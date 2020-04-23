@@ -1,13 +1,13 @@
 #' Calculate kij for the ANM
 #'
-kij_anm  <- function(dij, d_max = 10, k = 1, k_scale = 1, ...) {
-  k_scale * ifelse(dij <= d_max, k, 0)
+kij_anm  <- function(dij, d_max = 10, k = 1,  ...) {
+  ifelse(dij <= d_max, k, 0)
 }
 
 #' Calculate kij for the GNM
 #'
-kij_gnm <- function(dij, d_max = 10, k = 1, k_scale = 1, ...) {
-  k_scale * ifelse(dij <= d_max, k, 0)
+kij_gnm <- function(dij, d_max = 10, k = 1, ...) {
+  ifelse(dij <= d_max, k, 0)
 }
 
 #' Calculate kij for model by Hinsen
@@ -34,8 +34,8 @@ kij_hnm0 <- function(dij, c = 7.5, a = 1, ...) {
 #' Calculate kij for model by Ming and Wall (2005)
 #'
 kij_ming_wall <- function(dij, sdij,
-                          k_scale = 1.0, d_max = 10.5, k = 4.5, a = 42, ...) {
-  kij <- k_scale * ifelse(dij <=  d_max, k, 0)
+                          d_max = 10.5, k = 4.5, a = 42, ...) {
+  kij <-  ifelse(dij <=  d_max, k, 0)
   kij[sdij == 1] <- a * kij[sdij == 1]
   kij
 }

@@ -1,8 +1,8 @@
 #' Prot msf and compare with bfactor and 1/cn
 #'
-enm_msf_plot <- function(prot, param) {
+enm_msf_plot <- function(prot, d_max) {
 
-  df <- enm_profiles(prot, param)
+  df <- enm_profiles(prot, d_max)
 
   p_profiles <- df %>%
     mutate(rcn = 1/cn) %>%
@@ -110,10 +110,10 @@ enm_modes_matrix_plot  <- function(prot, modes = prot$enm$mode) {
 
 #' Calculate various profiles for prot
 #'
-enm_profiles <- function(prot, param) {
+enm_profiles <- function(prot, d_max) {
   site <- prot$site
   pdb_site <- prot$pdb_site
-  cn <- cn_xyz(prot$xyz, prot$pdb_site, d_max = param$enm$d_max, sd_min = param$mut$sd_min)
+  cn <- cn_xyz(prot$xyz, prot$pdb_site, d_max = d_max)
   wcn = wcn_xyz(prot$xyz)
   bfactor <- prot$bfactor
   msf <- msf_prot(prot)

@@ -1,7 +1,9 @@
 #' Add \code{enm} object to \code{prot} object
 #'
 #' @param prot A protein object that must contain \code{xyz} and \code{pdb_site} elements, and active_site indexes \code{ind_active} (which may be NA)
-#' @param param_list A list of \code{enm} parameters including elements \code{model, k_scale, d_max, sd_min}
+#' @param model the enm model
+#' @param v0 the energy at the minimum (for the relaxed model)
+#' @param d_max a cdistance cut-off needed by some models to define sites in contact
 #'
 #' @return A protein object equal to input with enm added, where enm is a list containing \code{graph, eij, kmat, mode, evalue, cmat, umat}
 #'  and also \code{cmat_active, kmat_active}, which are NA if \code{ind_active} is NA.
@@ -11,10 +13,10 @@
 #' @family enm builders
 #'
 #' @examples
-enm_add <- function(prot, param_list) {
+enm_add <- function(prot, model, v0,  d_max,...)  {
   stopifnot(!is.null(prot$ind_active)) # stop if ind_active undefined (but not if it's NA)
   stopifnot(is.null(prot$enm$umat)) # it adds nma only if not already defined
-  prot$enm <- enm_set(prot, param_list) #sets graph and eij
+  prot$enm <- enm_set(prot, model, v0, d_max) #sets graph and eij
   nma <- enm_nma(prot$enm)
   prot$enm <- c(prot$enm, nma) #append (mode, evalue, umat, cmat)
 
@@ -35,9 +37,10 @@ add_enm <- enm_add
 
 #' Set initial \code{enm} object
 #'
-#' @param prot A protein object that must contain \code{xyz} and \code{pdb_site} elements
-#' @param param A list of \code{enm} parameters including elements \code{model, k_scale, d_max, sd_min}
-#' @param ... Other parameters
+#' @param prot A protein object that must contain \code{xyz} and \code{pdb_site} elements, and active_site indexes \code{ind_active} (which may be NA)
+#' @param model the enm model
+#' @param v0 the energy at the minimum (for the relaxed model)
+#' @param d_max a cdistance cut-off needed by some models to define sites in contact
 #'
 #' @return A list containing the ENM graph `graph`, the matrix of versors `eij`, and the ENM K matrix `kmat`
 #' @export
@@ -45,8 +48,9 @@ add_enm <- enm_add
 #' @family enm builders
 #'
 #' @examples
-enm_set <- function(prot, param, ...) {
+enm_set <- function(prot, model, v0,  d_max,...) {
   vars = lst(xyz = prot$xyz, pdb_site = prot$pdb_site)
+  param <- lst(model = model,  v0 = v0, d_max = d_max)
   args = c(vars,param)
   enm <- do.call(enm_set_xyz, args)
   enm
@@ -59,9 +63,7 @@ enm_set <- function(prot, param, ...) {
 #' @param xyz The \code{3 x N} matrix containing the Cartesian coordinates of ENM nodes
 #' @param pdb_site The pdb numbering of network nodes
 #' @param model The ENM model variant (gnm, anm, hnm0, hnm, ming_wall, reach, pfgnm)
-#' @param k_scale  A scaling value to multiply kmat by
 #' @param d_max  The cut-off used to define contacts in some models
-#' @param sd_min The sequence-distance cutoff used for some models
 #' @param ... Any other parameter
 #'
 #' @return A list containing the ENM graph `graph`, the matrix of versors `eij`, and the ENM K matrix `kmat`
@@ -71,19 +73,12 @@ enm_set <- function(prot, param, ...) {
 #' @examples
 #'
 #' @family enm builders
-enm_set_xyz <- function(xyz,
-                        pdb_site,
-                        model = "gnm",
-                        k_scale = 1.0,
-                        d_max = 10,
-                        sd_min = 1,
-                        ...) {
+enm_set_xyz <- function(xyz, pdb_site, model,  d_max,...) {
 
   # Calculate (relaxed) enm graph from xyz
   # Returns list (graph, eij, kmat)
 
-  graph <- enm_graph_xyz(xyz, pdb_site,
-                         model, k_scale, d_max, sd_min)
+  graph <- enm_graph_xyz(xyz, pdb_site, model,  d_max)
 
   # calculate eij
   eij <- eij_edge(xyz, graph$i, graph$j)
@@ -101,11 +96,9 @@ enm_set_xyz <- function(xyz,
 #'
 #' @param xyz matrix of size \code{c(3,N)} containing each column the \code{x, y, z} coordinates of each of N nodes
 #' @param pdb_site integer vector of size N containing the number of each node (pdb residue number)
-#' @param model="gnm" character variable specifying the ENM model variant, default is \code{"gnm"}, options:
+#' @param model  character variable specifying the ENM model variant, default is \code{"gnm"}, options:
 #'     \code{gnm, anm, ming_wall, hnm, hnm0, pfgnm, reach}.
-#' @param k_scale=1.0 scalar to scale \code{kmat}
-#' @param d_max=10.0 distance-cutoff to define network contacts
-#' @param sd_min=1 sequence-cutoff to define if sites close in sequence need to be dealt with differently
+#' @param d_max distance-cutoff to define network contacts
 #' @return a tibble that contains the graph representation of the network
 #'
 #' @export
@@ -117,10 +110,8 @@ enm_set_xyz <- function(xyz,
 enm_graph_xyz <-
   function(xyz,
            pdb_site,
-           model = "gnm",
-           k_scale = 1.0,
-           d_max = 10,
-           sd_min = 1,
+           model,
+           d_max,
            ...) {
     # Calculate (relaxed) enm graph from xyz
     # Returns graph for the relaxed case
@@ -132,9 +123,7 @@ enm_graph_xyz <-
 
     # set function to calculate i-j spring constants
     kij_fun <- match.fun(paste0("kij_", model))
-    kij_par <- lst(k_scale = k_scale,
-                   d_max = d_max,
-                   sd_min = sd_min)
+    kij_par <- lst( d_max = d_max)
 
     site <- seq(nsites)
     # calculate graph
@@ -267,7 +256,7 @@ kmat_graph <- function(graph, eij, nsites, add_frust = FALSE) {
 #'
 #'@family enm builders
 #'
-enm_v0_add <- function(prot, v0 = 0) {
+enm_v0_add <- function(prot, v0) {
   graph <- prot$enm$graph
   n_edges <- nrow(graph)
   v0ij <- v0/n_edges
