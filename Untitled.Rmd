@@ -1,0 +1,33 @@
+---
+title: "Untitled"
+author: "Julian Echave"
+date: "4/16/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+library(itdepends)
+library(tidyverse)
+```
+
+```{r}
+dep_usage_pkg("penm") %>% 
+  count(pkg, sort = TRUE)
+```
+
+
+```{r}
+itdepends::dep_usage_pkg("penm") %>%
+  group_by(pkg) %>%
+  count(fun) %>%
+  top_n(1) %>%
+  arrange(desc(n)) %>%
+  head()
+```
+

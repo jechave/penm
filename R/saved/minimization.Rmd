@@ -1,0 +1,50 @@
+---
+title: "Minimization"
+author: "Julian Echave"
+date: "January 20, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+f <- function(x, a)
+{
+    res <- sum((x-a)^2)
+    attr(res, "gradient") <- 2*(x-a)
+    res
+}
+nlm(f, c(10,10), a = c(3,5))
+```
+
+```{r}
+f <- function(parameters,kijMat,r0,frustration=0) {
+    nsites = nrow(kijMat)
+    lambda = parameters[1]
+    deltaijV = parameters[-1]
+    deltaijMat = matrix(0,nsites,nsites)
+    deltaijMat[upper.tri(deltaijMat,diag=FALSE)] <- deltaijV
+    deltaijMat = deltaijMat + t(deltaijMat)
+    dijMat = bio3d::dm(as.vector(r0),mask.lower=FALSE)
+    lijMat = dijMat + deltaijMat
+    force = calculateForce(r0,kijMat,lijMat)
+    frust.energy = sum(kijMat*deltaijMat^2) 
+    f = sum(force^2) + lambda*(frust.energy-frustration)
+    f
+}
+    
+    
+
+```
+
+```{r}
+(m2 <- matrix(1:20, 4, 5))
+v = as.vector(m2[upper.tri(m2,diag=T)])
+m2
+
+upper.tri(c(1,2,3),diag=F)
+
+```
+

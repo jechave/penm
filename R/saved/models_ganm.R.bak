@@ -1,0 +1,312 @@
+kmat_graph <- function(graph, eij, nsites) {
+  stopifnot(max(graph$i, graph$j) <= nsites,
+            nrow(graph) == nrow(eij))
+  kmat <- array(0, dim = c(3, nsites, 3, nsites))
+  for (edge in seq(nrow(graph))) {
+    i <- graph$i[[edge]]
+    j <- graph$j[[edge]]
+    kij <- graph$kij[[edge]]
+    eij_v <- eij[edge,]
+    kmat[, j, , i] <- kmat[, i, , j] <- -kij * tcrossprod(eij_v, eij_v)
+  }
+  for (i in seq(nsites)) {
+    kmat[, i, , i] <- -apply(kmat[, i, , -i], c(1, 2), sum)
+  }
+
+  dim(kmat) <- c(3 * nsites, 3 * nsites)
+  kmat
+}
+
+
+ganm_3 <-
+  function(xyz,
+           pdb_site,
+           model = gnm,
+           k_scale = 1.0,
+           d_max = 10,
+           sd_min = 1,
+           TOL = 1.e-10) {
+    # put xyz in the right format and check size
+    xyz <- my_as_xyz(xyz)
+    nsites <- length(pdb_site)
+    stopifnot(ncol(xyz) == nsites)
+
+    # set function to calculate i-j spring constants
+    kij_fun <- match.fun(paste0("kij_", model))
+    kij_par <- lst(k_scale = k_scale,
+                   d_max = d_max,
+                   sd_min = sd_min)
+
+    site <- seq(nsites)
+    graph <- as_tibble(expand.grid(i = site, j = site)) %>%
+      filter(j > i) %>%
+      arrange(i, j) %>%
+      mutate(dij = dij_edge(xyz, i, j)) %>%
+      filter(dij <= d_max) %>%
+      mutate(sdij = sdij_edge(pdb_site, i, j),
+             lij = dij)
+    graph$kij <- do.call(kij_fun,
+                         c(lst(
+                           dij = graph$dij, sdij = graph$sdij
+                         ), kij_par))
+
+    graph <- graph %>%
+      mutate(edge = paste(i, j, sep = "-")) %>%
+      select(edge, i, j, sdij, lij = dij, kij)
+
+    eij <- eij_edge(xyz, graph$i, graph$j)
+
+    kmat <- kmat_graph(graph, eij, nsites)
+
+
+    # Diagonalize
+
+    eig <- eigen(kmat, symmetric = TRUE)
+
+    evalues <- eig$values
+    umat <- eig$vectors
+    modes <- evalues > TOL
+    evalues <- evalues[modes]
+    umat  <- umat[, modes]
+    cmat <-  umat %*% ((1 / evalues) * t(umat))
+
+    list(
+      "graph" = graph,
+      "eij" = eij,
+      "kmat" = kmat3,
+      "cmat" = cmat,
+      "umat" = umat,
+      "evalues" = evalues
+    )
+
+  }
+
+
+
+ganm <- function(xyz,
+           pdb_site,
+           model = gnm,
+           d_max = 10,
+           TOL = 1.e-10) {
+
+
+  xyz <- my_as_xyz(xyz)
+    kmat <- kmat_ganm(xyz, model, d_max)
+    kmat_ij <- -kmat
+    diag(kmat_ij) <- 0
+    # obtain 3N x 3N kmat
+
+
+
+    nsites <- nrow(kmat)
+    kmat3 <- matrix(0, 3 * nsites, 3 * nsites)
+    for (i in seq(nsites - 1)) {
+      ia <- (i - 1) * 3 + 1
+      ib <- ia + 2
+      for (j in seq((i + 1), nsites)) {
+        ja <- (j - 1) * 3 + 1
+        jb <- ja + 2
+        rij <- xyz[, j] - xyz[, i]
+        eij <-
+          rij / sqrt(sum(rij ^ 2)) # unit vector along i-j contact
+        Eij <- tcrossprod(eij, eij)
+        kmat3[ia:ib, ja:jb] <-
+          kmat3[ja:jb, ia:ib] <- kmat[i, j] * Eij
+        kmat3[ia:ib, ia:ib] <-
+          kmat3[ia:ib, ia:ib] - kmat3[ia:ib, ja:jb]
+        kmat3[ja:jb, ja:jb] <-
+          kmat3[ja:jb, ja:jb] - kmat3[ja:jb, ia:ib]
+
+      }
+    }
+
+    # Diagonalize
+
+    eig <- eigen(kmat3, symmetric = TRUE)
+
+    evalues <- eig$values
+    umat <- eig$vectors
+    modes <- evalues > TOL
+    evalues <- evalues[modes]
+    umat  <- umat[, modes]
+    cmat <-  umat %*% ((1 / evalues) * t(umat))
+
+    list(
+      "kmat_ij" = kmat_ij,
+      "kmat" = kmat3,
+      "cmat" = cmat,
+      "umat" = umat,
+      "evalues" = evalues
+    )
+
+  }
+
+# Functions kij -----------------------------------------------------------
+
+kij_gnm <- function(dij, d_max = 10, ...) {
+  ifelse(dij <= d_max, 1, 0)
+}
+
+kij_hnm0 <- function(dij, c = 7.5, a = 1, ...) {
+  a * exp( -(dij / c) ^ 2)
+}
+
+kij_pfgnm <- function(dij, ...) {
+  1/dij^2
+}
+
+
+kij_hnm <- function(dij, ...){
+  ab <- 860
+  b <-  2390
+  al <- 1280000
+  c <- 4
+  if (dij <= c) {
+    kij <- ab * dij - b
+  } else {
+    kij <- al / dij^6
+  }
+  kij
+}
+
+kij_reach <- function(dij, sdist = 5, same.chain = T, ...) {
+  k12 <- 712
+  k13 <- 6.92
+  k14 <- 32.0
+  ain <- 2560
+  bin <- 0.8
+  aex <- 1630
+  bex <- 0.772
+  if (sdist == 1) {
+    kij <- k12
+  } else if (sdist == 2) {
+    kij <- k13
+  } else if (sdist == 3) {
+    kij <- k14
+  } else if (same.chain) {
+    kij <- ain * exp(-bin * dij)
+  } else {
+    kij <- aex * exp(-bex * dij)
+  }
+  kij
+}
+
+
+# kmat functions (isotropic models) ---------------------------------------
+# TODO: I could just get rid of this stuff, or at least using match.fun simplify
+
+
+kmat_ganm <- function(xyz, model, d_max, pdb_site, ...)  {
+  xyz <- my_as_xyz(xyz) # make sure is 3xN
+  # wrapper that calculates the NxN kmat given a model
+  if (model == "hnm") {
+    kmat <- kmat_hnm(xyz)
+  } else if (model == "pfgnm") {
+    kmat <- kmat_pfgnm(xyz)
+  } else if (model == "gnm") {
+    kmat <- kmat_gnm(xyz, d_max)
+  } else if (model == "hnm0") {
+    kmat <- kmat_hnm0(xyz, d_max)
+  } else if (model == "reach") {
+    kmat <- kmat_reach(xyz, pdb_site)
+  } else {
+    print("error in ggnm")
+    print(paste("model:", model, "is undefined"))
+  }
+  kmat
+}
+
+
+kmat_gnm <- function(xyz, d_max = 10) {
+  nsites <- ncol(xyz)
+  kmat <- matrix(0,nsites,nsites)
+  for (i in seq(nsites)){
+    for(j in seq(nsites)) {
+      if(j != i) {
+        rij <- xyz[,j] - xyz[,i]
+        dij <- sqrt(sum(rij^2))
+        kij <- kij_gnm(dij, d_max)
+        kmat[i,j] <- - kij
+        kmat[i,i] <- kmat[i,i] - kmat[i,j]
+      }
+    }
+  }
+  kmat
+}
+
+
+
+
+kmat_hnm <- function(xyz, ...) {
+    nsites <- ncol(xyz)
+    kmat <- matrix(0,nsites,nsites)
+    for (i in seq(nsites)){
+        for(j in seq(nsites)) {
+            if(j != i) {
+                rij <- xyz[,j] - xyz[,i]
+                dij <- sqrt(sum(rij^2))
+                kij <- kij_hnm(dij)
+                kmat[i,j] <- - kij
+                kmat[i,i] <- kmat[i,i] - kmat[i,j]
+            }
+        }
+    }
+    kmat
+}
+
+kmat_hnm0 <- function(xyz, c = 7.5, a = 1, ...) {
+    nsites <- ncol(xyz)
+    kmat <- matrix(0,nsites,nsites)
+    for (i in seq(nsites)){
+        for(j in seq(nsites)) {
+            if(j != i) {
+                rij <- xyz[,j] - xyz[,i]
+                dij <- sqrt(sum(rij^2))
+                kij <- kij_hnm0(dij, c, a)
+                kmat[i,j] <- - kij
+                kmat[i,i] <- kmat[i,i] - kmat[i,j]
+            }
+        }
+    }
+    kmat
+}
+
+
+
+kmat_pfgnm <- function(xyz, ...) {
+    nsites <- ncol(xyz)
+    kmat <- matrix(0,nsites,nsites)
+    for (i in seq(nsites)){
+        for(j in seq(nsites)) {
+            if(j != i) {
+                rij <- xyz[,j] - xyz[,i]
+                dij <- sqrt(sum(rij^2))
+                kij <- kij_pfgnm(dij)
+                kmat[i,j] <- - kij
+                kmat[i,i] <- kmat[i,i] - kmat[i,j]
+            }
+        }
+    }
+    kmat
+}
+
+
+kmat_reach <- function(xyz,pdb_site,...) {
+    nsites <- ncol(xyz)
+    kmat <- matrix(0,nsites,nsites)
+    for (i in seq(nsites)){
+        for(j in seq(nsites)) {
+            if(j != i) {
+                rij <- xyz[,j] - xyz[,i]
+                dij <- sqrt(sum(rij^2))
+                sij <- abs(pdb_site[j]-pdb_site[i])
+                kij <- kij_reach(dij,sij)
+                kmat[i,j] <- - kij
+                kmat[i,i] <- kmat[i,i] - kmat[i,j]
+            }
+        }
+    }
+    kmat
+}
+
+
