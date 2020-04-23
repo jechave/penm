@@ -30,6 +30,7 @@ run_path <- "output/sc_mut_scan" # directory for this run
 ## Set up parameters
 
 ```{r}
+source("set_parameters.R")
 # global parameters
 beta <- beta_boltzmann()
 nmut_per_site <- 19
@@ -153,21 +154,37 @@ enm_modes_plot(wt, modes = c(1, 2, 3, 4, nmodes - 3, nmodes - 2, nmodes - 1, nmo
 ### Get mutants without recalculating ENM
 
 Note that entropy terms do not change w.r.t. wild-type.
-```{r}
-df_energies <- tibble(prot = "wt", recalc_enm = F, as_tibble(wt$energy))
-mut <- get_mutant(wt, wt, wt, param)
-df_row <-  tibble(prot = "mut", recalc_enm = F, as_tibble(mut$mut$energy))
-df_energies <- rbind(df_energies, df_row)
-mut_site <- get_mutant_site(wt, site_mut = 50, wt, wt, param)
-df_row <-  tibble(prot = "mut_site", recalc_enm = F, as_tibble(mut_site$energy))
-df_energies <- rbind(df_energies, df_row)
-mut_site_2 <- get_mutant_site_2(wt, 50, mutation = 1)
-df_row <-  tibble(prot = "mut_site_2", recalc_enm = F, as_tibble(mut_site_2$energy))
-df_energies <- rbind(df_energies, df_row)
 
-df_energies
+```{r}
+get_mut_energy <- function(prot, site, mutation, update_enm, add_frust) {
+  mut <- get_mutant_site(wt, 
+                           site, 
+                           mutation, wt, wt,
+                           sd_min = param$mut$sd_min,
+                           dl_sigma = param$mut$dl_sigma,
+                           model = param$enm$model,
+                           d_max = param$enm$d_max,
+                           v0 = param$enm$v0,
+                           add_frust = add_frust,
+                           update_enm = update_enm)
+  as_tibble(mut$energy)
+}
+
+df <- tibble(prot = c("wt", "mut_nofrust", "mut_frust"),
+             site = rep(80, 3),
+             wt = lst(wt),
+             mutation = c(0, 1, 1),
+             update_enm = c(F, F, F),
+             add_frust = c(F, F, T)) %>% 
+  mutate(mut_energy = pmap(list(wt, site, mutation, update_enm, add_frust), get_mut_energy)) %>% 
+  unnest(mut_energy) %>% 
+  arrange(mutation, add_frust, update_enm) %>% 
+  select(-prot, -wt, -mutation) 
+
+df
 
 ```
+
 
 
 ### Plot structural response
@@ -182,7 +199,7 @@ Remember that on average $df^2_n \propto \frac{1}{\sigma_n^2}$ and probably $df^
 
 #### Response along sites
 ```{r}
-mut <- get_mutant_site(wt, 50, wt, wt, param)
+mut <- get_mutant_site(wt, 50, mutation = 1)
 response_site_plot(wt, mut)
 
 ```
@@ -207,7 +224,7 @@ prot_evalue <- function(prot) prot$enm$evalue
 
 
 df_mutants <- expand_grid(wt = list(wt), j, mutation)  %>% 
-  mutate(mut = pmap(list(wt, j, mutation), get_mutant_site_2)) %>% 
+  mutate(mut = pmap(list(wt, j, mutation), get_mutant_site)) %>% 
   mutate(i = map(wt, "site"),
          dr2ij = map2(wt, mut, dr2_site),
          msfi = map(wt, msf_prot),
@@ -438,7 +455,7 @@ Now entropy terms should change.
 
 ```{r}
 get_mut_energy <- function(prot, site, mutation, update_enm, add_frust) {
-  mut <- get_mutant_site_2(wt, 
+  mut <- get_mutant_site(wt, 
                            site, 
                            mutation, wt, wt,
                            sd_min = param$mut$sd_min,
@@ -463,14 +480,12 @@ df <- tibble(prot = c("wt", "mutff", "mutft", "muttf", "muttt"),
   select(-prot, -wt, -mutation) 
 
 df
-  
-
 
 ```
 
 ```{r}
   get_mut <-function(wt, site, mutation = 1, dl_sigma = 1) {
-    get_mutant_site_2(wt, 
+    get_mutant_site(wt, 
                            site, 
                            mutation, wt, wt,
                            sd_min = param$mut$sd_min,
@@ -518,10 +533,10 @@ df %>%
 
 
 
-```{r}
+```{r, eval = FALSE}
 get_mut_energy <- function(site, mutation, wt,...) {
   # gets mutant, returns only its energy terms
-  mut <- get_mutant_site_2(wt, site, mutation,... )
+  mut <- get_mutant_site(wt, site, mutation,... )
   mut$energy
 }
 
