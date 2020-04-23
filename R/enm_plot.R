@@ -79,7 +79,7 @@ enm_modes_plot  <- function(prot, modes = c(1, 2, 3, 4, 5)) {
 
 #' Plot all normal modes
 #'
-enm_modes_matrix_plot  <- function(prot, plot_modes = prot$enm$mode) {
+enm_modes_matrix_plot  <- function(prot, modes = prot$enm$mode) {
   plot_modes <- prot$enm$mode %in% modes
   u <- prot$enm$umat[,plot_modes]
   mode <- prot$enm$mode[plot_modes]
