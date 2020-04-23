@@ -4,22 +4,17 @@
 \alias{enm_graph_xyz}
 \title{Calculate ENM graph}
 \usage{
-enm_graph_xyz(xyz, pdb_site, model = "gnm", k_scale = 1, d_max = 10,
-  sd_min = 1, ...)
+enm_graph_xyz(xyz, pdb_site, model, d_max, ...)
 }
 \arguments{
 \item{xyz}{matrix of size \code{c(3,N)} containing each column the \code{x, y, z} coordinates of each of N nodes}
 
 \item{pdb_site}{integer vector of size N containing the number of each node (pdb residue number)}
 
-\item{model="gnm"}{character variable specifying the ENM model variant, default is \code{"gnm"}, options:
+\item{model}{character variable specifying the ENM model variant, default is \code{"gnm"}, options:
 \code{gnm, anm, ming_wall, hnm, hnm0, pfgnm, reach}.}
 
-\item{k_scale=1.0}{scalar to scale \code{kmat}}
-
-\item{d_max=10.0}{distance-cutoff to define network contacts}
-
-\item{sd_min=1}{sequence-cutoff to define if sites close in sequence need to be dealt with differently}
+\item{d_max}{distance-cutoff to define network contacts}
 }
 \value{
 a tibble that contains the graph representation of the network

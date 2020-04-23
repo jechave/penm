@@ -4,8 +4,7 @@
 \alias{enm_set_xyz}
 \title{Set up ENM model}
 \usage{
-enm_set_xyz(xyz, pdb_site, model = "gnm", k_scale = 1, d_max = 10,
-  sd_min = 1, ...)
+enm_set_xyz(xyz, pdb_site, model, d_max, ...)
 }
 \arguments{
 \item{xyz}{The \code{3 x N} matrix containing the Cartesian coordinates of ENM nodes}
@@ -14,11 +13,7 @@ enm_set_xyz(xyz, pdb_site, model = "gnm", k_scale = 1, d_max = 10,
 
 \item{model}{The ENM model variant (gnm, anm, hnm0, hnm, ming_wall, reach, pfgnm)}
 
-\item{k_scale}{A scaling value to multiply kmat by}
-
 \item{d_max}{The cut-off used to define contacts in some models}
-
-\item{sd_min}{The sequence-distance cutoff used for some models}
 
 \item{...}{Any other parameter}
 }

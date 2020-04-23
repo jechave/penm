@@ -4,8 +4,7 @@
 \alias{kij_ming_wall}
 \title{Calculate kij for model by Ming and Wall (2005)}
 \usage{
-kij_ming_wall(dij, sdij, k_scale = 1, d_max = 10.5, k = 4.5,
-  a = 42, ...)
+kij_ming_wall(dij, sdij, d_max = 10.5, k = 4.5, a = 42, ...)
 }
 \description{
 Calculate kij for model by Ming and Wall (2005)

@@ -4,7 +4,7 @@
 \alias{kij_anm}
 \title{Calculate kij for the ANM}
 \usage{
-kij_anm(dij, d_max = 10, k = 1, k_scale = 1, ...)
+kij_anm(dij, d_max = 10, k = 1, ...)
 }
 \description{
 Calculate kij for the ANM

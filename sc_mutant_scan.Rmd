@@ -129,7 +129,7 @@ str(wt)
 ### Plot and compare msf
 
 ```{r}
-enm_msf_plot(wt, param)
+enm_msf_plot(wt, d_max = param$enm$d_max)
 ```
 
 ### Plot normal-mode matrix

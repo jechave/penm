@@ -5,14 +5,18 @@
 \alias{add_enm}
 \title{Add \code{enm} object to \code{prot} object}
 \usage{
-enm_add(prot, param_list)
+enm_add(prot, model, v0, d_max, ...)
 
-add_enm(prot, param_list)
+add_enm(prot, model, v0, d_max, ...)
 }
 \arguments{
 \item{prot}{A protein object that must contain \code{xyz} and \code{pdb_site} elements, and active_site indexes \code{ind_active} (which may be NA)}
 
-\item{param_list}{A list of \code{enm} parameters including elements \code{model, k_scale, d_max, sd_min}}
+\item{model}{the enm model}
+
+\item{v0}{the energy at the minimum (for the relaxed model)}
+
+\item{d_max}{a cdistance cut-off needed by some models to define sites in contact}
 }
 \value{
 A protein object equal to input with enm added, where enm is a list containing \code{graph, eij, kmat, mode, evalue, cmat, umat}

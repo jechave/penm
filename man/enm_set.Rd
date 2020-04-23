@@ -4,14 +4,16 @@
 \alias{enm_set}
 \title{Set initial \code{enm} object}
 \usage{
-enm_set(prot, param, ...)
+enm_set(prot, model, v0, d_max, ...)
 }
 \arguments{
-\item{prot}{A protein object that must contain \code{xyz} and \code{pdb_site} elements}
+\item{prot}{A protein object that must contain \code{xyz} and \code{pdb_site} elements, and active_site indexes \code{ind_active} (which may be NA)}
 
-\item{param}{A list of \code{enm} parameters including elements \code{model, k_scale, d_max, sd_min}}
+\item{model}{the enm model}
 
-\item{...}{Other parameters}
+\item{v0}{the energy at the minimum (for the relaxed model)}
+
+\item{d_max}{a cdistance cut-off needed by some models to define sites in contact}
 }
 \value{
 A list containing the ENM graph `graph`, the matrix of versors `eij`, and the ENM K matrix `kmat`

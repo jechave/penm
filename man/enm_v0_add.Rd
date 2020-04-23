@@ -5,9 +5,9 @@
 \alias{add_v0}
 \title{Add v0 to ENM}
 \usage{
-enm_v0_add(prot, v0 = 0)
+enm_v0_add(prot, v0)
 
-add_v0(prot, v0 = 0)
+add_v0(prot, v0)
 }
 \arguments{
 \item{prot}{A protein object}

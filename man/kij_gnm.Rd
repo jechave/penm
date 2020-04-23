@@ -4,7 +4,7 @@
 \alias{kij_gnm}
 \title{Calculate kij for the GNM}
 \usage{
-kij_gnm(dij, d_max = 10, k = 1, k_scale = 1, ...)
+kij_gnm(dij, d_max = 10, k = 1, ...)
 }
 \description{
 Calculate kij for the GNM
