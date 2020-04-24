@@ -4,10 +4,10 @@
 \alias{enm_nma}
 \title{Perform Normal Mode Analysis}
 \usage{
-enm_nma(enm, TOL = 1e-05)
+enm_nma(kmat, TOL = 1e-05)
 }
 \arguments{
-\item{enm}{A list of enm properties, one element must be kmat, the matrix K of the ENM}
+\item{kmat}{The K matrix to diagonalize}
 
 \item{TOL=1.e-5}{A small value, eigenvectors with eigenvalues larger than `TOL` are discarded}
 }
@@ -15,7 +15,7 @@ enm_nma(enm, TOL = 1e-05)
 A list with elements \code{mode}, \code{evalue}, \code{cmat}, and \code{umat}
 }
 \description{
-Given an enm object for which `kmat` has been defined, perform NMA
+Given an enm `kmat`, perform NMA
 }
 \examples{
 
@@ -26,7 +26,6 @@ enm_anm(enm, 1.e-10)
 Other enm builders: \code{\link{enm_add}},
   \code{\link{enm_energy}}, \code{\link{enm_graph_xyz}},
   \code{\link{enm_nma_basis}}, \code{\link{enm_set_xyz}},
-  \code{\link{enm_set}}, \code{\link{enm_v0_add}},
   \code{\link{kmat_graph}}
 }
 \concept{enm builders}

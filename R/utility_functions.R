@@ -1,3 +1,7 @@
+
+beta_boltzmann <- function(R = 1.986e-3, T = 298) 1/(R*T)
+
+
 my_as_xyz <- function(r) {
   r <- as.vector(r)
   n3 <- length(r)
@@ -56,9 +60,9 @@ cn_graph <- function(graph, nsites) {
 
 #' Calculate MSF profile of prot
 #'
-msf_prot <- function(wt) {
-  stopifnot(!is.null(wt$enm$cmat))
-  c <- diag(wt$enm$cmat)
+msf_prot <- function(prot) {
+  stopifnot(!is.null(prot$enm$cmat))
+  c <- diag(prot$enm$cmat)
   nsites <- length(c) / 3
   dim(c) <- c(3, nsites)
   msf <- colSums(c)

@@ -4,7 +4,7 @@
 \alias{msf_prot}
 \title{Calculate MSF profile of prot}
 \usage{
-msf_prot(wt)
+msf_prot(prot)
 }
 \description{
 Calculate MSF profile of prot

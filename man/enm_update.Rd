@@ -25,7 +25,6 @@ Update ENM following graph change
 }
 \seealso{
 Other enm mutating functions: \code{\link{get_force}},
-  \code{\link{get_mutant_site_2}},
-  \code{\link{get_mutant_site}}, \code{\link{get_mutant}}
+  \code{\link{get_mutant_site}}
 }
 \concept{enm mutating functions}

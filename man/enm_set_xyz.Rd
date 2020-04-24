@@ -4,7 +4,7 @@
 \alias{enm_set_xyz}
 \title{Set up ENM model}
 \usage{
-enm_set_xyz(xyz, pdb_site, model, d_max, ...)
+enm_set_xyz(xyz, pdb_site, model, d_max, add_frust, ...)
 }
 \arguments{
 \item{xyz}{The \code{3 x N} matrix containing the Cartesian coordinates of ENM nodes}
@@ -30,7 +30,6 @@ Set up ENM model from node coordinates `xyz` and residue pdb numbers `pdb_site`.
 Other enm builders: \code{\link{enm_add}},
   \code{\link{enm_energy}}, \code{\link{enm_graph_xyz}},
   \code{\link{enm_nma_basis}}, \code{\link{enm_nma}},
-  \code{\link{enm_set}}, \code{\link{enm_v0_add}},
   \code{\link{kmat_graph}}
 }
 \concept{enm builders}

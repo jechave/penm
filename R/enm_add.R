@@ -15,10 +15,15 @@
 enm_add <- function(prot, model, d_max, add_frust,...)  {
   stopifnot(!is.null(prot$ind_active)) # stop if ind_active undefined (but not if it's NA)
   stopifnot(is.null(prot$enm$umat)) # it adds nma only if not already defined
-  prot$enm <- enm_set_xyz(prot$xyz, prot$pdb_site, model, d_max, add_frust) # adds enm graph, eij, and kmat
-  nma <- enm_nma(prot$enm$kmat)
-  prot$enm <- c(prot$enm, nma) #append (mode, evalue, umat, cmat)
 
+  # add enm graph, eij, and kmat
+  prot$enm <- enm_set_xyz(prot$xyz, prot$pdb_site, model, d_max, add_frust)
+
+  # add (mode, evalue, umat, cmat)
+  nma <- enm_nma(prot$enm$kmat)
+  prot$enm <- c(prot$enm, nma)
+
+  # if active-site info, add cmat_active and kmat_active
   if (anyNA(prot$ind_active)) { # these matrices are only defined if ind_active is defined
     prot$enm$cmat_active <- NA
     prot$enm$kmat_active <- NA

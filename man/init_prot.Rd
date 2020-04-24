@@ -4,8 +4,8 @@
 \alias{init_prot}
 \title{Initialize prot object}
 \usage{
-init_prot(prot, pdb_site_active = NA, ideal = prot, v0 = 0,
-  model = "ming_wall", d_max = 10.5, sd_min = 1)
+init_prot(prot, pdb_site_active = NA, ideal = prot,
+  model = "ming_wall", d_max = 10.5, add_frust = FALSE, sd_min = 1)
 }
 \description{
 Initialize prot object

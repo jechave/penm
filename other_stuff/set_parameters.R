@@ -44,5 +44,4 @@ set_param_anm <- function(nmut_per_site,
 }
 
 
-beta_boltzmann <- function(R = 1.986e-3, T = 298) 1/(R*T)
 

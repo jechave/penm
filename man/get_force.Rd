@@ -19,7 +19,6 @@ Given \code{mut} obtained by perturbing site edges of \code{wt}, obtain force \c
 }
 \seealso{
 Other enm mutating functions: \code{\link{enm_update}},
-  \code{\link{get_mutant_site_2}},
-  \code{\link{get_mutant_site}}, \code{\link{get_mutant}}
+  \code{\link{get_mutant_site}}
 }
 \concept{enm mutating functions}

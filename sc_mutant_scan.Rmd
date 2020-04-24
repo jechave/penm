@@ -1,145 +1,116 @@
 ---
-title: "Scan mutations" 
+title: "Test penm package" 
 output: html_notebook
 ---
 
-Get single-point-mutation tables (spm_tbl)
 
 # Load libraries and functions
 
 ```{r}
+# load libraries
 library(tidyverse)
 library(ggridges)
 library(cowplot)
 library(bio3d)
 library(penm)
 library(jefuns)
-```
 
-# Initialise
-## set paths and file names
+# source functions to use in this script
+source("mutant_scan_functions.R")
 
-```{r}
-# file paths and names
+# set paths and file names
+
 spm_path <- "data"
 pdb_path <- "data" # pdb files repaired using FoldX (by Elisha)
-pdb_prefix <- "RepairPDB_"
-run_path <- "output/sc_mut_scan" # directory for this run
+
 ```
 
-## Set up parameters
+
+
+# Set up parameters
 
 ```{r}
-source("set_parameters.R")
 # global parameters
 beta <- beta_boltzmann()
 nmut_per_site <- 19
 update_enm <- FALSE # use true to recalculate entropies
 add_frust <- FALSE # use true to add frustration terms to energy functions
 # other parameters
-run_par = lst(
-  nmut_per_site = nmut_per_site,
-  v0 = 0, # in kcal/mol
-  mut_sd_min = 1,
-  mut_dl_sigma = .3,
-  fit_dg_thr = 0,
-  fix_model = "moran",
-  fix_n_eff = 1,
-  fix_mut_rate = 1,
-  beta = beta
+
+param <- lst(
+  enm = lst(model = "ming_wall",
+            d_max = 10.5,
+            add_frust = TRUE),
+  mut = lst(model = "lfenm",
+            dl_sigma = 0.3,
+            sd_min = 1,
+            update_enm = NA),
+  prs = lst(nmut_per_site = 5),
 )
-param <- do.call(set_param, run_par)
 
-# save parameters in run's folder
-file_param <- file.path(run_path, "param.rda")
-save(beta, nmut_per_site, update_enm, add_frust, run_par, param, file = file_param)
+str(param)
+
 ```
 
 
+# Read and preform ENM NMA of wild-type protein
 
-# Check input files
-```{r}
-#dataset <- tibble(pdb = "1PYL", chain = "A")
-dataset <- tibble(pdb = "2ACY", chain = "A")
-# read files
-dataset <- dataset %>% 
-  mutate(wt = map2(pdb,chain, pdb_file_check, 
-                   path = pdb_path, prefix = pdb_prefix)) 
-
-# separate info
-dataset <- dataset %>% 
-  mutate(missing_residues = map_lgl(wt, "missing_residues"),
-         n_sites_pdb = map_int(wt, "n_sites"),
-         n_unique_resno= map_int(wt, "n_unique_resno"))
-
-# get rid of wt column
-dataset <- dataset %>%  dplyr::select(-wt)
-
-
-# get rid of cases for which there are repeated resno 
-dataset <- dataset %>% 
-  dplyr::filter(n_sites_pdb == n_unique_resno)
-
-# get rid of cases with "missing residues"
-dataset <- dataset %>% 
-  dplyr::filter(!missing_residues)
-
-dataset
-```
-
-
-# Set up wild-type
+## Check pdb file and read wt coordinates
 
 ```{r}
-dataset <- dataset %>% 
-  mutate(wt = map2(pdb,chain, read_pdb_sc, 
-                   path = pdb_path, prefix = pdb_prefix)) %>% 
-  filter(!is.na(wt))  
+# set pdb data
+pdb <- "2ACY"
+chain <- "A"
+pdb_prefix <- "RepairPDB_"
 
-dataset
+# perform various checks of file existence and consistence
+check <- pdb_file_check(pdb, chain, pdb_path, pdb_prefix)
+
+# set up wild-type
+wt <- read_pdb_sc(pdb, chain, pdb_path, pdb_prefix)
+
+str(wt)
+
 ```
 
-# Get mutants
 
 ## Initialize wild-type
 
 Check that it works when pdb_active_site is defined
 ```{r}
-pdb_id <- dataset$pdb
-chain <- dataset$chain
-wt <- read_pdb_sc(pdb_id, chain, pdb_path, pdb_prefix)
-dummy = sample(wt$pdb_site, 1)
-dummy = c(dummy - 1, dummy, dummy + 1)
-dummy
-wt <- init_prot(wt,  pdb_site_active = dummy, sd_min = param$mut$sd_min)
+dummy_active_site = wt$pdb_site[5:7]
+wt <- init_prot(prot = wt,  
+                ideal = wt, # look what is this ideal for (add_frust?)
+                pdb_site_active = dummy_active_site, 
+                model = param$enm$model,
+                d_max = param$enm$d_max,
+                add_frust = T)
+                
 str(wt)
 ```
 
 Check that it works when pdb_active_site is not defined
 ```{r}
-pdb_id <- dataset$pdb
-chain <- dataset$chain
-wt <- read_pdb_sc(pdb_id, chain, pdb_path, pdb_prefix)
+wt <- read_pdb_sc(pdb, chain, pdb_path, pdb_prefix)
 wt <- init_prot(wt,  sd_min = param$mut$sd_min)
 str(wt)
 ```
 
-## Plot enm
 
+## Plot and compare msf
 
-### Plot and compare msf
 
 ```{r}
 enm_msf_plot(wt, d_max = param$enm$d_max)
 ```
 
-### Plot normal-mode matrix
+## Plot normal-mode matrix
 
 ```{r}
 enm_modes_matrix_plot(wt)
 ```
 
-### Plot a few normal modes
+## Plot a few normal modes
   
 ```{r}
 nsites = wt$nsites
@@ -149,28 +120,14 @@ enm_modes_plot(wt, modes = c(1, 2, 3, 4, nmodes - 3, nmodes - 2, nmodes - 1, nmo
   
 
 
-## Mutational change of structure
+# Test mutational model
 
-### Get mutants without recalculating ENM
+
+## Structural response, no recalculation of ENM
 
 Note that entropy terms do not change w.r.t. wild-type.
 
 ```{r}
-get_mut_energy <- function(prot, site, mutation, update_enm, add_frust, seed = 500 + mutation * site) {
-  mut <- get_mutant_site(wt, 
-                           site, 
-                           mutation, 
-                           seed,
-                           wt, wt,
-                           sd_min = param$mut$sd_min,
-                           dl_sigma = param$mut$dl_sigma,
-                           model = param$enm$model,
-                           d_max = param$enm$d_max,
-                           add_frust = add_frust,
-                           update_enm = update_enm)
-  as_tibble(mut$energy)
-}
-
 df <- tibble(prot = c("wt", "mut_nofrust", "mut_frust"),
              site = rep(80, 3),
              wt = lst(wt),
@@ -188,7 +145,8 @@ df
 
 
 
-### Plot structural response
+## Structural response plots 
+
 $f_{ij} = k_{ij} \delta l_{ij}$ is the force in the direction of contact $i-j$.
 $de = K^{1/2} dr = C^{-1/2}df$, $dr = C df$. 
 
@@ -198,14 +156,28 @@ By analogy, in site representation, check if it's approximately so that $de^2_{i
 
 Remember that on average $df^2_n \propto \frac{1}{\sigma_n^2}$ and probably $df^2_i \propto 1 / \sigma_i^2$.
 
-#### Response along sites
+### Response along sites
 ```{r}
-mut <- get_mutant_site(wt, 50, mutation = 1)
+  get_mut <-function(wt, site, mutation = 1, dl_sigma = 1) {
+    get_mutant_site(wt, 
+                           site, 
+                           mutation, 
+                    seed = 2000 + site * mutation,
+                    wt, wt,
+                           sd_min = param$mut$sd_min,
+                           dl_sigma = dl_sigma,
+                           model = param$enm$model,
+                           d_max = param$enm$d_max,
+                           add_frust = F,
+                           update_enm = T)
+  } 
+site = 80
+mut <- get_mutant_site(wt, site, mutation = 1)
 response_site_plot(wt, mut)
 
 ```
 
-#### Response along normal modes
+### Response along normal modes
 
 ```{r}
 response_nm_plot(wt, mut)
@@ -216,7 +188,7 @@ response_nm_plot(wt, mut)
 
 ```{r}
 # get mutant table
-mutation <- seq(from = 0, to = 10)
+mutation <- seq(from = 0, to = 5)
 j <- wt$site
 
 prot_site <- function(prot) prot$site
@@ -240,7 +212,7 @@ df_mutants <- inner_join(df_j, df_mutants) %>%
 df_mutants 
 ```
 
-#### Structural response along sites
+### Structural response along sites
 
 Full mean response matrix:
 
@@ -333,6 +305,8 @@ pij
 
 ```
 
+### Average response of site i
+
 Response profile vs. site:
 
 ```{r}
@@ -371,6 +345,8 @@ plot_grid(pi_site, plot_grid(pi_msf, pi_rmsf), ncol = 1)
 
 
 ```
+
+### Global response to mutating j
 
 Influence profile (dr2ij averaged over i):
 
@@ -412,32 +388,32 @@ plot_grid(pj_site, plot_grid(pj_msf, pj_rmsf), ncol = 1)
 
 ```
 
-#### Structural response along normal modes
+## Structural response along normal modes
 
 ```{r}
-df_prs_site <- df_mutants %>% 
-  select(j, mutation, i, dr2i) %>% 
-  rename(dr2 = dr2i) %>% 
-  unnest(i, dr2) 
+df_prs_mode <- df_mutants %>% 
+  select(j, mutation, mode, dr2nj) %>% 
+  rename(dr2 = dr2nj) %>% 
+  unnest(c(mode, dr2))
 
-pij = df_prs_site %>% 
-  group_by(i, j) %>% 
+pnj = df_prs_mode %>% 
+  group_by(mode, j) %>% 
   summarise(dr2_mean = mean(dr2),
             dr2_sd = sd(dr2)) %>% 
-  ggplot(aes(i, j, fill = sqrt(dr2_mean))) +
+  ggplot(aes(mode, j, fill = sqrt(dr2_mean))) +
   geom_tile() +
   scale_color_viridis_c() +
   theme_cowplot()
 
-pi <- df_prs_site %>% 
-  group_by(i) %>% 
+pn <- df_prs_mode %>% 
+  group_by(mode) %>% 
   summarise(dr2_mean = mean(dr2),
             dr2_sd = sd(dr2)) %>% 
-  ggplot(aes(i, dr2_mean)) +
+  ggplot(aes(mode, dr2_mean)) +
   geom_line() +
   theme_cowplot()
 
-pj <- df_prs_site %>% 
+pj <- df_prs_mode %>% 
   group_by(j) %>% 
   summarise(dr2_mean = mean(dr2),
             dr2_sd = sd(dr2)) %>% 
@@ -445,30 +421,17 @@ pj <- df_prs_site %>%
   geom_line() +
   theme_cowplot()
 
-plot_grid(pij, plot_grid(pi, pj), ncol = 1)
+plot_grid(pnj, plot_grid(pn, pj), ncol = 1)
 ```
 
-## Mutational change of ENM 
+# Mutating structure and motions
 
-### Get mutants recalculating ENM
+## Effect of ENM changes on entropic contributions
 
-Now entropy terms should change.
+Check that entropic tontributions to energy change when update_enm = TRUE
 
 ```{r}
-get_mut_energy <- function(prot, site, mutation, update_enm, add_frust, seed = 2000 + site * mutation) {
-  mut <- get_mutant_site(wt, 
-                         site, 
-                         mutation, 
-                         seed,
-                         wt, wt,
-                         sd_min = param$mut$sd_min,
-                         dl_sigma = param$mut$dl_sigma,
-                         model = param$enm$model,
-                         d_max = param$enm$d_max,
-                         add_frust = add_frust,
-                         update_enm = update_enm)
-  as_tibble(mut$energy)
-}
+
 
 df <- tibble(prot = c("wt", "mutff", "mutft", "muttf", "muttt"),
              site = rep(80, 5),
@@ -485,22 +448,12 @@ df
 
 ```
 
-```{r}
-  get_mut <-function(wt, site, mutation = 1, dl_sigma = 1) {
-    get_mutant_site(wt, 
-                           site, 
-                           mutation, 
-                    seed = 2000 + site * mutation,
-                    wt, wt,
-                           sd_min = param$mut$sd_min,
-                           dl_sigma = dl_sigma,
-                           model = param$enm$model,
-                           d_max = param$enm$d_max,
-                           add_frust = F,
-                           update_enm = T)
-  } 
+## Change in msf profile
 
-mut <- get_mut(wt, 87)
+```{r}
+
+
+mut <- get_mut(wt, 80, mutation = 1)
 
 msf_wt <- msf_prot(wt)
 msf_mut <- msf_prot(mut)
@@ -508,7 +461,7 @@ msf_wt
 
 df <- tibble(site = wt$site, wt_msf = msf_wt, mut_msf = msf_mut) 
 
-df %>% 
+p1  = df %>% 
   mutate(min_msf = map2_dbl(wt_msf, mut_msf, min),
          max_msf = map2_dbl(wt_msf, mut_msf, max)) %>% 
   mutate(min_msf = wt_msf,
@@ -523,25 +476,20 @@ df %>%
   theme_cowplot() +
   NULL
 
-df %>% 
+p2 <- df %>% 
   ggplot(aes(site, (msf_mut - msf_wt)/msf_wt)) +
   geom_line() +
   theme_cowplot()
+
+plot_grid(p1, p2)
 
 
 ```
 
 
 
-
-
-
 ```{r, eval = FALSE}
-get_mut_energy <- function(site, mutation, wt,...) {
-  # gets mutant, returns only its energy terms
-  mut <- get_mutant_site(wt, site, mutation,... )
-  mut$energy
-}
+
 
 # set up site-mutant table
   spm_tbl <- spm_tbl %>% 

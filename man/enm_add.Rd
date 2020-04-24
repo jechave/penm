@@ -2,19 +2,14 @@
 % Please edit documentation in R/enm_add.R
 \name{enm_add}
 \alias{enm_add}
-\alias{add_enm}
 \title{Add \code{enm} object to \code{prot} object}
 \usage{
-enm_add(prot, model, v0, d_max, ...)
-
-add_enm(prot, model, v0, d_max, ...)
+enm_add(prot, model, d_max, add_frust, ...)
 }
 \arguments{
 \item{prot}{A protein object that must contain \code{xyz} and \code{pdb_site} elements, and active_site indexes \code{ind_active} (which may be NA)}
 
 \item{model}{the enm model}
-
-\item{v0}{the energy at the minimum (for the relaxed model)}
 
 \item{d_max}{a cdistance cut-off needed by some models to define sites in contact}
 }
@@ -29,7 +24,6 @@ Add \code{enm} object to \code{prot} object
 Other enm builders: \code{\link{enm_energy}},
   \code{\link{enm_graph_xyz}}, \code{\link{enm_nma_basis}},
   \code{\link{enm_nma}}, \code{\link{enm_set_xyz}},
-  \code{\link{enm_set}}, \code{\link{enm_v0_add}},
   \code{\link{kmat_graph}}
 }
 \concept{enm builders}

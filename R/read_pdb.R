@@ -22,7 +22,7 @@ pdb_file_check <- function(pdb_id, chain = NA_character_, path, prefix = "") {
   pdb_file <- paste0(prefix, pdb, "_", chain, ".pdb")
   pdb_file <- file.path(pdb_path, pdb_file)
   if (!file.exists(pdb_file)) {
-    print(paste("warning", pdb_file, "not found: returning NA"))
+    print(paste("WARNING", pdb_file, "not found: returning NA"))
     return(NA)
   }
 
@@ -32,7 +32,7 @@ pdb_file_check <- function(pdb_id, chain = NA_character_, path, prefix = "") {
   missing_residues = FALSE
   if (!inspect.connectivity(pdb)){
     missing_residues = TRUE
-    print(paste("Warning: ",pdb_id,"has missing residues"))
+    print(paste("WARNING: ",pdb_id,"has missing residues"))
   }
 
   n_sites <- pdb$atom %>%
@@ -40,6 +40,9 @@ pdb_file_check <- function(pdb_id, chain = NA_character_, path, prefix = "") {
     nrow()
 
   n_unique_resno = length(unique(pdb$atom$resno))
+
+  if (n_sites != n_unique_resno)
+    print("WARNING: pdb has repeated residue numbers")
 
 
   lst(missing_residues, n_sites, n_unique_resno )

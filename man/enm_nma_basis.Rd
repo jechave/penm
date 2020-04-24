@@ -4,10 +4,10 @@
 \alias{enm_nma_basis}
 \title{NMA of ENM using a basis}
 \usage{
-enm_nma_basis(enm, umat0, nbasis = ncol(umat0), TOL = 1e-05)
+enm_nma_basis(kmat, umat0, nbasis = ncol(umat0), TOL = 1e-05)
 }
 \arguments{
-\item{enm}{An enm object, which contains `enm$kmat`}
+\item{kmat}{An enm K matrix}
 
 \item{umat0}{A matrix of basis vectors (e.g. normal modes of unperturbed enm)}
 
@@ -28,7 +28,6 @@ Before diagonalizing `kmat`, transform into a (smaller) basis. Useful for normal
 Other enm builders: \code{\link{enm_add}},
   \code{\link{enm_energy}}, \code{\link{enm_graph_xyz}},
   \code{\link{enm_nma}}, \code{\link{enm_set_xyz}},
-  \code{\link{enm_set}}, \code{\link{enm_v0_add}},
   \code{\link{kmat_graph}}
 }
 \concept{enm builders}
