@@ -489,7 +489,9 @@ df
   get_mut <-function(wt, site, mutation = 1, dl_sigma = 1) {
     get_mutant_site(wt, 
                            site, 
-                           mutation, wt, wt,
+                           mutation, 
+                    seed = 2000 + site * mutation,
+                    wt, wt,
                            sd_min = param$mut$sd_min,
                            dl_sigma = dl_sigma,
                            model = param$enm$model,

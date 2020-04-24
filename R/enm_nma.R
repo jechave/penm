@@ -1,8 +1,8 @@
 #' Perform Normal Mode Analysis
 #'
-#' Given an enm object for which `kmat` has been defined, perform NMA
+#' Given an enm `kmat`, perform NMA
 #'
-#' @param enm A list of enm properties, one element must be kmat, the matrix K of the ENM
+#' @param kmat The K matrix to diagonalize
 #' @param TOL=1.e-5 A small value, eigenvectors with eigenvalues larger than `TOL` are discarded
 #'
 #' @return A list with elements \code{mode}, \code{evalue}, \code{cmat}, and \code{umat}
@@ -15,11 +15,9 @@
 #'
 #'@family enm builders
 #'
-enm_nma <- function(enm, TOL = 1.e-5) {
+enm_nma <- function(kmat, TOL = 1.e-5) {
   # Given an enm object for which kmat has already been defined, perform NMA
   # It returns a list containing mode, evalue, cmat, umat
-  stopifnot(!is.null(enm$kmat))
-  kmat <- enm$kmat
   # Diagonalize
   eig <- eigen(kmat, symmetric = TRUE)
   evalue <- eig$values
@@ -45,7 +43,7 @@ enm_nma <- function(enm, TOL = 1.e-5) {
 #'
 #' Before diagonalizing `kmat`, transform into a (smaller) basis. Useful for normal-mode perturbation calculations
 #'
-#' @param enm  An enm object, which contains `enm$kmat`
+#' @param kmat  An enm K matrix
 #' @param umat0 A matrix of basis vectors (e.g. normal modes of unperturbed enm)
 #' @param nbasis Number of basis vectors to use (must be smaller than `ncol(umat0)`)
 #' @param TOL A number near 0 to use to discard normal modes (eval > TOL are kept)
@@ -57,16 +55,13 @@ enm_nma <- function(enm, TOL = 1.e-5) {
 #' @examples
 #'
 #'@family enm builders
-enm_nma_basis <- function(enm, umat0, nbasis = ncol(umat0), TOL = 1.e-5) {
+enm_nma_basis <- function(kmat, umat0, nbasis = ncol(umat0), TOL = 1.e-5) {
   # Given an enm object for which kmat has already been defined, perform NMA
   # It returns a list containing mode, evalue, cmat, umat
-  stopifnot(!is.null(enm$kmat))
-  stopifnot(nbasis <= ncol(umat0))
+  stopifnot(nbasis <= ncol(umat0)) # can't use less basis vectors than available
   nbasis_max <- ncol(umat0)
   basis <- seq(from = nbasis_max, to = nbasis_max - nbasis + 1, by = -1)
   umat0 <- umat0[,basis]
-
-  kmat <- enm$kmat
 
   # transform to basis representation
   kmodes <- crossprod(umat0, crossprod(kmat, umat0))

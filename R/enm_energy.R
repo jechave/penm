@@ -39,12 +39,11 @@ enm_energy <- function(prot, ideal, sd_min = 1, beta = beta_boltzmann()) {
 energy <- enm_energy
 
 
-
+#' Calculate minimum energy of a given prot object
+#' @param prot is a prot object with a en enm$graph tibble
+#' where v0ij, kij, lij and the dij for the minimum conformation are found.
+#' @return a scalar: the minimum energy
 enm_v_min <- function(prot, sd_min = 1) {
-  #' Calculate minimum energy of a given prot object
-  #' @param prot is a prot object with a en enm$graph tibble
-  #' where v0ij, kij, lij and the dij for the minimum conformation are found.
-  #' @return a scalar: the minimum energy
   graph <- prot$enm$graph
   graph <- graph[graph$sdij >= sd_min,] # Don't include i-i+1 terms in v_min
   v_min <- with(graph, {
@@ -55,7 +54,7 @@ enm_v_min <- function(prot, sd_min = 1) {
 
 
 
-# internal energy terms
+#' Internal energy contribution to free energy of activaton
 enm_dv_activation <- function(prot,ideal) {
   if (anyNA(prot$site_active)) {
     dv_activation <- NA
@@ -72,6 +71,7 @@ enm_dv_activation <- function(prot,ideal) {
 }
 
 
+#' Stress-model local-mutational-stress energy
 enm_v_stress <- function(prot,ideal, sd_min = 1) {
   prot_graph <- prot$enm$graph
   ideal_graph <- ideal$enm$graph
@@ -100,19 +100,16 @@ v_dij <- function(dij,v0ij,kij,lij) {
   sum(v0ij + .5 * kij * (dij - lij) ^ 2)
 }
 
-# entropic terms
-g_entropy_mode <- function(energy, beta) {
-  # returns vector of entropic terms given vector of mode energies
-  g_entropy <- 1/(2 * beta) * log((beta * energy) / (2 * pi))
-  g_entropy
-}
 
+
+#' entropic total free energy
 g_entropy <- function(prot, beta) {
   # Calculate T*S from the energy spectrum
   energy <- prot$enm$evalue
   sum(g_entropy_mode(energy, beta))
 }
 
+#' entropic contribution to dg_activation
 g_entropy_activation <- function(prot, beta) {
   # Calculate entropic contribution to dg_activation
   if (anyNA(prot$enm$kmat_active)) {
@@ -124,5 +121,12 @@ g_entropy_activation <- function(prot, beta) {
   }
   gact
 
+}
+
+#' entropic contribution of a single mode
+g_entropy_mode <- function(energy, beta) {
+  # returns vector of entropic terms given vector of mode energies
+  g_entropy <- 1/(2 * beta) * log((beta * energy) / (2 * pi))
+  g_entropy
 }
 

@@ -88,7 +88,7 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
                                 nsites = length(mut$pdb_site),
                                 add_frust = add_frust)
     # do nma and update nma info in mut
-    nma <- enm_nma(mut$enm)
+    nma <- enm_nma(mut$enm$kmat)
     mut$enm$mode = nma$mode
     mut$enm$evalue = nma$evalue
     mut$enm$umat = nma$umat
@@ -167,7 +167,7 @@ enm_update <- function(prot, add_frust = FALSE) {
   stopifnot(!is.null(prot$ind_active)) # stop if no active-diste info
   enm <- prot$enm
   enm$kmat <- kmat_graph(prot$enm$graph, prot$enm$eij, prot$nsites, add_frust)
-  nma <- enm_nma(enm) #returns mode, evalue, cmat, umat
+  nma <- enm_nma(enm$kmat) #returns mode, evalue, cmat, umat
   enm$mode <- nma$mode
   enm$evalue <- nma$evalue
   enm$cmat <- nma$cmat
