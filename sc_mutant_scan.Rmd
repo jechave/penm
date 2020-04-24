@@ -156,10 +156,12 @@ enm_modes_plot(wt, modes = c(1, 2, 3, 4, nmodes - 3, nmodes - 2, nmodes - 1, nmo
 Note that entropy terms do not change w.r.t. wild-type.
 
 ```{r}
-get_mut_energy <- function(prot, site, mutation, update_enm, add_frust) {
+get_mut_energy <- function(prot, site, mutation, update_enm, add_frust, seed = 500 + mutation * site) {
   mut <- get_mutant_site(wt, 
                            site, 
-                           mutation, wt, wt,
+                           mutation, 
+                           seed,
+                           wt, wt,
                            sd_min = param$mut$sd_min,
                            dl_sigma = param$mut$dl_sigma,
                            model = param$enm$model,
@@ -454,17 +456,19 @@ plot_grid(pij, plot_grid(pi, pj), ncol = 1)
 Now entropy terms should change.
 
 ```{r}
-get_mut_energy <- function(prot, site, mutation, update_enm, add_frust) {
+get_mut_energy <- function(prot, site, mutation, update_enm, add_frust, seed = 2000 + site * mutation) {
   mut <- get_mutant_site(wt, 
-                           site, 
-                           mutation, wt, wt,
-                           sd_min = param$mut$sd_min,
-                           dl_sigma = param$mut$dl_sigma,
-                           model = param$enm$model,
-                           d_max = param$enm$d_max,
-                           v0 = param$enm$v0,
-                           add_frust = add_frust,
-                           update_enm = update_enm)
+                         site, 
+                         mutation, 
+                         seed,
+                         wt, wt,
+                         sd_min = param$mut$sd_min,
+                         dl_sigma = param$mut$dl_sigma,
+                         model = param$enm$model,
+                         d_max = param$enm$d_max,
+                         v0 = param$enm$v0,
+                         add_frust = add_frust,
+                         update_enm = update_enm)
   as_tibble(mut$energy)
 }
 

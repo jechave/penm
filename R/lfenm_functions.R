@@ -9,6 +9,7 @@
 #' @param wt The protein \code{prot} to mutate
 #' @param site_mut The site to mutate (not the pdb_site, but sequential)
 #' @param mutation An integer, if 0, return \code{wt} without mutating
+#' @param seed An integer, the seed for set.seed before picking perturbations
 #' @param wt0 A protein with respect to which mutations are to be calculated
 #' @param ideal A protein with ideal protein structure
 #' @param sd_min An integer, only edges with \code{sdij > sd_min} are mutated
@@ -27,6 +28,7 @@
 #' @family enm mutating functions
 #'
 get_mutant_site <- function(wt, site_mut, mutation = 0,
+                            seed = 241956 + site_mut * mutation,
                               wt0 = wt, ideal = wt0,
                               sd_min = 2, dl_sigma = .3,
                               model = "ming_wall", d_max = 10.5, v0 = 0,
@@ -38,6 +40,8 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
     # if mutation is 0, return wt
     return(wt)
   }
+
+  set.seed(seed)
 
   mut <- wt
 
