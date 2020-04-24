@@ -16,7 +16,6 @@
 #' @param dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
 #' @param model The enm model type
 #' @param d_max The enm distance cut-off to define contacts
-#' @param v0 The minimum energy
 #' @param add_frust Whether to include frustrations or not
 #' @param update_enm Whether to update enm or not
 #'
@@ -31,7 +30,7 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
                             seed = 241956 + site_mut * mutation,
                               wt0 = wt, ideal = wt0,
                               sd_min = 2, dl_sigma = .3,
-                              model = "ming_wall", d_max = 10.5, v0 = 0,
+                              model = "ming_wall", d_max = 10.5,
                               add_frust = FALSE,
                               update_enm = FALSE) {
 
@@ -80,8 +79,6 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
 
     mut$enm$graph <- g2
 
-    # add v0ij to graph edges
-    mut <- add_v0(mut, v0)
 
     # recalculate eij versors
     mut$enm$eij <- eij_edge(mut$xyz, mut$enm$graph$i, mut$enm$graph$j)

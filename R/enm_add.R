@@ -2,7 +2,6 @@
 #'
 #' @param prot A protein object that must contain \code{xyz} and \code{pdb_site} elements, and active_site indexes \code{ind_active} (which may be NA)
 #' @param model the enm model
-#' @param v0 the energy at the minimum (for the relaxed model)
 #' @param d_max a cdistance cut-off needed by some models to define sites in contact
 #'
 #' @return A protein object equal to input with enm added, where enm is a list containing \code{graph, eij, kmat, mode, evalue, cmat, umat}
@@ -13,10 +12,10 @@
 #' @family enm builders
 #'
 #' @examples
-enm_add <- function(prot, model, v0,  d_max,...)  {
+enm_add <- function(prot, model, d_max,...)  {
   stopifnot(!is.null(prot$ind_active)) # stop if ind_active undefined (but not if it's NA)
   stopifnot(is.null(prot$enm$umat)) # it adds nma only if not already defined
-  prot$enm <- enm_set(prot, model, v0, d_max) #sets graph and eij
+  prot$enm <- enm_set_xyz(prot$xyz, prot$pdb_site, model, d_max) # adds enm graph, eij, and kmat
   nma <- enm_nma(prot$enm)
   prot$enm <- c(prot$enm, nma) #append (mode, evalue, umat, cmat)
 
@@ -31,30 +30,6 @@ enm_add <- function(prot, model, v0,  d_max,...)  {
   prot
 }
 
-#' @rdname enm_add
-#' @export
-add_enm <- enm_add
-
-#' Set initial \code{enm} object
-#'
-#' @param prot A protein object that must contain \code{xyz} and \code{pdb_site} elements, and active_site indexes \code{ind_active} (which may be NA)
-#' @param model the enm model
-#' @param v0 the energy at the minimum (for the relaxed model)
-#' @param d_max a cdistance cut-off needed by some models to define sites in contact
-#'
-#' @return A list containing the ENM graph `graph`, the matrix of versors `eij`, and the ENM K matrix `kmat`
-#' @export
-#'
-#' @family enm builders
-#'
-#' @examples
-enm_set <- function(prot, model, v0,  d_max,...) {
-  vars = lst(xyz = prot$xyz, pdb_site = prot$pdb_site)
-  param <- lst(model = model,  v0 = v0, d_max = d_max)
-  args = c(vars,param)
-  enm <- do.call(enm_set_xyz, args)
-  enm
-}
 
 #' Set up ENM model
 #'
@@ -142,7 +117,8 @@ enm_graph_xyz <-
     graph <- graph %>%
       mutate(edge = paste(i, j, sep = "-"),
              lij = dij) %>%
-      dplyr::select(edge, i, j, sdij, lij, kij, dij)
+      mutate(v0ij = 0) %>%
+      dplyr::select(edge, i, j, v0ij, sdij, lij, kij, dij)
 
     graph
   }
@@ -243,29 +219,3 @@ kmat_graph <- function(graph, eij, nsites, add_frust = FALSE) {
 }
 
 
-#' Add v0 to ENM
-#'
-#' Add \code{v0ij = v0 / nedges} to each edge of graph of enm object
-#' @param prot A protein object
-#' @param v0 A scalar, representing the ENM energy at the minimum
-#'
-#' @return A protein object identical to input, but with v0 added
-#' @export
-#'
-#' @examples
-#'
-#'@family enm builders
-#'
-enm_v0_add <- function(prot, v0) {
-  graph <- prot$enm$graph
-  n_edges <- nrow(graph)
-  v0ij <- v0/n_edges
-  v0ij <- rep(v0ij,n_edges)
-  graph$v0ij <- v0ij
-  prot$enm$graph <- graph
-  prot
-}
-
-#' @rdname enm_v0_add
-#' @export
-add_v0 <- enm_v0_add

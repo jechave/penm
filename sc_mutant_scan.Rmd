@@ -166,7 +166,6 @@ get_mut_energy <- function(prot, site, mutation, update_enm, add_frust, seed = 5
                            dl_sigma = param$mut$dl_sigma,
                            model = param$enm$model,
                            d_max = param$enm$d_max,
-                           v0 = param$enm$v0,
                            add_frust = add_frust,
                            update_enm = update_enm)
   as_tibble(mut$energy)
@@ -466,7 +465,6 @@ get_mut_energy <- function(prot, site, mutation, update_enm, add_frust, seed = 2
                          dl_sigma = param$mut$dl_sigma,
                          model = param$enm$model,
                          d_max = param$enm$d_max,
-                         v0 = param$enm$v0,
                          add_frust = add_frust,
                          update_enm = update_enm)
   as_tibble(mut$energy)
@@ -496,7 +494,6 @@ df
                            dl_sigma = dl_sigma,
                            model = param$enm$model,
                            d_max = param$enm$d_max,
-                           v0 = param$enm$v0,
                            add_frust = F,
                            update_enm = T)
   } 
