@@ -12,10 +12,10 @@
 #' @family enm builders
 #'
 #' @examples
-enm_add <- function(prot, model, d_max,...)  {
+enm_add <- function(prot, model, d_max, add_frust,...)  {
   stopifnot(!is.null(prot$ind_active)) # stop if ind_active undefined (but not if it's NA)
   stopifnot(is.null(prot$enm$umat)) # it adds nma only if not already defined
-  prot$enm <- enm_set_xyz(prot$xyz, prot$pdb_site, model, d_max) # adds enm graph, eij, and kmat
+  prot$enm <- enm_set_xyz(prot$xyz, prot$pdb_site, model, d_max, add_frust) # adds enm graph, eij, and kmat
   nma <- enm_nma(prot$enm$kmat)
   prot$enm <- c(prot$enm, nma) #append (mode, evalue, umat, cmat)
 
@@ -48,7 +48,7 @@ enm_add <- function(prot, model, d_max,...)  {
 #' @examples
 #'
 #' @family enm builders
-enm_set_xyz <- function(xyz, pdb_site, model,  d_max,...) {
+enm_set_xyz <- function(xyz, pdb_site, model,  d_max, add_frust,...) {
 
   # Calculate (relaxed) enm graph from xyz
   # Returns list (graph, eij, kmat)
@@ -59,7 +59,7 @@ enm_set_xyz <- function(xyz, pdb_site, model,  d_max,...) {
   eij <- eij_edge(xyz, graph$i, graph$j)
 
   # calculate kmat
-  kmat <- kmat_graph(graph, eij, nsites = length(pdb_site))
+  kmat <- kmat_graph(graph, eij, nsites = length(pdb_site), add_frust)
 
   # return enm object
   lst(graph = graph, eij = eij, kmat = kmat)
@@ -181,7 +181,7 @@ eij_edge <- function(xyz,i,j) {
 #' @param graph A tibble representing the ENM graph (with edge information, especially \code{kij}
 #' @param eij A matrix of size \code{n_edges x 3} of \code{eij} versors directed along ENM contacts
 #' @param nsites The number of nodes of the ENM network
-#' @param add_frust=FALSE Wether to add frustration or not before calculating \code{kmat}
+#' @param add_frust FALSE Wether to add frustration or not before calculating \code{kmat}
 #'
 #' @return The \code{3 nsites x 3 nsites} stiffness matrix of the ENM
 #'
@@ -192,7 +192,7 @@ eij_edge <- function(xyz,i,j) {
 #'
 #'@family enm builders
 #'
-kmat_graph <- function(graph, eij, nsites, add_frust = FALSE) {
+kmat_graph <- function(graph, eij, nsites, add_frust) {
   stopifnot(max(graph$i, graph$j) <= nsites,
             nrow(graph) == nrow(eij))
   kmat <- array(0, dim = c(3, nsites, 3, nsites))
