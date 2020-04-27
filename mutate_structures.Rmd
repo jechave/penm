@@ -34,11 +34,10 @@ pdb_path <- "data" # pdb files repaired using FoldX (by Elisha)
 
 # Set up parameters
 
-Here I set the parameters
-
 ```{r}
 # global parameters
 beta <- beta_boltzmann()
+nmut_per_site <- 19
 update_enm <- FALSE # use true to recalculate entropies
 add_frust <- FALSE # use true to add frustration terms to energy functions
 # other parameters
@@ -51,7 +50,7 @@ param <- lst(
             dl_sigma = 0.3,
             sd_min = 1,
             update_enm = NA),
-  prs = lst(nmut_per_site = 1),
+  prs = lst(nmut_per_site = 5),
 )
 
 str(param)
@@ -85,13 +84,13 @@ str(wt)
 Check that it works when pdb_active_site is defined
 ```{r}
 dummy_active_site = wt$pdb_site[5:7]
-wt <- init_prot(prot = wt,
-                pdb_site_active = dummy_active_site,
+wt <- init_prot(prot = wt,  
+                pdb_site_active = dummy_active_site, 
                 ideal = wt, # look what is this ideal for (add_frust?)
                 model = param$enm$model,
                 d_max = param$enm$d_max,
                 add_frust = T)
-
+                
 str(wt)
 ```
 
@@ -109,11 +108,11 @@ df <- tibble(prot = c("wt", "mut_nofrust", "mut_frust"),
              wt = lst(wt),
              mutation = c(0, 1, 1),
              update_enm = c(F, F, F),
-             add_frust = c(F, F, T)) %>%
-  mutate(mut_energy = pmap(list(wt, site, mutation, update_enm, add_frust), get_mut_energy)) %>%
-  unnest(mut_energy) %>%
-  arrange(mutation, add_frust, update_enm) %>%
-  select(-prot, -wt, -mutation)
+             add_frust = c(F, F, T)) %>% 
+  mutate(mut_energy = pmap(list(wt, site, mutation, update_enm, add_frust), get_mut_energy)) %>% 
+  unnest(mut_energy) %>% 
+  arrange(mutation, add_frust, update_enm) %>% 
+  select(-prot, -wt, -mutation) 
 
 df
 
@@ -121,14 +120,14 @@ df
 
 
 
-## Structural response plots
+## Structural response plots 
 
 $f_{ij} = k_{ij} \delta l_{ij}$ is the force in the direction of contact $i-j$.
-$de = K^{1/2} dr = C^{-1/2}df$, $dr = C df$.
+$de = K^{1/2} dr = C^{-1/2}df$, $dr = C df$. 
 
-Therefore, in normal-mode representation: $de_{n} = \sigma_n df_{n}$  and $dr_n = sigma_n^2 df_n$.
+Therefore, in normal-mode representation: $de_{n} = \sigma_n df_{n}$  and $dr_n = sigma_n^2 df_n$. 
 
-By analogy, in site representation, check if it's approximately so that $de^2_{i} = \sigma_n^2 df^2_{i}$  and $dr^2_i = \sigma_n^4 df^2_i$.
+By analogy, in site representation, check if it's approximately so that $de^2_{i} = \sigma_n^2 df^2_{i}$  and $dr^2_i = \sigma_n^4 df^2_i$. 
 
 Remember that on average $df^2_n \propto \frac{1}{\sigma_n^2}$ and probably $df^2_i \propto 1 / \sigma_i^2$.
 
@@ -151,7 +150,7 @@ response_nm_plot(wt, mut)
 
 ```{r}
 # get mutant table
-mutants <- get_mutants_table(wt, nmut_per_site = param$prs$nmut_per_site)
+mutants <- get_mutants_table(wt, nmut_per_site = 4)
 mutants[1:5,]
 ```
 
@@ -163,10 +162,10 @@ Full mean response matrix:
 # dr2ij_mean matrix
 dfij <- delta_structure_site(mutants)
 
-pij_mean <-  dfij %>%
-  group_by(i, j) %>%
+pij_mean <-  dfij %>% 
+  group_by(i, j) %>% 
   summarise(dr2ij_mean = mean(dr2ij),
-            dr2ij_sd = sd(dr2ij)) %>%
+            dr2ij_sd = sd(dr2ij)) %>% 
   ggplot(aes(j, i, fill = sqrt(dr2ij_mean))) +
   geom_tile() +
   scale_fill_viridis_c() +
@@ -180,18 +179,18 @@ pij_mean
 
 
 #dr2ij asymmetry
-df <- dfij %>%
-  group_by(i, j) %>%
+df <- dfij %>% 
+  group_by(i, j) %>% 
   summarise(dr2ij_mean = mean(dr2ij))
 
 dr2ij <- df$dr2ij_mean
 dim(dr2ij) <- c(length(wt$site), length(wt$site))
 str(dr2ij)
 dr2ji <- t(dr2ij)
-df$dr2ji <- as.vector(dr2ji)
+df$dr2ji <- as.vector(dr2ji) 
 
-df %>%
-  filter(!(i == j)) %>%
+df %>% 
+  filter(!(i == j)) %>% 
   ggplot(aes(dr2ij_mean, dr2ji)) +
   geom_point(alpha = .1) +
   theme_cowplot() +
@@ -202,14 +201,14 @@ df %>%
 
 
 # dr2ij over single mutation scan, vs. average over several mutation scans
-df <- dfij %>%
-  group_by(i, j) %>%
+df <- dfij %>% 
+  group_by(i, j) %>% 
   summarise(dr2ij_mean = mean(dr2ij))
 
 df <- inner_join(df, dfij)
 
-df %>%
-  filter(mutation > 0, mutation < 5) %>%
+df %>% 
+  filter(mutation > 0, mutation < 5) %>% 
   ggplot(aes(dr2ij_mean, dr2ij, color = factor(mutation))) +
   geom_point(size = .2, alpha = .2) +
   geom_smooth(method = "lm") +
@@ -222,10 +221,10 @@ df %>%
 
 # dr2ij_sd vs. dr2ij_mean plot
 
-pij <-  dfij %>%
-  group_by(i, j) %>%
+pij <-  dfij %>% 
+  group_by(i, j) %>% 
   summarise(dr2ij_mean = mean(dr2ij),
-            dr2ij_sd = sd(dr2ij)) %>%
+            dr2ij_sd = sd(dr2ij)) %>% 
   ggplot(aes(dr2ij_mean, dr2ij_sd)) +
   geom_point() +
   geom_smooth(method = "lm") +
@@ -248,30 +247,30 @@ Response profile vs. site:
 # Average response of each site
 dfi <- tibble(i = wt$site, msfi = msf_site(wt))
 dat <-   inner_join(dfij, dfi)
-
-pi_site <- dat %>%
-  group_by(i, msfi) %>%
-  summarise(dr2i_mean = mean(dr2ij)) %>%
-  ungroup() %>%
+  
+pi_site <- dat %>% 
+  group_by(i, msfi) %>% 
+  summarise(dr2i_mean = mean(dr2ij)) %>% 
+  ungroup() %>% 
   ggplot(aes(i, dr2i_mean)) +
   geom_line() +
   theme_cowplot() +
   NULL
 
-pi_msf <- dat %>%
-  group_by(i, msfi) %>%
-  summarise(dr2i_mean = mean(dr2ij)) %>%
-  ungroup() %>%
+pi_msf <- dat %>% 
+  group_by(i, msfi) %>% 
+  summarise(dr2i_mean = mean(dr2ij)) %>% 
+  ungroup() %>% 
   ggplot(aes(msfi, dr2i_mean)) +
   geom_point() +
   geom_smooth() +
   theme_cowplot() +
   NULL
 
-pi_rmsf <- dat %>%
-  group_by(i, msfi) %>%
-  summarise(dr2i_mean = mean(dr2ij)) %>%
-  ungroup() %>%
+pi_rmsf <- dat %>% 
+  group_by(i, msfi) %>% 
+  summarise(dr2i_mean = mean(dr2ij)) %>% 
+  ungroup() %>% 
   ggplot(aes(1 / msfi, dr2i_mean)) +
   geom_point() +
   geom_smooth() +
@@ -292,29 +291,29 @@ Influence profile (dr2ij averaged over i):
 dfj <- tibble(j = wt$site, msfj = msf_site(wt))
 dat <- inner_join(dfij, dfj)
 # Average response of each site
-pj_site <- dat %>%
-  group_by(j, msfj) %>%
-  summarise(dr2j_mean = mean(dr2ij)) %>%
-  ungroup() %>%
+pj_site <- dat %>% 
+  group_by(j, msfj) %>% 
+  summarise(dr2j_mean = mean(dr2ij)) %>% 
+  ungroup() %>% 
   ggplot(aes(j, dr2j_mean)) +
   geom_line() +
   theme_cowplot() +
   NULL
 
-pj_msf <- dat %>%
-  group_by(j, msfj) %>%
-  summarise(dr2j_mean = mean(dr2ij)) %>%
-  ungroup() %>%
+pj_msf <- dat %>% 
+  group_by(j, msfj) %>% 
+  summarise(dr2j_mean = mean(dr2ij)) %>% 
+  ungroup() %>% 
   ggplot(aes(msfj, dr2j_mean)) +
   geom_point() +
   geom_smooth() +
   theme_cowplot() +
   NULL
 
-pj_rmsf <- dat %>%
-  group_by(j, msfj) %>%
-  summarise(dr2j_mean = mean(dr2ij)) %>%
-  ungroup() %>%
+pj_rmsf <- dat %>% 
+  group_by(j, msfj) %>% 
+  summarise(dr2j_mean = mean(dr2ij)) %>% 
+  ungroup() %>% 
   ggplot(aes(1 / msfj, dr2j_mean)) +
   geom_point() +
   geom_smooth() +
@@ -331,38 +330,40 @@ plot_grid(pj_site, plot_grid(pj_msf, pj_rmsf), ncol = 1)
 ## Structural response along normal modes
 
 ```{r}
-dfnj <-  delta_structure_mode(mutants)
+dfnj <- delta_structure_mode(mutants)
 
-df_prs_mode <-  dfnj %>%
-  select(j, mutation, mode, dr2nj) %>%
-  rename(dr2 = dr2nj) %>%
+df_prs_mode <- dfnj %>% 
+  select(j, mutation, mode, dr2nj) %>% 
+  rename(dr2 = dr2nj) %>% 
   unnest(c(mode, dr2))
 
-pnj <-  df_prs_mode %>%
-  group_by(mode, j) %>%
+pnj = df_prs_mode %>% 
+  group_by(mode, j) %>% 
   summarise(dr2_mean = mean(dr2),
-            dr2_sd = sd(dr2)) %>%
+            dr2_sd = sd(dr2)) %>% 
   ggplot(aes(mode, j, fill = sqrt(dr2_mean))) +
   geom_tile() +
   scale_color_viridis_c() +
   theme_cowplot()
 
-pn <-  df_prs_mode %>%
-  group_by(mode) %>%
+pn <- df_prs_mode %>% 
+  group_by(mode) %>% 
   summarise(dr2_mean = mean(dr2),
-            dr2_sd = sd(dr2)) %>%
+            dr2_sd = sd(dr2)) %>% 
   ggplot(aes(mode, dr2_mean)) +
   geom_line() +
   theme_cowplot()
 
-pj <-  df_prs_mode %>%
-  group_by(j) %>%
+pj <- df_prs_mode %>% 
+  group_by(j) %>% 
   summarise(dr2_mean = mean(dr2),
-            dr2_sd = sd(dr2)) %>%
+            dr2_sd = sd(dr2)) %>% 
   ggplot(aes(j, dr2_mean)) +
   geom_line() +
   theme_cowplot()
 
 plot_grid(pnj, plot_grid(pn, pj), ncol = 1)
-
 ```
+
+
+
