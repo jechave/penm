@@ -1,0 +1,110 @@
+---
+title: "Test enm functions"
+author: "Julian Echave"
+date: "4/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Load libraries and functions
+
+```{r}
+# load libraries
+library(tidyverse)
+library(ggridges)
+library(cowplot)
+library(bio3d)
+library(penm)
+library(jefuns)
+
+# set paths and file names
+spm_path <- "data"
+pdb_path <- "data" # pdb files repaired using FoldX (by Elisha)
+
+```
+
+
+# Set up parameters
+
+```{r}
+# global parameters
+add_frust <- FALSE # use true to add frustration terms to energy functions
+
+# other parameters
+param <- lst(
+  enm = lst(model = "ming_wall",
+            d_max = 10.5,
+            add_frust = TRUE)
+)
+
+str(param)
+
+```
+
+
+# Read and preform ENM NMA of wild-type protein
+
+## Check pdb file and read wt coordinates
+
+```{r}
+# set pdb data
+pdb <- "2ACY"
+chain <- "A"
+pdb_prefix <- "RepairPDB_"
+
+# perform various checks of file existence and consistence
+check <- pdb_file_check(pdb, chain, pdb_path, pdb_prefix)
+
+# set up wild-type
+wt <- read_pdb_sc(pdb, chain, pdb_path, pdb_prefix)
+
+str(wt)
+
+```
+
+
+## Initialize wild-type
+
+Check that it works when pdb_active_site is defined
+```{r}
+dummy_active_site = wt$pdb_site[5:7]
+wt <- init_prot(prot = wt,  
+                pdb_site_active = dummy_active_site, 
+                ideal = wt, # look what is this ideal for (add_frust?)
+                model = param$enm$model,
+                d_max = param$enm$d_max,
+                add_frust = T)
+                
+str(wt)
+```
+
+Check that it works when pdb_active_site is not defined
+```{r}
+wt <- read_pdb_sc(pdb, chain, pdb_path, pdb_prefix)
+wt <- init_prot(wt,  sd_min = 1) 
+str(wt)
+```
+
+
+## Plot and compare msf
+
+
+```{r}
+enm_msf_plot(wt, d_max = param$enm$d_max)
+```
+
+## Plot normal-mode matrix
+
+```{r}
+enm_modes_matrix_plot(wt)
+```
+
+## Plot a few normal modes
+  
+```{r}
+nsites = wt$nsites
+nmodes <- max(wt$enm$mode)
+enm_modes_plot(wt, modes = c(1, 2, 3, 4, nmodes - 3, nmodes - 2, nmodes - 1, nmodes))
+```
