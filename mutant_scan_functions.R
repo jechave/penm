@@ -77,24 +77,6 @@ delta_structure_mode <- function(mutants) {
 }
 
 
-# Protein properties ------------------------------------------------------
-
-
-# profiles
-prot_site <- function(prot) prot$site
-prot_pdb_site <- function(prot) prot$site
-prot_bfactor <- function(prot) prot$bfactor
-prot_msf <- msf_prot
-prot_mode <- function(prot) prot$enm$mode
-prot_evalue <- function(prot) prot$enm$evalue
-
-# scalars
-prot_v_min <- function(prot) prot$energy$v_min
-prot_g_entropy <- function(prot) prot$energy$g_entropy
-prot_v_stress <- function(prot) prot$energy$v_stress
-prot_dv_activation <- function(prot) prot$energy$dv_activation
-prot_g_entropy_activation <- function(prot) prot$energy$g_entropy_activation
-
 
 dv_min <- function(prot1, prot2)
   prot_v_min(prot2) - prot_v_min(prot1)
@@ -110,6 +92,3 @@ ddv_activation <- function(prot1, prot2)
 
 dg_entropy_activation <- function(prot1, prot2)
   prot_g_entropy_activation(prot2) - prot_g_entropy_activation(prot1)
-
-
-

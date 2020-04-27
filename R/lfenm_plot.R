@@ -5,7 +5,7 @@ response_site_plot <- function(prot1, prot2) {
   df2 <- df2_site(prot1, prot2)
   de2 <- de2_site(prot1, prot2)
   dr2 <- dr2_site(prot1, prot2)
-  msf <- msf_prot(prot1)
+  msf <- msf_site(prot1)
   df <- tibble(pdb_site = prot1$pdb_site, site = prot1$site, msf, df2, de2, dr2)
 
 

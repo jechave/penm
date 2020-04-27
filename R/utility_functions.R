@@ -58,16 +58,6 @@ cn_graph <- function(graph, nsites) {
   cn
 }
 
-#' Calculate MSF profile of prot
-#'
-msf_prot <- function(prot) {
-  stopifnot(!is.null(prot$enm$cmat))
-  c <- diag(prot$enm$cmat)
-  nsites <- length(c) / 3
-  dim(c) <- c(3, nsites)
-  msf <- colSums(c)
-  msf
-}
 
 
 
@@ -132,20 +122,4 @@ site_to_ind <- function(site) {
 my_quad_form <- function(x,m,y) {
   ret <- crossprod(y,crossprod(m,x))
   as.numeric(ret)
-}
-
-
-
-smooth <- function(x, width = 1) {
-  # window-smooth function
-  if (width == 1) return(x)
-  n <- length(x)
-  w <- (width - 1)/2
-  s <- x
-  for (i in seq_along(s)) {
-    im <- max(1, i - w)
-    ip <- min(n, i + w)
-    s[i] = mean(x[im:ip])
-  }
-  s
 }

@@ -38,15 +38,12 @@ pdb_path <- "data" # pdb files repaired using FoldX (by Elisha)
 ```{r}
 # global parameters
 beta <- beta_boltzmann()
-nmut_per_site <- 19
-update_enm <- FALSE # use true to recalculate entropies
-add_frust <- FALSE # use true to add frustration terms to energy functions
 # other parameters
 
 param <- lst(
   enm = lst(model = "ming_wall",
             d_max = 10.5,
-            add_frust = TRUE),
+            add_frust = NA),
   mut = lst(model = "lfenm",
             dl_sigma = 0.3,
             sd_min = 1,
@@ -152,8 +149,8 @@ mut <- get_mut(wt, mutated_site, mutation = 1, dl_sigma = 1, update_enm, add_fru
 
 # set msf data.frame for plotting
 site <- prot_site(wt)
-wt_msf <- prot_msf(wt)
-mut_msf <- prot_msf(mut)
+wt_msf <- msf_site(wt)
+mut_msf <- msf_site(mut)
 df <- tibble(site, wt_msf, mut_msf)
 
 p1  = df %>% 
