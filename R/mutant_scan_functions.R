@@ -44,19 +44,20 @@ get_mutants_table <- function(wt, nmut_per_site) {
 delta_energy <- function(mutants) {
   # energy differences
   mutants %>%
-    mutate(dv_min = map2_dbl(wt, mut, dv_min),
-           dg_entropy = map2_dbl(wt, mut, dg_entropy),
-           dv_stress = map2_dbl(wt, mut, dv_stress),
-           ddv_ativation = map2_dbl(wt, mut, ddv_activation),
-           dg_entropy_activation = map2_dbl(wt, mut, dg_entropy_activation)) %>%
+    mutate(delta_v_min = map2_dbl(wt, mut, delta_v_min),
+           delta_g_entropy = map2_dbl(wt, mut, delta_g_entropy),
+           delta_v_stress = map2_dbl(wt, mut, delta_v_stress),
+           ddv_ativation = map2_dbl(wt, mut, delta_v_activation),
+           delta_g_entropy_activation = map2_dbl(wt, mut, delta_g_entropy_activation)) %>%
     select(-wt, -mut)
 }
 
 #' Calculate structural mutational response, site analysis
 delta_structure_site <- function(mutants) {
   # structural differences, site analysis
+  wt <- mutants$wt[[1]]
   mutants %>%
-    mutate(i = map(wt, prot_site),
+    mutate(i = map(wt, get_site),
            dr2ij = map2(wt, mut, dr2_site),
            de2ij = map2(wt, mut, de2_site),
            df2ij = map2(wt, mut, df2_site)) %>%
@@ -68,27 +69,10 @@ delta_structure_site <- function(mutants) {
 delta_structure_mode <- function(mutants) {
   # structural differences, mode analysis
   mutants %>%
-    mutate(mode = map(wt, prot_mode),
+    mutate(mode = map(wt, get_mode),
            dr2nj = map2(wt, mut, dr2_nm),
            de2nj = map2(wt, mut, de2_nm),
            df2nj = map2(wt, mut, df2_nm)) %>%
     select(-wt, -mut) %>%
     unnest(c(mode, dr2nj, de2nj, df2nj))
 }
-
-
-
-dv_min <- function(prot1, prot2)
-  prot_v_min(prot2) - prot_v_min(prot1)
-
-dg_entropy <- function(prot1, prot2)
-  prot_g_entropy(prot2) - prot_g_entropy(prot1)
-
-dv_stress <- function(prot1, prot2)
-  prot_v_stress(prot2) - prot_v_stress(prot1)
-
-ddv_activation <- function(prot1, prot2)
-  prot_dv_activation(prot2) - prot_dv_activation(prot1)
-
-dg_entropy_activation <- function(prot1, prot2)
-  prot_g_entropy_activation(prot2) - prot_g_entropy_activation(prot1)

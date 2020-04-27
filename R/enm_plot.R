@@ -116,7 +116,7 @@ enm_profiles <- function(prot, d_max) {
   cn <- cn_xyz(prot$xyz, prot$pdb_site, d_max = d_max)
   wcn = wcn_xyz(prot$xyz)
   bfactor <- prot$bfactor
-  msf <- msf_site(prot)
+  msf <- get_msf_site(prot)
 
   df <- tibble(site, pdb_site, cn, wcn, bfactor, msf)
   df

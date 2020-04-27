@@ -23,8 +23,8 @@ enm_energy <- function(prot, ideal, sd_min = 1, beta = beta_boltzmann()) {
   v_stress <- enm_v_stress(prot, ideal) # energy needed to shift whole protein from prot$xyz to ideal$xyz (stress model)
 
   # entropic energy terms
-  g_entropy <- g_entropy(prot, beta)
-  g_entropy_activation <- g_entropy_activation(prot, beta)
+  g_entropy <- enm_g_entropy(prot, beta)
+  g_entropy_activation <- enm_g_entropy_activation(prot, beta)
 
   # return list of energy terms
   lst(v_min,
@@ -45,11 +45,11 @@ energy <- enm_energy
 #' @return a scalar: the minimum energy
 enm_v_min <- function(prot, sd_min = 1) {
   graph <- prot$enm$graph
-  graph <- graph[graph$sdij >= sd_min,] # Don't include i-i+1 terms in v_min
-  v_min <- with(graph, {
+  graph <- graph[graph$sdij >= sd_min,] # Don't include i-i+1 terms
+  v <- with(graph, {
     v_dij(dij, v0ij, kij, lij)
   })
-  v_min
+  v
 }
 
 
@@ -103,30 +103,29 @@ v_dij <- function(dij,v0ij,kij,lij) {
 
 
 #' entropic total free energy
-g_entropy <- function(prot, beta) {
+enm_g_entropy <- function(prot, beta) {
   # Calculate T*S from the energy spectrum
   energy <- prot$enm$evalue
-  sum(g_entropy_mode(energy, beta))
+  sum(enm_g_entropy_mode(energy, beta))
 }
 
 #' entropic contribution to dg_activation
-g_entropy_activation <- function(prot, beta) {
+enm_g_entropy_activation <- function(prot, beta) {
   # Calculate entropic contribution to dg_activation
   if (anyNA(prot$enm$kmat_active)) {
     gact <- NA
   } else {
     eig <- eigen(prot$enm$kmat_active, symmetric = TRUE, only.values = TRUE)
     evalue <- eig$values
-    gact <- sum(g_entropy_mode(evalue, beta))
+    gact <- sum(enm_g_entropy_mode(evalue, beta))
   }
   gact
 
 }
 
 #' entropic contribution of a single mode
-g_entropy_mode <- function(energy, beta) {
+enm_g_entropy_mode <- function(energy, beta) {
   # returns vector of entropic terms given vector of mode energies
-  g_entropy <- 1/(2 * beta) * log((beta * energy) / (2 * pi))
-  g_entropy
+  g_entropy_mode <- 1/(2 * beta) * log((beta * energy) / (2 * pi))
+  g_entropy_mode
 }
-
