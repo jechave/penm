@@ -1,8 +1,13 @@
 ---
-title: "Test penm package" 
-output: html_notebook
+title: "Effect of mutations on ENM structure"
+author: "Julian Echave"
+date: "4/25/2020"
+output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 # Load libraries and functions
 
@@ -80,44 +85,14 @@ Check that it works when pdb_active_site is defined
 ```{r}
 dummy_active_site = wt$pdb_site[5:7]
 wt <- init_prot(prot = wt,  
-                ideal = wt, # look what is this ideal for (add_frust?)
                 pdb_site_active = dummy_active_site, 
+                ideal = wt, # look what is this ideal for (add_frust?)
                 model = param$enm$model,
                 d_max = param$enm$d_max,
                 add_frust = T)
                 
 str(wt)
 ```
-
-Check that it works when pdb_active_site is not defined
-```{r}
-wt <- read_pdb_sc(pdb, chain, pdb_path, pdb_prefix)
-wt <- init_prot(wt,  sd_min = param$mut$sd_min)
-str(wt)
-```
-
-
-## Plot and compare msf
-
-
-```{r}
-enm_msf_plot(wt, d_max = param$enm$d_max)
-```
-
-## Plot normal-mode matrix
-
-```{r}
-enm_modes_matrix_plot(wt)
-```
-
-## Plot a few normal modes
-  
-```{r}
-nsites = wt$nsites
-nmodes <- max(wt$enm$mode)
-enm_modes_plot(wt, modes = c(1, 2, 3, 4, nmodes - 3, nmodes - 2, nmodes - 1, nmodes))
-```
-  
 
 
 # Test mutational model
@@ -158,19 +133,6 @@ Remember that on average $df^2_n \propto \frac{1}{\sigma_n^2}$ and probably $df^
 
 ### Response along sites
 ```{r}
-  get_mut <-function(wt, site, mutation = 1, dl_sigma = 1) {
-    get_mutant_site(wt, 
-                           site, 
-                           mutation, 
-                    seed = 2000 + site * mutation,
-                    wt, wt,
-                           sd_min = param$mut$sd_min,
-                           dl_sigma = dl_sigma,
-                           model = param$enm$model,
-                           d_max = param$enm$d_max,
-                           add_frust = F,
-                           update_enm = T)
-  } 
 site = 80
 mut <- get_mutant_site(wt, site, mutation = 1)
 response_site_plot(wt, mut)
@@ -188,28 +150,8 @@ response_nm_plot(wt, mut)
 
 ```{r}
 # get mutant table
-mutation <- seq(from = 0, to = 5)
-j <- wt$site
-
-prot_site <- function(prot) prot$site
-prot_mode <- function(prot) prot$enm$mode
-prot_evalue <- function(prot) prot$enm$evalue
-
-
-df_mutants <- expand_grid(wt = list(wt), j, mutation)  %>% 
-  mutate(mut = pmap(list(wt, j, mutation), get_mutant_site)) %>% 
-  mutate(i = map(wt, "site"),
-         dr2ij = map2(wt, mut, dr2_site),
-         msfi = map(wt, msf_prot),
-         mode = map(wt, prot_mode),
-         evalue = map(wt, prot_evalue),
-         dr2nj = map2(wt, mut, dr2_nm)) %>% 
-  select(-wt, -mut)
-
-df_j <- tibble(j = wt$site, msfj = msf_prot(wt))
-df_mutants <- inner_join(df_j, df_mutants) %>% 
-  select(mutation, j, i, msfj, msfi, everything())
-df_mutants 
+mutants <- get_mutants_table(wt, nmut_per_site = 4)
+mutants[1:5,]
 ```
 
 ### Structural response along sites
@@ -217,13 +159,10 @@ df_mutants
 Full mean response matrix:
 
 ```{r}
-df_prs_site <- df_mutants %>% 
-  select(j, mutation, i, msfj, msfi, dr2ij) %>% 
-  unnest(c(i, msfi, dr2ij))
-
 # dr2ij_mean matrix
+dfij <- delta_structure_site(mutants)
 
-pij_mean <-  df_prs_site %>% 
+pij_mean <-  dfij %>% 
   group_by(i, j) %>% 
   summarise(dr2ij_mean = mean(dr2ij),
             dr2ij_sd = sd(dr2ij)) %>% 
@@ -240,7 +179,7 @@ pij_mean
 
 
 #dr2ij asymmetry
-df <- df_prs_site %>% 
+df <- dfij %>% 
   group_by(i, j) %>% 
   summarise(dr2ij_mean = mean(dr2ij))
 
@@ -262,11 +201,11 @@ df %>%
 
 
 # dr2ij over single mutation scan, vs. average over several mutation scans
-df <- df_prs_site %>% 
+df <- dfij %>% 
   group_by(i, j) %>% 
   summarise(dr2ij_mean = mean(dr2ij))
 
-df <- inner_join(df, df_prs_site)
+df <- inner_join(df, dfij)
 
 df %>% 
   filter(mutation > 0, mutation < 5) %>% 
@@ -282,7 +221,7 @@ df %>%
 
 # dr2ij_sd vs. dr2ij_mean plot
 
-pij <-  df_prs_site %>% 
+pij <-  dfij %>% 
   group_by(i, j) %>% 
   summarise(dr2ij_mean = mean(dr2ij),
             dr2ij_sd = sd(dr2ij)) %>% 
@@ -298,11 +237,6 @@ pij <-  df_prs_site %>%
 
 pij
 
-
-
-
-
-
 ```
 
 ### Average response of site i
@@ -311,7 +245,10 @@ Response profile vs. site:
 
 ```{r}
 # Average response of each site
-pi_site <- df_prs_site %>% 
+dfi <- tibble(i = wt$site, msfi = msf_site(wt))
+dat <-   inner_join(dfij, dfi)
+  
+pi_site <- dat %>% 
   group_by(i, msfi) %>% 
   summarise(dr2i_mean = mean(dr2ij)) %>% 
   ungroup() %>% 
@@ -320,7 +257,7 @@ pi_site <- df_prs_site %>%
   theme_cowplot() +
   NULL
 
-pi_msf <- df_prs_site %>% 
+pi_msf <- dat %>% 
   group_by(i, msfi) %>% 
   summarise(dr2i_mean = mean(dr2ij)) %>% 
   ungroup() %>% 
@@ -330,7 +267,7 @@ pi_msf <- df_prs_site %>%
   theme_cowplot() +
   NULL
 
-pi_rmsf <- df_prs_site %>% 
+pi_rmsf <- dat %>% 
   group_by(i, msfi) %>% 
   summarise(dr2i_mean = mean(dr2ij)) %>% 
   ungroup() %>% 
@@ -351,8 +288,10 @@ plot_grid(pi_site, plot_grid(pi_msf, pi_rmsf), ncol = 1)
 Influence profile (dr2ij averaged over i):
 
 ```{r}
+dfj <- tibble(j = wt$site, msfj = msf_site(wt))
+dat <- inner_join(dfij, dfj)
 # Average response of each site
-pj_site <- df_prs_site %>% 
+pj_site <- dat %>% 
   group_by(j, msfj) %>% 
   summarise(dr2j_mean = mean(dr2ij)) %>% 
   ungroup() %>% 
@@ -361,7 +300,7 @@ pj_site <- df_prs_site %>%
   theme_cowplot() +
   NULL
 
-pj_msf <- df_prs_site %>% 
+pj_msf <- dat %>% 
   group_by(j, msfj) %>% 
   summarise(dr2j_mean = mean(dr2ij)) %>% 
   ungroup() %>% 
@@ -371,7 +310,7 @@ pj_msf <- df_prs_site %>%
   theme_cowplot() +
   NULL
 
-pj_rmsf <- df_prs_site %>% 
+pj_rmsf <- dat %>% 
   group_by(j, msfj) %>% 
   summarise(dr2j_mean = mean(dr2ij)) %>% 
   ungroup() %>% 
@@ -391,7 +330,9 @@ plot_grid(pj_site, plot_grid(pj_msf, pj_rmsf), ncol = 1)
 ## Structural response along normal modes
 
 ```{r}
-df_prs_mode <- df_mutants %>% 
+dfnj <- delta_structure_mode(mutants)
+
+df_prs_mode <- dfnj %>% 
   select(j, mutation, mode, dr2nj) %>% 
   rename(dr2 = dr2nj) %>% 
   unnest(c(mode, dr2))
@@ -424,101 +365,5 @@ pj <- df_prs_mode %>%
 plot_grid(pnj, plot_grid(pn, pj), ncol = 1)
 ```
 
-# Mutating structure and motions
 
-## Effect of ENM changes on entropic contributions
-
-Check that entropic tontributions to energy change when update_enm = TRUE
-
-```{r}
-
-
-df <- tibble(prot = c("wt", "mutff", "mutft", "muttf", "muttt"),
-             site = rep(80, 5),
-             wt = lst(wt),
-             mutation = c(0, 1, 1, 1, 1),
-             update_enm = c(F, F, F, T, T),
-             add_frust = c(F, F, T, F, T)) %>% 
-  mutate(mut_energy = pmap(list(wt, site, mutation, update_enm, add_frust), get_mut_energy)) %>% 
-  unnest(mut_energy) %>% 
-  arrange(mutation, add_frust, update_enm) %>% 
-  select(-prot, -wt, -mutation) 
-
-df
-
-```
-
-## Change in msf profile
-
-```{r}
-
-
-mut <- get_mut(wt, 80, mutation = 1)
-
-msf_wt <- msf_prot(wt)
-msf_mut <- msf_prot(mut)
-msf_wt
-
-df <- tibble(site = wt$site, wt_msf = msf_wt, mut_msf = msf_mut) 
-
-p1  = df %>% 
-  mutate(min_msf = map2_dbl(wt_msf, mut_msf, min),
-         max_msf = map2_dbl(wt_msf, mut_msf, max)) %>% 
-  mutate(min_msf = wt_msf,
-         max_msf = mut_msf) %>% 
-  pivot_longer(cols = c("wt_msf", "mut_msf"),
-               names_to = "protein",
-               values_to = "msf") %>% 
-  ggplot(aes(site, msf, color = protein)) +
-  geom_line() +
-  geom_ribbon(aes(ymin = min_msf, ymax = max_msf), alpha = 1, color = NA, fill = "pink") +
-  scale_color_viridis_d() +
-  theme_cowplot() +
-  NULL
-
-p2 <- df %>% 
-  ggplot(aes(site, (msf_mut - msf_wt)/msf_wt)) +
-  geom_line() +
-  theme_cowplot()
-
-plot_grid(p1, p2)
-
-
-```
-
-
-
-```{r, eval = FALSE}
-
-
-# set up site-mutant table
-  spm_tbl <- spm_tbl %>% 
-    unnest(site, pdb_site, cn, wcn, bfactor, bfactor_enm, d_active, .drop = TRUE) %>%
-    mutate(mutation = replicate(n(), c(0:nmut_per_site), simplify = FALSE)) %>%
-    unnest(mutation, .drop = TRUE)
-  
-  # get mutants
-  spm_tbl <- spm_tbl %>% 
-    mutate( 
-      wt_energy = map(site, ~ wt_energy),
-      mut_energy = map2(site, mutation, get_mut_energy,  
-                        wt = wt, 
-                        sd_min = param$mut$sd_min,
-                        update_enm = update_enm, 
-                        add_frust = add_frust)) 
-  
-  # prepare for output
-  spm_tbl <- spm_tbl %>% 
-    rename(wt = wt_energy, mut = mut_energy) %>% 
-    mutate(wt = map(wt, as_tibble), 
-           mut = map(mut, as_tibble)) %>% 
-    unnest(wt, mut, .sep = "_") 
-  
-  # output
-  pdb <- spm_tbl$pdb[[1]]
-  chain <- spm_tbl$chain[[1]]
-  out_file <- file.path(run_path,paste0("spm_",pdb, "_", chain, ".csv.gz"))
-  write.csv(spm_tbl, file = gzfile(out_file),row.names = FALSE)
-
-```
 
