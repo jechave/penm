@@ -149,7 +149,11 @@ response_nm_plot(wt, mut)
 
 ```{r}
 # get mutant table
+<<<<<<< HEAD:mutate_structures.Rmd
 mutants <- get_mutants_table(wt, nmut_per_site = param$prs$nmut_per_site)
+=======
+mutants <- get_mutants_table(wt, nmut_per_site = 4)
+>>>>>>> 3739ca6e6c02a0087bac465d01e31d5d218647a1:mutate_structures.Rmd
 mutants[1:5,]
 ```
 
