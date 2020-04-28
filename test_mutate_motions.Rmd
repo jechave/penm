@@ -98,6 +98,7 @@ str(wt)
 Check that entropic tontributions to energy change when update_enm = TRUE
 
 ```{r}
+mut <- get_mut_energy(wt, 80, 1, update_enm = T, frustrated = T)
 
 
 df <- tibble(prot = c("wt", "mutF", "mutT"),

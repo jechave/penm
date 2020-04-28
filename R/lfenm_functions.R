@@ -51,67 +51,31 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
   n_mut_edge <- sum(mut_edge)
   dlij <- rnorm(n_mut_edge, 0, dl_sigma)
   #dlij <- sample(c(-dl_max,0,dl_max),size = n_mut_edge, replace = TRUE)
-  mut$enm$graph$lij[mut_edge] <-  wt0$enm$graph$lij[mut_edge] + dlij
+  mut$enm$graph$lij[mut_edge] <-  wt0$enm$graph$lij[mut_edge] + dlij # add perturbation to spring parameters
 
   # calculate mutant equilibrium conformation (LRA)
   f <- get_force(wt, mut)
-  nzf <- f != 0 # consider only non-zero forces
+  nzf <- f != 0 # consider only non-zero forces, to make next step faster
   dxyz <-  crossprod(wt$enm$cmat[nzf, ], f[nzf])
   mut$xyz <- wt$xyz + dxyz
 
 
   # recalculate energies
 
-  if (update_enm) {
-    # recalculate enm
-    # recalculate mutant's graph
-    g1 <- mut$enm$graph
-
-    # add/rm edges according to new xyz
-    g2 <- enm_graph_xyz(mut$xyz, mut$pdb_site,
-                           model = model,  d_max = d_max)
-
-    # keep lij for edges that haven't changed
-    g2[g2$edge %in% g1$edge, "lij"] <- g1[g1$edge %in% g2$edge, "lij"]
-
-    mut$enm$graph <- g2
-
-
-    # recalculate eij versors
-    mut$enm$eij <- eij_edge(mut$xyz, mut$enm$graph$i, mut$enm$graph$j)
-
-    # recalculate kmat
-    mut$enm$kmat <-  kmat_graph(mut$enm$graph, mut$enm$eij,
-                                nsites = length(mut$pdb_site),
-                                frustrated = frustrated)
-    # do nma and update nma info in mut
-    nma <- enm_nma(mut$enm$kmat)
-    mut$enm$mode = nma$mode
-    mut$enm$evalue = nma$evalue
-    mut$enm$umat = nma$umat
-    mut$enm$cmat = nma$cmat
-
-    # if site_active is defined, recalculate cmat_active and kmat_active
-    if (anyNA(mut$ind_active)) {
-      mut$enm$cmat_active <- NA
-      mut$enm$kmat_active <- NA
-    } else {
-      mut$enm$cmat_active <- mut$enm$cmat[mut$ind_active, mut$ind_active]
-      mut$enm$kmat_active <- solve(mut$enm$cmat_active)
-    }
-
+  if (update_enm) { # recalculate enm
+    # recalculate whole mut$enm (graph, kmat, etc. etc.)
+    mut <- mutate_enm(mut, model, d_max, frustrated)
   } else {
   # recalculate only equilibrium distances
     mut$enm$graph$dij <- dij_edge(mut$xyz, mut$enm$graph$i, mut$enm$graph$j)
   }
 
-
   # calculate mutant energy
-  mut$energy <- energy(mut, ideal = ideal, sd_min = 1)
+
+  mut$energy <- energy(mut, ideal, sd_min = 1)
 
   mut
 }
-
 
 
 #' Get force that mutates wt into mut
@@ -147,41 +111,66 @@ get_force <- function(wt, mut) {
   as.vector(f)
 }
 
-#' Update ENM following graph change
+
+
+
+
+#' mutate enm following change in protein structure and lij parameters
 #'
-#' @param prot  A protein object
-#' @param frustrated A logical indicating whether to add frustration
-#'
-#' @return A protein object with updated \code{enm} component
-#' @export
-#'
-#' @examples
-#'
-#' @family enm mutating functions
-#' @export
-enm_update <- function(prot, frustrated = FALSE) {
+mutate_enm <- function(prot, model, d_max, frustrated) {
   # it re-calculates what needs to be recalculated due to change in graph
   stopifnot(!is.null(prot$ind_active)) # stop if no active-diste info
-  enm <- prot$enm
-  enm$kmat <- kmat_graph(prot$enm$graph, prot$enm$eij, prot$nsites, frustrated)
-  nma <- enm_nma(enm$kmat) #returns mode, evalue, cmat, umat
-  enm$mode <- nma$mode
-  enm$evalue <- nma$evalue
-  enm$cmat <- nma$cmat
-  enm$umat <- nma$umat
+
+
+  prot <- mutate_graph(prot, model, d_max) # recalculate mutant's graph
+  prot <- mutate_eij(prot) # recalculate eij versors, following change in graph
+  prot$enm$kmat <- kmat_graph(prot$enm$graph, prot$enm$eij, prot$nsites, frustrated) # recalculate kmat
+
+  # recalculate normal modes etc.
+  nma <- enm_nma(prot$enm$kmat) #returns mode, evalue, cmat, umat
+
+  prot$enm$mode <- nma$mode
+  prot$enm$evalue <- nma$evalue
+  prot$enm$cmat <- nma$cmat
+  prot$enm$umat <- nma$umat
 
   if (anyNA(prot$ind_active)) { #if ind_active is NA, cmat_active and kmat_active are undefined
-    enm$cmat_active <- NA
-    enm$kmat_active <- NA
+    prot$enm$cmat_active <- NA
+    prot$enm$kmat_active <- NA
   } else {
-    enm$cmat_active <- enm$cmat[prot$ind_active, prot$ind_active]
-    enm$kmat_active <- solve(enm$cmat_active)
+    prot$enm$cmat_active <- prot$enm$cmat[prot$ind_active, prot$ind_active]
+    prot$enm$kmat_active <- solve(prot$enm$cmat_active)
   }
 
-  prot$enm <- enm
   prot
 }
 
-#' @rdname enm_update
-#' @export
-update_enm <- enm_update
+#' mutate graph following change in structure
+#'
+mutate_graph <- function(mut, model, d_max) {
+  g1 <- mut$enm$graph # the mut graph with wt contacts but mut lij parameters...
+
+  # the "self-consistent" graph: add/rm edges according to new xyz
+  g2 <- enm_graph_xyz(mut$xyz, mut$pdb_site, model = model,  d_max = d_max)
+
+  # the "frustrated" graph: keep lij for edges that haven't changed
+  g2[g2$edge %in% g1$edge, "lij"] <- g1[g1$edge %in% g2$edge, "lij"]
+
+  mut$enm$graph <- g2
+  mut
+}
+
+#' mutate eij vectors, following change of structure and graph
+mutate_eij <- function(mut) {
+  mut$enm$eij <- eij_edge(mut$xyz, mut$enm$graph$i, mut$enm$graph$j)
+  mut
+}
+
+#' Depreciated, use mutate_enm instead
+#'
+enm_update <- function(...) {
+  stop("enm_update has been renamed to mutate_enm")
+}
+
+
+

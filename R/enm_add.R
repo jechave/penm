@@ -186,7 +186,7 @@ eij_edge <- function(xyz,i,j) {
 #' @param graph A tibble representing the ENM graph (with edge information, especially \code{kij}
 #' @param eij A matrix of size \code{n_edges x 3} of \code{eij} versors directed along ENM contacts
 #' @param nsites The number of nodes of the ENM network
-#' @param frustrated FALSE Wether to add frustration or not before calculating \code{kmat}
+#' @param frustrated Logical indicating  wether to add frustration or not before calculating \code{kmat}
 #'
 #' @return The \code{3 nsites x 3 nsites} stiffness matrix of the ENM
 #'
