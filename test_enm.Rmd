@@ -83,7 +83,7 @@ str(wt)
 Check that it works when pdb_active_site is not defined
 ```{r}
 wt <- read_pdb_sc(pdb, chain, pdb_path, pdb_prefix)
-wt <- init_prot(wt,  sd_min = 1) 
+wt <- init_prot(wt) 
 str(wt)
 ```
 

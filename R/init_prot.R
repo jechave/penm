@@ -1,12 +1,11 @@
 #' Initialize prot object
 init_prot <- function(prot, pdb_site_active = NA,
                       ideal = prot,
-                      model = "ming_wall", d_max = 10.5,  frustrated = FALSE,
-                      sd_min = 1) {
+                      model = "ming_wall", d_max = 10.5,  frustrated = FALSE) {
 
   prot <- add_site_indexes(prot, pdb_site_active)
   prot <- enm_add(prot, model, d_max, frustrated)
-  prot$energy <- energy(prot, ideal = prot, sd_min = sd_min)
+  prot$energy <- enm_energy(prot, ideal = prot)
   prot
 }
 

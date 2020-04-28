@@ -36,15 +36,25 @@ wcn_xyz <- function(xyz, ...) {
   wcn
 }
 
-cn_xyz <- function(xyz, pdb_site, d_max = 10.5, sd_min = 1) {
+#' Title Calculate contact number of sites
+#'
+#' Calculates number of contacts.
+#'
+#' @param xyz  xyz coordinates of sites (e.g. alpha carbons, or center of mass, etc.)
+#' @param d_max cutoff radius to define contacts
+#'
+#' @return vector of contact numbers
+#' @export
+#'
+#' @examples
+cn_xyz <-  function(xyz, d_max) {
   xyz <- my_as_xyz(xyz)
   nsites <- ncol(xyz)
   cn <- rep(NA,nsites)
   for (i in seq(nsites)) {
-    sdij <- abs(pdb_site - pdb_site[[i]])
     dijv <- xyz - xyz[,i]
     dij <- sqrt(colSums(dijv^2))
-    cn[[i]] <- sum(dij <= d_max & sdij >= sd_min)
+    cn[[i]] <- sum(dij <= d_max)
   }
   cn
 }

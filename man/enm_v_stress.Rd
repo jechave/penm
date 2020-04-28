@@ -4,7 +4,7 @@
 \alias{enm_v_stress}
 \title{Stress-model local-mutational-stress energy}
 \usage{
-enm_v_stress(prot, ideal, sd_min = 1)
+enm_v_stress(prot, ideal)
 }
 \description{
 Stress-model local-mutational-stress energy

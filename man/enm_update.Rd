@@ -2,29 +2,10 @@
 % Please edit documentation in R/lfenm_functions.R
 \name{enm_update}
 \alias{enm_update}
-\alias{update_enm}
-\title{Update ENM following graph change}
+\title{Depreciated, use mutate_enm instead}
 \usage{
-enm_update(prot, add_frust = FALSE)
-
-update_enm(prot, add_frust = FALSE)
-}
-\arguments{
-\item{prot}{A protein object}
-
-\item{add_frust}{A logical indicating whether to add frustration}
-}
-\value{
-A protein object with updated \code{enm} component
+enm_update(...)
 }
 \description{
-Update ENM following graph change
+Depreciated, use mutate_enm instead
 }
-\examples{
-
-}
-\seealso{
-Other enm mutating functions: \code{\link{get_force}},
-  \code{\link{get_mutant_site}}
-}
-\concept{enm mutating functions}

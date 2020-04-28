@@ -6,7 +6,6 @@
 #'
 #' @param prot A protein object, with enm graph defined
 #' @param ideal A protein object that corresponds to the ideal "active" conformation
-#' @param sd_min Integer representing a cut-off in sequence distance for energy calculations
 #' @param beta  boltzmann temperature
 #'
 #' @return A list of energy terms \code{lst(v_min, dv_activation, g_entropy, g_entropy_activation, v_stress)}
@@ -15,10 +14,10 @@
 #' @examples
 #'
 #'@family enm builders
-enm_energy <- function(prot, ideal, sd_min = 1, beta = beta_boltzmann()) {
+enm_energy <- function(prot, ideal, beta = beta_boltzmann()) {
 
   # internal energy terms
-  v_min <- enm_v_min(prot, sd_min) # energy at miniumum
+  v_min <- enm_v_min(prot) # energy at miniumum
   dv_activation <- enm_dv_activation(prot, ideal) # activation energy to shift prot$xyz to ideal$xyz for active site
   v_stress <- enm_v_stress(prot, ideal) # energy needed to shift whole protein from prot$xyz to ideal$xyz (stress model)
 
@@ -34,18 +33,19 @@ enm_energy <- function(prot, ideal, sd_min = 1, beta = beta_boltzmann()) {
       v_stress)
 }
 
-#' @rdname enm_energy
-#' @export
-energy <- enm_energy
+energy <- function(...) {
+  stop("function energy renamed; call enm_energy")
+}
+
+
 
 
 #' Calculate minimum energy of a given prot object
 #' @param prot is a prot object with a en enm$graph tibble
 #' where v0ij, kij, lij and the dij for the minimum conformation are found.
 #' @return a scalar: the minimum energy
-enm_v_min <- function(prot, sd_min = 1) {
+enm_v_min <- function(prot) {
   graph <- prot$enm$graph
-  graph <- graph[graph$sdij >= sd_min,] # Don't include i-i+1 terms
   v <- with(graph, {
     v_dij(dij, v0ij, kij, lij)
   })
@@ -72,7 +72,7 @@ enm_dv_activation <- function(prot,ideal) {
 
 
 #' Stress-model local-mutational-stress energy
-enm_v_stress <- function(prot,ideal, sd_min = 1) {
+enm_v_stress <- function(prot,ideal) {
   prot_graph <- prot$enm$graph
   ideal_graph <- ideal$enm$graph
 
@@ -81,11 +81,6 @@ enm_v_stress <- function(prot,ideal, sd_min = 1) {
     rename(dij_ideal = dij)
 
   joint_graph <- inner_join(prot_graph, ideal_graph, by = "edge")
-
-  #debug
-  # don't include sequence neigbors in stress calculation
-  joint_graph <- joint_graph %>%
-    filter(sdij >= sd_min)
 
   kij <- joint_graph$kij
   lij <- joint_graph$lij

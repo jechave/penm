@@ -12,7 +12,7 @@
 #' @param seed An integer, the seed for set.seed before picking perturbations
 #' @param wt0 A protein with respect to which mutations are to be calculated
 #' @param ideal A protein with ideal protein structure
-#' @param sd_min An integer, only edges with \code{sdij > sd_min} are mutated
+#' @param mut_sd_min An integer, only edges with \code{sdij > mut_sd_min} are mutated
 #' @param dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
 #' @param model The enm model type
 #' @param d_max The enm distance cut-off to define contacts
@@ -29,7 +29,7 @@
 get_mutant_site <- function(wt, site_mut, mutation = 0,
                             seed = 241956 + site_mut * mutation,
                             wt0 = wt, ideal = wt0,
-                            sd_min = 2, dl_sigma = .3, update_enm = FALSE,
+                            mut_sd_min = 2, dl_sigma = .3, update_enm = FALSE,
                             model = "ming_wall", d_max = 10.5, frustrated = FALSE) {
 
   if (mutation == 0) {
@@ -45,7 +45,7 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
   mut_edge <-
     (mut$enm$graph$i == site_mut |
        mut$enm$graph$j == site_mut) &
-    mut$enm$graph$sdij >= sd_min
+    mut$enm$graph$sdij >= mut_sd_min
 
   # mutate edges
   n_mut_edge <- sum(mut_edge)
@@ -72,7 +72,7 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
 
   # calculate mutant energy
 
-  mut$energy <- energy(mut, ideal, sd_min = 1)
+  mut$energy <- enm_energy(mut, ideal)
 
   mut
 }

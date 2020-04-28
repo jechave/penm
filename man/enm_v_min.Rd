@@ -4,7 +4,7 @@
 \alias{enm_v_min}
 \title{Calculate minimum energy of a given prot object}
 \usage{
-enm_v_min(prot, sd_min = 1)
+enm_v_min(prot)
 }
 \arguments{
 \item{prot}{is a prot object with a en enm$graph tibble

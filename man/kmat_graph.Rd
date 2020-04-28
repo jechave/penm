@@ -4,7 +4,7 @@
 \alias{kmat_graph}
 \title{Calculate kmat given the ENM graph}
 \usage{
-kmat_graph(graph, eij, nsites, add_frust)
+kmat_graph(graph, eij, nsites, frustrated)
 }
 \arguments{
 \item{graph}{A tibble representing the ENM graph (with edge information, especially \code{kij}}
@@ -13,7 +13,7 @@ kmat_graph(graph, eij, nsites, add_frust)
 
 \item{nsites}{The number of nodes of the ENM network}
 
-\item{add_frust}{FALSE Wether to add frustration or not before calculating \code{kmat}}
+\item{frustrated}{Logical indicating  wether to add frustration or not before calculating \code{kmat}}
 }
 \value{
 The \code{3 nsites x 3 nsites} stiffness matrix of the ENM

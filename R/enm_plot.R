@@ -113,11 +113,10 @@ enm_modes_matrix_plot  <- function(prot, modes = prot$enm$mode) {
 enm_profiles <- function(prot, d_max) {
   site <- prot$site
   pdb_site <- prot$pdb_site
-  cn <- cn_xyz(prot$xyz, prot$pdb_site, d_max = d_max)
+  cn <- cn_xyz(prot$xyz, d_max)
   wcn = wcn_xyz(prot$xyz)
   bfactor <- prot$bfactor
   msf <- get_msf_site(prot)
 
-  df <- tibble(site, pdb_site, cn, wcn, bfactor, msf)
-  df
+  tibble(site, pdb_site, cn, wcn, bfactor, msf)
 }

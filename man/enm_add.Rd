@@ -4,7 +4,7 @@
 \alias{enm_add}
 \title{Add \code{enm} object to \code{prot} object}
 \usage{
-enm_add(prot, model, d_max, add_frust, ...)
+enm_add(prot, model, d_max, frustrated, ...)
 }
 \arguments{
 \item{prot}{A protein object that must contain \code{xyz} and \code{pdb_site} elements, and active_site indexes \code{ind_active} (which may be NA)}

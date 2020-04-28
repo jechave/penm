@@ -4,7 +4,7 @@
 \alias{enm_set_xyz}
 \title{Set up ENM model}
 \usage{
-enm_set_xyz(xyz, pdb_site, model, d_max, add_frust, ...)
+enm_set_xyz(xyz, pdb_site, model, d_max, frustrated, ...)
 }
 \arguments{
 \item{xyz}{The \code{3 x N} matrix containing the Cartesian coordinates of ENM nodes}

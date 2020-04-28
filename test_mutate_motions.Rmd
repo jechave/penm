@@ -46,7 +46,7 @@ param <- lst(
             frustrated = NA),
   mut = lst(model = "lfenm",
             dl_sigma = 0.3,
-            sd_min = 1,
+            mut_sd_min = 1,
             update_enm = NA),
   prs = lst(nmut_per_site = 1),
 )
@@ -98,9 +98,6 @@ str(wt)
 Check that entropic tontributions to energy change when update_enm = TRUE
 
 ```{r}
-mut <- get_mut_energy(wt, 80, 1, update_enm = T, frustrated = T)
-
-
 df <- tibble(prot = c("wt", "mutF", "mutT"),
              site = c(3, 3, 3),
              wt = lst(wt),

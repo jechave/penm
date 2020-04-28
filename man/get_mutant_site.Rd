@@ -5,9 +5,9 @@
 \title{Get a single-point mutant}
 \usage{
 get_mutant_site(wt, site_mut, mutation = 0, seed = 241956 + site_mut *
-  mutation, wt0 = wt, ideal = wt0, sd_min = 2, dl_sigma = 0.3,
-  model = "ming_wall", d_max = 10.5, add_frust = FALSE,
-  update_enm = FALSE)
+  mutation, wt0 = wt, ideal = wt0, mut_sd_min = 2, dl_sigma = 0.3,
+  update_enm = FALSE, model = "ming_wall", d_max = 10.5,
+  frustrated = FALSE)
 }
 \arguments{
 \item{wt}{The protein \code{prot} to mutate}
@@ -22,17 +22,20 @@ get_mutant_site(wt, site_mut, mutation = 0, seed = 241956 + site_mut *
 
 \item{ideal}{A protein with ideal protein structure}
 
-\item{sd_min}{An integer, only edges with \code{sdij > sd_min} are mutated}
+\item{mut_sd_min}{An integer, only edges with \code{sdij > mut_sd_min} are mutated}
 
 \item{dl_sigma}{The standard deviation of a normal distribution from which edge-length perturbation is picked.}
+
+\item{update_enm}{Whether to update enm or not}
 
 \item{model}{The enm model type}
 
 \item{d_max}{The enm distance cut-off to define contacts}
 
-\item{add_frust}{Whether to include frustrations or not}
-
-\item{update_enm}{Whether to update enm or not}
+\item{frustrated}{Whether to include frustrations or not}
+}
+\value{
+A mutated protein
 }
 \description{
 Returns a mutant given a wt and a site to mutate (site_mut)
@@ -45,7 +48,6 @@ Returns a mutant given a wt and a site to mutate (site_mut)
 
 }
 \seealso{
-Other enm mutating functions: \code{\link{enm_update}},
-  \code{\link{get_force}}
+Other enm mutating functions: \code{\link{get_force}}
 }
 \concept{enm mutating functions}

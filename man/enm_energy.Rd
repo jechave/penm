@@ -2,19 +2,14 @@
 % Please edit documentation in R/enm_energy.R
 \name{enm_energy}
 \alias{enm_energy}
-\alias{energy}
 \title{Calculate various enm energies for prot object}
 \usage{
-enm_energy(prot, ideal, sd_min = 1, beta = beta_boltzmann())
-
-energy(prot, ideal, sd_min = 1, beta = beta_boltzmann())
+enm_energy(prot, ideal, beta = beta_boltzmann())
 }
 \arguments{
 \item{prot}{A protein object, with enm graph defined}
 
 \item{ideal}{A protein object that corresponds to the ideal "active" conformation}
-
-\item{sd_min}{Integer representing a cut-off in sequence distance for energy calculations}
 
 \item{beta}{boltzmann temperature}
 }
