@@ -29,10 +29,6 @@ pdb_path <- "data" # pdb files repaired using FoldX (by Elisha)
 # Set up parameters
 
 ```{r}
-# global parameters
-frustrated <- FALSE # use true to add frustration terms to energy functions
-
-# other parameters
 param <- lst(
   enm = lst(model = "ming_wall",
             d_max = 10.5,
@@ -69,21 +65,26 @@ str(wt)
 
 Check that it works when pdb_active_site is defined
 ```{r}
+
+# check that it works with active_site defined
 dummy_active_site = wt$pdb_site[5:7]
 wt <- init_prot(prot = wt,  
                 pdb_site_active = dummy_active_site, 
-                ideal = wt, # look what is this ideal for (frustrated?)
-                model = param$enm$model,
-                d_max = param$enm$d_max,
-                frustrated = T)
+                ideal = wt, # ideal to calculate v_stress and dv_active
+                model = param$enm$model, d_max = param$enm$d_max, frustrated = F)
                 
 str(wt)
 ```
 
-Check that it works when pdb_active_site is not defined
+Check that it works when pdb_active_site is NOT defined
 ```{r}
+# set up wild-type
 wt <- read_pdb_sc(pdb, chain, pdb_path, pdb_prefix)
-wt <- init_prot(wt) 
+# check that it works with active_site defined
+wt <- init_prot(prot = wt,
+                ideal = wt, # ideal to calculate v_stress and dv_active
+                model = param$enm$model, d_max = param$enm$d_max, frustrated = F)
+                
 str(wt)
 ```
 
@@ -92,19 +93,18 @@ str(wt)
 
 
 ```{r}
-enm_msf_plot(wt, d_max = param$enm$d_max)
+plot_msf_site(wt, d_max = param$enm$d_max)
 ```
 
 ## Plot normal-mode matrix
 
 ```{r}
-enm_modes_matrix_plot(wt)
+plot_umat2(wt)
 ```
 
 ## Plot a few normal modes
   
 ```{r}
-nsites = wt$nsites
 nmodes <- max(wt$enm$mode)
-enm_modes_plot(wt, modes = c(1, 2, 3, 4, nmodes - 3, nmodes - 2, nmodes - 1, nmodes))
+plot_modes(wt, plot_modes = c(1, 2, 3, 4, nmodes - 3, nmodes - 2, nmodes - 1, nmodes))
 ```

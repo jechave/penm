@@ -1,8 +1,8 @@
 #' Prot msf and compare with bfactor and 1/cn
 #'
-enm_msf_plot <- function(prot, d_max) {
+plot_msf_site <- function(prot, d_max) {
 
-  df <- enm_profiles(prot, d_max)
+  df <- get_profiles_site(prot, d_max)
 
   p_profiles <- df %>%
     mutate(rcn = 1/cn) %>%
@@ -50,27 +50,12 @@ enm_msf_plot <- function(prot, d_max) {
 
 #' Plot some normal modes of prot object
 #'
-enm_modes_plot  <- function(prot, modes = c(1, 2, 3, 4, 5)) {
-  plot_modes <- prot$enm$mode %in% modes
-  u <- prot$enm$umat[,plot_modes]
-  mode <- prot$enm$mode[plot_modes]
-  uc2 <- data.frame(site =prot$site)
-  for (c in seq(ncol(u))) {
-    uc <- u[,c]
-    uc <- my_as_xyz(uc)
-    uc2_col <- data.frame(mode = colSums(uc^2))
-    names(uc2_col) <- paste0("mode_", mode[c])
-    uc2 <- cbind(uc2, uc2_col)
-  }
+plot_modes  <- function(prot, plot_modes = c(1, 2, 3, 4, 5)) {
+  df <- get_msf_site_mode(prot)
 
-  uc2 %>%
-    pivot_longer(cols = starts_with("mode"),
-                 names_to = "mode",
-                 names_prefix = "mode_",
-                 values_to = "msf") %>%
-    mutate(mode = as.integer(mode)) %>%
-    mutate(mode = as.factor(mode)) %>%
-    ggplot(aes(y = mode, x = site, height = sqrt(msf))) +
+  df %>%
+    filter(mode %in% plot_modes) %>%
+    ggplot(aes(y = factor(mode), x = site, height = sqrt(msf))) +
     geom_ridgeline_gradient() +
     theme_cowplot() +
     NULL
@@ -79,25 +64,10 @@ enm_modes_plot  <- function(prot, modes = c(1, 2, 3, 4, 5)) {
 
 #' Plot all normal modes
 #'
-enm_modes_matrix_plot  <- function(prot, modes = prot$enm$mode) {
-  plot_modes <- prot$enm$mode %in% modes
-  u <- prot$enm$umat[,plot_modes]
-  mode <- prot$enm$mode[plot_modes]
-  uc2 <- data.frame(site =prot$site)
-  for (c in seq(ncol(u))) {
-    uc <- u[,c]
-    uc <- my_as_xyz(uc)
-    uc2_col <- data.frame(mode = colSums(uc^2))
-    names(uc2_col) <- paste0("mode_", mode[c])
-    uc2 <- cbind(uc2, uc2_col)
-  }
+plot_umat2  <- function(prot) {
+  df <- get_umat2(prot)
 
-  uc2 %>%
-    pivot_longer(cols = starts_with("mode"),
-                 names_to = "mode",
-                 names_prefix = "mode_",
-                 values_to = "msf") %>%
-    mutate(mode = as.integer(mode)) %>%
+  df %>%
     # mutate(mode = as.factor(mode)) %>%
     ggplot(aes(x = site, y = mode,  fill = sqrt(msf))) +
     geom_tile() +
@@ -108,15 +78,28 @@ enm_modes_matrix_plot  <- function(prot, modes = prot$enm$mode) {
 }
 
 
-#' Calculate various profiles for prot
-#'
-enm_profiles <- function(prot, d_max) {
-  site <- prot$site
-  pdb_site <- prot$pdb_site
-  cn <- cn_xyz(prot$xyz, d_max)
-  wcn = wcn_xyz(prot$xyz)
-  bfactor <- prot$bfactor
-  msf <- get_msf_site(prot)
+get_umat2 <- function(prot) {
+  umat <- prot$enm$umat
+  mode <- get_mode(prot)
+  umat2 <- data.frame(site = prot$site)
+  for (n in seq(1:length(mode))) {
+    un <- umat[, n]
+    un <- my_as_xyz(un)
+    un2_column <- data.frame(mode = colSums(un^2))
+    names(un2_column) <- paste0("mode_", mode[n])
+    umat2 <- cbind(umat2, un2_column)
+  }
 
-  tibble(site, pdb_site, cn, wcn, bfactor, msf)
+  df <- umat2 %>%
+    pivot_longer(cols = starts_with("mode"),
+                 names_to = "mode",
+                 names_prefix = "mode_",
+                 values_to = "msf") %>%
+    mutate(mode = as.integer(mode))  %>%
+    arrange(mode, site) %>%
+    select(mode, site, msf)
+  df
 }
+
+
+

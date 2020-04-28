@@ -1,7 +1,7 @@
 #' Initialize prot object
 init_prot <- function(prot, pdb_site_active = NA,
                       ideal = prot,
-                      model = "ming_wall", d_max = 10.5,  frustrated = FALSE) {
+                      model, d_max,  frustrated) {
 
   prot <- add_site_indexes(prot, pdb_site_active)
   prot <- enm_add(prot, model, d_max, frustrated)
