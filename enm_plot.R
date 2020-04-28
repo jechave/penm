@@ -51,7 +51,7 @@ plot_msf_site <- function(prot, d_max) {
 #' Plot some normal modes of prot object
 #'
 plot_modes  <- function(prot, plot_modes = c(1, 2, 3, 4, 5)) {
-  df <- get_msf_site_mode(prot)
+  df <- get_umat2(prot)
 
   df %>%
     filter(mode %in% plot_modes) %>%

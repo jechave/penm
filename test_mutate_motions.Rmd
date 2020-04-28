@@ -22,7 +22,8 @@ library(penm)
 library(jefuns)
 
 # source functions to use in this script
-# source("mutant_scan_functions.R")
+source("mutant_scan_functions.R")
+source("lfenm_plot.R")
 
 # set paths and file names
 
