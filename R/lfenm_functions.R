@@ -16,24 +16,21 @@
 #' @param dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
 #' @param model The enm model type
 #' @param d_max The enm distance cut-off to define contacts
-#' @param add_frust Whether to include frustrations or not
+#' @param frustrated Whether to include frustrations or not
 #' @param update_enm Whether to update enm or not
 #'
-#' @return
+#' @return A mutated protein
+
 #' @export
 #'
 #' @examples
 #'
 #' @family enm mutating functions
-#'
 get_mutant_site <- function(wt, site_mut, mutation = 0,
                             seed = 241956 + site_mut * mutation,
-                              wt0 = wt, ideal = wt0,
-                              sd_min = 2, dl_sigma = .3,
-                              model = "ming_wall", d_max = 10.5,
-                              add_frust = FALSE,
-                              update_enm = FALSE) {
-
+                            wt0 = wt, ideal = wt0,
+                            sd_min = 2, dl_sigma = .3, update_enm = FALSE,
+                            model = "ming_wall", d_max = 10.5, frustrated = FALSE) {
 
   if (mutation == 0) {
     # if mutation is 0, return wt
@@ -86,7 +83,7 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
     # recalculate kmat
     mut$enm$kmat <-  kmat_graph(mut$enm$graph, mut$enm$eij,
                                 nsites = length(mut$pdb_site),
-                                add_frust = add_frust)
+                                frustrated = frustrated)
     # do nma and update nma info in mut
     nma <- enm_nma(mut$enm$kmat)
     mut$enm$mode = nma$mode
@@ -153,7 +150,7 @@ get_force <- function(wt, mut) {
 #' Update ENM following graph change
 #'
 #' @param prot  A protein object
-#' @param add_frust A logical indicating whether to add frustration
+#' @param frustrated A logical indicating whether to add frustration
 #'
 #' @return A protein object with updated \code{enm} component
 #' @export
@@ -161,12 +158,12 @@ get_force <- function(wt, mut) {
 #' @examples
 #'
 #' @family enm mutating functions
-#'
-enm_update <- function(prot, add_frust = FALSE) {
+#' @export
+enm_update <- function(prot, frustrated = FALSE) {
   # it re-calculates what needs to be recalculated due to change in graph
   stopifnot(!is.null(prot$ind_active)) # stop if no active-diste info
   enm <- prot$enm
-  enm$kmat <- kmat_graph(prot$enm$graph, prot$enm$eij, prot$nsites, add_frust)
+  enm$kmat <- kmat_graph(prot$enm$graph, prot$enm$eij, prot$nsites, frustrated)
   nma <- enm_nma(enm$kmat) #returns mode, evalue, cmat, umat
   enm$mode <- nma$mode
   enm$evalue <- nma$evalue
@@ -188,116 +185,3 @@ enm_update <- function(prot, add_frust = FALSE) {
 #' @rdname enm_update
 #' @export
 update_enm <- enm_update
-
-#' Compare the structures of two proteins in site representation
-#'
-#' Calculate de difference between the structures of two proteins, return dr2_site.
-#'
-#' This version works only for prot1 and prot2 with no indels
-#'
-#' @param prot1 A protein object with \code{xyz} defined
-#' @param prot2 A second protein object  with \code{xyz} defined
-#'
-#' @return A tibble with columns \code{pdb_site, site, dr2}
-#' @export
-#'
-#' @examples
-dr2_site <- function(prot1, prot2) {
-  stopifnot(prot1$pdb_site == prot2$pdb_site) # this version of dr2_site is to compare proteins with no indels
-  stopifnot(prot1$site == prot2$site) # this version of dr2_site is to compare proteins with no indels
-  dxyz <- my_as_xyz(prot2$xyz - prot1$xyz) # use c(3, nsites) representation of xyz
-  dr2i <- colSums(dxyz^2)
-  dr2i
-}
-
-#' @rdname dr2_site
-de2_site <- function(prot1, prot2) {
-  stopifnot(prot1$pdb_site == prot2$pdb_site) # this version of dr2_site is to compare proteins with no indels
-  stopifnot(prot1$site == prot2$site) # this version of dr2_site is to compare proteins with no indels
-
-  evalue <- prot1$enm$evalue
-  umat <- prot1$enm$umat
-  kmat_sqrt <- umat %*% (sqrt(evalue) * t(umat))
-  dxyz <- my_as_xyz(prot2$xyz - prot1$xyz) # use c(3, nsites) representation of xyz
-  dr <- as.vector(dxyz)
-  de <- kmat_sqrt %*% dr
-  de <- my_as_xyz(de)
-  de2i <-  colSums(de^2)
-  de2i
-}
-
-#' @rdname dr2_site
-df2_site <- function(prot1, prot2) {
-  stopifnot(prot1$pdb_site == prot2$pdb_site) # this version of dr2_site is to compare proteins with no indels
-  stopifnot(prot1$site == prot2$site) # this version of dr2_site is to compare proteins with no indels
-
-  kmat <- prot1$enm$kmat
-
-  dxyz <- my_as_xyz(prot2$xyz - prot1$xyz) # use c(3, nsites) representation of xyz
-  dr <- as.vector(dxyz)
-  df <- kmat %*% dr
-  df <- my_as_xyz(df)
-  df2i <-  colSums(df^2)
-  df2i
-}
-
-
-
-#' Compare the structures of two proteins in nm representation
-#'
-#' Calculate de difference between the structures of two proteins, return dr2_nm.
-#'
-#' This version works only for prot1 and prot2 with no indels
-#'
-#' @param prot1 A protein object with \code{xyz} and \code{enm} defined
-#' @param prot2 A second protein object  with \code{xyz} defined
-#'
-#' @return A vector of square differences along normal modes \code{dr2n}
-#' @export
-#'
-#' @examples
-dr2_nm <- function(prot1, prot2) {
-  stopifnot(prot1$pdb_site == prot2$pdb_site) # this version of dr2_site is to compare proteins with no indels
-  dxyz <- as.vector(prot2$xyz - prot1$xyz) # use c(3, nsites) representation of xyz
-  drn <- as.vector(crossprod(prot1$enm$umat, dxyz))
-  stopifnot(length(prot1$enm$mode) == length(drn))
-  dr2n <- drn^2
-  as.vector(dr2n)
-}
-
-#' @rdname dr2_nm
-de2_nm <- function(prot1, prot2) {
-  stopifnot(prot1$pdb_site == prot2$pdb_site) # this version of dr2_site is to compare proteins with no indels
-  stopifnot(prot1$site == prot2$site) # this version of dr2_site is to compare proteins with no indels
-
-  evalue <- prot1$enm$evalue
-  umat <- prot1$enm$umat
-  kmat_sqrt <- umat %*% (sqrt(evalue) * t(umat))
-  dr <- as.vector(prot2$xyz - prot1$xyz) # use c(3, nsites) representation of xyz
-  de <- kmat_sqrt %*% dr
-  den <- t(umat) %*% de
-  de2n <-  den^2
-  as.vector(de2n)
-}
-
-
-
-#' @rdname dr2_nm
-df2_nm <- function(prot1, prot2) {
-  stopifnot(prot1$pdb_site == prot2$pdb_site) # this version of dr2_site is to compare proteins with no indels
-
-  kmat <- prot1$enm$kmat
-  umat <- prot1$enm$umat
-
-  dr <- as.vector(prot2$xyz - prot1$xyz)
-  df <- kmat %*% dr
-  dfn <- t(umat) %*% df
-  df2n <-  dfn^2
-  as.vector(df2n)
-}
-
-
-
-
-
-

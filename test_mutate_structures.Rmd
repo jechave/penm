@@ -38,13 +38,13 @@ pdb_path <- "data" # pdb files repaired using FoldX (by Elisha)
 # global parameters
 beta <- beta_boltzmann()
 update_enm <- FALSE # use true to recalculate entropies
-add_frust <- FALSE # use true to add frustration terms to energy functions
+frustrated <- FALSE # use true to add frustration terms to energy functions
 # other parameters
 
 param <- lst(
   enm = lst(model = "ming_wall",
             d_max = 10.5,
-            add_frust = TRUE),
+            frustrated = TRUE),
   mut = lst(model = "lfenm",
             dl_sigma = 0.3,
             sd_min = 1,
@@ -85,10 +85,10 @@ Check that it works when pdb_active_site is defined
 dummy_active_site = wt$pdb_site[5:7]
 wt <- init_prot(prot = wt,
                 pdb_site_active = dummy_active_site,
-                ideal = wt, # look what is this ideal for (add_frust?)
+                ideal = wt, # look what is this ideal for (frustrated?)
                 model = param$enm$model,
                 d_max = param$enm$d_max,
-                add_frust = T)
+                frustrated = T)
 
 str(wt)
 ```
@@ -107,10 +107,10 @@ df <- tibble(prot = c("wt", "mut_nofrust", "mut_frust"),
              wt = lst(wt),
              mutation = c(0, 1, 1),
              update_enm = c(F, F, F),
-             add_frust = c(F, F, T)) %>%
-  mutate(mut_energy = pmap(list(wt, site, mutation, update_enm, add_frust), get_mut_energy)) %>%
+             frustrated = c(F, F, T)) %>%
+  mutate(mut_energy = pmap(list(wt, site, mutation, update_enm, frustrated), get_mut_energy)) %>%
   unnest(mut_energy) %>%
-  arrange(mutation, add_frust, update_enm) %>%
+  arrange(mutation, frustrated, update_enm) %>%
   select(-prot, -wt, -mutation)
 
 df

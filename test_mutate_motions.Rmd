@@ -43,7 +43,7 @@ beta <- beta_boltzmann()
 param <- lst(
   enm = lst(model = "ming_wall",
             d_max = 10.5,
-            add_frust = NA),
+            frustrated = NA),
   mut = lst(model = "lfenm",
             dl_sigma = 0.3,
             sd_min = 1,
@@ -84,10 +84,10 @@ Check that it works when pdb_active_site is defined
 dummy_active_site = wt$pdb_site[5:7]
 wt <- init_prot(prot = wt,
                 pdb_site_active = dummy_active_site,
-                ideal = wt, # look what is this ideal for (add_frust?)
+                ideal = wt, # look what is this ideal for (frustrated?)
                 model = param$enm$model,
                 d_max = param$enm$d_max,
-                add_frust = T)
+                frustrated = T)
 
 str(wt)
 ```
@@ -105,10 +105,10 @@ df <- tibble(prot = c("wt", "mutF", "mutT"),
              wt = lst(wt),
              mutation = c(0, 1, 1),
              update_enm = c(F, F, T),
-             add_frust = c(F, F, F)) %>%
-  mutate(mut_energy = pmap(list(wt, site, mutation, update_enm, add_frust), get_mut_energy)) %>%
+             frustrated = c(F, F, F)) %>%
+  mutate(mut_energy = pmap(list(wt, site, mutation, update_enm, frustrated), get_mut_energy)) %>%
   unnest(mut_energy) %>%
-  arrange(mutation, add_frust, update_enm) %>%
+  arrange(mutation, frustrated, update_enm) %>%
   select(-prot, -wt, -mutation)
 
 df
@@ -127,10 +127,10 @@ df <- tibble(prot = c("wt", "mutff", "mutft", "muttf", "muttt"),
              wt = lst(wt),
              mutation = c(0, 1, 1, 1, 1),
              update_enm = c(F, F, F, T, T),
-             add_frust = c(F, F, T, F, T)) %>%
-  mutate(mut_energy = pmap(list(wt, site, mutation, update_enm, add_frust), get_mut_energy)) %>%
+             frustrated = c(F, F, T, F, T)) %>%
+  mutate(mut_energy = pmap(list(wt, site, mutation, update_enm, frustrated), get_mut_energy)) %>%
   unnest(mut_energy) %>%
-  arrange(mutation, update_enm, add_frust) %>%
+  arrange(mutation, update_enm, frustrated) %>%
   select(-prot, -wt, -mutation)
 
 df
@@ -144,8 +144,8 @@ df
 # get mutant
 mutated_site <- 80
 update_enm <- T
-add_frust <- F
-mut <- get_mut(wt, mutated_site, mutation = 1, dl_sigma = 1, update_enm, add_frust)
+frustrated <- F
+mut <- get_mut(wt, mutated_site, mutation = 1, dl_sigma = 1, update_enm, frustrated)
 
 # set msf data.frame for plotting
 site <- get_site(wt)
@@ -165,7 +165,7 @@ p1  = df %>%
   theme(legend.position = "top") +
   NULL +
   ggtitle(paste0("mutated_site:", mutated_site, ", update_enm = ", update_enm,
-                 ", add_frust = ", add_frust))
+                 ", frustrated = ", frustrated))
 
 p2 <- df %>%
   ggplot(aes(site, mut_msf - wt_msf)) +
@@ -189,8 +189,8 @@ plot_grid(p1, p2, ncol = 1)
 # get mutant
 mutated_site <- 80
 update_enm <- T
-add_frust <- F
-mut <- get_mut(wt, mutated_site, mutation = 1, dl_sigma = 1, update_enm, add_frust)
+frustrated <- F
+mut <- get_mut(wt, mutated_site, mutation = 1, dl_sigma = 1, update_enm, frustrated)
 
 # set msf data.frame for plotting
 mode <- get_mode(wt)
@@ -210,7 +210,7 @@ p1  = df %>%
   theme(legend.position = "top") +
   NULL +
   ggtitle(paste0("mutated_site:", mutated_site, ", update_enm = ", update_enm,
-                 ", add_frust = ", add_frust))
+                 ", frustrated = ", frustrated))
 
 p2 <- df %>%
   ggplot(aes(mode, mut_msf - wt_msf)) +

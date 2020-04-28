@@ -1,4 +1,4 @@
-get_mut_energy <- function(prot, site, mutation, update_enm, add_frust, seed = 2000 + site * mutation) {
+get_mut_energy <- function(prot, site, mutation, update_enm, frustrated, seed = 2000 + site * mutation) {
   mut <- get_mutant_site(wt,
                          site,
                          mutation,
@@ -8,12 +8,12 @@ get_mut_energy <- function(prot, site, mutation, update_enm, add_frust, seed = 2
                          dl_sigma = param$mut$dl_sigma,
                          model = param$enm$model,
                          d_max = param$enm$d_max,
-                         add_frust = add_frust,
+                         frustrated = frustrated,
                          update_enm = update_enm)
   as_tibble(mut$energy)
 }
 
-get_mut <-function(wt, site, mutation = 1, dl_sigma = 1, update_enm = T, add_frust = T) {
+get_mut <-function(wt, site, mutation = 1, dl_sigma = 1, update_enm = T, frustrated = T) {
   get_mutant_site(wt,
                   site,
                   mutation,
@@ -23,7 +23,7 @@ get_mut <-function(wt, site, mutation = 1, dl_sigma = 1, update_enm = T, add_fru
                   dl_sigma = dl_sigma,
                   model = param$enm$model,
                   d_max = param$enm$d_max,
-                  add_frust = add_frust,
+                  frustrated = frustrated,
                   update_enm = update_enm)
 }
 
