@@ -58,19 +58,13 @@ str(param)
 
 # Read and preform ENM NMA of wild-type protein
 
-## Check pdb file and read wt coordinates
+## init wt
 
 ```{r}
-# set pdb data
-pdb <- "2ACY"
-chain <- "A"
-pdb_prefix <- "RepairPDB_"
-
-# perform various checks of file existence and consistence
-check <- pdb_file_check(pdb, chain, pdb_path, pdb_prefix)
-
 # set up wild-type
-wt <- read_pdb_sc(pdb, chain, pdb_path, pdb_prefix)
+pdb_file <- "data/2acy_A.pdb"
+pdb <- read.pdb(pdb_file)
+wt <- prot_sc(pdb)
 
 str(wt)
 

@@ -1,87 +1,6 @@
-#' Check pdb file issues
-#'
-#'  Checks if the pdb file exists and, if it does, some other issues
-#'
-#' @param pdb_id The pdb id (lower case)
-#' @param chain pdb chain
-#' @param path path of pdb files
-#' @param prefix prefix of pdb file names
-#'
-#' @return If pdb file does not exist, returns NA, otherwise,
-#'     it returns \code{list(missing_residues, n_sites, n_unique_resno)}
-#'
-#' @export
-#'
-#' @examples
-#'
-#' @family pdb input functions
-#'
-pdb_file_check <- function(pdb_id, chain = NA_character_, path, prefix = "") {
-  pdb <- pdb_id
-  pdb_path <- path
-  pdb_file <- paste0(prefix, pdb, "_", chain, ".pdb")
-  pdb_file <- file.path(pdb_path, pdb_file)
-  if (!file.exists(pdb_file)) {
-    print(paste("WARNING", pdb_file, "not found: returning NA"))
-    return(NA)
-  }
-
-  # read structure
-  pdb <- read.pdb(file = pdb_file) # input structure
-
-  missing_residues = FALSE
-  if (!inspect.connectivity(pdb)){
-    missing_residues = TRUE
-    print(paste("WARNING: ",pdb_id,"has missing residues"))
-  }
-
-  n_sites <- pdb$atom %>%
-    filter(elety == "CA") %>%
-    nrow()
-
-  n_unique_resno = length(unique(pdb$atom$resno))
-
-  if (n_sites != n_unique_resno)
-    print("WARNING: pdb has repeated residue numbers")
 
 
-  lst(missing_residues, n_sites, n_unique_resno )
-}
-
-#' Read pdb side-chains
-#'
-#' Reads pdb file, returns side-chain coordinates and bfactors
-#'
-#' @param pdb_id  protein's pdb id
-#' @param chain protein chain
-#' @param path path to pdb files
-#' @param prefix prefix of pdb file names
-#'
-#' @return list of center-of-mass coordinates lst(xyz, pdb_site, bfactor)
-#'
-#' @export
-#'
-#' @examples
-#'
-#' @family pdb input functions
-#'
-read_pdb_sc <- function(pdb_id, chain = NA_character_, path, prefix = "") {
-  pdb <- pdb_id
-  pdb_path <- path
-  pdb_file <- paste0(prefix, pdb, "_", chain, ".pdb")
-  pdb_file <- file.path(pdb_path, pdb_file)
-  if (!file.exists(pdb_file)) {
-    print(paste("warning", pdb_file, "not found: returning NA"))
-    return(NA)
-  }
-
-  # read structure
-  pdb <- bio3d::read.pdb(file = pdb_file) # input structure
-
-  if (!inspect.connectivity(pdb)){
-    print(paste("Warning: ",pdb_id,"has missing residues"))
-  }
-
+prot_sc <- function(pdb) {
   # calculate xyz coordinates of ca, cb, com, qm (qb by Micheletti), ql (qb by Levitt)
   r = residue.coordinates(pdb)
   b = residue.bfactors(pdb)
@@ -104,39 +23,11 @@ read_pdb_sc <- function(pdb_id, chain = NA_character_, path, prefix = "") {
 
 
   lst(xyz, pdb_site, bfactor)
-
 }
 
-#' Read pdb alpha carbons
-#'
-#' Reads pdb file, returns alpha-carbon coordinates and bfactors
-#'
-#' @param pdb_id  protein's pdb id
-#' @param chain protein chain
-#' @param path path to pdb files
-#' @param prefix prefix of pdb file names
-#'
-#' @return list of center-of-mass coordinates lst(xyz, pdb_site, bfactor)
-#'
-#' @export
-#'
-#' @examples
-#'
-#' @family pdb input functions
-#'
-read_pdb_ca <- function(pdb_id, chain = NA_character_, path, prefix = "") {
-  pdb <- pdb_id
-  pdb_path <- path
-  pdb_file <- paste0(prefix, pdb, "_", chain, ".pdb")
-  pdb_file <- file.path(pdb_path, pdb_file)
-  if (!file.exists(pdb_file)) {
-    print(paste("warning", pdb_file, "not found: returning NA"))
-    return(NA)
-  }
-  # read structure
-  pdb <- read.pdb(file = pdb_file) # input structure
+prot_ca <- function(pdb) {
   # select CA
-  sel <- atom.select(pdb, chain = chain, elety = "CA")
+  sel <- atom.select(pdb, elety = "CA")
   # prepare output
   bfactor <- as.numeric(pdb$atom[sel$atom, c("b")])
   pdb_site <- as.numeric(pdb$atom[sel$atom, c("resno")])
