@@ -27,7 +27,6 @@ source("lfenm_plot.R")
 
 # set paths and file names
 
-spm_path <- "data"
 pdb_path <- "data" # pdb files repaired using FoldX (by Elisha)
 
 ```

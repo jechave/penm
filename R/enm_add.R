@@ -87,8 +87,7 @@ enm_set_xyz <- function(xyz, pdb_site, model,  d_max, frustrated,...) {
 #' enm_graph_xyz(xyz, pdb_site)
 #'
 #'@family enm builders
-enm_graph_xyz <-
-  function(xyz,
+enm_graph_xyz <- function(xyz,
            pdb_site,
            model,
            d_max,

@@ -88,15 +88,7 @@ reduce_matrix <- function(full.matrix) {
 }
 
 
-contact_number <- function(d_ij,d_max=12.5) {
-  nsites <- ncol(d_ij)
-  diag(d_ij) = 0
-  cn <- rep(0,nsites)
-  for (j in seq(nsites)) {
-    cn[j] <- sum(d_ij[,j] <= d_max & d_ij[,j] > 0)
-  }
-  cn
-}
+
 
 distance_to_active <- function(xyz,site_active) {
   stopifnot(length(xyz) %% 3 == 0)
