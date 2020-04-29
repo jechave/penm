@@ -23,7 +23,7 @@ enm_anm(enm, 1.e-10)
 
 }
 \seealso{
-Other enm builders: \code{\link{enm_add}},
+Other enm builders: \code{\link{add_enm}},
   \code{\link{enm_energy}}, \code{\link{enm_graph_xyz}},
   \code{\link{enm_nma_basis}}, \code{\link{enm_set_xyz}},
   \code{\link{kmat_graph}}

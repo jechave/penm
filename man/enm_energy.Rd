@@ -25,7 +25,7 @@ returns a list of internal energies (v) and entropic terms (g)
 
 }
 \seealso{
-Other enm builders: \code{\link{enm_add}},
+Other enm builders: \code{\link{add_enm}},
   \code{\link{enm_graph_xyz}}, \code{\link{enm_nma_basis}},
   \code{\link{enm_nma}}, \code{\link{enm_set_xyz}},
   \code{\link{kmat_graph}}

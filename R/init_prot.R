@@ -4,7 +4,7 @@ init_prot <- function(prot, pdb_site_active = NA,
                       model, d_max,  frustrated) {
 
   prot <- add_site_indexes(prot, pdb_site_active)
-  prot <- enm_add(prot, model, d_max, frustrated)
+  prot <- add_enm(prot, model, d_max, frustrated)
   prot$energy <- enm_energy(prot, ideal = prot)
   prot
 }

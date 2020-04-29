@@ -12,7 +12,7 @@
 #' @family enm builders
 #'
 #' @examples
-enm_add <- function(prot, model, d_max, frustrated,...)  {
+add_enm <- function(prot, model, d_max, frustrated,...)  {
   stopifnot(!is.null(prot$ind_active)) # stop if ind_active undefined (but not if it's NA)
   stopifnot(is.null(prot$enm$umat)) # it adds nma only if not already defined
 
