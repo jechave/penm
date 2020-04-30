@@ -66,21 +66,7 @@ str(param)
 pdb_file <- "data/2acy_A.pdb"
 pdb <- read.pdb(pdb_file)
 
-# set up wild-type
-wt <- prot_sc(pdb)
-
-str(wt)
-
-```
-
-
-## Initialize wild-type
-
-```{r}
-wt <- init_prot(prot = wt,
-                model = param$enm$model,
-                d_max = param$enm$d_max,
-                frustrated = T)
+wt <- set_prot(pdb, node = "sc", model = "ming_wall", d_max = 10.5, frustrated = FALSE) 
 
 str(wt)
 ```

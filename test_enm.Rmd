@@ -25,14 +25,6 @@ source("plot_enm.R")
 ```
 
 
-# Set up parameters
-
-```{r}
-enm_param <- lst(model = "ming_wall", "d_max" = 10.5, frustrated = FALSE )
-str(enm_param)
-```
-
-
 # Read and perform ENM NMA of wild-type protein
 
 
@@ -43,12 +35,7 @@ str(enm_param)
 pdb_file <- "data/2acy_A.pdb"
 pdb <- read.pdb(pdb_file)
 
-# initialize prot object 
-prot <- prot_sc(pdb) #note I could use prot_ca or prot_sc here
-
-# add enm stuff
-prot <- init_prot(prot = prot, 
-                model = enm_param$model, d_max = enm_param$d_max, frustrated = enm_param$frustrated)
+prot <- set_prot(pdb, node = "sc", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
                 
 str(prot)
 ```
@@ -67,7 +54,7 @@ enm_energy(prot)
 
 
 ```{r}
-plot_msf_site(prot, d_max = param$enm$d_max)
+plot_msf_site(prot, d_max = prot$enm_param$d_max)
 ```
 
 ## Plot normal-mode matrix
