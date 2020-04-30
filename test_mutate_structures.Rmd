@@ -81,7 +81,6 @@ Check that it works when pdb_active_site is defined
 dummy_active_site = wt$pdb_site[5:7]
 wt <- init_prot(prot = wt,
                 pdb_site_active = dummy_active_site,
-                ideal = wt, # look what is this ideal for (frustrated?)
                 model = param$enm$model,
                 d_max = param$enm$d_max,
                 frustrated = T)

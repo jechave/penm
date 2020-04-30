@@ -66,7 +66,6 @@ Check that it works when pdb_active_site is defined
 dummy_active_site = wt$pdb_site[5:7]
 wt <- init_prot(prot = wt,  
                 pdb_site_active = dummy_active_site, 
-                ideal = wt, # ideal to calculate v_stress and dv_active
                 model = param$enm$model, d_max = param$enm$d_max, frustrated = F)
                 
 str(wt)
@@ -78,7 +77,6 @@ Check that it works when pdb_active_site is NOT defined
 wt <- prot_sc(pdb)
 # check that it works with active_site defined
 wt <- init_prot(prot = wt,
-                ideal = wt, # ideal to calculate v_stress and dv_active
                 model = param$enm$model, d_max = param$enm$d_max, frustrated = F)
                 
 str(wt)
