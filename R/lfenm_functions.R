@@ -3,15 +3,12 @@
 #' Returns a mutant given a wt and a site to mutate (site_mut)
 #'     wt0 is the protein to use to calculate perturbations of current site
 #'     (if wt0 = wt, it is the current wild-type, but it can be a fixed initial state)
-#'     ideal is the ideal protein (assumed to be by default the fixed initial state)
-#'     copy wt
 #'
 #' @param wt The protein \code{prot} to mutate
 #' @param site_mut The site to mutate (not the pdb_site, but sequential)
 #' @param mutation An integer, if 0, return \code{wt} without mutating
 #' @param seed An integer, the seed for set.seed before picking perturbations
 #' @param wt0 A protein with respect to which mutations are to be calculated
-#' @param ideal A protein with ideal protein structure
 #' @param mut_sd_min An integer, only edges with \code{sdij > mut_sd_min} are mutated
 #' @param dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
 #' @param model The enm model type
@@ -28,7 +25,7 @@
 #' @family enm mutating functions
 get_mutant_site <- function(wt, site_mut, mutation = 0,
                             seed = 241956 + site_mut * mutation,
-                            wt0 = wt, ideal = wt0,
+                            wt0 = wt,
                             mut_sd_min = 2, dl_sigma = .3, update_enm = FALSE,
                             model = "ming_wall", d_max = 10.5, frustrated = FALSE) {
 
@@ -69,10 +66,6 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
   # recalculate only equilibrium distances
     mut$enm$graph$dij <- dij_edge(mut$xyz, mut$enm$graph$i, mut$enm$graph$j)
   }
-
-  # calculate mutant energy
-
-  mut$energy <- enm_energy(mut, ideal)
 
   mut
 }

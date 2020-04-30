@@ -5,7 +5,7 @@
 \title{Get a single-point mutant}
 \usage{
 get_mutant_site(wt, site_mut, mutation = 0, seed = 241956 + site_mut *
-  mutation, wt0 = wt, ideal = wt0, mut_sd_min = 2, dl_sigma = 0.3,
+  mutation, wt0 = wt, mut_sd_min = 2, dl_sigma = 0.3,
   update_enm = FALSE, model = "ming_wall", d_max = 10.5,
   frustrated = FALSE)
 }
@@ -19,8 +19,6 @@ get_mutant_site(wt, site_mut, mutation = 0, seed = 241956 + site_mut *
 \item{seed}{An integer, the seed for set.seed before picking perturbations}
 
 \item{wt0}{A protein with respect to which mutations are to be calculated}
-
-\item{ideal}{A protein with ideal protein structure}
 
 \item{mut_sd_min}{An integer, only edges with \code{sdij > mut_sd_min} are mutated}
 
@@ -41,8 +39,6 @@ A mutated protein
 Returns a mutant given a wt and a site to mutate (site_mut)
     wt0 is the protein to use to calculate perturbations of current site
     (if wt0 = wt, it is the current wild-type, but it can be a fixed initial state)
-    ideal is the ideal protein (assumed to be by default the fixed initial state)
-    copy wt
 }
 \examples{
 
