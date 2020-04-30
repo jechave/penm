@@ -1,11 +1,11 @@
 #' Add \code{enm} object to \code{prot} object
 #'
-#' @param prot A protein object that must contain \code{xyz} and \code{pdb_site} elements, and active_site indexes \code{ind_active} (which may be NA)
+#' @param prot A protein object that must contain \code{xyz} and \code{pdb_site}
 #' @param model the enm model
 #' @param d_max a cdistance cut-off needed by some models to define sites in contact
 #'
 #' @return A protein object equal to input with enm added, where enm is a list containing \code{graph, eij, kmat, mode, evalue, cmat, umat}
-#'  and also \code{cmat_active, kmat_active}, which are NA if \code{ind_active} is NA.
+#'
 #'
 #' @export
 #'
@@ -13,7 +13,6 @@
 #'
 #' @examples
 add_enm <- function(prot, model, d_max, frustrated,...)  {
-  stopifnot(!is.null(prot$ind_active)) # stop if ind_active undefined (but not if it's NA)
   stopifnot(is.null(prot$enm$umat)) # it adds nma only if not already defined
 
   # add enm graph, eij, and kmat
@@ -22,15 +21,6 @@ add_enm <- function(prot, model, d_max, frustrated,...)  {
   # add (mode, evalue, umat, cmat)
   nma <- enm_nma(prot$enm$kmat)
   prot$enm <- c(prot$enm, nma)
-
-  # if active-site info, add cmat_active and kmat_active
-  if (anyNA(prot$ind_active)) { # these matrices are only defined if ind_active is defined
-    prot$enm$cmat_active <- NA
-    prot$enm$kmat_active <- NA
-  } else {
-    prot$enm$cmat_active <- prot$enm$cmat[prot$ind_active, prot$ind_active]
-    prot$enm$kmat_active <- solve(prot$enm$cmat_active)
-  }
 
   prot
 }

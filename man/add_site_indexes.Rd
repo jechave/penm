@@ -2,10 +2,10 @@
 % Please edit documentation in R/init_prot.R
 \name{add_site_indexes}
 \alias{add_site_indexes}
-\title{add site and active-site indexes}
+\title{add site indexes}
 \usage{
-add_site_indexes(prot, pdb_site_active)
+add_site_indexes(prot)
 }
 \description{
-add site and active-site indexes
+add site indexes
 }

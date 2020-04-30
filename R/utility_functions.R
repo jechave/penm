@@ -90,29 +90,6 @@ reduce_matrix <- function(full.matrix) {
 
 
 
-distance_to_active <- function(xyz,site_active) {
-  stopifnot(length(xyz) %% 3 == 0)
-  nsites <- length(xyz)/3
-
-  if (anyNA(site_active)) {
-    distance = rep(NA, nsites)
-  } else {
-    site <- seq(nsites)
-    is_active_site <- site %in% site_active
-    xyz <- my_as_xyz(xyz)
-
-    nsite.active = sum(is_active_site)
-    distance <- rep(NA,nsites)
-    for (j in seq(nsites)) {
-      d_active_to_j <-  xyz[,j] - xyz[,is_active_site]
-      dim(d_active_to_j) <-  c(3,nsite.active)
-      d_active_to_j_norm <-  sqrt(colSums(d_active_to_j^2))
-      distance[j] <-  min(d_active_to_j_norm)
-    }
-  }
-
-  distance
-}
 
 site_to_ind <- function(site) {
   s <- rep(site,each=3)

@@ -67,6 +67,8 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
     mut$enm$graph$dij <- dij_edge(mut$xyz, mut$enm$graph$i, mut$enm$graph$j)
   }
 
+  mut$energy <- enm_energy(mut)
+
   mut
 }
 
@@ -112,7 +114,6 @@ get_force <- function(wt, mut) {
 #'
 mutate_enm <- function(prot, model, d_max, frustrated) {
   # it re-calculates what needs to be recalculated due to change in graph
-  stopifnot(!is.null(prot$ind_active)) # stop if no active-diste info
 
 
   prot <- mutate_graph(prot, model, d_max) # recalculate mutant's graph
@@ -126,14 +127,6 @@ mutate_enm <- function(prot, model, d_max, frustrated) {
   prot$enm$evalue <- nma$evalue
   prot$enm$cmat <- nma$cmat
   prot$enm$umat <- nma$umat
-
-  if (anyNA(prot$ind_active)) { #if ind_active is NA, cmat_active and kmat_active are undefined
-    prot$enm$cmat_active <- NA
-    prot$enm$kmat_active <- NA
-  } else {
-    prot$enm$cmat_active <- prot$enm$cmat[prot$ind_active, prot$ind_active]
-    prot$enm$kmat_active <- solve(prot$enm$cmat_active)
-  }
 
   prot
 }

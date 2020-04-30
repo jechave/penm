@@ -4,7 +4,7 @@
 \alias{init_prot}
 \title{Initialize prot object}
 \usage{
-init_prot(prot, pdb_site_active = NA, model, d_max, frustrated)
+init_prot(prot, model, d_max, frustrated)
 }
 \description{
 Initialize prot object

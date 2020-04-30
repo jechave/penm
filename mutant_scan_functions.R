@@ -3,14 +3,14 @@ get_mut_energy <- function(prot, site, mutation, update_enm, frustrated, seed = 
                          site,
                          mutation,
                          seed,
-                         wt, wt,
+                         wt,
                          mut_sd_min = param$mut$mut_sd_min,
                          dl_sigma = param$mut$dl_sigma,
                          model = param$enm$model,
                          d_max = param$enm$d_max,
                          frustrated = frustrated,
                          update_enm = update_enm)
-  as_tibble(mut$energy)
+  as_tibble(enm_energy(mut))
 }
 
 get_mut <-function(wt, site, mutation = 1, dl_sigma = 1, update_enm = T, frustrated = T) {
@@ -18,7 +18,7 @@ get_mut <-function(wt, site, mutation = 1, dl_sigma = 1, update_enm = T, frustra
                   site,
                   mutation,
                   seed = 2000 + site * mutation,
-                  wt, wt,
+                  wt,
                   mut_sd_min = param$mut$mut_sd_min,
                   dl_sigma = dl_sigma,
                   model = param$enm$model,
@@ -45,10 +45,7 @@ delta_energy <- function(mutants) {
   # energy differences
   mutants %>%
     mutate(delta_v_min = map2_dbl(wt, mut, delta_v_min),
-           delta_g_entropy = map2_dbl(wt, mut, delta_g_entropy),
-           delta_v_stress = map2_dbl(wt, mut, delta_v_stress),
-           ddv_ativation = map2_dbl(wt, mut, delta_v_activation),
-           delta_g_entropy_activation = map2_dbl(wt, mut, delta_g_entropy_activation)) %>%
+           delta_g_entropy = map2_dbl(wt, mut, delta_g_entropy)) %>%
     select(-wt, -mut)
 }
 

@@ -7,7 +7,7 @@
 add_enm(prot, model, d_max, frustrated, ...)
 }
 \arguments{
-\item{prot}{A protein object that must contain \code{xyz} and \code{pdb_site} elements, and active_site indexes \code{ind_active} (which may be NA)}
+\item{prot}{A protein object that must contain \code{xyz} and \code{pdb_site}}
 
 \item{model}{the enm model}
 
@@ -15,15 +15,15 @@ add_enm(prot, model, d_max, frustrated, ...)
 }
 \value{
 A protein object equal to input with enm added, where enm is a list containing \code{graph, eij, kmat, mode, evalue, cmat, umat}
- and also \code{cmat_active, kmat_active}, which are NA if \code{ind_active} is NA.
 }
 \description{
 Add \code{enm} object to \code{prot} object
 }
 \seealso{
-Other enm builders: \code{\link{enm_energy}},
-  \code{\link{enm_graph_xyz}}, \code{\link{enm_nma_basis}},
-  \code{\link{enm_nma}}, \code{\link{enm_set_xyz}},
-  \code{\link{kmat_graph}}
+Other enm builders: \code{\link{add_enm_activation}},
+  \code{\link{enm_energy_activation}},
+  \code{\link{enm_energy}}, \code{\link{enm_graph_xyz}},
+  \code{\link{enm_nma_basis}}, \code{\link{enm_nma}},
+  \code{\link{enm_set_xyz}}, \code{\link{kmat_graph}}
 }
 \concept{enm builders}
