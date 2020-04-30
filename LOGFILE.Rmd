@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "penm development log"
 output: github_document
 ---
 
@@ -7,24 +7,21 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## GitHub Documents
 
-This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
+## 30 April 2020
 
-## Including Code
+### Eliminate need to use  `ideal` in enm and lfenm calculations
 
-You can include R code in the document as follows:
+`ideal` is the ideal protein structure, needed to calculate `v_stress`, `dv_activation`, and `g_entropy_activation`.
+To eliminate it, I can just avoid calling these functions to set up and mutate `wt`
 
-```{r cars}
-summary(cars)
-```
+1. Moved  `v_stress`, `dv_activation`, and `g_entropy_activation` to *activation.R*
+2. Split old enm_energy into two functions: enm_energy_activation (it calls dv_activation and g_entropy_activation) and enm_energy that calculates just v_min and g_entropy
 
-## Including Plots
 
-You can also embed plots, for example:
+### Eliminate active-site dependent info from enm and lfenm calculations
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
+pdb_active_site indices are used to calculate cmat_activation, kmat_activation, and activation energies. I do not need this in the prot object. If needed, I can add it later. 
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+

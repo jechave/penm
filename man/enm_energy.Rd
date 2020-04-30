@@ -4,17 +4,15 @@
 \alias{enm_energy}
 \title{Calculate various enm energies for prot object}
 \usage{
-enm_energy(prot, ideal, beta = beta_boltzmann())
+enm_energy(prot, beta = beta_boltzmann())
 }
 \arguments{
 \item{prot}{A protein object, with enm graph defined}
 
-\item{ideal}{A protein object that corresponds to the ideal "active" conformation}
-
 \item{beta}{boltzmann temperature}
 }
 \value{
-A list of energy terms \code{lst(v_min, dv_activation, g_entropy, g_entropy_activation, v_stress)}
+A list of energy terms \code{lst(v_min,  _entropy)}
 }
 \description{
 Given a protein (prot) with enm defined, it calculates energy terms
@@ -25,7 +23,9 @@ returns a list of internal energies (v) and entropic terms (g)
 
 }
 \seealso{
-Other enm builders: \code{\link{add_enm}},
+Other enm builders: \code{\link{add_enm_activation}},
+  \code{\link{add_enm}},
+  \code{\link{enm_energy_activation}},
   \code{\link{enm_graph_xyz}}, \code{\link{enm_nma_basis}},
   \code{\link{enm_nma}}, \code{\link{enm_set_xyz}},
   \code{\link{kmat_graph}}

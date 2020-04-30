@@ -4,11 +4,7 @@ get_v_min  <- function(prot) prot$energy$v_min
 
 get_g_entropy <- function(prot) prot$energy$g_entropy
 
-get_v_stress <- function(prot) prot$energy$v_stress
 
-get_dv_activation <- function(prot) prot$energy$dv_activation
-
-get_g_entropy_activation <- function(prot) prot$energy$g_entropy_activation
 
 
 

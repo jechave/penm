@@ -5,38 +5,30 @@
 #' (note: hemholtz free energy is A = v_min + g_energy)
 #'
 #' @param prot A protein object, with enm graph defined
-#' @param ideal A protein object that corresponds to the ideal "active" conformation
 #' @param beta  boltzmann temperature
 #'
-#' @return A list of energy terms \code{lst(v_min, dv_activation, g_entropy, g_entropy_activation, v_stress)}
+#' @return A list of energy terms \code{lst(v_min,  _entropy)}
 #' @export
 #'
 #' @examples
 #'
 #'@family enm builders
-enm_energy <- function(prot, ideal, beta = beta_boltzmann()) {
+enm_energy <- function(prot, beta = beta_boltzmann()) {
 
   # internal energy terms
   v_min <- enm_v_min(prot) # energy at miniumum
-  dv_activation <- enm_dv_activation(prot, ideal) # activation energy to shift prot$xyz to ideal$xyz for active site
-  v_stress <- enm_v_stress(prot, ideal) # energy needed to shift whole protein from prot$xyz to ideal$xyz (stress model)
 
   # entropic energy terms
   g_entropy <- enm_g_entropy(prot, beta)
-  g_entropy_activation <- enm_g_entropy_activation(prot, beta)
 
   # return list of energy terms
-  lst(v_min,
-      dv_activation,
-      g_entropy,
-      g_entropy_activation,
-      v_stress)
+  result <- lst(v_min, g_entropy)
+  result
 }
 
 energy <- function(...) {
   stop("function energy renamed; call enm_energy")
 }
-
 
 
 

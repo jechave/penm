@@ -1,4 +1,66 @@
+#' add active-site indexes to prot object
+#'
+add_active_site_indexes <- function(prot, pdb_site_active) {
+  result <- prot
+  result$pdb_site_active <- pdb_site_active # add pdb_site_active
+  result$site_active <- prot$site[prot$pdb_site %in% pdb_site_active] # add site_active
+  result$ind_active <- site_to_ind(result$site_active) # add ind_active
+  result
+}
+
+#' Add cmat_activation and kmat_activation to prot object
+#'
+#' @param prot A protein object that must contain \code{xyz} and \code{pdb_site} elements, and active_site indexes \code{ind_active} (which may be NA)
+#'
+#' @return A protein object with added cmat_active and kmat_active
+#'
+#' @export
+#'
+#' @family enm builders
+#'
+#' @examples
+add_enm_activation <- function(prot)  {
+  result <- prot
+
+    result$enm$cmat_active <- result$enm$cmat[result$ind_active, result$ind_active]
+    result$enm$kmat_active <- solve(result$enm$cmat_active)
+
+  result
+}
+
+mutate_enm_activation <- add_enm_activation
+
+
 # All functions related to activation, either of whole protein (v_stress) or of active site
+
+#' Calculate various enm energies for prot object
+#'
+#' Given a protein (prot) with enm defined, it calculates energy terms
+#' returns a list of internal energies (v) and entropic terms (g)
+#' (note: hemholtz free energy is A = v_min + g_energy)
+#'
+#' @param prot A protein object, with enm graph defined
+#' @param ideal A protein object that corresponds to the ideal "active" conformation
+#' @param beta  boltzmann temperature
+#'
+#' @return A list of energy terms \code{lst(v_min, dv_activation, g_entropy, g_entropy_activation, v_stress)}
+#' @export
+#'
+#' @examples
+#'
+#'@family enm builders
+enm_energy_activation <- function(prot, ideal, beta = beta_boltzmann()) {
+
+  # internal energy terms
+  dv_activation <- enm_dv_activation(prot, ideal) # activation energy to shift prot$xyz to ideal$xyz for active site
+
+  # entropic energy terms
+  g_entropy_activation <- enm_g_entropy_activation(prot, beta)
+
+  # return list of energy terms
+  result <- lst(dv_activation,  g_entropy_activation)
+  result
+}
 
 #' Stress-model local-mutational-stress energy
 enm_v_stress <- function(prot,ideal) {
@@ -48,3 +110,46 @@ enm_g_entropy_activation <- function(prot, beta) {
   gact
 
 }
+
+
+distance_to_active <- function(xyz,site_active) {
+  stopifnot(length(xyz) %% 3 == 0)
+  nsites <- length(xyz)/3
+
+  if (anyNA(site_active)) {
+    distance = rep(NA, nsites)
+  } else {
+    site <- seq(nsites)
+    is_active_site <- site %in% site_active
+    xyz <- my_as_xyz(xyz)
+
+    nsite.active = sum(is_active_site)
+    distance <- rep(NA,nsites)
+    for (j in seq(nsites)) {
+      d_active_to_j <-  xyz[,j] - xyz[,is_active_site]
+      dim(d_active_to_j) <-  c(3,nsite.active)
+      d_active_to_j_norm <-  sqrt(colSums(d_active_to_j^2))
+      distance[j] <-  min(d_active_to_j_norm)
+    }
+  }
+
+  distance
+}
+
+get_v_stress <- function(prot) prot$energy$v_stress
+
+get_dv_activation <- function(prot) prot$energy$dv_activation
+
+get_g_entropy_activation <- function(prot) prot$energy$g_entropy_activation
+
+
+delta_v_stress <- function(prot1, prot2)
+  get_v_stress(prot2) - get_v_stress(prot1)
+
+delta_v_activation <- function(prot1, prot2)
+  get_dv_activation(prot2) - get_dv_activation(prot1)
+
+delta_g_entropy_activation <- function(prot1, prot2)
+  get_g_entropy_activation(prot2) - get_g_entropy_activation(prot1)
+
+
