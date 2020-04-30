@@ -21,58 +21,44 @@ library(jefuns)
 
 
 # source functions
-source("enm_plot.R")
+source("plot_enm.R")
 ```
 
 
 # Set up parameters
 
 ```{r}
-param <- lst(
-  enm = lst(model = "ming_wall",
-            d_max = 10.5,
-            frustrated = TRUE)
-)
-
-str(param)
-
+enm_param <- lst(model = "ming_wall", "d_max" = 10.5, frustrated = FALSE )
+str(enm_param)
 ```
 
 
 # Read and perform ENM NMA of wild-type protein
 
 
-## Initiate wild-type wt object
+## Set up Elastic Network Model
 
 ```{r}
-## read wt coordinates
+## read pdb filec
 pdb_file <- "data/2acy_A.pdb"
 pdb <- read.pdb(pdb_file)
 
-# set network nodes
-wt <- prot_sc(pdb) #note I could use prot_ca or prot_sc here
+# initialize prot object 
+prot <- prot_sc(pdb) #note I could use prot_ca or prot_sc here
 
-str(wt)
-
-```
-
-
-## Initialize wild-type
-
-```{r}
-# set up wild-type
-wt <- prot_sc(pdb)
-
-wt <- init_prot(prot = wt, 
-                model = param$enm$model, d_max = param$enm$d_max, frustrated = F)
+# add enm stuff
+prot <- init_prot(prot = prot, 
+                model = enm_param$model, d_max = enm_param$d_max, frustrated = enm_param$frustrated)
                 
-str(wt)
+str(prot)
 ```
 
-### Calculate wt energy
+
+
+### Calculate prot energy
 
 ```{r}
-enm_energy(wt)
+enm_energy(prot)
 
 ```
 
@@ -81,18 +67,18 @@ enm_energy(wt)
 
 
 ```{r}
-plot_msf_site(wt, d_max = param$enm$d_max)
+plot_msf_site(prot, d_max = param$enm$d_max)
 ```
 
 ## Plot normal-mode matrix
 
 ```{r}
-plot_umat2(wt)
+plot_umat2(prot)
 ```
 
 ## Plot a few normal modes
   
 ```{r}
-nmodes <- max(wt$enm$mode)
-plot_modes(wt, plot_modes = c(1, 2, 3, 4, nmodes - 3, nmodes - 2, nmodes - 1, nmodes))
+nmodes <- max(prot$enm$mode)
+plot_modes(prot, plot_modes = c(1, 2, 3, 4, nmodes - 3, nmodes - 2, nmodes - 1, nmodes))
 ```

@@ -23,5 +23,19 @@ To eliminate it, I can just avoid calling these functions to set up and mutate `
 
 pdb_active_site indices are used to calculate cmat_activation, kmat_activation, and activation energies. I do not need this in the prot object. If needed, I can add it later. 
 
+1. I moved everything related to active site into file activation.R (need to test it, current tests don't use it).
+2. Everything else is independent of either "pdb_site_active" or "ideal". Therefore, it should run for tasks that do not depend on defining active sites.
+3. Modified tests accordingly (eliminating dummy active site and ideal).
+4. Commited changes to git and github
+
+### Make a one-buttom setup of prot object and test
+
+right now setting up the protein object is done by first reading a pdb file into a bio3d pdb object, then calling prot_sc or prot_ca to initialize the prot object, then calling init_prot to cmplete it. Join prot_sc/prot_ca with init_prot into a single function `set_prot(pdb)` 
+Consider adding the enm parameters to prot to be used when passing to other functions(prot)
+
+1. 
+
+
+
 
 
