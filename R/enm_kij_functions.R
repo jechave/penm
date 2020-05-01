@@ -1,14 +1,13 @@
 #' Calculate kij for the ANM
 #'
-kij_anm  <- function(dij, d_max = 10, k = 1,  ...) {
-  ifelse(dij <= d_max, k, 0)
+kij_anm  <- function(dij, sdij, d_max = 10, k = 1,  ...) {
+  kij <- ifelse(dij <= d_max | abs(sdij) == 1, k, 0)
+  kij
 }
 
 #' Calculate kij for the GNM
 #'
-kij_gnm <- function(dij, d_max = 10, k = 1, ...) {
-  ifelse(dij <= d_max, k, 0)
-}
+kij_gnm <- kij_anm
 
 #' Calculate kij for model by Hinsen
 #'
@@ -36,7 +35,7 @@ kij_hnm0 <- function(dij, c = 7.5, a = 1, ...) {
 kij_ming_wall <- function(dij, sdij,
                           d_max = 10.5, k = 4.5, a = 42, ...) {
   kij <-  ifelse(dij <=  d_max, k, 0)
-  kij[sdij == 1] <- a * kij[sdij == 1]
+  kij[abs(sdij) == 1] <- a * k  #warning: regardless of distance, i,i+1 contacts are "forced"
   kij
 }
 

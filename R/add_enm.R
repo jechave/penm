@@ -100,9 +100,10 @@ enm_graph_xyz <- function(xyz,
       filter(j > i) %>%
       arrange(i, j) %>%
       mutate(dij = dij_edge(xyz, i, j)) %>%
-      filter(dij <= d_max) %>%
-      mutate(sdij = sdij_edge(pdb_site, i, j),
-             lij = dij)
+      mutate(sdij = sdij_edge(pdb_site, i, j)) %>%
+      filter(dij <= d_max | sdij == 1) %>%
+      mutate(lij = dij)
+
     graph$kij <- do.call(kij_fun,
                          c(lst(
                            dij = graph$dij, sdij = graph$sdij

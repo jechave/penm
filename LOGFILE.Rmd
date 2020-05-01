@@ -58,6 +58,14 @@ Thus, eliminate energy from protein object (and change everything accordingly)
 
 
 
+### make plot_enm functions good enough to move to package
+
+- added some more plots to test_enm.Rmd
+- fixed an issue: graph setting (in set_enm_xyz) missed some i-(i+1) contacts for which dij > d_max (not a problem for CA models, but it's a problem for SC models). 
+- Changed kij_anm and kij_ming_wall so that they don't set these i-(i+1) kij to 0.
+- Tested and commited.
+
+
 
 
 

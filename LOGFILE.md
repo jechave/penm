@@ -68,3 +68,13 @@ accordingly)
     get\_v\_min\_activaiton, get\_g\_entropy\_activation, get\_v\_stress
   - tested
   - commited to git and github
+
+### make plot\_enm functions good enough to move to package
+
+  - added some more plots to test\_enm.Rmd
+  - fixed an issue: graph setting (in set\_enm\_xyz) missed some i-(i+1)
+    contacts for which dij \> d\_max (not a problem for CA models, but
+    it’s a problem for SC models).
+  - Changed kij\_anm and kij\_ming\_wall so that they don’t set these
+    i-(i+1) kij to 0.
+  - Tested and commited.

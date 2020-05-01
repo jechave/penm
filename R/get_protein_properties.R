@@ -17,8 +17,8 @@ get_profiles_site <-  function(prot, d_max) {
   wcn <- get_wcn(prot)
   bfactor <- get_bfactor(prot)
   msf <- get_msf_site(prot)
-
-  tibble(site, pdb_site, cn, wcn, bfactor, msf)
+  mlms <- get_mlms(prot)
+  tibble(site, pdb_site, cn, wcn, bfactor, msf, mlms)
 }
 
 get_site  <- function(prot) prot$site
@@ -41,6 +41,20 @@ get_msf_site <- function(prot) {
   dim(c) <- c(3, nsites)
   msf <- colSums(c)
   msf
+
+}
+
+#' Calculates mean local mutational stress
+#'
+#' The mlms of a site is the sum over its contacts of kij
+#'
+get_mlms <-  function(prot) {
+
+  result <- prot$enm$kmat %>%
+    reduce_matrix() %>%
+    diag()
+
+  result
 
 }
 

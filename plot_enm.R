@@ -6,14 +6,13 @@ plot_msf_site <- function(prot, d_max) {
 
   p_profiles <- df %>%
     mutate(rcn = 1/cn) %>%
-    mutate(rwcn = 1/wcn) %>%
     pivot_longer(
-      cols = c(rcn, rwcn, msf, bfactor),
+      cols = c(rcn, mlms, msf, bfactor),
       names_to = "property",
       values_to = "value"
     ) %>%
-    mutate(property = factor(property, levels = c("bfactor", "msf", "rcn", "rwcn"),
-                             labels = c("bfactor", "msf", "1 / cn", "1 / wcn"))) %>%
+    mutate(property = factor(property, levels = c("bfactor", "msf", "rcn", "mlms"),
+                             labels = c("bfactor", "msf", "1 / cn", "mlms"))) %>%
     group_by(property) %>%
     mutate(value = jefuns::mMnorm(value)) %>%
     ggplot(aes(y = property, x = site, height = value)) +
@@ -29,7 +28,7 @@ plot_msf_site <- function(prot, d_max) {
     theme_cowplot()
 
   pwcn <- df %>%
-    ggplot(aes(1 / wcn, msf)) +
+    ggplot(aes(1 / mlms, msf)) +
     geom_point() +
     geom_smooth() +
     theme_cowplot()
