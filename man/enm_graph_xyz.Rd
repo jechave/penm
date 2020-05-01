@@ -28,9 +28,7 @@ enm_graph_xyz(xyz, pdb_site)
 }
 \seealso{
 Other enm builders: \code{\link{add_enm_activation}},
-  \code{\link{add_enm}},
-  \code{\link{enm_energy_activation}},
-  \code{\link{enm_energy}}, \code{\link{enm_nma_basis}},
+  \code{\link{add_enm}}, \code{\link{enm_nma_basis}},
   \code{\link{enm_nma}}, \code{\link{enm_set_xyz}},
   \code{\link{kmat_graph}}
 }

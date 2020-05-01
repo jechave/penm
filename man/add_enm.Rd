@@ -21,9 +21,8 @@ Add \code{enm} object to \code{prot} object
 }
 \seealso{
 Other enm builders: \code{\link{add_enm_activation}},
-  \code{\link{enm_energy_activation}},
-  \code{\link{enm_energy}}, \code{\link{enm_graph_xyz}},
-  \code{\link{enm_nma_basis}}, \code{\link{enm_nma}},
-  \code{\link{enm_set_xyz}}, \code{\link{kmat_graph}}
+  \code{\link{enm_graph_xyz}}, \code{\link{enm_nma_basis}},
+  \code{\link{enm_nma}}, \code{\link{enm_set_xyz}},
+  \code{\link{kmat_graph}}
 }
 \concept{enm builders}

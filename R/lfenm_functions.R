@@ -67,8 +67,6 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
     mut$enm$graph$dij <- dij_edge(mut$xyz, mut$enm$graph$i, mut$enm$graph$j)
   }
 
-  mut$energy <- enm_energy(mut)
-
   mut
 }
 

@@ -1,4 +1,5 @@
-get_mut_energy <- function(prot, site, mutation, update_enm, frustrated, seed = 2000 + site * mutation) {
+get_mut_energy <- function(wt, site, mutation, update_enm, frustrated, seed = 2000 + site * mutation,
+                           beta = beta_boltzmann(T = 298)) {
   mut <- get_mutant_site(wt,
                          site,
                          mutation,
@@ -10,7 +11,8 @@ get_mut_energy <- function(prot, site, mutation, update_enm, frustrated, seed = 
                          d_max = param$enm$d_max,
                          frustrated = frustrated,
                          update_enm = update_enm)
-  as_tibble(enm_energy(mut))
+
+  tibble(v_min = enm_v_min(mut), g_entropy = enm_g_entropy(mut, beta))
 }
 
 get_mut <-function(wt, site, mutation = 1, dl_sigma = 1, update_enm = T, frustrated = T) {

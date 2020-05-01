@@ -31,36 +31,7 @@ add_enm_activation <- function(prot)  {
 mutate_enm_activation <- add_enm_activation
 
 
-# All functions related to activation, either of whole protein (v_stress) or of active site
 
-#' Calculate various enm energies for prot object
-#'
-#' Given a protein (prot) with enm defined, it calculates energy terms
-#' returns a list of internal energies (v) and entropic terms (g)
-#' (note: hemholtz free energy is A = v_min + g_energy)
-#'
-#' @param prot A protein object, with enm graph defined
-#' @param ideal A protein object that corresponds to the ideal "active" conformation
-#' @param beta  boltzmann temperature
-#'
-#' @return A list of energy terms \code{lst(v_min, dv_activation, g_entropy, g_entropy_activation, v_stress)}
-#' @export
-#'
-#' @examples
-#'
-#'@family enm builders
-enm_energy_activation <- function(prot, ideal, beta = beta_boltzmann()) {
-
-  # internal energy terms
-  dv_activation <- enm_dv_activation(prot, ideal) # activation energy to shift prot$xyz to ideal$xyz for active site
-
-  # entropic energy terms
-  g_entropy_activation <- enm_g_entropy_activation(prot, beta)
-
-  # return list of energy terms
-  result <- lst(dv_activation,  g_entropy_activation)
-  result
-}
 
 #' Stress-model local-mutational-stress energy
 enm_v_stress <- function(prot,ideal) {
@@ -136,20 +107,14 @@ distance_to_active <- function(xyz,site_active) {
   distance
 }
 
-get_v_stress <- function(prot) prot$energy$v_stress
-
-get_dv_activation <- function(prot) prot$energy$dv_activation
-
-get_g_entropy_activation <- function(prot) prot$energy$g_entropy_activation
-
 
 delta_v_stress <- function(prot1, prot2)
-  get_v_stress(prot2) - get_v_stress(prot1)
+  enm_v_stress(prot2) - enm_v_stress(prot1)
 
 delta_v_activation <- function(prot1, prot2)
-  get_dv_activation(prot2) - get_dv_activation(prot1)
+  enm_dv_activation(prot2) - enm_dv_activation(prot1)
 
 delta_g_entropy_activation <- function(prot1, prot2)
-  get_g_entropy_activation(prot2) - get_g_entropy_activation(prot1)
+  enm_g_entropy_activation(prot2) - enm_g_entropy_activation(prot1)
 
 

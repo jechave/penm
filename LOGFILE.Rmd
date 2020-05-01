@@ -28,12 +28,37 @@ pdb_active_site indices are used to calculate cmat_activation, kmat_activation, 
 3. Modified tests accordingly (eliminating dummy active site and ideal).
 4. Commited changes to git and github
 
-### Make a one-buttom setup of prot object and test
+### Make a one-button setup of prot object and test
+
 
 right now setting up the protein object is done by first reading a pdb file into a bio3d pdb object, then calling prot_sc or prot_ca to initialize the prot object, then calling init_prot to cmplete it. Join prot_sc/prot_ca with init_prot into a single function `set_prot(pdb)` 
 Consider adding the enm parameters to prot to be used when passing to other functions(prot)
 
-1. 
+- Replaced previous "pdb_sc" followed by "init_prot" by a single set_prot(pdb,...) function that sets up the enm, performs nma etc. 
+- Added enm_param to prot object
+- Set up a prot_test.R test in tests/testthat directory, which is run when devtools::test()
+- Added objects pdb_2acy_A and prot_2acy_A to data folder for testing
+Tested and commited all changes.
+
+## 1  May  2020
+
+Refactor enm
+
+### beta and energy terms
+
+beta = 1/(k_boltzman T), depends on temperature. Therefore it is not a property of the protein but, rather, something that depends on the protein's properties and the environment's temperature. For this reason, it would be better to calculate energies when needed, rather than attaching energy terms to the prot object.
+
+Thus, eliminate energy from protein object (and change everything accordingly)
+
+- deleted enm_energy and enm_energy_activation functions
+- deleted all calls to enm_energy and recursively...
+- deleted query functions get_v_min, get_g_entropy, get_v_min_activaiton, get_g_entropy_activation, get_v_stress
+- tested
+- commited to git and github
+
+
+
+
 
 
 

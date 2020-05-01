@@ -1,33 +1,7 @@
-#' Calculate various enm energies for prot object
-#'
-#' Given a protein (prot) with enm defined, it calculates energy terms
-#' returns a list of internal energies (v) and entropic terms (g)
-#' (note: hemholtz free energy is A = v_min + g_energy)
-#'
-#' @param prot A protein object, with enm graph defined
-#' @param beta  boltzmann temperature
-#'
-#' @return A list of energy terms \code{lst(v_min,  _entropy)}
-#' @export
-#'
-#' @examples
-#'
-#'@family enm builders
-enm_energy <- function(prot, beta = beta_boltzmann()) {
 
-  # internal energy terms
-  v_min <- enm_v_min(prot) # energy at miniumum
-
-  # entropic energy terms
-  g_entropy <- enm_g_entropy(prot, beta)
-
-  # return list of energy terms
-  result <- lst(v_min, g_entropy)
-  result
-}
 
 energy <- function(...) {
-  stop("function energy renamed; call enm_energy")
+  stop("function energy deleted; call enm_v_min, enm_g_entropy, etc. separately")
 }
 
 

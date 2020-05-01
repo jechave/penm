@@ -1,8 +1,5 @@
 # Get scalar protein properties -------------------------------------------------------
 
-get_v_min  <- function(prot) prot$energy$v_min
-
-get_g_entropy <- function(prot) prot$energy$g_entropy
 
 
 

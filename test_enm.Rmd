@@ -35,6 +35,7 @@ source("plot_enm.R")
 pdb_file <- "data/2acy_A.pdb"
 pdb <- read.pdb(pdb_file)
 
+# set up the protein's enm
 prot <- set_prot(pdb, node = "sc", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
                 
 str(prot)
@@ -45,8 +46,8 @@ str(prot)
 ### Calculate prot energy
 
 ```{r}
-enm_energy(prot)
-
+tibble(v_min = enm_v_min(prot), 
+       g_entropy = enm_g_entropy(prot, beta_boltzmann(T = 298)))
 ```
 
 
