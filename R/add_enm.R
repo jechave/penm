@@ -1,29 +1,4 @@
-#' Add \code{enm} object to \code{prot} object
-#'
-#' @param prot A protein object that must contain \code{xyz} and \code{pdb_site}
-#' @param model the enm model
-#' @param d_max a cdistance cut-off needed by some models to define sites in contact
-#'
-#' @return A protein object equal to input with enm added, where enm is a list containing \code{graph, eij, kmat, mode, evalue, cmat, umat}
-#'
-#'
-#' @export
-#'
-#' @family enm builders
-#'
-#' @examples
-add_enm <- function(prot, model, d_max, frustrated,...)  {
-  stopifnot(is.null(prot$enm$umat)) # it adds nma only if not already defined
 
-  # add enm graph, eij, and kmat
-  prot$enm <- enm_set_xyz(prot$xyz, prot$pdb_site, model, d_max, frustrated)
-
-  # add (mode, evalue, umat, cmat)
-  nma <- enm_nma(prot$enm$kmat)
-  prot$enm <- c(prot$enm, nma)
-
-  prot
-}
 
 
 #' Set up ENM model
@@ -43,7 +18,7 @@ add_enm <- function(prot, model, d_max, frustrated,...)  {
 #' @examples
 #'
 #' @family enm builders
-enm_set_xyz <- function(xyz, pdb_site, model,  d_max, frustrated,...) {
+enm_from_xyz <- function(xyz, pdb_site, model,  d_max, frustrated,...) {
 
   # Calculate (relaxed) enm graph from xyz
   # Returns list (graph, eij, kmat)
@@ -56,8 +31,21 @@ enm_set_xyz <- function(xyz, pdb_site, model,  d_max, frustrated,...) {
   # calculate kmat
   kmat <- kmat_graph(graph, eij, nsites = length(pdb_site), frustrated)
 
+  # diagonalise kmat
+  nma <- enm_nma(kmat)
+
+  # add (mode, evalue, umat, cmat)
+
   # return enm object
-  lst(graph = graph, eij = eij, kmat = kmat)
+  result <- lst(graph = graph,
+                eij = eij,
+                kmat = kmat,
+                mode = nma$mode,
+                evalue = nma$evalue,
+                cmat = nma$cmat,
+                umat = nma$umat)
+
+  result
 }
 
 #' Calculate ENM graph

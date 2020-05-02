@@ -27,8 +27,7 @@ kmat_graph(graph, eij)
 }
 \seealso{
 Other enm builders: \code{\link{add_enm_activation}},
-  \code{\link{add_enm}}, \code{\link{enm_graph_xyz}},
-  \code{\link{enm_nma_basis}}, \code{\link{enm_nma}},
-  \code{\link{enm_set_xyz}}
+  \code{\link{enm_from_xyz}}, \code{\link{enm_graph_xyz}},
+  \code{\link{enm_nma_basis}}, \code{\link{enm_nma}}
 }
 \concept{enm builders}

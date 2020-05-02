@@ -15,7 +15,7 @@ set_prot <- function(pdb, node = "sc", model, d_max, frustrated) {
 
   prot <- nodes(pdb, node) # get xyz of nodes, pdb_site, and bfactor
   prot$enm_param <- lst(node, model, d_max, frustrated) # add enm parameters
-  prot <- add_enm(prot, model, d_max, frustrated) # calculate enm and nma
+  prot$enm <- enm_from_xyz(prot$xyz, prot$pdb_site, model, d_max, frustrated)
 
   prot
 }
