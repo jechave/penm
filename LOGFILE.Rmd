@@ -66,6 +66,17 @@ Thus, eliminate energy from protein object (and change everything accordingly)
 - Tested and commited.
 
 
+## 2 May 2020
+
+### Deleted `add_site_indexes()`
+
+- added `nsites` and `site` to the result returned by `prot_sc()` and `prot_ca()` 
+- tested and commited
+
+
+
+
+
 
 
 

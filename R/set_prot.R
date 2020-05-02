@@ -14,7 +14,6 @@
 set_prot <- function(pdb, node = "sc", model, d_max, frustrated) {
 
   prot <- nodes(pdb, node) # get xyz of nodes, pdb_site, and bfactor
-  prot <- add_site_indexes(prot) # add site
   prot$enm_param <- lst(node, model, d_max, frustrated) # add enm parameters
   prot <- add_enm(prot, model, d_max, frustrated) # calculate enm and nma
 
@@ -41,6 +40,8 @@ prot_sc <- function(pdb) {
   b = residue.bfactors(pdb)
 
   pdb_site <- r$site
+  nsites <- length( r$site )
+  site <- seq( length( r$site ) )
 
   xyz <-  r$com.xyz
   xyz_na <- is.na(xyz)
@@ -57,37 +58,38 @@ prot_sc <- function(pdb) {
   bfactor[is.na(bfactor)] <- b.a[is.na(bfactor)] # Use CA bfactor otherwise
 
 
-  lst(xyz, pdb_site, bfactor)
+  result <- lst( nsites,
+                 site,
+                 pdb_site,
+                 bfactor,
+                 xyz )
+  result
 }
 
 prot_ca <- function(pdb) {
-  # select CA
-  sel <- atom.select(pdb, elety = "CA")
-  # prepare output
-  bfactor <- as.numeric(pdb$atom[sel$atom, c("b")])
-  pdb_site <- as.numeric(pdb$atom[sel$atom, c("resno")])
-  nsites <- length(pdb_site)
-  xyz.calpha <-
-    matrix(pdb$xyz[sel$xyz],
-           ncol = nsites,
-           nrow = 3,
-           byrow = F)
+  sel <- atom.select(pdb, elety = "CA") # select CA
 
-  output <-
-    list(
-      "xyz" = as.vector(xyz.calpha),
-      "pdb_site" = pdb_site,
-      "bfactor" = bfactor
-    )
-  output
+  nsites <- length(sel$atom)
+  site <- seq(length(sel$atom))
+  pdb_site <- pdb$atom$resno[sel$atom]
+  bfactor <- pdb$atom$b[sel$atom]
+  xyz <- pdb$xyz[sel$xyz]
+
+  result <- lst( nsites,
+                 site,
+                 pdb_site,
+                 bfactor,
+                 xyz )
+  result
 }
 
 
-add_site_indexes <- function(prot) {
-  prot <- prot
-  prot$nsites <- length(prot$pdb_site) # add nsites
-  prot$site <- seq(prot$nsites) # add site
-  prot
+site <- function(prot) {
+  seq( length(prot$pdb_site) )
+}
+
+nsites <- function(prot) {
+  length(prot$pdb_site)
 }
 
 

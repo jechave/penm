@@ -78,3 +78,11 @@ accordingly)
   - Changed kij\_anm and kij\_ming\_wall so that they don’t set these
     i-(i+1) kij to 0.
   - Tested and commited.
+
+## 2 May 2020
+
+### Deleted `add_site_indexes()`
+
+  - added `nsites` and `site` to the result returned by `prot_sc()` and
+    `prot_ca()`
+  - tested and commited
