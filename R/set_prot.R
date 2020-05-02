@@ -84,14 +84,6 @@ prot_ca <- function(pdb) {
 }
 
 
-site <- function(prot) {
-  seq( length(prot$pdb_site) )
-}
-
-nsites <- function(prot) {
-  length(prot$pdb_site)
-}
-
 
 
 

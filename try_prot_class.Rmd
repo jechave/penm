@@ -1,0 +1,31 @@
+---
+title: "Untitled"
+author: "Julian Echave"
+date: "5/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(bio3d)
+library(penm)
+library(tidyverse)
+library(cowplot)
+source("plot_enm.R")
+
+
+pdb <- read.pdb("data/2acy_A.pdb")
+prot <- set_prot(pdb, node = "ca", model = "anm", d_max = 10.5, frustrated = F)
+str(prot)
+
+```
+```{r}
+class(prot) = "prot"
+plot.prot <- function(prot) plot_modes(prot)
+plot(prot)
+
+```
+
