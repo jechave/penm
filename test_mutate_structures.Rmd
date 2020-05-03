@@ -63,7 +63,7 @@ str(param)
 ## Check pdb file and read wt coordinates
 
 ```{r}
-pdb_file <- "data/2acy_A.pdb"
+pdb_file <- "data-raw/2acy_A.pdb"
 pdb <- read.pdb(pdb_file)
 
 wt <- set_prot(pdb, node = "sc", model = "ming_wall", d_max = 10.5, frustrated = FALSE) 

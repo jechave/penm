@@ -21,7 +21,7 @@ First, read a pdb file using `bio3d::read.pdb` to generate a `pdb` object for a 
 Then, create the `prot` object, that contains the full ENM analysis.
 
 ```
-bio3d::read.pdb("data/2acy_A.pdb") # read a pdb file
+bio3d::read.pdb("data-raw/2acy_A.pdb") # read a pdb file
 prot <- set_prot(pdb, node = "calpha", model = "anm", d_max = 10.5, frustrated = FALSE)
 ```
 In this example, network nodes are placed at $C_\alpha$ coordinates, the model used is Bahar's Anisotropic Network Model ("anm") with a cut-off distance to define contacts of `d_max = 10.5`. `frustrated` indicates whether to add frustrations to the model.

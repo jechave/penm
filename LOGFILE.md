@@ -86,3 +86,14 @@ accordingly)
   - added `nsites` and `site` to the result returned by `prot_sc()` and
     `prot_ca()`
   - tested and commited
+
+### Deleted `add_enm()`
+
+  - renamed `enm_set_xyz` to `enm_from_xyz`
+  - made `enm_from_xyz` call `nma(kmat)` and return also `mode, evalue,
+    umat, cmat`
+  - made set\_prot call `enm_from_xyz` directly, rather than `add_enm`
+  - deleted `add_enm`
+  - tested and commited
+
+### Moved non-binary data to `./data_raw`

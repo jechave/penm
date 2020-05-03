@@ -82,6 +82,16 @@ Thus, eliminate energy from protein object (and change everything accordingly)
 - tested and commited
 
 
+### Moved non-binary data to `./data_raw`
+
+
+
+## 3 May 2020
+
+### merged set_prot.R and add_prot.R into single file 
+
+
+
 
 
 

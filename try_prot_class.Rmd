@@ -17,7 +17,7 @@ library(cowplot)
 source("plot_enm.R")
 
 
-pdb <- read.pdb("data/2acy_A.pdb")
+pdb <- read.pdb("data-raw/2acy_A.pdb")
 prot <- set_prot(pdb, node = "ca", model = "anm", d_max = 10.5, frustrated = F)
 str(prot)
 

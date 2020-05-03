@@ -32,7 +32,7 @@ source("plot_enm.R")
 
 ```{r}
 ## read pdb filec
-pdb_file <- "data/2acy_A.pdb"
+pdb_file <- "data-raw/2acy_A.pdb"
 pdb <- read.pdb(pdb_file)
 
 # set up the protein's enm
