@@ -97,3 +97,9 @@ accordingly)
   - tested and commited
 
 ### Moved non-binary data to `./data_raw`
+
+## 3 May 2020
+
+### merged set\_prot.R and add\_prot.R into single file
+
+### renamed various files in package R directory

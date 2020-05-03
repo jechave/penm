@@ -90,6 +90,10 @@ Thus, eliminate energy from protein object (and change everything accordingly)
 
 ### merged set_prot.R and add_prot.R into single file 
 
+### renamed various files in package R directory
+
+
+
 
 
 

@@ -56,8 +56,7 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
   dxyz <-  crossprod(wt$enm$cmat[nzf, ], f[nzf])
   mut$xyz <- wt$xyz + dxyz
 
-
-  # recalculate energies
+  # recalculate enm
 
   if (update_enm) { # recalculate enm
     # recalculate whole mut$enm (graph, kmat, etc. etc.)
