@@ -103,3 +103,16 @@ accordingly)
 ### merged set\_prot.R and add\_prot.R into single file
 
 ### renamed various files in package R directory
+
+## 4 May 2020
+
+### Changed order of `eval` and `umat` columns in `enm_nma()`
+
+### Changed all enm plotting functions
+
+### Added several functions to *enm\_analysis.R*
+
+### Changed *test\_enm.R*
+
+Now it calculates prot then calls plot functions in the order they are
+in the *plot\_enm.R* file.

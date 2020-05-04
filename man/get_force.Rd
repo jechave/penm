@@ -18,6 +18,7 @@ A force vector of size \code{3 x nsites}
 Given \code{mut} obtained by perturbing site edges of \code{wt}, obtain force \code{fij = kij * dlij}
 }
 \seealso{
-Other enm mutating functions: \code{\link{get_mutant_site}}
+Other enm mutating functions: 
+\code{\link{get_mutant_site}()}
 }
 \concept{enm mutating functions}

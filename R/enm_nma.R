@@ -23,10 +23,16 @@ enm_nma <- function(kmat, TOL = 1.e-5) {
   evalue <- eig$values
   umat <- eig$vectors
   modes <- evalue > TOL
-  nmodes <- sum(modes)
-  mode <- seq.int(from = nmodes, to = 1, by = -1)
   evalue <- evalue[modes]
   umat  <- umat[, modes]
+
+  nmodes <- sum(modes)
+  mode <- seq.int(from = nmodes, to = 1, by = -1)
+  evalue <- evalue[mode]
+  umat <- umat[, mode]
+  mode <- mode[mode]
+
+
   cmat <-  umat %*% ((1 / evalue) * t(umat))
 
   nma <- list(

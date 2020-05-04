@@ -93,6 +93,17 @@ Thus, eliminate energy from protein object (and change everything accordingly)
 ### renamed various files in package R directory
 
 
+## 4 May 2020
+
+### Changed order of `eval` and `umat` columns in `enm_nma()`
+
+### Changed all enm plotting functions
+
+### Added several functions to *enm_analysis.R*
+
+### Changed *test_enm.R*
+
+Now it calculates prot then calls plot functions in the order they are in the *plot_enm.R* file.
 
 
 

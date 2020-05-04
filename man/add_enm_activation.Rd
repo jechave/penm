@@ -16,8 +16,11 @@ A protein object with added cmat_active and kmat_active
 Add cmat_activation and kmat_activation to prot object
 }
 \seealso{
-Other enm builders: \code{\link{enm_from_xyz}},
-  \code{\link{enm_graph_xyz}}, \code{\link{enm_nma_basis}},
-  \code{\link{enm_nma}}, \code{\link{kmat_graph}}
+Other enm builders: 
+\code{\link{enm_from_xyz}()},
+\code{\link{enm_graph_xyz}()},
+\code{\link{enm_nma_basis}()},
+\code{\link{enm_nma}()},
+\code{\link{kmat_graph}()}
 }
 \concept{enm builders}

@@ -4,10 +4,19 @@
 \alias{get_mutant_site}
 \title{Get a single-point mutant}
 \usage{
-get_mutant_site(wt, site_mut, mutation = 0, seed = 241956 + site_mut *
-  mutation, wt0 = wt, mut_sd_min = 2, dl_sigma = 0.3,
-  update_enm = FALSE, model = "ming_wall", d_max = 10.5,
-  frustrated = FALSE)
+get_mutant_site(
+  wt,
+  site_mut,
+  mutation = 0,
+  seed = 241956 + site_mut * mutation,
+  wt0 = wt,
+  mut_sd_min = 2,
+  dl_sigma = 0.3,
+  update_enm = FALSE,
+  model = "ming_wall",
+  d_max = 10.5,
+  frustrated = FALSE
+)
 }
 \arguments{
 \item{wt}{The protein \code{prot} to mutate}
@@ -44,6 +53,7 @@ Returns a mutant given a wt and a site to mutate (site_mut)
 
 }
 \seealso{
-Other enm mutating functions: \code{\link{get_force}}
+Other enm mutating functions: 
+\code{\link{get_force}()}
 }
 \concept{enm mutating functions}

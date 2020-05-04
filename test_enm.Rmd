@@ -41,99 +41,66 @@ prot <- set_prot(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated
 str(prot)
 ```
 
+## Test plot functions
 
-
-### Calculate prot energy
+### MSF determinants
 
 ```{r}
-tibble(v_min = enm_v_min(prot), 
-       g_entropy = enm_g_entropy(prot, beta_boltzmann(T = 298)))
+plot_grid(
+   plot_msf_vs_cn(prot, prot$enm_param$d_max),
+   plot_bfactor_vs_msf(prot),
+   plot_msf_vs_mlms(prot))
 ```
 
 
-## Plot and compare msf
-
+### Site profiles
 
 ```{r}
-plot_msf_site(prot, d_max = prot$enm_param$d_max)
+plot_site_profiles(prot)
 ```
 
-## Plot normal-mode matrix
+## Mode plots
 
 ```{r}
-plot_umat2(prot)
+plot_Kn(prot)
 ```
 
-## Plot a few normal modes
-  
+### Mode energy
+
 ```{r}
-nmodes <- max(prot$enm$mode)
-plot_modes(prot, plot_modes = c(1, 2, 3, 4, nmodes - 3, nmodes - 2, nmodes - 1, nmodes))
+plot_grid(
+   plot_eigenvalue_vs_mode(prot),
+   plot_eigenvalue_spectrum(prot)
+)
 ```
-33 Plot eigenvalues
-
+### Mode MSF
 
 ```{r}
-plot_eigenvalue_vs_mode <- function(prot) {
-   df <-  tibble(mode = prot$enm$mode, eigenvalue = prot$enm$evalue, msf = 1 / eigenvalue) 
-   
-   p <- df  %>% 
-     ggplot(aes(mode, eigenvalue)) +
-     geom_point() +
-     theme_cowplot() 
-   
-   p
-     
-}
-
-plot_eigenvalue_spectrum <- function(prot) {
-   df <-  tibble(mode = prot$enm$mode, eigenvalue = prot$enm$evalue) 
-   
-   p <- df  %>% 
-     ggplot(aes(eigenvalue)) +
-     geom_histogram() +
-     theme_cowplot() 
-   
-   p
-     
-}
-
-plot_msf_vs_mode <- function(prot) {
-   df <-  tibble(mode = prot$enm$mode, msf = 1 / prot$enm$evalue) 
-   
-   p <- df  %>% 
-     ggplot(aes(mode, msf)) +
-     geom_point() +
-     theme_cowplot() 
-   
-   p
-     
-}
-
-plot_msf_mode_spectrum <- function(prot) {
-   df <-  tibble(mode = prot$enm$mode, msf = 1 / prot$enm$evalue) 
-   
-   p <- df  %>% 
-     ggplot(aes(msf)) +
-     geom_histogram() +
-     theme_cowplot() 
-   
-   p
-     
-}
+plot_grid(
+   plot_msf_vs_mode(prot),
+   plot_msf_mode_spectrum(prot)
+)
+```
 
 
-plot_grid(plot_eigenvalue_vs_mode(prot),
-          plot_eigenvalue_spectrum(prot),
-          plot_msf_vs_mode(prot),
-          plot_msf_mode_spectrum(prot))
+### Modes
 
+```{r}
+plot_grid(
+   plot_umat2(prot),
+   plot_modes(prot),
+   ncol = 2
+)
+```
 
+###  MSF contributions of modes
+```{r}
+plot_msf_site_mode(prot)
+```
 
+## Correlation matrix
 
-
-
-
-
+```{r}
+plot_matrix(rho_matrix(prot), value_name = "rho")
 ```
 

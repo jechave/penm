@@ -1,104 +1,177 @@
-#' Prot msf and compare with bfactor and 1/cn
-#'
-plot_msf_site <- function(prot, d_max) {
 
-  df <- get_profiles_site(prot, d_max)
+# Site profile plots ------------------------------------------------------
 
-  p_profiles <- df %>%
-    mutate(rcn = 1/cn) %>%
+plot_msf_vs_cn <- function(prot, d_max) {
+  tibble(cn = get_cn(prot, d_max), msf = get_msf_site(prot)) %>%
+    ggplot(aes(1 / cn, msf)) +
+    geom_point() +
+    geom_smooth() +
+    theme_cowplot()
+}
+
+plot_bfactor_vs_msf <- function(df, msf, bfactor) {
+  tibble(msf = get_msf_site(prot), bfactor = get_bfactor(prot)) %>%
+    ggplot(aes(msf, bfactor)) +
+    geom_point() +
+    geom_smooth() +
+    theme_cowplot()
+}
+
+plot_msf_vs_mlms <- function(prot) {
+  tibble(mlms = get_mlms(prot), msf = get_msf_site(prot)) %>%
+    ggplot(aes(1 / mlms, msf)) +
+    geom_point() +
+    geom_smooth() +
+    theme_cowplot()
+}
+
+plot_site_profiles <- function(prot) {
+
+  df <- tibble(
+    site = get_site(prot),
+    cn = get_cn(prot, prot$enm_param$d_max),
+    mlms = get_mlms(prot),
+    msf = get_msf_site(prot),
+    bfactor = get_bfactor(prot)
+  )
+
+  df %>%
+    mutate(rcn = 1/cn,
+           rmlms = 1 / mlms) %>%
     pivot_longer(
-      cols = c(rcn, mlms, msf, bfactor),
+      cols = c(rcn, rmlms, msf, bfactor),
       names_to = "property",
       values_to = "value"
     ) %>%
-    mutate(property = factor(property, levels = c("bfactor", "msf", "rcn", "mlms"),
-                             labels = c("bfactor", "msf", "1 / cn", "mlms"))) %>%
+    mutate(property = factor(property, levels = c("bfactor", "msf", "rcn", "rmlms"),
+                             labels = c("bfactor", "msf", "1 / cn", "1 / mlms"))) %>%
     group_by(property) %>%
     mutate(value = jefuns::mMnorm(value)) %>%
     ggplot(aes(y = property, x = site, height = value)) +
     ggridges::geom_ridgeline_gradient() +
     theme_cowplot() +
     theme(axis.title.y = element_blank())
-
-
-  pcn <- df %>%
-    ggplot(aes(1 / cn, msf)) +
-    geom_point() +
-    geom_smooth() +
-    theme_cowplot()
-
-  pwcn <- df %>%
-    ggplot(aes(1 / mlms, msf)) +
-    geom_point() +
-    geom_smooth() +
-    theme_cowplot()
-
-  pbfactor <- df %>%
-    ggplot(aes(msf, bfactor)) +
-    geom_point() +
-    geom_smooth() +
-    theme_cowplot()
-
-
-
-
-  p2 = plot_grid(pbfactor, pcn, pwcn, ncol = 3)
-  plot_grid(p_profiles, p2, ncol = 1)
 }
 
+
+# Mode plots --------------------------------------------------------------
+
+
+
+
+
+
+#' Plot mode connectivity
+#'
+plot_Kn <- function(prot) {
+  umat2(prot) %>%
+    group_by(mode) %>%
+    summarise(Kn = Kn(umat2)) %>%
+    ggplot(aes(mode, Kn)) +
+    geom_point() +
+    geom_smooth() +
+    theme_cowplot()
+}
+
+#' Eigenvalues vs. mode
+#'
+plot_eigenvalue_vs_mode <- function(prot) {
+  tibble(mode = get_mode(prot), eigenvalue = get_evalue(prot)) %>%
+  ggplot(aes(mode, eigenvalue)) +
+    geom_point() +
+    theme_cowplot()
+}
+
+#' Eigenvalue spectrum
+#'
+plot_eigenvalue_spectrum <- function(prot) {
+  tibble(mode = get_mode(prot), eigenvalue = get_evalue(prot)) %>%
+    ggplot(aes(eigenvalue)) +
+    geom_histogram() +
+    theme_cowplot()
+}
+
+#' MSF vs mode
+#'
+plot_msf_vs_mode <- function(prot) {
+  tibble(mode = get_mode(prot), msf = get_msf_mode(prot)) %>%
+    ggplot(aes(mode, msf)) +
+    geom_point() +
+    theme_cowplot()
+
+}
+
+#' MSF spectrum
+#'
+plot_msf_mode_spectrum <- function(prot) {
+  tibble(mode = get_mode(prot), msf = get_msf_mode(prot)) %>%
+    ggplot(aes(msf)) +
+    geom_histogram() +
+    theme_cowplot()
+}
+
+
+
+# site by mode matrices ---------------------------------------------------
+
+
+
+#' Plot umat2 matrix
+#'
+plot_umat2  <- function(prot) {
+  umat2(prot) %>%
+    ggplot(aes(x = mode, y = site, fill =sqrt(umat2))) +
+    geom_tile() +
+    scale_fill_viridis_b() +
+    theme_cowplot() +
+    NULL
+}
 
 #' Plot some normal modes of prot object
 #'
 plot_modes  <- function(prot, plot_modes = c(1, 2, 3, 4, 5)) {
-  df <- get_umat2(prot)
-
-  df %>%
+  umat2(prot) %>%
     filter(mode %in% plot_modes) %>%
-    ggplot(aes(y = factor(mode), x = site, height = sqrt(msf))) +
+    ggplot(aes(y = factor(mode), x = site, height = sqrt(umat2))) +
     geom_ridgeline_gradient() +
     theme_cowplot() +
     NULL
 
 }
 
-#' Plot all normal modes
+#' Plot msf site by mode matrix
 #'
-plot_umat2  <- function(prot) {
-  df <- get_umat2(prot)
-
-  df %>%
-    # mutate(mode = as.factor(mode)) %>%
-    ggplot(aes(x = site, y = mode,  fill = sqrt(msf))) +
+plot_msf_site_mode  <- function(prot) {
+  msf_site_mode(prot) %>%
+    ggplot(aes(x = mode, y = site, fill = sqrt(msf))) +
     geom_tile() +
     scale_fill_viridis_b() +
     theme_cowplot() +
     NULL
-
 }
 
 
-get_umat2 <- function(prot) {
-  umat <- prot$enm$umat
-  mode <- get_mode(prot)
-  umat2 <- data.frame(site = prot$site)
-  for (n in seq(1:length(mode))) {
-    un <- umat[, n]
-    un <- my_as_xyz(un)
-    un2_column <- data.frame(mode = colSums(un^2))
-    names(un2_column) <- paste0("mode_", mode[n])
-    umat2 <- cbind(umat2, un2_column)
-  }
+# Helper functions --------------------------------------------------------
 
-  df <- umat2 %>%
-    pivot_longer(cols = starts_with("mode"),
-                 names_to = "mode",
-                 names_prefix = "mode_",
-                 values_to = "msf") %>%
-    mutate(mode = as.integer(mode))  %>%
-    arrange(mode, site) %>%
-    select(mode, site, msf)
-  df
+
+
+#' Tile plot of a matrix
+#'
+plot_matrix <- function(m, row_name = "i", col_name = "j", value_name = "mij") {
+  df <- matrix_to_tibble(m)
+  df %>%
+    ggplot(aes(x = j, y = i, fill = mij)) +
+    geom_tile() +
+    scale_fill_viridis_b() +
+    theme_cowplot() +
+    xlab(col_name) +
+    ylab(row_name) +
+    NULL
 }
+
+
+
+
 
 
 
