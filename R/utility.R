@@ -102,3 +102,6 @@ my_quad_form <- function(x,m,y) {
   ret <- crossprod(y,crossprod(m,x))
   as.numeric(ret)
 }
+
+
+

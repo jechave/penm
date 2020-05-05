@@ -64,7 +64,8 @@ plot_site_profiles <- function(prot) {
 #' Plot mode connectivity
 #'
 plot_Kn <- function(prot) {
-  umat2(prot) %>%
+  get_umat2(prot) %>%
+    matrix_to_tibble(row_name = "site", col_name = "mode", value_name = "umat2") %>%
     group_by(mode) %>%
     summarise(Kn = Kn(umat2)) %>%
     ggplot(aes(mode, Kn)) +
@@ -119,18 +120,15 @@ plot_msf_mode_spectrum <- function(prot) {
 #' Plot umat2 matrix
 #'
 plot_umat2  <- function(prot) {
-  umat2(prot) %>%
-    ggplot(aes(x = mode, y = site, fill =sqrt(umat2))) +
-    geom_tile() +
-    scale_fill_viridis_b() +
-    theme_cowplot() +
-    NULL
+  get_umat2(prot) %>%
+    plot_matrix(row_name = "site", col_name = "mode", value_name = "Uin^2")
 }
 
 #' Plot some normal modes of prot object
 #'
 plot_modes  <- function(prot, plot_modes = c(1, 2, 3, 4, 5)) {
-  umat2(prot) %>%
+  get_umat2(prot) %>%
+    matrix_to_tibble(row_name = "site", col_name = "mode", value_name = "umat2") %>%
     filter(mode %in% plot_modes) %>%
     ggplot(aes(y = factor(mode), x = site, height = sqrt(umat2))) +
     geom_ridgeline_gradient() +
@@ -142,32 +140,43 @@ plot_modes  <- function(prot, plot_modes = c(1, 2, 3, 4, 5)) {
 #' Plot msf site by mode matrix
 #'
 plot_msf_site_mode  <- function(prot) {
-  msf_site_mode(prot) %>%
-    ggplot(aes(x = mode, y = site, fill = sqrt(msf))) +
-    geom_tile() +
-    scale_fill_viridis_b() +
-    theme_cowplot() +
-    NULL
+  get_msf_site_mode(prot) %>%
+    plot_matrix(row_name = "site", col_name = "mode", value_name = "MSF")
 }
+
+#' Plot rmsf site by mode matrix
+#'
+plot_rmsf_site_mode  <- function(prot) {
+  get_msf_site_mode(prot) %>%
+    sqrt() %>%
+    plot_matrix(row_name = "site", col_name = "mode", value_name = "RMSF")
+}
+
+
+
+# Site by site matrices ---------------------------------------------------
+
+
+plot_rho_matrix <- function(prot) {
+  get_rho_matrix(prot) %>%
+    plot_matrix(row_name = "i", col_name = "j", value_name = "rho")
+}
+
+plot_reduced_cmat <- function(prot) {
+  get_reduced_cmat(prot) %>%
+    plot_matrix(row_name = "i", col_name = "j", value_name = "Cij")
+}
+
+plot_reduced_kmat <- function(prot) {
+  get_reduced_kmat(prot) %>%
+    plot_matrix(row_name = "i", col_name = "j", value_name = "Kij")
+}
+
 
 
 # Helper functions --------------------------------------------------------
 
 
-
-#' Tile plot of a matrix
-#'
-plot_matrix <- function(m, row_name = "i", col_name = "j", value_name = "mij") {
-  df <- matrix_to_tibble(m)
-  df %>%
-    ggplot(aes(x = j, y = i, fill = mij)) +
-    geom_tile() +
-    scale_fill_viridis_b() +
-    theme_cowplot() +
-    xlab(col_name) +
-    ylab(row_name) +
-    NULL
-}
 
 
 

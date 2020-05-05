@@ -105,6 +105,26 @@ Thus, eliminate energy from protein object (and change everything accordingly)
 
 Now it calculates prot then calls plot functions in the order they are in the *plot_enm.R* file.
 
+## 5 May 2020
+
+- Learnt to use `knitr::purl()` to translate .Rmd into .R
+- Learnt to use `mvbutils::foodweb()` to plot dependencies of functions
+- Changed function name: `cmat(prot)` to `get_reduced_cmat(prot)`
+- Changed function name: `kmat(prot)` to `get_reduced_cmat(prot)`
+- Changed function name: `umat2(prot)` to `get_umat2(prot)`
+- Changed function name: `umat2_matrix(prot)` to `get_umat2_matrix(prot)`
+- Changed definition of all matrix plot functions so that they do not need to transform to tibble before plotting (they call `plot_matrix` instead)
+- Deleted `msf_site_mode`
+- Renamed `msf_site_mode_matrix` to `get_msf_site_mode`
+- Deleted `get_umat2`
+- Renamed `get_umat2_matrix` to `get_umat2`
+- Renamed `rho_matrix`to `get_rho_matrix` and `plot_rho` to `plot_rho_matrix`
+- Moved general functions `matrix_to_tibble`and `plot_matrix` to package `jefuns` 
+- Moved all plot functions of enm into package directory as `enm_plot.R`
+- Tested and comitted to git and github
+
+
+
 
 
 

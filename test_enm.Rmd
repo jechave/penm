@@ -19,9 +19,6 @@ library(bio3d)
 library(penm)
 library(jefuns)
 
-
-# source functions
-source("plot_enm.R")
 ```
 
 
@@ -41,7 +38,9 @@ prot <- set_prot(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated
 str(prot)
 ```
 
-## Test plot functions
+# Test plot functions
+
+## Site plots
 
 ### MSF determinants
 
@@ -83,24 +82,33 @@ plot_grid(
 ```
 
 
-### Modes
+##  Site by mode 
 
 ```{r}
+plot_modes(prot)
+```
+
+```{r}
+plot_umat2(prot)
+```
+```{r}
 plot_grid(
-   plot_umat2(prot),
-   plot_modes(prot),
-   ncol = 2
+   plot_msf_site_mode(prot),
+   plot_rmsf_site_mode(prot),
+   ncol = 1
 )
 ```
 
-###  MSF contributions of modes
-```{r}
-plot_msf_site_mode(prot)
-```
-
-## Correlation matrix
+## Site by site matrices
 
 ```{r}
-plot_matrix(rho_matrix(prot), value_name = "rho")
+plot_grid(
+   plot_rho_matrix(prot),
+   plot_reduced_cmat(prot),
+   plot_reduced_kmat(prot),
+   ncol = 2
+)
+
+
 ```
 
