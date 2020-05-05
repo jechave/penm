@@ -1,8 +1,8 @@
 
 # Site profile plots ------------------------------------------------------
 
-plot_msf_vs_cn <- function(prot, d_max) {
-  tibble(cn = get_cn(prot, d_max), msf = get_msf_site(prot)) %>%
+plot_msf_vs_cn <- function(prot) {
+  tibble(cn = get_cn(prot), msf = get_msf_site(prot)) %>%
     ggplot(aes(1 / cn, msf)) +
     geom_point() +
     geom_smooth() +
@@ -29,7 +29,7 @@ plot_site_profiles <- function(prot) {
 
   df <- tibble(
     site = get_site(prot),
-    cn = get_cn(prot, prot$enm_param$d_max),
+    cn = get_cn(prot),
     mlms = get_mlms(prot),
     msf = get_msf_site(prot),
     bfactor = get_bfactor(prot)

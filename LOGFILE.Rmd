@@ -122,6 +122,7 @@ Now it calculates prot then calls plot functions in the order they are in the *p
 - Moved general functions `matrix_to_tibble`and `plot_matrix` to package `jefuns` 
 - Moved all plot functions of enm into package directory as `enm_plot.R`
 - Tested and comitted to git and github
+- Eliminated `d_max` from `get_cn` and related
 
 
 

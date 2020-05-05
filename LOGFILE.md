@@ -141,3 +141,4 @@ in the *plot\_enm.R* file.
   - Moved all plot functions of enm into package directory as
     `enm_plot.R`
   - Tested and comitted to git and github
+  - Eliminated `d_max` from `get_cn` and related

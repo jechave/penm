@@ -46,7 +46,7 @@ str(prot)
 
 ```{r}
 plot_grid(
-   plot_msf_vs_cn(prot, prot$enm_param$d_max),
+   plot_msf_vs_cn(prot),
    plot_bfactor_vs_msf(prot),
    plot_msf_vs_mlms(prot))
 ```

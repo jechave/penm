@@ -10,7 +10,7 @@ get_pdb_site <- function(prot) prot$site
 
 get_bfactor <- function(prot) prot$bfactor
 
-get_cn <- function(prot, d_max) cn_xyz(prot$xyz, d_max)
+get_cn <- function(prot) cn_xyz(prot$xyz, prot$enm_param$d_max)
 
 get_wcn <- function(prot) wcn_xyz(prot$xyz)
 
