@@ -33,7 +33,8 @@ pdb_file <- "data-raw/2acy_A.pdb"
 pdb <- read.pdb(pdb_file)
 
 # set up the protein's enm
-prot <- set_prot(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+
+prot <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
                 
 str(prot)
 ```

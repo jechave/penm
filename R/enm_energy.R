@@ -11,7 +11,7 @@ energy <- function(...) {
 #' where v0ij, kij, lij and the dij for the minimum conformation are found.
 #' @return a scalar: the minimum energy
 enm_v_min <- function(prot) {
-  graph <- prot$enm$graph
+  graph <- get_graph(prot)
   v <- with(graph, {
     v_dij(dij, v0ij, kij, lij)
   })
@@ -28,7 +28,7 @@ v_dij <- function(dij,v0ij,kij,lij) {
 #' entropic total free energy
 enm_g_entropy <- function(prot, beta) {
   # Calculate T*S from the energy spectrum
-  energy <- prot$enm$evalue
+  energy <- get_evalue(prot)
   sum(enm_g_entropy_mode(energy, beta))
 }
 

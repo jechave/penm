@@ -1,10 +1,10 @@
 library(mvbutils)
 
 remove(list = ls())
-source("plot_enm.R")
-source("R/enm_analysis.R")
+source("R/enm.R")
+source("R/enm_prot_getters.R")
 
 fw <- foodweb()
 
-callers.of("matrix_to_tibble", fw)
-callees.of("matrix_to_tibble", fw)
+callers.of("set_enm", fw)
+callees.of("set_enm", fw)

@@ -64,7 +64,7 @@ str(param)
 pdb_file <- "data-raw/2acy_A.pdb"
 pdb <- read.pdb(pdb_file)
 
-wt <- set_prot(pdb, node = "sc", model = "ming_wall", d_max = 10.5, frustrated = TRUE)
+wt <- set_enm(pdb, node = "sc", model = "ming_wall", d_max = 10.5, frustrated = TRUE)
 str(wt)
 ```
 

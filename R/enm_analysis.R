@@ -4,15 +4,10 @@
 
 # Get site profiles ----------------------------------------------------
 
-get_site  <- function(prot) prot$site
 
-get_pdb_site <- function(prot) prot$site
+get_cn <- function(prot) cn_xyz(get_xyz(prot), get_d_max(prot))
 
-get_bfactor <- function(prot) prot$bfactor
-
-get_cn <- function(prot) cn_xyz(prot$xyz, prot$enm_param$d_max)
-
-get_wcn <- function(prot) wcn_xyz(prot$xyz)
+get_wcn <- function(prot) wcn_xyz(get_xyz(prot))
 
 #' Calculate MSF profile of prot
 #'
@@ -32,9 +27,6 @@ get_mlms <-  function(prot) {
 
 # Get mode profiles -------------------------------------------------------
 
-get_mode <- function(prot) prot$enm$mode
-
-get_evalue <- function(prot) prot$enm$evalue
 
 get_msf_mode <-  function(prot) 1 / get_evalue(prot)
 
@@ -55,14 +47,14 @@ get_rho_matrix <- function(prot) {
 #'  Variance-covariance matrix
 #'
 get_reduced_cmat <- function(prot) {
-  prot$enm$cmat %>%
+  get_cmat(prot) %>%
     reduce_matrix()
 }
 
 #' Reduced network K matrix
 #'
 get_reduced_kmat <- function(prot) {
-  prot$enm$kmat %>%
+  get_kmat(prot) %>%
     reduce_matrix()
 }
 
@@ -78,7 +70,7 @@ get_reduced_kmat <- function(prot) {
 get_msf_site_mode <- function(prot) {
   result <- prot %>%
     get_umat2()
-  result <- t(t(result) / prot$enm$evalue)
+  result <- t(t(result) / get_evalue(prot))
   result
 }
 
@@ -87,7 +79,7 @@ get_msf_site_mode <- function(prot) {
 #' Site-reduced `umat**2` matrix, as matrix
 #'
 get_umat2 <- function(prot) {
-  umat2 <- prot$enm$umat^2
+  umat2 <- get_umat(prot)^2
   dim(umat2) <- c(3, nrow(umat2) / 3, ncol(umat2))
   umat2 <- apply(umat2, c(2, 3), sum)
   umat2

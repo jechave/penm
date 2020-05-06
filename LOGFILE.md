@@ -119,9 +119,14 @@ in the *plot\_enm.R* file.
 
 ## 5 May 2020
 
+### Learned useful tools
+
   - Learnt to use `knitr::purl()` to translate .Rmd into .R
   - Learnt to use `mvbutils::foodweb()` to plot dependencies of
     functions
+
+### Refactored prot getters, calculators, and plotters
+
   - Changed function name: `cmat(prot)` to `get_reduced_cmat(prot)`
   - Changed function name: `kmat(prot)` to `get_reduced_cmat(prot)`
   - Changed function name: `umat2(prot)` to `get_umat2(prot)`
@@ -141,4 +146,20 @@ in the *plot\_enm.R* file.
   - Moved all plot functions of enm into package directory as
     `enm_plot.R`
   - Tested and comitted to git and github
+
+### Other
+
   - Eliminated `d_max` from `get_cn` and related
+
+## 6 May 2020
+
+### Restructured prot object
+
+  - Added enm parameters to `prot$enm`
+  - Wrote getters for prot object
+  - Changed `set_prot` to a single `set_enm(pdb, ...)` function that
+    sets up the prot object
+  - Changed structure of `prot` object (and it’s class is `prot`)
+  - Fixed getters according to new structure of prot
+  - Changed queries by getters in enm module (but not in penm.R and
+    activation.R): e.g. replaced prot\(enm\)umat by get\_umat(prot)

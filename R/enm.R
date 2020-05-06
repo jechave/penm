@@ -11,20 +11,37 @@
 #'
 #' @examples
 #'
-set_prot <- function(pdb, node = "sc", model, d_max, frustrated) {
+set_enm <- function(pdb, node, model, d_max, frustrated) {
 
-  prot <- nodes(pdb, node) # get xyz of nodes, pdb_site, and bfactor
-  prot$enm_param <- lst(node, model, d_max, frustrated) # add enm parameters
-  prot$enm <- enm_from_xyz(prot$xyz, prot$pdb_site, model, d_max, frustrated)
+  param <- lst(node, model, d_max, frustrated) # set list of parametersº
 
-  prot
+  nodes <-  set_nodes(pdb, node)  # get xyz of nodes, pdb_site, and bfactor
+
+  # node coordinates and pdb_site labelings
+  xyz <- nodes$xyz
+  pdb_site <- nodes$pdb_site
+
+  graph <- enm_graph_xyz(xyz, pdb_site, model,  d_max) # calculate (relaxed) enm graph from xyz
+
+  eij <- eij_edge(xyz, graph$i, graph$j) # calculate eij
+
+  kmat <- kmat_graph(graph, eij, nsites = length(pdb_site), frustrated) # calculate kmat
+
+  nma <- enm_nma(kmat) # diagonalise kmat
+
+  result <- (lst(param, nodes, graph, eij, kmat, nma))
+  class(result) = "prot"
+
+  result
+
 }
 
 
 
 
 
-nodes <- function(pdb, node) {
+
+set_nodes <- function(pdb, node) {
   if (node == "calpha" | node == "ca") {
     prot <- prot_ca(pdb)
   } else if (node == "side_chain" | node == "sc") {
@@ -86,57 +103,6 @@ prot_ca <- function(pdb) {
 
 
 
-
-
-
-
-
-#' Set up ENM model
-#'
-#' Set up ENM model from node coordinates `xyz` and residue pdb numbers `pdb_site`.
-#'
-#' @param xyz The \code{3 x N} matrix containing the Cartesian coordinates of ENM nodes
-#' @param pdb_site The pdb numbering of network nodes
-#' @param model The ENM model variant (gnm, anm, hnm0, hnm, ming_wall, reach, pfgnm)
-#' @param d_max  The cut-off used to define contacts in some models
-#' @param ... Any other parameter
-#'
-#' @return A list containing the ENM graph `graph`, the matrix of versors `eij`, and the ENM K matrix `kmat`
-#'
-#' @export
-#'
-#' @examples
-#'
-#' @family enm builders
-enm_from_xyz <- function(xyz, pdb_site, model,  d_max, frustrated,...) {
-
-  # Calculate (relaxed) enm graph from xyz
-  # Returns list (graph, eij, kmat)
-
-  graph <- enm_graph_xyz(xyz, pdb_site, model,  d_max)
-
-  # calculate eij
-  eij <- eij_edge(xyz, graph$i, graph$j)
-
-  # calculate kmat
-  kmat <- kmat_graph(graph, eij, nsites = length(pdb_site), frustrated)
-
-  # diagonalise kmat
-  nma <- enm_nma(kmat)
-
-  # add (mode, evalue, umat, cmat)
-
-  # return enm object
-  result <- lst(graph = graph,
-                eij = eij,
-                kmat = kmat,
-                mode = nma$mode,
-                evalue = nma$evalue,
-                cmat = nma$cmat,
-                umat = nma$umat)
-
-  result
-}
 
 #' Calculate ENM graph
 #'
