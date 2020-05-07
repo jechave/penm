@@ -17,9 +17,9 @@ Add cmat_activation and kmat_activation to prot object
 }
 \seealso{
 Other enm builders: 
-\code{\link{enm_nma_basis}()},
-\code{\link{enm_nma}()},
 \code{\link{set_enm_graph}()},
-\code{\link{set_enm_kmat}()}
+\code{\link{set_enm_kmat}()},
+\code{\link{set_enm_nma_basis}()},
+\code{\link{set_enm_nma}()}
 }
 \concept{enm builders}

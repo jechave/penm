@@ -118,7 +118,7 @@ mutate_enm <- function(prot, model, d_max, frustrated) {
   prot$enm$kmat <- set_enm_kmat(prot$enm$graph, prot$enm$eij, prot$nsites, frustrated) # recalculate kmat
 
   # recalculate normal modes etc.
-  nma <- enm_nma(prot$enm$kmat) #returns mode, evalue, cmat, umat
+  nma <- set_enm_nma(prot$enm$kmat) #returns mode, evalue, cmat, umat
 
   prot$enm$mode <- nma$mode
   prot$enm$evalue <- nma$evalue

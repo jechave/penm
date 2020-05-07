@@ -30,7 +30,7 @@ set_enm <- function(pdb, node, model, d_max, frustrated) {
 
   kmat <- set_enm_kmat(graph, eij, nsites = length(pdb_site), frustrated) # calculate kmat
 
-  nma <- enm_nma(kmat) # diagonalise kmat
+  nma <- set_enm_nma(kmat) # diagonalise kmat
 
   result <- (lst(param, nodes, graph, eij, kmat, nma))
   class(result) = "prot"

@@ -15,7 +15,7 @@
 #'
 #'@family enm builders
 #'
-enm_nma <- function(kmat, TOL = 1.e-5) {
+set_enm_nma <- function(kmat, TOL = 1.e-5) {
   # Given an enm object for which kmat has already been defined, perform NMA
   # It returns a list containing mode, evalue, cmat, umat
   # Diagonalize
@@ -61,7 +61,7 @@ enm_nma <- function(kmat, TOL = 1.e-5) {
 #' @examples
 #'
 #'@family enm builders
-enm_nma_basis <- function(kmat, umat0, nbasis = ncol(umat0), TOL = 1.e-5) {
+set_enm_nma_basis <- function(kmat, umat0, nbasis = ncol(umat0), TOL = 1.e-5) {
   # Given an enm object for which kmat has already been defined, perform NMA
   # It returns a list containing mode, evalue, cmat, umat
   stopifnot(nbasis <= ncol(umat0)) # can't use less basis vectors than available
