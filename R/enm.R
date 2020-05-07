@@ -15,20 +15,13 @@ set_enm <- function(pdb, node, model, d_max, frustrated) {
 
   param <- set_enm_param(node, model, d_max, frustrated) # set list of parametersº
 
-
-
-
   nodes <-  set_enm_nodes(pdb, node)  # get xyz of nodes, pdb_site, and bfactor
 
-  # node coordinates and pdb_site labelings
-  xyz <- nodes$xyz
-  pdb_site <- nodes$pdb_site
+  graph <- set_enm_graph(nodes$xyz, nodes$pdb_site, param$model,  param$d_max) # calculate (relaxed) enm graph from xyz
 
-  graph <- set_enm_graph(xyz, pdb_site, model,  d_max) # calculate (relaxed) enm graph from xyz
+  eij <- set_enm_eij(nodes$xyz, graph$i, graph$j) # calculate eij
 
-  eij <- set_enm_eij(xyz, graph$i, graph$j) # calculate eij
-
-  kmat <- set_enm_kmat(graph, eij, nsites = length(pdb_site), frustrated) # calculate kmat
+  kmat <- set_enm_kmat(graph, eij, nsites = nodes$nsites, param$frustrated) # calculate kmat
 
   nma <- set_enm_nma(kmat) # diagonalise kmat
 

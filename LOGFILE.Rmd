@@ -169,6 +169,14 @@ Therefore, I need to change everywhere where prot objects are called in penm.R a
 
 ### **WARNING: v_min changes between update_enm = F and update_enm = T**
 
+### Refactor penm.R
+Get enm parameters from prot object rather than pass it independently in all penm.R funcitons
+
+- Eliminate model, d_max, and frustrated from arguments of get_mutant_site and functions called from there
+
+
+
+
 
 
 

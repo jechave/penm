@@ -31,7 +31,6 @@ if (FALSE)
 Other enm builders: 
 \code{\link{add_enm_activation}()},
 \code{\link{set_enm_kmat}()},
-\code{\link{set_enm_nma_basis}()},
 \code{\link{set_enm_nma}()}
 }
 \concept{enm builders}

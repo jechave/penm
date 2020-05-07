@@ -1,4 +1,7 @@
 library(here)
+library(tidyverse)
+library(bio3d)
+library(jefuns)
 
 load(here("data/pdb_2acy_A.rda"))
 load(here("data/prot_2acy_A_ming_wall_ca.rda"))

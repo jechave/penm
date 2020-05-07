@@ -40,9 +40,8 @@ str(wt)
 ```{r}
 
 mut <- get_mutant_site(wt, site_mut = 80, mutation = 1, 
-                       wt0 = wt,
-                       mut_sd_min = 1, dl_sigma = 0.3, update_enm = FALSE,
-                       model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+                       wt0 = wt, mut_sd_min = 1, dl_sigma = 0.3, update_enm = FALSE)
+                       
 
 str(mut)
 
@@ -54,8 +53,7 @@ str(mut)
 
 mut_update_enm <- get_mutant_site(wt, site_mut = 80, mutation = 1, 
                        wt0 = wt,
-                       mut_sd_min = 1, dl_sigma = 0.3, update_enm = TRUE,
-                       model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+                       mut_sd_min = 1, dl_sigma = 0.3, update_enm = TRUE)
 
 str(mut_update_enm)
 

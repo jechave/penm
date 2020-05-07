@@ -29,7 +29,6 @@ set_enm_kmat(graph, eij)
 Other enm builders: 
 \code{\link{add_enm_activation}()},
 \code{\link{set_enm_graph}()},
-\code{\link{set_enm_nma_basis}()},
 \code{\link{set_enm_nma}()}
 }
 \concept{enm builders}

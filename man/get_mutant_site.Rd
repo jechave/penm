@@ -12,10 +12,7 @@ get_mutant_site(
   wt0 = wt,
   mut_sd_min = 2,
   dl_sigma = 0.3,
-  update_enm = FALSE,
-  model = "ming_wall",
-  d_max = 10.5,
-  frustrated = FALSE
+  update_enm = FALSE
 )
 }
 \arguments{

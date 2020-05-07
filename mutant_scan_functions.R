@@ -7,9 +7,6 @@ get_mut_energy <- function(wt, site, mutation, update_enm, frustrated, seed = 20
                          wt,
                          mut_sd_min = param$mut$mut_sd_min,
                          dl_sigma = param$mut$dl_sigma,
-                         model = param$enm$model,
-                         d_max = param$enm$d_max,
-                         frustrated = frustrated,
                          update_enm = update_enm)
 
   tibble(v_min = enm_v_min(mut), g_entropy = enm_g_entropy(mut, beta))
@@ -23,9 +20,6 @@ get_mut <-function(wt, site, mutation = 1, dl_sigma = 1, update_enm = T, frustra
                   wt,
                   mut_sd_min = param$mut$mut_sd_min,
                   dl_sigma = dl_sigma,
-                  model = param$enm$model,
-                  d_max = param$enm$d_max,
-                  frustrated = frustrated,
                   update_enm = update_enm)
 }
 

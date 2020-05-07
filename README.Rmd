@@ -55,17 +55,17 @@ In this example, network nodes are placed at $C_\alpha$ coordinates, the model u
     
 ### penm dependencies
 
-* `get_mutant_site(wt, site_mut, mutation, seed, wt0, mut_sd_min, dl_sigma, update_enm, model, d_max, frustrated)`
+* `get_mutant_site(wt, site_mut, mutation, seed, wt0, mut_sd_min, dl_sigma, update_enm)`
   * mutates the graph 
   *  `get_force(wt, mut)`
   * calculates `dxyz`
   * `if (update_enm): 
-    * mutate_enm(mut, model, d_max, frustrated)`
-      * `mutate_graph(prot, model, d_max)`
-        * `enm_graph_xyz(xyz, pdb_site, model,  d_max)`
+    * mutate_enm(prot)`
+      * `mutate_graph(prot)`
+        * `set_enm_graph(xyz, pdb_site, model,  d_max)`
       * `mutate_eij(prot)`
         * `eij_edge(xyz,i, j)`
-      * `kmat_graph(graph, eij, nsites, frustrated)` 
+      * `set_enm_kmat(graph, eij, nsites, frustrated)` 
       * `enm_nma(kmat)`
   # recalculate normal modes etc.
   nma <- enm_nma(prot$enm$kmat) #returns mode, evalue, cmat, umat

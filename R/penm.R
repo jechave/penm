@@ -26,8 +26,7 @@
 get_mutant_site <- function(wt, site_mut, mutation = 0,
                             seed = 241956 + site_mut * mutation,
                             wt0 = wt,
-                            mut_sd_min = 2, dl_sigma = .3, update_enm = FALSE,
-                            model = "ming_wall", d_max = 10.5, frustrated = FALSE) {
+                            mut_sd_min = 2, dl_sigma = .3, update_enm = FALSE) {
 
   if (mutation == 0) {
     # if mutation is 0, return wt
@@ -60,9 +59,9 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
 
   if (update_enm) { # recalculate enm
     # recalculate (graph, kmat, etc. etc.)
-    mut <- mutate_enm(mut, model, d_max, frustrated)
+    mut <- mutate_enm(mut)
   } else {
-  # recalculate only equilibrium distances
+    # recalculate only equilibrium distances
     mut$graph$dij <- dij_edge(mut$nodes$xyz, mut$graph$i, mut$graph$j)
   }
 
@@ -105,21 +104,25 @@ get_force <- function(wt, mut) {
 
 
 
-
-
 #' mutate enm following change in protein structure and lij parameters
 #'
-mutate_enm <- function(prot, model, d_max, frustrated) {
+mutate_enm <- function(prot) {
   # it re-calculates what needs to be recalculated due to change in graph
 
+  model <- get_enm_model(prot)
+  d_max <- get_d_max(prot)
+  frustrated <- get_frustrated(prot)
 
-  prot <- mutate_graph(prot, model, d_max) # recalculate mutant's graph
+
+
+  prot <- mutate_graph(prot) # recalculate mutant's graph
   prot <- mutate_eij(prot) # recalculate eij versors, following change in graph
   prot$kmat <- set_enm_kmat(prot$graph, prot$eij, prot$nodes$nsites, frustrated) # recalculate kmat
 
   # recalculate normal modes etc.
   nma <- set_enm_nma(prot$kmat) #returns mode, evalue, cmat, umat
 
+  # put everything in object to return
   prot$nma$mode <- nma$mode
   prot$nma$evalue <- nma$evalue
   prot$nma$cmat <- nma$cmat
@@ -130,17 +133,21 @@ mutate_enm <- function(prot, model, d_max, frustrated) {
 
 #' mutate graph following change in structure
 #'
-mutate_graph <- function(mut, model, d_max) {
-  g1 <- mut$graph # the mut graph with wt contacts but mut lij parameters...
+mutate_graph <- function(prot) {
+
+  model <- get_enm_model(prot)
+  d_max <- get_d_max(prot)
+
+  g1 <- get_graph(prot)  # the mut graph with wt contacts but mut lij parameters...
 
   # the "self-consistent" graph: add/rm edges according to new xyz
-  g2 <- set_enm_graph(mut$nodes$xyz, mut$node$pdb_site, model = model,  d_max = d_max)
+  g2 <- set_enm_graph(get_xyz(prot), get_pdb_site(prot),  model = get_enm_model(prot),  d_max = get_d_max(prot))
 
   # the "frustrated" graph: keep lij for edges that haven't changed
   g2[g2$edge %in% g1$edge, "lij"] <- g1[g1$edge %in% g2$edge, "lij"]
 
-  mut$graph <- g2
-  mut
+  prot$graph <- g2
+  prot
 }
 
 #' mutate eij vectors, following change of structure and graph

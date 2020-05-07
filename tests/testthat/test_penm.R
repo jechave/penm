@@ -1,4 +1,8 @@
 library(here)
+library(tidyverse)
+library(jefuns)
+library(bio3d)
+
 
 load(here("data/pdb_2acy_A.rda"))
 load(here("data/wt.rda"))
@@ -14,8 +18,7 @@ test_that("get_mutant_site gets mut_lf", {
   expect_equal(
     get_mutant_site(wt, site_mut = 80, mutation = 1,
                     wt0 = wt,
-                    mut_sd_min = 1, dl_sigma = 0.3, update_enm = FALSE,
-                    model = "ming_wall", d_max = 10.5, frustrated = FALSE),
+                    mut_sd_min = 1, dl_sigma = 0.3, update_enm = FALSE),
     mut_lf)
 })
 
@@ -23,7 +26,6 @@ test_that("get_mutant_site gets mut_qf", {
   expect_equal(
     get_mutant_site(wt, site_mut = 80, mutation = 1,
                     wt0 = wt,
-                    mut_sd_min = 1, dl_sigma = 0.3, update_enm = TRUE,
-                    model = "ming_wall", d_max = 10.5, frustrated = FALSE),
+                    mut_sd_min = 1, dl_sigma = 0.3, update_enm = TRUE),
     mut_qf)
 })

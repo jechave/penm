@@ -4,7 +4,7 @@
 \alias{mutate_enm}
 \title{mutate enm following change in protein structure and lij parameters}
 \usage{
-mutate_enm(prot, model, d_max, frustrated)
+mutate_enm(prot)
 }
 \description{
 mutate enm following change in protein structure and lij parameters

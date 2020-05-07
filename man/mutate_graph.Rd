@@ -4,7 +4,7 @@
 \alias{mutate_graph}
 \title{mutate graph following change in structure}
 \usage{
-mutate_graph(mut, model, d_max)
+mutate_graph(prot)
 }
 \description{
 mutate graph following change in structure
