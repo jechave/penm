@@ -145,7 +145,7 @@ mutate_graph <- function(mut, model, d_max) {
 
 #' mutate eij vectors, following change of structure and graph
 mutate_eij <- function(mut) {
-  mut$enm$eij <- eij_edge(mut$xyz, mut$enm$graph$i, mut$enm$graph$j)
+  mut$enm$eij <- set_enm_eij(mut$xyz, mut$enm$graph$i, mut$enm$graph$j)
   mut
 }
 

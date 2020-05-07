@@ -26,7 +26,7 @@ set_enm <- function(pdb, node, model, d_max, frustrated) {
 
   graph <- set_enm_graph(xyz, pdb_site, model,  d_max) # calculate (relaxed) enm graph from xyz
 
-  eij <- eij_edge(xyz, graph$i, graph$j) # calculate eij
+  eij <- set_enm_eij(xyz, graph$i, graph$j) # calculate eij
 
   kmat <- kmat_graph(graph, eij, nsites = length(pdb_site), frustrated) # calculate kmat
 
@@ -129,7 +129,8 @@ prot_ca <- function(pdb) {
 #' @export
 #'
 #' @examples
-#' set_enm_graph(xyz, pdb_site)
+#' if (FALSE)
+#'  set_enm_graph(xyz, pdb_site, model, d_max)
 #'
 #'@family enm builders
 set_enm_graph <- function(xyz,
@@ -206,7 +207,7 @@ sdij_edge <- function(pdb_site,i,j) {
 #' @param xyz vector of xyz coordinates
 #' @return matrix with n_edge rows and 3 columns (x, y, z)
 #'
-eij_edge <- function(xyz,i,j) {
+set_enm_eij <- function(xyz,i,j) {
 
   stopifnot(length(i) == length(j))
   n_edges <- length(i)

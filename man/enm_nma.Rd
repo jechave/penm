@@ -25,8 +25,8 @@ enm_anm(enm, 1.e-10)
 \seealso{
 Other enm builders: 
 \code{\link{add_enm_activation}()},
-\code{\link{enm_graph_xyz}()},
 \code{\link{enm_nma_basis}()},
-\code{\link{kmat_graph}()}
+\code{\link{kmat_graph}()},
+\code{\link{set_enm_graph}()}
 }
 \concept{enm builders}

@@ -163,3 +163,12 @@ in the *plot\_enm.R* file.
   - Fixed getters according to new structure of prot
   - Changed queries by getters in enm module (but not in penm.R and
     activation.R): e.g. replaced prot\(enm\)umat by get\_umat(prot)
+
+## 7 May 2020
+
+### Rename functions called by `set_enm`
+
+  - Extract function `set_enm_param`
+  - `set_nodes` to `set_enm_nodes`
+  - `enm_graph_xyz to set_enm_graph`
+  - `eij_edge to set_enm_eij`
