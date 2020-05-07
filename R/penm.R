@@ -134,7 +134,7 @@ mutate_graph <- function(mut, model, d_max) {
   g1 <- mut$enm$graph # the mut graph with wt contacts but mut lij parameters...
 
   # the "self-consistent" graph: add/rm edges according to new xyz
-  g2 <- enm_graph_xyz(mut$xyz, mut$pdb_site, model = model,  d_max = d_max)
+  g2 <- set_enm_graph(mut$xyz, mut$pdb_site, model = model,  d_max = d_max)
 
   # the "frustrated" graph: keep lij for edges that haven't changed
   g2[g2$edge %in% g1$edge, "lij"] <- g1[g1$edge %in% g2$edge, "lij"]
