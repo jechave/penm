@@ -145,6 +145,14 @@ Now it calculates prot then calls plot functions in the order they are in the *p
 e.g. replaced prot$enm$umat by get_umat(prot)
 
 
+## 7 May 2020
+
+### Rename functions called by `set_enm`
+
+- Extract function `set_enm_param`
+- `set_nodes` to `set_enm_nodes`
+
+
 
 
 

@@ -13,9 +13,12 @@
 #'
 set_enm <- function(pdb, node, model, d_max, frustrated) {
 
-  param <- lst(node, model, d_max, frustrated) # set list of parametersº
+  param <- set_enm_param(node, model, d_max, frustrated) # set list of parametersº
 
-  nodes <-  set_nodes(pdb, node)  # get xyz of nodes, pdb_site, and bfactor
+
+
+
+  nodes <-  set_enm_nodes(pdb, node)  # get xyz of nodes, pdb_site, and bfactor
 
   # node coordinates and pdb_site labelings
   xyz <- nodes$xyz
@@ -38,10 +41,14 @@ set_enm <- function(pdb, node, model, d_max, frustrated) {
 
 
 
+#' set enm parameters list
+#'
+set_enm_param <-  function(node, model, d_max, frustrated)  lst(node, model, d_max, frustrated)
 
 
-
-set_nodes <- function(pdb, node) {
+#' set enm node labelings and coordinates
+#'
+set_enm_nodes <- function(pdb, node) {
   if (node == "calpha" | node == "ca") {
     prot <- prot_ca(pdb)
   } else if (node == "side_chain" | node == "sc") {
@@ -51,6 +58,8 @@ set_nodes <- function(pdb, node) {
   }
 }
 
+#' set side-chain nodes
+#'
 prot_sc <- function(pdb) {
   # calculate xyz coordinates of ca, cb, com, qm (qb by Micheletti), ql (qb by Levitt)
   r = residue.coordinates(pdb)
@@ -83,6 +92,8 @@ prot_sc <- function(pdb) {
   result
 }
 
+#' set CA nodes
+#'
 prot_ca <- function(pdb) {
   sel <- atom.select(pdb, elety = "CA") # select CA
 
@@ -163,6 +174,7 @@ enm_graph_xyz <- function(xyz,
   }
 
 #' Calculate distance of edges
+#'
 dij_edge <- function(xyz,i,j) {
   stopifnot(length(i) == length(j))
   xyz <- my_as_xyz(xyz)
@@ -177,6 +189,7 @@ dij_edge <- function(xyz,i,j) {
 }
 
 #' Calculate edge sequence distance
+#'
 sdij_edge <- function(pdb_site,i,j) {
   # sequence distance
   stopifnot(length(i) == length(j))
