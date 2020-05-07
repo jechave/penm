@@ -115,7 +115,7 @@ mutate_enm <- function(prot, model, d_max, frustrated) {
 
   prot <- mutate_graph(prot, model, d_max) # recalculate mutant's graph
   prot <- mutate_eij(prot) # recalculate eij versors, following change in graph
-  prot$enm$kmat <- kmat_graph(prot$enm$graph, prot$enm$eij, prot$nsites, frustrated) # recalculate kmat
+  prot$enm$kmat <- set_enm_kmat(prot$enm$graph, prot$enm$eij, prot$nsites, frustrated) # recalculate kmat
 
   # recalculate normal modes etc.
   nma <- enm_nma(prot$enm$kmat) #returns mode, evalue, cmat, umat

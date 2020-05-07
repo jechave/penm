@@ -32,6 +32,6 @@ Other enm builders:
 \code{\link{add_enm_activation}()},
 \code{\link{enm_nma_basis}()},
 \code{\link{enm_nma}()},
-\code{\link{kmat_graph}()}
+\code{\link{set_enm_kmat}()}
 }
 \concept{enm builders}

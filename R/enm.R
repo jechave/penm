@@ -28,7 +28,7 @@ set_enm <- function(pdb, node, model, d_max, frustrated) {
 
   eij <- set_enm_eij(xyz, graph$i, graph$j) # calculate eij
 
-  kmat <- kmat_graph(graph, eij, nsites = length(pdb_site), frustrated) # calculate kmat
+  kmat <- set_enm_kmat(graph, eij, nsites = length(pdb_site), frustrated) # calculate kmat
 
   nma <- enm_nma(kmat) # diagonalise kmat
 
@@ -239,13 +239,13 @@ set_enm_eij <- function(xyz,i,j) {
 #' @return The \code{3 nsites x 3 nsites} stiffness matrix of the ENM
 #'
 #' @examples
-#' kmat_graph(graph, eij)
+#' set_enm_kmat(graph, eij)
 #'
 #' @export
 #'
 #'@family enm builders
 #'
-kmat_graph <- function(graph, eij, nsites, frustrated) {
+set_enm_kmat <- function(graph, eij, nsites, frustrated) {
   stopifnot(max(graph$i, graph$j) <= nsites,
             nrow(graph) == nrow(eij))
   kmat <- array(0, dim = c(3, nsites, 3, nsites))

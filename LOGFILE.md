@@ -172,3 +172,4 @@ in the *plot\_enm.R* file.
   - `set_nodes` to `set_enm_nodes`
   - `enm_graph_xyz to set_enm_graph`
   - `eij_edge to set_enm_eij`
+  - `kmat_graph to set_enm_kmat`
