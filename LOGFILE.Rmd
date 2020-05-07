@@ -156,6 +156,22 @@ e.g. replaced prot$enm$umat by get_umat(prot)
 - `kmat_graph` to `set_enm_kmat`
 - `enm_nma` to `set_enm_nma`
 
+### Fix calls to prot object in penm.R and related
+
+The prot object of the enm module was restructured.
+Therefore, I need to change everywhere where prot objects are called in penm.R and related.
+
+- Did all the necessary renaming in penm.R and penm_analysis.R
+- Checked that get_penm_mutant works
+- Wrote automatic tests test_enm.R test_penm.R for further refactoring
+- Tested automatically set_enm() and get_mutant_site(): they work.
+- Commited to git and github
+
+### **WARNING: v_min changes between update_enm = F and update_enm = T**
+
+
+
+
 
 
 

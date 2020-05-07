@@ -174,3 +174,18 @@ in the *plot\_enm.R* file.
   - `eij_edge` to `set_enm_eij`
   - `kmat_graph` to `set_enm_kmat`
   - `enm_nma` to `set_enm_nma`
+
+### Fix calls to prot object in penm.R and related
+
+The prot object of the enm module was restructured. Therefore, I need to
+change everywhere where prot objects are called in penm.R and related.
+
+  - Did all the necessary renaming in penm.R and penm\_analysis.R
+  - Checked that get\_penm\_mutant works
+  - Wrote automatic tests test\_enm.R test\_penm.R for further
+    refactoring
+  - Tested automatically set\_enm() and get\_mutant\_site(): they work.
+  - Commited to git and
+github
+
+### **WARNING: v\_min changes between update\_enm = F and update\_enm = T**

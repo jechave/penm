@@ -1,0 +1,78 @@
+---
+title: "Test penm modeule of penm package"
+author: "Julian Echave"
+date: "4/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load libraries and functions
+
+```{r}
+# load libraries
+library(tidyverse)
+library(ggridges)
+library(cowplot)
+library(bio3d)
+library(penm)
+library(jefuns)
+```
+
+
+## Check pdb file and read wt coordinates
+
+```{r}
+pdb_file <- "data-raw/2acy_A.pdb"
+pdb <- read.pdb(pdb_file)
+
+wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE) 
+
+str(wt)
+```
+
+
+## Get a mutant with update_enm = FALSE 
+
+
+```{r}
+
+mut <- get_mutant_site(wt, site_mut = 80, mutation = 1, 
+                       wt0 = wt,
+                       mut_sd_min = 1, dl_sigma = 0.3, update_enm = FALSE,
+                       model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+
+str(mut)
+
+```
+## Get a mutant with update_enm = FALSE 
+
+
+```{r}
+
+mut_update_enm <- get_mutant_site(wt, site_mut = 80, mutation = 1, 
+                       wt0 = wt,
+                       mut_sd_min = 1, dl_sigma = 0.3, update_enm = TRUE,
+                       model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+
+str(mut_update_enm)
+
+```
+```{r}
+df <- tibble(protein = c("wt", "mut_no_update_enm", "mut_update_enm"),
+             v_min = c(
+               enm_v_min(wt), 
+               enm_v_min(mut), 
+               enm_v_min(mut_update_enm)),
+             g_entropy = c(
+               enm_g_entropy(wt, beta_boltzmann()),
+               enm_g_entropy(mut, beta_boltzmann()),
+               enm_g_entropy(mut_update_enm, beta_boltzmann()))
+             )
+df
+             
+
+```
+

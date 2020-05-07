@@ -40,30 +40,30 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
 
   # pick edges to mutate
   mut_edge <-
-    (mut$enm$graph$i == site_mut |
-       mut$enm$graph$j == site_mut) &
-    mut$enm$graph$sdij >= mut_sd_min
+    (mut$graph$i == site_mut |
+       mut$graph$j == site_mut) &
+    mut$graph$sdij >= mut_sd_min
 
   # mutate edges
   n_mut_edge <- sum(mut_edge)
   dlij <- rnorm(n_mut_edge, 0, dl_sigma)
   #dlij <- sample(c(-dl_max,0,dl_max),size = n_mut_edge, replace = TRUE)
-  mut$enm$graph$lij[mut_edge] <-  wt0$enm$graph$lij[mut_edge] + dlij # add perturbation to spring parameters
+  mut$graph$lij[mut_edge] <-  wt0$graph$lij[mut_edge] + dlij # add perturbation to spring parameters
 
   # calculate mutant equilibrium conformation (LRA)
   f <- get_force(wt, mut)
   nzf <- f != 0 # consider only non-zero forces, to make next step faster
-  dxyz <-  crossprod(wt$enm$cmat[nzf, ], f[nzf])
-  mut$xyz <- wt$xyz + dxyz
+  dxyz <-  crossprod(wt$nma$cmat[nzf, ], f[nzf])
+  mut$nodes$xyz <- wt$nodes$xyz + dxyz
 
   # recalculate enm
 
   if (update_enm) { # recalculate enm
-    # recalculate whole mut$enm (graph, kmat, etc. etc.)
+    # recalculate (graph, kmat, etc. etc.)
     mut <- mutate_enm(mut, model, d_max, frustrated)
   } else {
   # recalculate only equilibrium distances
-    mut$enm$graph$dij <- dij_edge(mut$xyz, mut$enm$graph$i, mut$enm$graph$j)
+    mut$graph$dij <- dij_edge(mut$nodes$xyz, mut$graph$i, mut$graph$j)
   }
 
   mut
@@ -83,16 +83,16 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
 #' @examples
 #' @family enm mutating functions
 get_force <- function(wt, mut) {
-  n_edges <- nrow(wt$enm$graph)
-  nsites <- wt$nsites
-  i <- wt$enm$graph$i
-  j <- wt$enm$graph$j
-  dij <- wt$enm$graph$dij # equilibrium of wt
-  kij <- wt$enm$graph$kij
-  lij <- mut$enm$graph$lij # mutant's spring lengths
+  n_edges <- nrow(wt$graph)
+  nsites <- wt$nodes$nsites
+  i <- wt$graph$i
+  j <- wt$graph$j
+  dij <- wt$graph$dij # equilibrium of wt
+  kij <- wt$graph$kij
+  lij <- mut$graph$lij # mutant's spring lengths
   fij = kij*(dij - lij) # Force on i in the direction from i to j.
 
-  eij <- wt$enm$eij
+  eij <- wt$eij
   f <- matrix(0, nrow = 3, ncol = nsites)
   for (k in seq(n_edges)) {
     ik <- i[k]
@@ -115,15 +115,15 @@ mutate_enm <- function(prot, model, d_max, frustrated) {
 
   prot <- mutate_graph(prot, model, d_max) # recalculate mutant's graph
   prot <- mutate_eij(prot) # recalculate eij versors, following change in graph
-  prot$enm$kmat <- set_enm_kmat(prot$enm$graph, prot$enm$eij, prot$nsites, frustrated) # recalculate kmat
+  prot$kmat <- set_enm_kmat(prot$graph, prot$eij, prot$nodes$nsites, frustrated) # recalculate kmat
 
   # recalculate normal modes etc.
-  nma <- set_enm_nma(prot$enm$kmat) #returns mode, evalue, cmat, umat
+  nma <- set_enm_nma(prot$kmat) #returns mode, evalue, cmat, umat
 
-  prot$enm$mode <- nma$mode
-  prot$enm$evalue <- nma$evalue
-  prot$enm$cmat <- nma$cmat
-  prot$enm$umat <- nma$umat
+  prot$nma$mode <- nma$mode
+  prot$nma$evalue <- nma$evalue
+  prot$nma$cmat <- nma$cmat
+  prot$nma$umat <- nma$umat
 
   prot
 }
@@ -131,21 +131,21 @@ mutate_enm <- function(prot, model, d_max, frustrated) {
 #' mutate graph following change in structure
 #'
 mutate_graph <- function(mut, model, d_max) {
-  g1 <- mut$enm$graph # the mut graph with wt contacts but mut lij parameters...
+  g1 <- mut$graph # the mut graph with wt contacts but mut lij parameters...
 
   # the "self-consistent" graph: add/rm edges according to new xyz
-  g2 <- set_enm_graph(mut$xyz, mut$pdb_site, model = model,  d_max = d_max)
+  g2 <- set_enm_graph(mut$nodes$xyz, mut$node$pdb_site, model = model,  d_max = d_max)
 
   # the "frustrated" graph: keep lij for edges that haven't changed
   g2[g2$edge %in% g1$edge, "lij"] <- g1[g1$edge %in% g2$edge, "lij"]
 
-  mut$enm$graph <- g2
+  mut$graph <- g2
   mut
 }
 
 #' mutate eij vectors, following change of structure and graph
 mutate_eij <- function(mut) {
-  mut$enm$eij <- set_enm_eij(mut$xyz, mut$enm$graph$i, mut$enm$graph$j)
+  mut$eij <- set_enm_eij(mut$nodes$xyz, mut$graph$i, mut$graph$j)
   mut
 }
 
@@ -154,6 +154,3 @@ mutate_eij <- function(mut) {
 enm_update <- function(...) {
   stop("enm_update has been renamed to mutate_enm")
 }
-
-
-
