@@ -16,7 +16,7 @@ object for a protein. Then, create the `prot` object, that contains the
 full ENM analysis.
 
     bio3d::read.pdb("data-raw/2acy_A.pdb") # read a pdb file
-    prot <- set_prot(pdb, node = "calpha", model = "anm", d_max = 10.5, frustrated = FALSE)
+    prot <- set_enm(pdb, node = "calpha", model = "anm", d_max = 10.5, frustrated = FALSE)
 
 In this example, network nodes are placed at \(C_\alpha\) coordinates,
 the model used is Bahar’s Anisotropic Network Model (“anm”) with a
@@ -27,36 +27,8 @@ indicates whether to add frustrations to the model.
 
 ### enm dependencies
 
-  - `set_prot(pdb, node, model, d_max, frustrated)`
-      - `nodes(pdb, node)`
-          - `prot_ca(pdb)`
-          - `prot_sc(pdb)`
-              - `residue.coordinates(pdb)`
-              - `residue.bfactors(pdb)`
-      - `enm_from_xyz(xyz, pdb_site, model, d_max, frustrated)`
-          - `enm_graph_xyz(xyz, pdb_site, model, d_max)`
-              - `my_as_xyz(xyz)`
-              - `kij(dij, d_max)`
-              - `dij_edge(xyz, i, j))`
-              - `sdij = sdij_edge(pdb_site, i, j))`
-          - `eij <- eij_edge(xyz, i, j)`
-              - `my_as_xyz(xyz)`
-          - `kmat_graph(graph, eij, nsites, frustrated)`
+![Dependencies of `set_enm()`.](images/tree_set_enm.png)
 
 ### penm dependencies
 
-  - `get_mutant_site(wt, site_mut, mutation, seed, wt0, mut_sd_min,
-    dl_sigma, update_enm, model, d_max, frustrated)`
-      - mutates the graph
-      - `get_force(wt, mut)`
-      - calculates `dxyz`
-      - `if (update_enm): * mutate_enm(mut, model, d_max, frustrated)`
-          - `mutate_graph(prot, model, d_max)`
-              - `enm_graph_xyz(xyz, pdb_site, model, d_max)`
-          - `mutate_eij(prot)`
-              - `eij_edge(xyz,i, j)`
-          - `kmat_graph(graph, eij, nsites, frustrated)`
-          - `enm_nma(kmat)` \# recalculate normal modes etc. nma \<-
-            enm\_nma(prot\(enm\)kmat) \#returns mode, evalue, cmat, umat
-      - `if (!update_enm):`
-          - `dij_edge(xyz, i, j)`
+![Dependencies of `get_mutant_site()`](images/tree_get_mutant_site.png)

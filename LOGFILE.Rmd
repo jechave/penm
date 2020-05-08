@@ -185,7 +185,9 @@ I refactored set_enm by adding functions that depend as much as possible only on
 - added `set_enm_nma()` to file *enm.R* and deleted *enm_nma.R*
 - old `set_enm_` are now `calculate_enm_`
 
-### Replace `calculate_enm_` by `set_enm_` in *penm.R* as much as possible
+### Refactor `get_mutant_site()` in *penm.R*
+
+- replaced all `calculate_enm_` functions by `set_enm_(prot)` functions in *penm.R*
 
 
 

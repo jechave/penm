@@ -7,7 +7,7 @@ output:  github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, fig.cap = TRUE)
 ```
 
 
@@ -23,7 +23,7 @@ Then, create the `prot` object, that contains the full ENM analysis.
 
 ```
 bio3d::read.pdb("data-raw/2acy_A.pdb") # read a pdb file
-prot <- set_prot(pdb, node = "calpha", model = "anm", d_max = 10.5, frustrated = FALSE)
+prot <- set_enm(pdb, node = "calpha", model = "anm", d_max = 10.5, frustrated = FALSE)
 ```
 In this example, network nodes are placed at $C_\alpha$ coordinates, the model used is Bahar's Anisotropic Network Model ("anm") with a cut-off distance to define contacts of `d_max = 10.5`. `frustrated` indicates whether to add frustrations to the model.
 
@@ -34,47 +34,15 @@ In this example, network nodes are placed at $C_\alpha$ coordinates, the model u
 
 ### enm dependencies
 
-- `set_prot(pdb, node, model, d_max, frustrated)`
-  * `nodes(pdb, node)`
-    + `prot_ca(pdb)`
-    + `prot_sc(pdb)`
-      * `residue.coordinates(pdb)`
-      * `residue.bfactors(pdb)`
-  * `enm_from_xyz(xyz, pdb_site, model, d_max, frustrated)`
-    + `enm_graph_xyz(xyz, pdb_site, model,  d_max)`
-      * `my_as_xyz(xyz)`
-      * `kij(dij, d_max)`
-      * `dij_edge(xyz, i, j))`
-      * `sdij = sdij_edge(pdb_site, i, j))`
-    + `eij <- eij_edge(xyz, i, j)`
-      * `my_as_xyz(xyz)`
-    + `kmat_graph(graph, eij, nsites, frustrated)`
+  ![Dependencies of `set_enm()`.](images/tree_set_enm.png)
     
     
     
     
 ### penm dependencies
 
-* `get_mutant_site(wt, site_mut, mutation, seed, wt0, mut_sd_min, dl_sigma, update_enm)`
-  * mutates the graph 
-  *  `get_force(wt, mut)`
-  * calculates `dxyz`
-  * `if (update_enm): 
-    * mutate_enm(prot)`
-      * `mutate_graph(prot)`
-        * `set_enm_graph(xyz, pdb_site, model,  d_max)`
-      * `mutate_eij(prot)`
-        * `eij_edge(xyz,i, j)`
-      * `set_enm_kmat(graph, eij, nsites, frustrated)` 
-      * `enm_nma(kmat)`
-  # recalculate normal modes etc.
-  nma <- enm_nma(prot$enm$kmat) #returns mode, evalue, cmat, umat
-  * `if (!update_enm):`
-    * `dij_edge(xyz, i, j)`
-    
-  
-  
-  
+
+   ![Dependencies of `get_mutant_site()`](images/tree_get_mutant_site.png)
   
                             
 

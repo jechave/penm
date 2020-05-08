@@ -107,26 +107,12 @@ get_force <- function(wt, mut) {
 #' mutate enm following change in protein structure and lij parameters
 #'
 mutate_enm <- function(prot) {
-  # it re-calculates what needs to be recalculated due to change in graph
 
-  model <- get_enm_model(prot)
-  d_max <- get_d_max(prot)
-  frustrated <- get_frustrated(prot)
-
-
-
-  prot <- mutate_graph(prot) # recalculate mutant's graph
-  prot <- mutate_eij(prot) # recalculate eij versors, following change in graph
-  prot$kmat <- calculate_enm_kmat(prot$graph, prot$eij, prot$nodes$nsites, frustrated) # recalculate kmat
-
-  # recalculate normal modes etc.
-  nma <- calculate_enm_nma(prot$kmat) #returns mode, evalue, cmat, umat
-
-  # put everything in object to return
-  prot$nma$mode <- nma$mode
-  prot$nma$evalue <- nma$evalue
-  prot$nma$cmat <- nma$cmat
-  prot$nma$umat <- nma$umat
+  prot <- prot %>%
+    mutate_graph() %>%
+    set_enm_eij() %>%
+    set_enm_kmat() %>%
+    set_enm_nma()
 
   prot
 }
@@ -135,13 +121,11 @@ mutate_enm <- function(prot) {
 #'
 mutate_graph <- function(prot) {
 
-  model <- get_enm_model(prot)
-  d_max <- get_d_max(prot)
-
-  g1 <- get_graph(prot)  # the mut graph with wt contacts but mut lij parameters...
+  # the mut graph with wt contacts but mut lij parameters...
+  g1 <- get_graph(prot)
 
   # the "self-consistent" graph: add/rm edges according to new xyz
-  g2 <- calculate_enm_graph(get_xyz(prot), get_pdb_site(prot),  model = get_enm_model(prot),  d_max = get_d_max(prot))
+  g2 <- set_enm_graph(prot)$graph
 
   # the "frustrated" graph: keep lij for edges that haven't changed
   g2[g2$edge %in% g1$edge, "lij"] <- g1[g1$edge %in% g2$edge, "lij"]
@@ -150,11 +134,6 @@ mutate_graph <- function(prot) {
   prot
 }
 
-#' mutate eij vectors, following change of structure and graph
-mutate_eij <- function(mut) {
-  mut$eij <- calculate_enm_eij(mut$nodes$xyz, mut$graph$i, mut$graph$j)
-  mut
-}
 
 #' Depreciated, use mutate_enm instead
 #'
