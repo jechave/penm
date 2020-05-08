@@ -2,10 +2,10 @@
 % Please edit documentation in R/enm.R
 \name{set_enm_nodes}
 \alias{set_enm_nodes}
-\title{set enm node labelings and coordinates}
+\title{Set nodes of prot object}
 \usage{
-set_enm_nodes(pdb, node)
+set_enm_nodes(prot, pdb)
 }
 \description{
-set enm node labelings and coordinates
+Set nodes of prot object
 }

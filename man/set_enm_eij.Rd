@@ -2,18 +2,10 @@
 % Please edit documentation in R/enm.R
 \name{set_enm_eij}
 \alias{set_enm_eij}
-\title{Calculate unit vectors of edges}
+\title{Set eij unit vectors of prot object}
 \usage{
-set_enm_eij(xyz, i, j)
-}
-\arguments{
-\item{xyz}{vector of xyz coordinates}
-
-\item{i, j}{integer vectors of nodes connected in each edge}
-}
-\value{
-matrix with n_edge rows and 3 columns (x, y, z)
+set_enm_eij(prot)
 }
 \description{
-Calculate unit vectors of edges
+Set eij unit vectors of prot object
 }

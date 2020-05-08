@@ -2,35 +2,10 @@
 % Please edit documentation in R/enm.R
 \name{set_enm_graph}
 \alias{set_enm_graph}
-\title{Calculate ENM graph}
+\title{Set graph of prot object}
 \usage{
-set_enm_graph(xyz, pdb_site, model, d_max, ...)
-}
-\arguments{
-\item{xyz}{matrix of size \code{c(3,N)} containing each column the \code{x, y, z} coordinates of each of N nodes}
-
-\item{pdb_site}{integer vector of size N containing the number of each node (pdb residue number)}
-
-\item{model}{character variable specifying the ENM model variant, default is \code{"gnm"}, options:
-\code{gnm, anm, ming_wall, hnm, hnm0, pfgnm, reach}.}
-
-\item{d_max}{distance-cutoff to define network contacts}
-}
-\value{
-a tibble that contains the graph representation of the network
+set_enm_graph(prot)
 }
 \description{
-Calculates graph representation of Elastic Network Model (ENM), the typical relaxed case (lij = dij)
+Set graph of prot object
 }
-\examples{
-if (FALSE)
- set_enm_graph(xyz, pdb_site, model, d_max)
-
-}
-\seealso{
-Other enm builders: 
-\code{\link{add_enm_activation}()},
-\code{\link{set_enm_kmat}()},
-\code{\link{set_enm_nma}()}
-}
-\concept{enm builders}

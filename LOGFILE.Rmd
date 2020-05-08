@@ -175,6 +175,26 @@ Get enm parameters from prot object rather than pass it independently in all pen
 - Eliminate model, d_max, and frustrated from arguments of get_mutant_site and functions called from there
 
 
+## 8 May 2020
+
+### Refactor set_enm 
+
+I refactored set_enm by adding functions that depend as much as possible only on prot objects, so that parameters are passed through prot.
+
+- new set_enm_ functions depend mostly on `prot` rather than explicitly on its components
+- added `set_enm_nma()` to file *enm.R* and deleted *enm_nma.R*
+- old `set_enm_` are now `calculate_enm_`
+
+### Replace `calculate_enm_` by `set_enm_` in *penm.R* as much as possible
+
+
+
+
+
+
+
+
+
 
 
 

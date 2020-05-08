@@ -1,3 +1,7 @@
+
+# Create and set prot object ----------------------------------------------
+
+
 #' Set up ENM from bio3d pdb object
 #'
 #' @param pdb a pdb object obtained using bio3d::read.pdb
@@ -12,36 +16,88 @@
 #' @examples
 #'
 set_enm <- function(pdb, node, model, d_max, frustrated) {
+  prot <- create_enm() %>%
+    set_enm_param(node = node, model = model, d_max = d_max, frustrated = frustrated) %>%
+    set_enm_nodes(pdb = pdb) %>%
+    set_enm_graph() %>%
+    set_enm_eij() %>%
+    set_enm_kmat() %>%
+    set_enm_nma()
 
-  param <- set_enm_param(node, model, d_max, frustrated) # set list of parametersº
-
-  nodes <-  set_enm_nodes(pdb, node)  # get xyz of nodes, pdb_site, and bfactor
-
-  graph <- set_enm_graph(nodes$xyz, nodes$pdb_site, param$model,  param$d_max) # calculate (relaxed) enm graph from xyz
-
-  eij <- set_enm_eij(nodes$xyz, graph$i, graph$j) # calculate eij
-
-  kmat <- set_enm_kmat(graph, eij, nsites = nodes$nsites, param$frustrated) # calculate kmat
-
-  nma <- set_enm_nma(kmat) # diagonalise kmat
-
-  result <- (lst(param, nodes, graph, eij, kmat, nma))
-  class(result) = "prot"
-
-  result
-
+  prot
 }
 
 
 
+# prot versions of setters ------------------------------------------------
+
+#' Create an empty prot object
+#'
+create_enm <- function() {
+  result <- lst(param = NA, nodes = NA, graph = NA, eij = NA, kmat = NA, nma = NA)
+  class(result) <- "prot"
+  result
+}
+
+#' Set param of prot object
+#'
+set_enm_param <- function(prot, node, model, d_max, frustrated) {
+  result <- prot
+  result$param <- calculate_enm_param(node, model, d_max, frustrated)
+  result
+}
+
+#' Set nodes of prot object
+#'
+set_enm_nodes <- function(prot, pdb) {
+  result <- prot
+  result$nodes <- calculate_enm_nodes(pdb, get_enm_node(prot))
+  result
+}
+
+#' Set graph of prot object
+#'
+set_enm_graph <- function(prot) {
+  result <- prot
+  result$graph <- calculate_enm_graph(get_xyz(prot), get_pdb_site(prot), get_enm_model(prot), get_d_max(prot))
+  result
+}
+
+#' Set eij unit vectors of prot object
+#'
+set_enm_eij <- function(prot) {
+  result <- prot
+  result$eij <- calculate_enm_eij(get_xyz(prot), get_graph(prot)$i, get_graph(prot)$j)
+  result
+}
+
+#' Set enm's kmat of prot object
+#'
+set_enm_kmat <- function(prot) {
+  result <- prot
+  result$kmat <- calculate_enm_kmat(get_graph(prot), get_eij(prot), get_nsites(prot), get_frustrated(prot))
+  result
+}
+
+#' Set normal-mode-analysis component of prot object
+set_enm_nma <- function(prot) {
+  result <- prot
+  result$nma <- calculate_enm_nma(get_kmat(prot))
+  result
+}
+
+
+# Set primitives ----------------------------------------------------------
+
 #' set enm parameters list
 #'
-set_enm_param <-  function(node, model, d_max, frustrated)  lst(node, model, d_max, frustrated)
+calculate_enm_param <-  function(node, model, d_max, frustrated)  lst(node, model, d_max, frustrated)
+
 
 
 #' set enm node labelings and coordinates
 #'
-set_enm_nodes <- function(pdb, node) {
+calculate_enm_nodes <- function(pdb, node) {
   if (node == "calpha" | node == "ca") {
     prot <- prot_ca(pdb)
   } else if (node == "side_chain" | node == "sc") {
@@ -123,10 +179,10 @@ prot_ca <- function(pdb) {
 #'
 #' @examples
 #' if (FALSE)
-#'  set_enm_graph(xyz, pdb_site, model, d_max)
+#'  calculate_enm_graph(xyz, pdb_site, model, d_max)
 #'
 #'@family enm builders
-set_enm_graph <- function(xyz,
+calculate_enm_graph <- function(xyz,
            pdb_site,
            model,
            d_max,
@@ -200,7 +256,7 @@ sdij_edge <- function(pdb_site,i,j) {
 #' @param xyz vector of xyz coordinates
 #' @return matrix with n_edge rows and 3 columns (x, y, z)
 #'
-set_enm_eij <- function(xyz,i,j) {
+calculate_enm_eij <- function(xyz,i,j) {
 
   stopifnot(length(i) == length(j))
   n_edges <- length(i)
@@ -232,13 +288,13 @@ set_enm_eij <- function(xyz,i,j) {
 #' @return The \code{3 nsites x 3 nsites} stiffness matrix of the ENM
 #'
 #' @examples
-#' set_enm_kmat(graph, eij)
+#' calculate_enm_kmat(graph, eij)
 #'
 #' @export
 #'
 #'@family enm builders
 #'
-set_enm_kmat <- function(graph, eij, nsites, frustrated) {
+calculate_enm_kmat <- function(graph, eij, nsites, frustrated) {
   stopifnot(max(graph$i, graph$j) <= nsites,
             nrow(graph) == nrow(eij))
   kmat <- array(0, dim = c(3, nsites, 3, nsites))
@@ -263,3 +319,53 @@ set_enm_kmat <- function(graph, eij, nsites, frustrated) {
   dim(kmat) <- c(3 * nsites, 3 * nsites)
   kmat
 }
+
+
+#' Perform Normal Mode Analysis
+#'
+#' Given an enm `kmat`, perform NMA
+#'
+#' @param kmat The K matrix to diagonalize
+#' @param TOL=1.e-5 A small value, eigenvectors with eigenvalues larger than `TOL` are discarded
+#'
+#' @return A list with elements \code{mode}, \code{evalue}, \code{cmat}, and \code{umat}
+#'
+#' @examples
+#'
+#' enm_anm(enm, 1.e-10)
+#'
+#' @export
+#'
+#'@family enm builders
+#'
+calculate_enm_nma <- function(kmat, TOL = 1.e-5) {
+  # Given an enm object for which kmat has already been defined, perform NMA
+  # It returns a list containing mode, evalue, cmat, umat
+  # Diagonalize
+  eig <- eigen(kmat, symmetric = TRUE)
+  evalue <- eig$values
+  umat <- eig$vectors
+  modes <- evalue > TOL
+  evalue <- evalue[modes]
+  umat  <- umat[, modes]
+
+  nmodes <- sum(modes)
+  mode <- seq.int(from = nmodes, to = 1, by = -1)
+  evalue <- evalue[mode]
+  umat <- umat[, mode]
+  mode <- mode[mode]
+
+
+  cmat <-  umat %*% ((1 / evalue) * t(umat))
+
+  nma <- list(
+    mode = mode,
+    evalue = evalue,
+    cmat = cmat,
+    umat = umat
+  )
+  nma
+}
+
+
+

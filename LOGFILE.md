@@ -197,3 +197,19 @@ all penm.R funcitons
 
   - Eliminate model, d\_max, and frustrated from arguments of
     get\_mutant\_site and functions called from there
+
+## 8 May 2020
+
+### Refactor set\_enm
+
+I refactored set\_enm by adding functions that depend as much as
+possible only on prot objects, so that parameters are passed through
+prot.
+
+  - new set\_enm\_ functions depend mostly on `prot` rather than
+    explicitly on its components
+  - added `set_enm_nma()` to file *enm.R* and deleted *enm\_nma.R*
+  - old `set_enm_` are now
+`calculate_enm_`
+
+### Replace `calculate_enm_` by `set_enm_` in *penm.R* as much as possible

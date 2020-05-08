@@ -2,33 +2,10 @@
 % Please edit documentation in R/enm.R
 \name{set_enm_kmat}
 \alias{set_enm_kmat}
-\title{Calculate kmat given the ENM graph}
+\title{Set enm's kmat of prot object}
 \usage{
-set_enm_kmat(graph, eij, nsites, frustrated)
-}
-\arguments{
-\item{graph}{A tibble representing the ENM graph (with edge information, especially \code{kij}}
-
-\item{eij}{A matrix of size \code{n_edges x 3} of \code{eij} versors directed along ENM contacts}
-
-\item{nsites}{The number of nodes of the ENM network}
-
-\item{frustrated}{Logical indicating  wether to add frustration or not before calculating \code{kmat}}
-}
-\value{
-The \code{3 nsites x 3 nsites} stiffness matrix of the ENM
+set_enm_kmat(prot)
 }
 \description{
-Calculate kmat given the ENM graph
+Set enm's kmat of prot object
 }
-\examples{
-set_enm_kmat(graph, eij)
-
-}
-\seealso{
-Other enm builders: 
-\code{\link{add_enm_activation}()},
-\code{\link{set_enm_graph}()},
-\code{\link{set_enm_nma}()}
-}
-\concept{enm builders}

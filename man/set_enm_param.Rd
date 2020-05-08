@@ -2,10 +2,10 @@
 % Please edit documentation in R/enm.R
 \name{set_enm_param}
 \alias{set_enm_param}
-\title{set enm parameters list}
+\title{Set param of prot object}
 \usage{
-set_enm_param(node, model, d_max, frustrated)
+set_enm_param(prot, node, model, d_max, frustrated)
 }
 \description{
-set enm parameters list
+Set param of prot object
 }
