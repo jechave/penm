@@ -35,6 +35,7 @@ In this example, network nodes are placed at $C_\alpha$ coordinates, the model u
 ### enm dependencies
 
   ![Dependencies of `set_enm()`.](images/tree_set_enm.png)
+  
     
     
     
@@ -43,6 +44,9 @@ In this example, network nodes are placed at $C_\alpha$ coordinates, the model u
 
 
    ![Dependencies of `get_mutant_site()`](images/tree_get_mutant_site.png)
+   
+   
+   
   
                             
 

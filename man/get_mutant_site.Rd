@@ -29,14 +29,6 @@ get_mutant_site(
 \item{mut_sd_min}{An integer, only edges with \code{sdij > mut_sd_min} are mutated}
 
 \item{dl_sigma}{The standard deviation of a normal distribution from which edge-length perturbation is picked.}
-
-\item{update_enm}{Whether to update enm or not}
-
-\item{model}{The enm model type}
-
-\item{d_max}{The enm distance cut-off to define contacts}
-
-\item{frustrated}{Whether to include frustrations or not}
 }
 \value{
 A mutated protein

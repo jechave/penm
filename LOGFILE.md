@@ -209,7 +209,12 @@ prot.
   - new set\_enm\_ functions depend mostly on `prot` rather than
     explicitly on its components
   - added `set_enm_nma()` to file *enm.R* and deleted *enm\_nma.R*
-  - old `set_enm_` are now
-`calculate_enm_`
+  - old `set_enm_` are now `calculate_enm_`
 
-### Replace `calculate_enm_` by `set_enm_` in *penm.R* as much as possible
+### Refactor `get_mutant_site()` in *penm.R*
+
+  - replaced all `calculate_enm_` functions by `set_enm_(prot)`
+    functions in *penm.R*
+  - Changed `get_force`
+  - Changed dlij from lij(mut) - dij(wt) to lij(mut) - lij(wt)
+  - Made `get_mutant_site` a bit shorter by adding get\_dlij

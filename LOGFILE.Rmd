@@ -188,6 +188,10 @@ I refactored set_enm by adding functions that depend as much as possible only on
 ### Refactor `get_mutant_site()` in *penm.R*
 
 - replaced all `calculate_enm_` functions by `set_enm_(prot)` functions in *penm.R*
+- Changed `get_force`
+- Changed dlij from lij(mut) - dij(wt) to lij(mut) - lij(wt)
+- Made `get_mutant_site` a bit shorter by adding get_dlij
+
 
 
 

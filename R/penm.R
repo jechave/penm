@@ -7,14 +7,10 @@
 #' @param wt The protein \code{prot} to mutate
 #' @param site_mut The site to mutate (not the pdb_site, but sequential)
 #' @param mutation An integer, if 0, return \code{wt} without mutating
-#' @param seed An integer, the seed for set.seed before picking perturbations
 #' @param wt0 A protein with respect to which mutations are to be calculated
 #' @param mut_sd_min An integer, only edges with \code{sdij > mut_sd_min} are mutated
 #' @param dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
-#' @param model The enm model type
-#' @param d_max The enm distance cut-off to define contacts
-#' @param frustrated Whether to include frustrations or not
-#' @param update_enm Whether to update enm or not
+#' @param seed An integer, the seed for set.seed before picking perturbations
 #'
 #' @return A mutated protein
 
@@ -35,24 +31,17 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
 
   set.seed(seed)
 
-  mut <- wt
-
-  # pick edges to mutate
-  mut_edge <-
-    (mut$graph$i == site_mut |
-       mut$graph$j == site_mut) &
-    mut$graph$sdij >= mut_sd_min
-
-  # mutate edges
-  n_mut_edge <- sum(mut_edge)
-  dlij <- rnorm(n_mut_edge, 0, dl_sigma)
-  #dlij <- sample(c(-dl_max,0,dl_max),size = n_mut_edge, replace = TRUE)
-  mut$graph$lij[mut_edge] <-  wt0$graph$lij[mut_edge] + dlij # add perturbation to spring parameters
-
+  dlij <- get_dlij(wt, site_mut, mut_sd_min, dl_sigma)
+  f <- get_force(wt, dlij)
   # calculate mutant equilibrium conformation (LRA)
-  f <- get_force(wt, mut)
   nzf <- f != 0 # consider only non-zero forces, to make next step faster
   dxyz <-  crossprod(wt$nma$cmat[nzf, ], f[nzf])
+
+
+
+  mut <- wt
+  mut$graph$lij = wt0$graph$lij + dlij #TODO revise this: mut parameters are w.r.t. w0, not wt...
+
   mut$nodes$xyz <- wt$nodes$xyz + dxyz
 
   # recalculate enm
@@ -68,32 +57,48 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
   mut
 }
 
+get_dlij <- function(wt, site_mut, mut_sd_min, dl_sigma) {
+  graph <- get_graph(wt)
 
-#' Get force that mutates wt into mut
+  dlij = rep(0, nrow(get_graph(wt)))
+
+  # pick edges to mutate
+
+  mut_edge <- (graph$i == site_mut | graph$j == site_mut) & (graph$sdij >= mut_sd_min)
+  n_mut_edge <- sum(mut_edge)
+  dlij[mut_edge] <- rnorm(n_mut_edge, 0, dl_sigma)
+
+  dlij
+}
+
+
+#' Get force resulting from adding dlij to wt
 #'
-#' Given \code{mut} obtained by perturbing site edges of \code{wt}, obtain force \code{fij = kij * dlij}
 #'
-#' @param wt The wild-type protein
-#' @param mut The mutant, which contains the mutated \code{graph}
+#' @param wt the wild-type protein
+#' @param dlij the perturbations to the wt lij parameters
 #'
 #' @return A force vector of size \code{3 x nsites}
 #' @export
 #'
 #' @examples
 #' @family enm mutating functions
-get_force <- function(wt, mut) {
-  n_edges <- nrow(wt$graph)
-  nsites <- wt$nodes$nsites
-  i <- wt$graph$i
-  j <- wt$graph$j
-  dij <- wt$graph$dij # equilibrium of wt
-  kij <- wt$graph$kij
-  lij <- mut$graph$lij # mutant's spring lengths
-  fij = kij*(dij - lij) # Force on i in the direction from i to j.
+get_force <- function(wt, dlij) {
 
-  eij <- wt$eij
-  f <- matrix(0, nrow = 3, ncol = nsites)
-  for (k in seq(n_edges)) {
+  graph <- get_graph(wt)
+
+  stopifnot(nrow(graph) == length(dlij))
+
+  i <- graph$i
+  j <- graph$j
+  kij <- graph$kij
+  eij <- get_eij(wt)
+
+  fij = -kij * dlij # Force on i in the direction from i to j.
+
+
+  f <- matrix(0, nrow = 3, ncol = get_nsites(wt))
+  for (k in seq(nrow(graph))) {
     ik <- i[k]
     jk <- j[k]
     f[, ik] <- f[, ik] + fij[k] * eij[k,  ]
@@ -101,6 +106,9 @@ get_force <- function(wt, mut) {
   }
   as.vector(f)
 }
+
+
+
 
 
 
