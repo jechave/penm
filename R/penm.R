@@ -30,30 +30,31 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
   set.seed(seed + site_mut * mutation)
 
 
-  delta_lij <- get_delta_lij(wt, site_mut, mut_sd_min, dl_sigma)
-  f <- get_force(wt, delta_lij)
-  cmat <- get_cmat(wt)
-  nzf <- f != 0 # consider only non-zero forces, to make next step faster
-  dxyz <-  crossprod(cmat[nzf, ], f[nzf]) # calculate mutant equilibrium conformation (LRA)
-
-
-
-  mut <- wt
-  mut$graph$lij = wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
-
-  mut$nodes$xyz <- wt$nodes$xyz + dxyz
 
   # recalculate enm
 
   if (update_enm) { # recalculate enm
-    # recalculate (graph, kmat, etc. etc.)
+    delta_lij <- get_delta_lij(wt, site_mut, mut_sd_min, dl_sigma)
+    dxyz <- get_dxyz(wt, delta_lij)
+    mut <- wt
+    mut$graph$lij = wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
+    mut$nodes$xyz <- wt$nodes$xyz + dxyz
     mut <- mutate_enm(mut)
-  } else {
-    # recalculate only equilibrium distances
-    mut$graph$dij <- dij_edge(mut$nodes$xyz, mut$graph$i, mut$graph$j)
+    return(mut)
   }
 
-  mut
+  if (!update_enm) {
+    delta_lij <- get_delta_lij(wt, site_mut, mut_sd_min, dl_sigma)
+    dxyz <- get_dxyz(wt, delta_lij)
+    mut <- wt
+    mut$graph$lij = wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
+    mut$nodes$xyz <- wt$nodes$xyz + dxyz
+    mut$graph$dij <- dij_edge(mut$nodes$xyz, mut$graph$i, mut$graph$j)
+    return(mut)
+  }
+
+  stop("Error in get_mutant_site, update_enm undefined?")
+
 }
 
 get_delta_lij <- function(wt, site_mut, mut_sd_min, dl_sigma) {
@@ -68,6 +69,13 @@ get_delta_lij <- function(wt, site_mut, mut_sd_min, dl_sigma) {
   delta_lij[mut_edge] <- rnorm(n_mut_edge, 0, dl_sigma)
 
   delta_lij
+}
+
+get_dxyz <- function(wt, delta_lij) {
+  f <- get_force(wt, delta_lij)
+  cmat <- get_cmat(wt)
+  nzf <- f != 0 # consider only non-zero forces, to make next step faster
+  dxyz <-  crossprod(cmat[nzf, ], f[nzf]) # calculate mutant equilibrium conformation (LRA)
 }
 
 
@@ -105,10 +113,6 @@ get_force <- function(wt, delta_lij) {
   }
   as.vector(f)
 }
-
-
-
-
 
 
 #' mutate enm following change in protein structure and lij parameters

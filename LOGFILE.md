@@ -219,3 +219,4 @@ prot.
   - Changed dlij from lij(mut) - dij(wt) to lij(mut) - lij(wt)
   - Made `get_mutant_site` a bit shorter by adding get\_dlij
   - Removed `wt0` (I wasn’t using it, just confusing).
+  - Tidied up penm.R file a little bit more
