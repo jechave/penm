@@ -68,10 +68,9 @@ get_reduced_kmat <- function(prot) {
 #' MSF of each site contributed by each mode, as matrix
 #'
 get_msf_site_mode <- function(prot) {
-  result <- prot %>%
-    get_umat2()
-  result <- t(t(result) / get_evalue(prot))
-  result
+  umat2 <- get_umat2(prot)
+  msf_site_mode <- t(t(umat2) / get_evalue(prot))
+  msf_site_mode
 }
 
 

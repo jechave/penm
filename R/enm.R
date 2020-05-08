@@ -34,56 +34,50 @@ set_enm <- function(pdb, node, model, d_max, frustrated) {
 #' Create an empty prot object
 #'
 create_enm <- function() {
-  result <- lst(param = NA, nodes = NA, graph = NA, eij = NA, kmat = NA, nma = NA)
-  class(result) <- "prot"
-  result
+  prot <- lst(param = NA, nodes = NA, graph = NA, eij = NA, kmat = NA, nma = NA)
+  class(prot) <- "prot"
+  prot
 }
 
 #' Set param of prot object
 #'
 set_enm_param <- function(prot, node, model, d_max, frustrated) {
-  result <- prot
-  result$param <- calculate_enm_param(node, model, d_max, frustrated)
-  result
+  prot$param <- calculate_enm_param(node, model, d_max, frustrated)
+  prot
 }
 
 #' Set nodes of prot object
 #'
 set_enm_nodes <- function(prot, pdb) {
-  result <- prot
-  result$nodes <- calculate_enm_nodes(pdb, get_enm_node(prot))
-  result
+  prot$nodes <- calculate_enm_nodes(pdb, get_enm_node(prot))
+  prot
 }
 
 #' Set graph of prot object
 #'
 set_enm_graph <- function(prot) {
-  result <- prot
-  result$graph <- calculate_enm_graph(get_xyz(prot), get_pdb_site(prot), get_enm_model(prot), get_d_max(prot))
-  result
+  prot$graph <- calculate_enm_graph(get_xyz(prot), get_pdb_site(prot), get_enm_model(prot), get_d_max(prot))
+  prot
 }
 
 #' Set eij unit vectors of prot object
 #'
 set_enm_eij <- function(prot) {
-  result <- prot
-  result$eij <- calculate_enm_eij(get_xyz(prot), get_graph(prot)$i, get_graph(prot)$j)
-  result
+  prot$eij <- calculate_enm_eij(get_xyz(prot), get_graph(prot)$i, get_graph(prot)$j)
+  prot
 }
 
 #' Set enm's kmat of prot object
 #'
 set_enm_kmat <- function(prot) {
-  result <- prot
-  result$kmat <- calculate_enm_kmat(get_graph(prot), get_eij(prot), get_nsites(prot), get_frustrated(prot))
-  result
+  prot$kmat <- calculate_enm_kmat(get_graph(prot), get_eij(prot), get_nsites(prot), get_frustrated(prot))
+  prot
 }
 
 #' Set normal-mode-analysis component of prot object
 set_enm_nma <- function(prot) {
-  result <- prot
-  result$nma <- calculate_enm_nma(get_kmat(prot))
-  result
+  prot$nma <- calculate_enm_nma(get_kmat(prot))
+  prot
 }
 
 
@@ -133,12 +127,7 @@ prot_sc <- function(pdb) {
   bfactor[is.na(bfactor)] <- b.a[is.na(bfactor)] # Use CA bfactor otherwise
 
 
-  result <- lst( nsites,
-                 site,
-                 pdb_site,
-                 bfactor,
-                 xyz )
-  result
+  lst( nsites, site, pdb_site, bfactor, xyz )
 }
 
 #' set CA nodes
@@ -152,12 +141,7 @@ prot_ca <- function(pdb) {
   bfactor <- pdb$atom$b[sel$atom]
   xyz <- pdb$xyz[sel$xyz]
 
-  result <- lst( nsites,
-                 site,
-                 pdb_site,
-                 bfactor,
-                 xyz )
-  result
+  lst( nsites, site, pdb_site, bfactor, xyz )
 }
 
 

@@ -2,20 +2,20 @@
 % Please edit documentation in R/penm.R
 \name{get_force}
 \alias{get_force}
-\title{Get force resulting from adding dlij to wt}
+\title{Get force resulting from adding delta_lij to wt}
 \usage{
-get_force(wt, dlij)
+get_force(wt, delta_lij)
 }
 \arguments{
 \item{wt}{the wild-type protein}
 
-\item{dlij}{the perturbations to the wt lij parameters}
+\item{delta_lij}{the perturbations to the wt lij parameters}
 }
 \value{
 A force vector of size \code{3 x nsites}
 }
 \description{
-Get force resulting from adding dlij to wt
+Get force resulting from adding delta_lij to wt
 }
 \seealso{
 Other enm mutating functions: 

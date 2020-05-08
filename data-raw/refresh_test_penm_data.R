@@ -17,12 +17,10 @@ wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, frustr
 ## ----------------------------------------------------------------------------------------------------------------------
 
 mut_lf  <- get_mutant_site(wt, site_mut = 80, mutation = 1,
-                       wt0 = wt,
                        mut_sd_min = 1, dl_sigma = 0.3, update_enm = FALSE)
 
 ## ----------------------------------------------------------------------------------------------------------------------
 mut_qf <- get_mutant_site(wt, site_mut = 80, mutation = 1,
-                       wt0 = wt,
                        mut_sd_min = 1, dl_sigma = 0.3, update_enm = TRUE)
 
 usethis::use_data(wt, mut_lf, mut_qf, overwrite = TRUE)

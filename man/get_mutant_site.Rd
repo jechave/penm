@@ -8,11 +8,10 @@ get_mutant_site(
   wt,
   site_mut,
   mutation = 0,
-  seed = 241956 + site_mut * mutation,
-  wt0 = wt,
   mut_sd_min = 2,
   dl_sigma = 0.3,
-  update_enm = FALSE
+  update_enm = FALSE,
+  seed = 241956
 )
 }
 \arguments{
@@ -22,21 +21,19 @@ get_mutant_site(
 
 \item{mutation}{An integer, if 0, return \code{wt} without mutating}
 
-\item{seed}{An integer, the seed for set.seed before picking perturbations}
-
-\item{wt0}{A protein with respect to which mutations are to be calculated}
-
 \item{mut_sd_min}{An integer, only edges with \code{sdij > mut_sd_min} are mutated}
 
 \item{dl_sigma}{The standard deviation of a normal distribution from which edge-length perturbation is picked.}
+
+\item{update_enm}{A logical, whether to recalculate kmat and nma or not.}
+
+\item{seed}{An integer, the seed for set.seed before picking perturbations}
 }
 \value{
 A mutated protein
 }
 \description{
 Returns a mutant given a wt and a site to mutate (site_mut)
-    wt0 is the protein to use to calculate perturbations of current site
-    (if wt0 = wt, it is the current wild-type, but it can be a fixed initial state)
 }
 \examples{
 
