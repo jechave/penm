@@ -19,6 +19,8 @@ Get force resulting from adding delta_lij to wt
 }
 \seealso{
 Other enm mutating functions: 
+\code{\link{get_mutant_site_lfenm}()},
+\code{\link{get_mutant_site_sclfenm}()},
 \code{\link{get_mutant_site}()}
 }
 \concept{enm mutating functions}

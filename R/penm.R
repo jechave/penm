@@ -5,9 +5,9 @@
 #' @param wt The protein \code{prot} to mutate
 #' @param site_mut The site to mutate (not the pdb_site, but sequential)
 #' @param mutation An integer, if 0, return \code{wt} without mutating
+#' @param mut_model A string specifying mutational model ("lfenm" or "sclfenm")
+#' @param mut_dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
 #' @param mut_sd_min An integer, only edges with \code{sdij > mut_sd_min} are mutated
-#' @param dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
-#' @param update_enm A logical, whether to recalculate kmat and nma or not.
 #' @param seed An integer, the seed for set.seed before picking perturbations
 #'
 #' @return A mutated protein
@@ -18,9 +18,43 @@
 #'
 #' @family enm mutating functions
 #'
-get_mutant_site <- function(wt, site_mut, mutation = 0,
-                            mut_sd_min = 2, dl_sigma = .3, update_enm = FALSE,
-                            seed = 241956) {
+get_mutant_site <- function(wt, site_mut, mutation = 0, mut_model = "lfenm", mut_dl_sigma = .3, mut_sd_min = 2, seed = 241956) {
+
+  if (mut_model == "lfenm") {
+    mut <- get_mutant_site_lfenm(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min, seed)
+    return(mut)
+  }
+
+
+  if (mut_model == "sclfenm") { # recalculate enm
+    mut <- get_mutant_site_sclfenm(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min, seed)
+    return(mut)
+  }
+
+  stop(paste("Error in get_mutant_site,  undefined mut_model:", mut_model))
+
+}
+
+#' Get a single-point mutant using lfenm model
+#'
+#' Returns a mutant given a wt and a site to mutate (site_mut)
+#'
+#' @param wt The protein \code{prot} to mutate
+#' @param site_mut The site to mutate (not the pdb_site, but sequential)
+#' @param mutation An integer, if 0, return \code{wt} without mutating
+#' @param mut_dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
+#' @param mut_sd_min An integer, only edges with \code{sdij > mut_sd_min} are mutated
+#' @param seed An integer, the seed for set.seed before picking perturbations
+#'
+#' @return A mutated protein
+
+#' @export
+#'
+#' @examples
+#'
+#' @family enm mutating functions
+#'
+get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min,  seed) {
 
   if (mutation == 0) {
     # if mutation is 0, return wt
@@ -29,35 +63,58 @@ get_mutant_site <- function(wt, site_mut, mutation = 0,
 
   set.seed(seed + site_mut * mutation)
 
+  delta_lij <- get_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
+  dxyz <- get_dxyz(wt, delta_lij)
+  mut <- wt
+  mut$graph$lij = wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
+  mut$nodes$xyz <- wt$nodes$xyz + dxyz
+  mut$graph$dij <- dij_edge(mut$nodes$xyz, mut$graph$i, mut$graph$j)
+  return(mut)
+}
 
 
-  # recalculate enm
 
-  if (update_enm) { # recalculate enm
-    delta_lij <- get_delta_lij(wt, site_mut, mut_sd_min, dl_sigma)
-    dxyz <- get_dxyz(wt, delta_lij)
-    mut <- wt
-    mut$graph$lij = wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
-    mut$nodes$xyz <- wt$nodes$xyz + dxyz
-    mut <- mutate_enm(mut)
-    return(mut)
+#' Get a single-point mutant using sclfenm mode
+#'
+#' Returns a mutant given a wt and a site to mutate (site_mut)
+#'
+#' @param wt The protein \code{prot} to mutate
+#' @param site_mut The site to mutate (not the pdb_site, but sequential)
+#' @param mutation An integer, if 0, return \code{wt} without mutating
+#' @param mut_dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
+#' @param mut_sd_min An integer, only edges with \code{sdij > mut_sd_min} are mutated
+#' @param seed An integer, the seed for set.seed before picking perturbations
+#'
+#' @return A mutated protein
+
+#' @export
+#'
+#' @examples
+#'
+#' @family enm mutating functions
+#'
+get_mutant_site_sclfenm <- function(wt, site_mut, mutation,  mut_dl_sigma, mut_sd_min,  seed) {
+
+  stop("ERROR: sclfenm must be fixed before this option may be run")
+
+  if (mutation == 0) {
+    # if mutation is 0, return wt
+    return(wt)
   }
 
-  if (!update_enm) {
-    delta_lij <- get_delta_lij(wt, site_mut, mut_sd_min, dl_sigma)
-    dxyz <- get_dxyz(wt, delta_lij)
-    mut <- wt
-    mut$graph$lij = wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
-    mut$nodes$xyz <- wt$nodes$xyz + dxyz
-    mut$graph$dij <- dij_edge(mut$nodes$xyz, mut$graph$i, mut$graph$j)
-    return(mut)
-  }
+  set.seed(seed + site_mut * mutation)
 
-  stop("Error in get_mutant_site, update_enm undefined?")
+  delta_lij <- get_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
+  dxyz <- get_dxyz(wt, delta_lij)
+  mut <- wt
+  mut$graph$lij = wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
+  mut$nodes$xyz <- wt$nodes$xyz + dxyz
+  mut <- mutate_enm(mut)
+  return(mut)
 
 }
 
-get_delta_lij <- function(wt, site_mut, mut_sd_min, dl_sigma) {
+get_delta_lij <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) {
   graph <- get_graph(wt)
 
   delta_lij = rep(0, nrow(get_graph(wt)))
@@ -66,7 +123,7 @@ get_delta_lij <- function(wt, site_mut, mut_sd_min, dl_sigma) {
 
   mut_edge <- (graph$i == site_mut | graph$j == site_mut) & (graph$sdij >= mut_sd_min)
   n_mut_edge <- sum(mut_edge)
-  delta_lij[mut_edge] <- rnorm(n_mut_edge, 0, dl_sigma)
+  delta_lij[mut_edge] <- rnorm(n_mut_edge, 0, mut_dl_sigma)
 
   delta_lij
 }

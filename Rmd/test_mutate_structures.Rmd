@@ -47,7 +47,7 @@ param <- lst(
             d_max = 10.5,
             frustrated = TRUE),
   mut = lst(model = "lfenm",
-            dl_sigma = 0.3,
+            mut_dl_sigma = 0.3,
             mut_sd_min = 1,
             update_enm = NA),
   prs = lst(nmut_per_site = 2),

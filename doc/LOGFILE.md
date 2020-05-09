@@ -220,3 +220,18 @@ prot.
   - Made `get_mutant_site` a bit shorter by adding get\_dlij
   - Removed `wt0` (I wasn’t using it, just confusing).
   - Tidied up penm.R file a little bit more
+
+## 9 May 2020
+
+### Put update\_enm on stan by
+
+  - Changed `update_enm` to `mut_model`, that can now be `lfenm` (K
+    doesn’t change) or `sclfenm` (the update\_enm = T version previous).
+  - Wrote a note regarding my worries about the sclfenm version
+  - Separated more clearly the options “lfenm” and “sclfenm” in *penm.R*
+    functions
+  - Made current “sclfenm” option stop if called because I need to
+    revise it.
+  - Made “sclefnm” tests skip the test.
+  - Tested
+  - Commited

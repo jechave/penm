@@ -1,26 +1,25 @@
-get_mut_energy <- function(wt, site, mutation, update_enm, frustrated, seed = 2000 + site * mutation,
-                           beta = beta_boltzmann(T = 298)) {
+get_mut_energy <- function(wt, site, mutation, mut_model,
+                           seed = 2000 + site * mutation, beta = beta_boltzmann(T = 298)) {
   mut <- get_mutant_site(wt,
                          site,
                          mutation,
-                         seed,
-                         wt,
+                         mut_model,
+                         mut_dl_sigma = param$mut$mut_dl_sigma,
                          mut_sd_min = param$mut$mut_sd_min,
-                         dl_sigma = param$mut$dl_sigma,
-                         update_enm = update_enm)
+                         seed)
+ get_mutant_site()
 
   tibble(v_min = enm_v_min(mut), g_entropy = enm_g_entropy(mut, beta))
 }
 
-get_mut <-function(wt, site, mutation = 1, dl_sigma = 1, update_enm = T, frustrated = T) {
+get_mut <-function(wt, site, mutation = 1, mut_model = "sclfenm", mut_dl_sigma = 1) {
   get_mutant_site(wt,
                   site,
                   mutation,
-                  seed = 2000 + site * mutation,
-                  wt,
+                  mut_model,
+                  mut_dl_sigma = mut_dl_sigma,
                   mut_sd_min = param$mut$mut_sd_min,
-                  dl_sigma = dl_sigma,
-                  update_enm = update_enm)
+                  seed = 2000 + site * mutation)
 }
 
 

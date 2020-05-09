@@ -1,0 +1,64 @@
+---
+title: "Function declarations"
+author: "Julian Echave"
+date: "5/9/2020"
+output: pdf_document
+---
+
+## *enm.R*
+
+* set_enm <- function(pdb, node, model, d_max, frustrated) 
+
+* create_enm <- function() 
+
+* set_enm_param <- function(prot, node, model, d_max, frustrated) 
+
+* set_enm_nodes <- function(prot, pdb) 
+
+* set_enm_graph <- function(prot) 
+
+* set_enm_eij <- function(prot) 
+
+* set_enm_kmat <- function(prot) 
+
+* set_enm_nma <- function(prot) 
+
+* calculate_enm_nodes <- function(pdb, node) 
+
+* prot_sc <- function(pdb) 
+
+* prot_ca <- function(pdb) 
+
+* calculate_enm_graph <- function(xyz, pdb_site, model, d_max)
+
+* dij_edge <- function(xyz,i,j) 
+
+* sdij_edge <- function(pdb_site,i,j) 
+
+* calculate_enm_eij <- function(xyz,i,j) 
+
+* calculate_enm_kmat <- function(graph, eij, nsites, frustrated) 
+
+* calculate_enm_nma <- function(kmat, TOL = 1.e-5) 
+
+\newpage
+
+## *penm.R*
+
+* get_mutant_site <- function(wt, site_mut, mutation = 0, mut_model = "lfenm", mut_dl_sigma = .3, mut_sd_min = 2, seed = 241956) 
+
+* get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min,  seed) 
+
+* get_mutant_site_sclfenm <- function(wt, site_mut, mutation,  mut_dl_sigma, mut_sd_min,  seed) 
+
+* get_delta_lij <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) 
+
+* get_dxyz <- function(wt, delta_lij) 
+
+* get_force <- function(wt, delta_lij) 
+
+* mutate_enm <- function(prot) 
+
+* mutate_graph <- function(prot) 
+
+* enm_update <- function(...) 

@@ -1,3 +1,4 @@
+library(here)
 library(mvbutils)
 
 remove(list = ls())
@@ -9,6 +10,11 @@ fw <- foodweb()
 foodweb(prune =c("set_enm"))
 
 foodweb(prune =c("get_mutant_site"))
+
+foodweb(prune =c("get_mutant_site_lfenm"))
+
+foodweb(prune =c("get_mutant_site_sclfenm"),
+        generics = c("dij_edge", "sdij_edge"))
 
 # callers.of("get_mutant_site", fw)
 # callees.of("get_mutant_site", fw)

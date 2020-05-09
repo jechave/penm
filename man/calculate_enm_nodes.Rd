@@ -2,10 +2,10 @@
 % Please edit documentation in R/enm.R
 \name{calculate_enm_nodes}
 \alias{calculate_enm_nodes}
-\title{set enm node labelings and coordinates}
+\title{Calculate nodes of prot object}
 \usage{
 calculate_enm_nodes(pdb, node)
 }
 \description{
-set enm node labelings and coordinates
+Calculate nodes of prot object
 }

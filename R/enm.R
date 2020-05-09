@@ -29,7 +29,7 @@ set_enm <- function(pdb, node, model, d_max, frustrated) {
 
 
 
-# prot versions of setters ------------------------------------------------
+# Set prot components ------------------------------------------------
 
 #' Create an empty prot object
 #'
@@ -42,16 +42,18 @@ create_enm <- function() {
 #' Set param of prot object
 #'
 set_enm_param <- function(prot, node, model, d_max, frustrated) {
-  prot$param <- calculate_enm_param(node, model, d_max, frustrated)
+  prot$param <- lst(node, model, d_max, frustrated)
   prot
 }
+
 
 #' Set nodes of prot object
 #'
 set_enm_nodes <- function(prot, pdb) {
   prot$nodes <- calculate_enm_nodes(pdb, get_enm_node(prot))
-  prot
+  return(prot)
 }
+
 
 #' Set graph of prot object
 #'
@@ -81,24 +83,21 @@ set_enm_nma <- function(prot) {
 }
 
 
-# Set primitives ----------------------------------------------------------
-
-#' set enm parameters list
-#'
-calculate_enm_param <-  function(node, model, d_max, frustrated)  lst(node, model, d_max, frustrated)
+# Calculate prot components -----------------------------------------------
 
 
-
-#' set enm node labelings and coordinates
+#' Calculate nodes of prot object
 #'
 calculate_enm_nodes <- function(pdb, node) {
   if (node == "calpha" | node == "ca") {
-    prot <- prot_ca(pdb)
-  } else if (node == "side_chain" | node == "sc") {
-    prot <- prot_sc(pdb)
-  } else {
-    stop("Error: node must be ca, calpha, sc, or side_chain")
+    nodes <- prot_ca(pdb)
+    return(nodes)
   }
+  if (node == "side_chain" | node == "sc") {
+    nodes <- prot_sc(pdb)
+    return(nodes)
+  }
+  stop("Error: node must be ca, calpha, sc, or side_chain")
 }
 
 #' set side-chain nodes
@@ -146,8 +145,6 @@ prot_ca <- function(pdb) {
 
 
 
-
-
 #' Calculate ENM graph
 #'
 #' Calculates graph representation of Elastic Network Model (ENM), the typical relaxed case (lij = dij)
@@ -166,11 +163,7 @@ prot_ca <- function(pdb) {
 #'  calculate_enm_graph(xyz, pdb_site, model, d_max)
 #'
 #'@family enm builders
-calculate_enm_graph <- function(xyz,
-           pdb_site,
-           model,
-           d_max,
-           ...) {
+calculate_enm_graph <- function(xyz, pdb_site, model, d_max,...) {
     # Calculate (relaxed) enm graph from xyz
     # Returns graph for the relaxed case
 
