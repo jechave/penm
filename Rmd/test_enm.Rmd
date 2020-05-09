@@ -18,6 +18,7 @@ library(cowplot)
 library(bio3d)
 library(penm)
 library(jefuns)
+library(here)
 
 ```
 
@@ -29,7 +30,7 @@ library(jefuns)
 
 ```{r}
 ## read pdb filec
-pdb_file <- "data-raw/2acy_A.pdb"
+pdb_file <- here("data-raw/2acy_A.pdb")
 pdb <- read.pdb(pdb_file)
 
 # set up the protein's enm
