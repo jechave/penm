@@ -35,7 +35,7 @@ set_enm <- function(pdb, node, model, d_max, frustrated) {
 #'
 create_enm <- function() {
   prot <- lst(param = NA, nodes = NA, graph = NA, eij = NA, kmat = NA, nma = NA)
-  class(prot) <- "prot"
+  class(prot) <- append(class(prot), "prot")
   prot
 }
 
