@@ -83,14 +83,3 @@ get_umat2 <- function(prot) {
   umat2 <- apply(umat2, c(2, 3), sum)
   umat2
 }
-
-
-
-
-
-
-
-
-
-
-

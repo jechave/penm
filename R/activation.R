@@ -34,7 +34,7 @@ mutate_enm_activation <- add_enm_activation
 
 
 #' Stress-model local-mutational-stress energy
-enm_v_stress <- function(prot,ideal) {
+enm_v_stress <- function(prot, ideal) {
   prot_graph <- prot$enm$graph
   ideal_graph <- ideal$enm$graph
 
@@ -53,14 +53,14 @@ enm_v_stress <- function(prot,ideal) {
 }
 
 #' Internal energy contribution to free energy of activaton
-enm_dv_activation <- function(prot,ideal) {
+enm_dv_activation <- function(prot, ideal) {
   if (anyNA(prot$site_active)) {
     dv_activation <- NA
   } else {
     dxyz <- prot$xyz - ideal$xyz
     site_active <- prot$site_active
     dxyz <- my_as_xyz(dxyz)
-    dxyz <- as.vector(dxyz[,site_active])
+    dxyz <- as.vector(dxyz[, site_active])
     kmat_active <- prot$enm$kmat_active
     dv_activation <- .5 * my_quad_form(dxyz, kmat_active, dxyz)
   }
@@ -83,22 +83,22 @@ enm_g_entropy_activation <- function(prot, beta) {
 }
 
 
-distance_to_active <- function(xyz,site_active) {
+distance_to_active <- function(xyz, site_active) {
   stopifnot(length(xyz) %% 3 == 0)
-  nsites <- length(xyz)/3
+  nsites <- length(xyz) / 3
 
   if (anyNA(site_active)) {
-    distance = rep(NA, nsites)
+    distance <-  rep(NA, nsites)
   } else {
     site <- seq(nsites)
     is_active_site <- site %in% site_active
     xyz <- my_as_xyz(xyz)
 
-    nsite.active = sum(is_active_site)
-    distance <- rep(NA,nsites)
+    nsite_active <-  sum(is_active_site)
+    distance <- rep(NA, nsites)
     for (j in seq(nsites)) {
-      d_active_to_j <-  xyz[,j] - xyz[,is_active_site]
-      dim(d_active_to_j) <-  c(3,nsite.active)
+      d_active_to_j <-  xyz[, j] - xyz[, is_active_site]
+      dim(d_active_to_j) <-  c(3, nsite_active)
       d_active_to_j_norm <-  sqrt(colSums(d_active_to_j^2))
       distance[j] <-  min(d_active_to_j_norm)
     }
@@ -116,5 +116,3 @@ delta_v_activation <- function(prot1, prot2)
 
 delta_g_entropy_activation <- function(prot1, prot2)
   enm_g_entropy_activation(prot2) - enm_g_entropy_activation(prot1)
-
-

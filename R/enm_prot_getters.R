@@ -33,10 +33,3 @@ get_evalue <- function(prot) prot$nma$evalue
 get_umat <- function(prot) prot$nma$umat
 
 get_cmat <- function(prot) prot$nma$cmat
-
-
-
-
-
-
-

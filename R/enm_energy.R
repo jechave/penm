@@ -18,7 +18,7 @@ enm_v_min <- function(prot) {
   v
 }
 
-v_dij <- function(dij,v0ij,kij,lij) {
+v_dij <- function(dij, v0ij, kij, lij) {
   # Calculates energy of a given conformation (dij).
   sum(v0ij + .5 * kij * (dij - lij) ^ 2)
 }
@@ -36,6 +36,6 @@ enm_g_entropy <- function(prot, beta) {
 #' entropic contribution of a single mode
 enm_g_entropy_mode <- function(energy, beta) {
   # returns vector of entropic terms given vector of mode energies
-  g_entropy_mode <- 1/(2 * beta) * log((beta * energy) / (2 * pi))
+  g_entropy_mode <- 1 / (2 * beta) * log((beta * energy) / (2 * pi))
   g_entropy_mode
 }

@@ -104,12 +104,12 @@ calculate_enm_nodes <- function(pdb, node) {
 #'
 prot_sc <- function(pdb) {
   # calculate xyz coordinates of ca, cb, com, qm (qb by Micheletti), ql (qb by Levitt)
-  r = residue.coordinates(pdb)
-  b = residue.bfactors(pdb)
+  r <-  residue.coordinates(pdb)
+  b <-  residue.bfactors(pdb)
 
   pdb_site <- r$site
-  nsites <- length( r$site )
-  site <- seq( length( r$site ) )
+  nsites <- length(r$site)
+  site <- seq(length(r$site))
 
   xyz <-  r$com.xyz
   xyz_na <- is.na(xyz)
@@ -126,7 +126,7 @@ prot_sc <- function(pdb) {
   bfactor[is.na(bfactor)] <- b.a[is.na(bfactor)] # Use CA bfactor otherwise
 
 
-  lst( nsites, site, pdb_site, bfactor, xyz )
+  lst(nsites, site, pdb_site, bfactor, xyz)
 }
 
 #' set CA nodes
@@ -140,7 +140,7 @@ prot_ca <- function(pdb) {
   bfactor <- pdb$atom$b[sel$atom]
   xyz <- pdb$xyz[sel$xyz]
 
-  lst( nsites, site, pdb_site, bfactor, xyz )
+  lst(nsites, site, pdb_site, bfactor, xyz)
 }
 
 
@@ -163,7 +163,7 @@ prot_ca <- function(pdb) {
 #'  calculate_enm_graph(xyz, pdb_site, model, d_max)
 #'
 #'@family enm builders
-calculate_enm_graph <- function(xyz, pdb_site, model, d_max,...) {
+calculate_enm_graph <- function(xyz, pdb_site, model, d_max, ...) {
     # Calculate (relaxed) enm graph from xyz
     # Returns graph for the relaxed case
 
@@ -174,7 +174,7 @@ calculate_enm_graph <- function(xyz, pdb_site, model, d_max,...) {
 
     # set function to calculate i-j spring constants
     kij_fun <- match.fun(paste0("kij_", model))
-    kij_par <- lst( d_max = d_max)
+    kij_par <- lst(d_max = d_max)
 
     site <- seq(nsites)
     # calculate graph
@@ -202,14 +202,14 @@ calculate_enm_graph <- function(xyz, pdb_site, model, d_max,...) {
 
 #' Calculate distance of edges
 #'
-dij_edge <- function(xyz,i,j) {
+dij_edge <- function(xyz, i, j) {
   stopifnot(length(i) == length(j))
   xyz <- my_as_xyz(xyz)
-  dij <- rep(NA,length(i))
+  dij <- rep(NA, length(i))
   for (k in seq(length(i)))  {
     ik <- i[k]
     jk <- j[k]
-    rij <- xyz[,jk] - xyz[,ik]
+    rij <- xyz[, jk] - xyz[, ik]
     dij[k] <- sqrt(sum(rij^2))
   }
   dij
@@ -217,10 +217,9 @@ dij_edge <- function(xyz,i,j) {
 
 #' Calculate edge sequence distance
 #'
-sdij_edge <- function(pdb_site,i,j) {
+sdij_edge <- function(pdb_site, i, j) {
   # sequence distance
   stopifnot(length(i) == length(j))
-  n_edges <- length(i)
   sdij <- abs(pdb_site[j] - pdb_site[i])
   sdij
 
@@ -233,7 +232,7 @@ sdij_edge <- function(pdb_site,i,j) {
 #' @param xyz vector of xyz coordinates
 #' @return matrix with n_edge rows and 3 columns (x, y, z)
 #'
-calculate_enm_eij <- function(xyz,i,j) {
+calculate_enm_eij <- function(xyz, i, j) {
 
   stopifnot(length(i) == length(j))
   n_edges <- length(i)
@@ -242,12 +241,12 @@ calculate_enm_eij <- function(xyz,i,j) {
   #               eij_y = rep(NA,n_edges),
   #               eij_z = rep(NA,n_edges))
 
-  eij <- matrix(NA,n_edges,3)
+  eij <- matrix(NA, n_edges, 3)
   for (k in seq(n_edges)) {
     ik <- i[k]
     jk <- j[k]
-    rij <- xyz[,jk] - xyz[,ik]
-    eij[k,] <- rij/sqrt(sum(rij^2))
+    rij <- xyz[, jk] - xyz[, ik]
+    eij[k, ] <- rij / sqrt(sum(rij^2))
   }
   eij
 }
@@ -280,11 +279,11 @@ calculate_enm_kmat <- function(graph, eij, nsites, frustrated) {
     j <- graph$j[[edge]]
     kij <- graph$kij[[edge]]
     if (frustrated) {
-      gij <- graph$lij[[edge]]/graph$dij[[edge]] - 1
+      gij <- graph$lij[[edge]] / graph$dij[[edge]] - 1
     } else {
       gij <- 0
     }
-    eij_v <- eij[edge,]
+    eij_v <- eij[edge, ]
     eij_mat <- tcrossprod(eij_v, eij_v)
     kij_mat <- -kij * (eij_mat + gij * (eij_mat - diag(3)))
     kmat[, j, , i] <- kmat[, i, , j] <- kij_mat
@@ -303,7 +302,7 @@ calculate_enm_kmat <- function(graph, eij, nsites, frustrated) {
 #' Given an enm `kmat`, perform NMA
 #'
 #' @param kmat The K matrix to diagonalize
-#' @param TOL=1.e-5 A small value, eigenvectors with eigenvalues larger than `TOL` are discarded
+#' @param too_small=1.e-5 A small value, eigenvectors with eigenvalues larger than `too_small` are discarded
 #'
 #' @return A list with elements \code{mode}, \code{evalue}, \code{cmat}, and \code{umat}
 #'
@@ -315,14 +314,14 @@ calculate_enm_kmat <- function(graph, eij, nsites, frustrated) {
 #'
 #'@family enm builders
 #'
-calculate_enm_nma <- function(kmat, TOL = 1.e-5) {
+calculate_enm_nma <- function(kmat, too_small = 1.e-5) {
   # Given an enm object for which kmat has already been defined, perform NMA
   # It returns a list containing mode, evalue, cmat, umat
   # Diagonalize
   eig <- eigen(kmat, symmetric = TRUE)
   evalue <- eig$values
   umat <- eig$vectors
-  modes <- evalue > TOL
+  modes <- evalue > too_small
   evalue <- evalue[modes]
   umat  <- umat[, modes]
 
@@ -343,6 +342,3 @@ calculate_enm_nma <- function(kmat, TOL = 1.e-5) {
   )
   nma
 }
-
-
-

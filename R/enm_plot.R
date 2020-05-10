@@ -36,7 +36,7 @@ plot_site_profiles <- function(prot) {
   )
 
   df %>%
-    mutate(rcn = 1/cn,
+    mutate(rcn = 1 / cn,
            rmlms = 1 / mlms) %>%
     pivot_longer(
       cols = c(rcn, rmlms, msf, bfactor),
@@ -171,16 +171,3 @@ plot_reduced_kmat <- function(prot) {
   get_reduced_kmat(prot) %>%
     plot_matrix(row_name = "i", col_name = "j", value_name = "Kij")
 }
-
-
-
-# Helper functions --------------------------------------------------------
-
-
-
-
-
-
-
-
-

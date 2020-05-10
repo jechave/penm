@@ -66,7 +66,7 @@ get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_m
   delta_lij <- get_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
   dxyz <- get_dxyz(wt, delta_lij)
   mut <- wt
-  mut$graph$lij = wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
+  mut$graph$lij <-  wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
   mut$nodes$xyz <- wt$nodes$xyz + dxyz
   mut$graph$dij <- dij_edge(mut$nodes$xyz, mut$graph$i, mut$graph$j)
   return(mut)
@@ -107,7 +107,7 @@ get_mutant_site_sclfenm <- function(wt, site_mut, mutation,  mut_dl_sigma, mut_s
   delta_lij <- get_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
   dxyz <- get_dxyz(wt, delta_lij)
   mut <- wt
-  mut$graph$lij = wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
+  mut$graph$lij <-  wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
   mut$nodes$xyz <- wt$nodes$xyz + dxyz
   mut <- mutate_enm(mut)
   return(mut)
@@ -117,7 +117,7 @@ get_mutant_site_sclfenm <- function(wt, site_mut, mutation,  mut_dl_sigma, mut_s
 get_delta_lij <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) {
   graph <- get_graph(wt)
 
-  delta_lij = rep(0, nrow(get_graph(wt)))
+  delta_lij <-  rep(0, nrow(get_graph(wt)))
 
   # pick edges to mutate
 
@@ -133,6 +133,7 @@ get_dxyz <- function(wt, delta_lij) {
   cmat <- get_cmat(wt)
   nzf <- f != 0 # consider only non-zero forces, to make next step faster
   dxyz <-  crossprod(cmat[nzf, ], f[nzf]) # calculate mutant equilibrium conformation (LRA)
+  dxyz
 }
 
 
@@ -158,15 +159,15 @@ get_force <- function(wt, delta_lij) {
   kij <- graph$kij
   eij <- get_eij(wt)
 
-  fij = -kij * delta_lij # Force on i in the direction from i to j.
+  fij <-  -kij * delta_lij # Force on i in the direction from i to j.
 
 
   f <- matrix(0, nrow = 3, ncol = get_nsites(wt))
   for (k in seq(nrow(graph))) {
     ik <- i[k]
     jk <- j[k]
-    f[, ik] <- f[, ik] + fij[k] * eij[k,  ]
-    f[, jk] <- f[, jk] - fij[k] * eij[k,  ]
+    f[, ik] <- f[, ik] + fij[k] * eij[k, ]
+    f[, jk] <- f[, jk] - fij[k] * eij[k, ]
   }
   as.vector(f)
 }

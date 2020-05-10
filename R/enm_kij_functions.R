@@ -11,7 +11,7 @@ kij_gnm <- kij_anm
 
 #' Calculate kij for model by Hinsen
 #'
-kij_hnm <- function(dij, ...){
+kij_hnm <- function(dij, ...) {
   ab <- 860
   b <-  2390
   al <- 1280000
@@ -27,7 +27,7 @@ kij_hnm <- function(dij, ...){
 #' Calculate kij for exponential model Hinsen
 #'
 kij_hnm0 <- function(dij, c = 7.5, a = 1, ...) {
-  a * exp( -(dij / c) ^ 2)
+  a * exp(-(dij / c)^2)
 }
 
 #' Calculate kij for model by Ming and Wall (2005)
@@ -42,12 +42,12 @@ kij_ming_wall <- function(dij, sdij,
 #' Calculate kij for parameter-free anm (by Yang et al.)
 #'
 kij_pfgnm <- function(dij, ...) {
-  1/dij^2
+  1 / dij^2
 }
 
 #' Calculate kij for model by Reach et al.
 #'
-kij_reach <- function(dij, sdist = 5, same.chain = T, ...) {
+kij_reach <- function(dij, sdist = 5, same_chain = T, ...) {
   k12 <- 712
   k13 <- 6.92
   k14 <- 32.0
@@ -61,7 +61,7 @@ kij_reach <- function(dij, sdist = 5, same.chain = T, ...) {
     kij <- k13
   } else if (sdist == 3) {
     kij <- k14
-  } else if (same.chain) {
+  } else if (same_chain) {
     kij <- ain * exp(-bin * dij)
   } else {
     kij <- aex * exp(-bex * dij)
