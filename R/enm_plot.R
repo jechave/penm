@@ -33,7 +33,6 @@ plot_stress <- function(prot) {
 
 }
 
-
 plot_site_profiles <- function(prot) {
 
   df <- tibble(
@@ -41,19 +40,19 @@ plot_site_profiles <- function(prot) {
     cn = get_cn(prot),
     mlms = get_mlms(prot),
     msf = get_msf_site(prot),
-    bfactor = get_bfactor(prot)
+    bfactor = get_bfactor(prot),
+    stress = get_stress(prot)
   )
 
   df %>%
-    mutate(rcn = 1 / cn,
-           rmlms = 1 / mlms) %>%
     pivot_longer(
-      cols = c(rcn, rmlms, msf, bfactor),
+      cols = c(cn, mlms, stress, msf, bfactor),
       names_to = "property",
       values_to = "value"
     ) %>%
-    mutate(property = factor(property, levels = c("bfactor", "msf", "rcn", "rmlms"),
-                             labels = c("bfactor", "msf", "1 / cn", "1 / mlms"))) %>%
+    mutate(property = factor(property,
+                             levels = c("bfactor", "msf", "cn", "mlms", "stress"),
+                             labels = c("bfactor", "msf", "cn", "mlms", "stress"))) %>%
     group_by(property) %>%
     mutate(value = jefuns::mMnorm(value)) %>%
     ggplot(aes(y = property, x = site, height = value)) +

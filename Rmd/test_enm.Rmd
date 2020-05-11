@@ -40,7 +40,7 @@ prot <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated 
 str(prot)
 ```
 
-# Test plot functions
+# Test *enm_plot.R* functions
 
 ## Site plots
 

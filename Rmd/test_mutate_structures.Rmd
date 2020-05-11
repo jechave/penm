@@ -63,10 +63,11 @@ str(param)
 ## Check pdb file and read wt coordinates
 
 ```{r}
-pdb_file <- "data-raw/2acy_A.pdb"
+pdb_file <- here("data-raw/2acy_A.pdb")
 pdb <- read.pdb(pdb_file)
 
-wt <- set_enm(pdb, node = "sc", model = "ming_wall", d_max = 10.5, frustrated = FALSE) 
+wt <- set_enm(pdb, node = "sc", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+
 
 str(wt)
 ```

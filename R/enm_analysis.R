@@ -19,8 +19,27 @@ get_msf_site <- function(prot) {
 #'
 #' The mlms of a site is the sum over its contacts of kij
 #'
-get_mlms <-  function(prot) {
+get_mlms_1 <-  function(prot) {
   diag(get_reduced_kmat(prot))
+}
+
+#' Site-dependent ENM minimum stress energy
+#'
+get_mlms <- function(prot, sdij_cut = 2) {
+  g1 <- get_graph(prot)
+  g2 <- g1 %>%
+    select(edge, j, i, v0ij, sdij, lij, kij, dij)
+  names(g2) <- names(g1)
+  g <- rbind(g1, g2)
+
+  g <- g %>%
+    filter(sdij >= sdij_cut) %>%
+    group_by(i) %>%
+    summarise(mlms = sum(kij))  %>%
+    select(mlms)
+
+  as.vector(g$mlms)
+
 }
 
 #' Site-dependent ENM minimum stress energy

@@ -102,7 +102,6 @@ distance = function(r1,r2) {
 }
 
 qb.levitt = function(ca.xyz,l=3,theta=37.6){
-  require(pracma)
   # quasi-beta (centroid) coordinates according to Levitt 1996
   nsites = length(ca.xyz)/3
   dim(ca.xyz) = c(3,nsites)
@@ -116,7 +115,7 @@ qb.levitt = function(ca.xyz,l=3,theta=37.6){
       rp = unlist(ca.xyz[,i] - ca.xyz[,i+1])
       x = rp+rm
       x = x/vnorm(x)
-      y = cross(rp,rm)
+      y = pracma::cross(rp, rm)
       y = y/vnorm(y)
       q.i = ca.xyz[,i]+x*l*cos(theta)+y*l*sin(theta)
     }
@@ -126,7 +125,6 @@ qb.levitt = function(ca.xyz,l=3,theta=37.6){
 }
 
 qb.micheletti = function(ca.xyz,l=3){
-  require(pracma)
   # quasi-beta (centroid) coordinates according to Micheletti 2004 (also Jernigan and HSCa)
   nsites = length(ca.xyz)/3
   dim(ca.xyz) = c(3,nsites)
