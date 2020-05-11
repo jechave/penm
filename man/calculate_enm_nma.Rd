@@ -4,12 +4,12 @@
 \alias{calculate_enm_nma}
 \title{Perform Normal Mode Analysis}
 \usage{
-calculate_enm_nma(kmat, TOL = 1e-05)
+calculate_enm_nma(kmat, too_small = 1e-05)
 }
 \arguments{
 \item{kmat}{The K matrix to diagonalize}
 
-\item{TOL=1.e-5}{A small value, eigenvectors with eigenvalues larger than `TOL` are discarded}
+\item{too_small=1.e-5}{A small value, eigenvectors with eigenvalues larger than `too_small` are discarded}
 }
 \value{
 A list with elements \code{mode}, \code{evalue}, \code{cmat}, and \code{umat}

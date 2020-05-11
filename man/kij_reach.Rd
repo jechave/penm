@@ -4,7 +4,7 @@
 \alias{kij_reach}
 \title{Calculate kij for model by Reach et al.}
 \usage{
-kij_reach(dij, sdist = 5, same.chain = T, ...)
+kij_reach(dij, sdist = 5, same_chain = T, ...)
 }
 \description{
 Calculate kij for model by Reach et al.
