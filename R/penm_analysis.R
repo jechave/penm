@@ -6,6 +6,9 @@ delta_g_entropy <- function(prot1, prot2)
 
 
 
+# Structure differences ---------------------------------------------------
+
+
 
 #' Compare the structures of two proteins in site representation
 #'
@@ -63,7 +66,7 @@ df2_site <- function(prot1, prot2) {
 
 #' Compare the structures of two proteins in nm representation
 #'
-#' Calculate de difference between the structures of two proteins, return dr2_nm.
+#' Calculate de difference between the structures of two proteins, return dr2_mode.
 #'
 #' This version works only for prot1 and prot2 with no indels
 #'
@@ -74,7 +77,7 @@ df2_site <- function(prot1, prot2) {
 #' @export
 #'
 #' @examples
-dr2_nm <- function(prot1, prot2) {
+dr2_mode <- function(prot1, prot2) {
   stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
   dxyz <- as.vector(prot2$nodes$xyz - prot1$nodes$xyz) # use c(3, nsites) representation of xyz
   drn <- as.vector(crossprod(prot1$nma$umat, dxyz))
@@ -83,8 +86,8 @@ dr2_nm <- function(prot1, prot2) {
   as.vector(dr2n)
 }
 
-#' @rdname dr2_nm
-de2_nm <- function(prot1, prot2) {
+#' @rdname dr2_mode
+de2_mode <- function(prot1, prot2) {
   stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
   stopifnot(prot1$node$site == prot2$node$site) # this version of dr2_site is to compare proteins with no indels
 
@@ -100,8 +103,8 @@ de2_nm <- function(prot1, prot2) {
 
 
 
-#' @rdname dr2_nm
-df2_nm <- function(prot1, prot2) {
+#' @rdname dr2_mode
+df2_mode <- function(prot1, prot2) {
   stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
 
   kmat <- prot1$kmat

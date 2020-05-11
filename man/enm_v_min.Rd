@@ -7,11 +7,11 @@
 enm_v_min(prot)
 }
 \arguments{
-\item{prot}{is a prot object with a en enm$graph tibble
+\item{prot}{is a prot object, wit a component graph tibble
 where v0ij, kij, lij and the dij for the minimum conformation are found.}
 }
 \value{
-a scalar: the minimum energy
+a scalar: the energy at the minimum-enegy conformation
 }
 \description{
 Calculate minimum energy of a given prot object

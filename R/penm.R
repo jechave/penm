@@ -204,8 +204,3 @@ mutate_graph <- function(prot) {
 }
 
 
-#' Depreciated, use mutate_enm instead
-#'
-enm_update <- function(...) {
-  stop("enm_update has been renamed to mutate_enm")
-}

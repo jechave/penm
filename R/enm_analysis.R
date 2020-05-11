@@ -23,6 +23,25 @@ get_mlms <-  function(prot) {
   diag(get_reduced_kmat(prot))
 }
 
+#' Site-dependent ENM minimum stress energy
+#'
+get_stress <- function(prot) {
+  g1 <- get_graph(prot)
+  g2 <- g1 %>%
+    select(edge, j, i, v0ij, sdij, lij, kij, dij)
+  names(g2) <- names(g1)
+  g <- rbind(g1, g2)
+
+  g <- g %>%
+    mutate(stress = .5 * kij * (dij - lij)^2) %>%
+    group_by(i) %>%
+    summarise(stress = sum(stress))  %>%
+    select(stress)
+
+  as.vector(g$stress)
+
+}
+
 
 
 # Get mode profiles -------------------------------------------------------
@@ -83,3 +102,4 @@ get_umat2 <- function(prot) {
   umat2 <- apply(umat2, c(2, 3), sum)
   umat2
 }
+

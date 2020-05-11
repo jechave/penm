@@ -1,15 +1,12 @@
 
 
-energy <- function(...) {
-  stop("function energy deleted; call enm_v_min, enm_g_entropy, etc. separately")
-}
 
 
 
 #' Calculate minimum energy of a given prot object
-#' @param prot is a prot object with a en enm$graph tibble
+#' @param prot is a prot object, wit a component graph tibble
 #' where v0ij, kij, lij and the dij for the minimum conformation are found.
-#' @return a scalar: the minimum energy
+#' @return a scalar: the energy at the minimum-enegy conformation
 enm_v_min <- function(prot) {
   graph <- get_graph(prot)
   v <- with(graph, {

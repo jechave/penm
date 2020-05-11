@@ -62,9 +62,9 @@ delta_structure_mode <- function(mutants) {
   # structural differences, mode analysis
   mutants %>%
     mutate(mode = map(wt, get_mode),
-           dr2nj = map2(wt, mut, dr2_nm),
-           de2nj = map2(wt, mut, de2_nm),
-           df2nj = map2(wt, mut, df2_nm)) %>%
+           dr2nj = map2(wt, mut, dr2_mode),
+           de2nj = map2(wt, mut, de2_mode),
+           df2nj = map2(wt, mut, df2_mode)) %>%
     select(-wt, -mut) %>%
     unnest(c(mode, dr2nj, de2nj, df2nj))
 }

@@ -60,9 +60,9 @@ response_site_plot <- function(prot1, prot2) {
 #' Plot structural difference along normal modes
 response_nm_plot <- function(prot1, prot2) {
   # make tibble with data to plot
-  df2 <- df2_nm(prot1, prot2)
-  de2 <- de2_nm(prot1, prot2)
-  dr2 <- dr2_nm(prot1, prot2)
+  df2 <- df2_mode(prot1, prot2)
+  de2 <- de2_mode(prot1, prot2)
+  dr2 <- dr2_mode(prot1, prot2)
   msf <- get_msf_mode(prot1)
   df <- tibble( mode = prot1$enm$mode, msf, df2, de2, dr2)
 

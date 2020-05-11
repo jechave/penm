@@ -25,6 +25,15 @@ plot_msf_vs_mlms <- function(prot) {
     theme_cowplot()
 }
 
+plot_stress <- function(prot) {
+  tibble(site = get_site(prot), stress = get_stress(prot)) %>%
+    ggplot(aes(site, stress)) +
+    geom_line() +
+    theme_cowplot()
+
+}
+
+
 plot_site_profiles <- function(prot) {
 
   df <- tibble(
