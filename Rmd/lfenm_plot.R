@@ -6,7 +6,8 @@ response_site_plot <- function(prot1, prot2) {
   de2 <- de2_site(prot1, prot2)
   dr2 <- dr2_site(prot1, prot2)
   msf <- get_msf_site(prot1)
-  df <- tibble(pdb_site = prot1$pdb_site, site = prot1$site, msf, df2, de2, dr2)
+  df <- tibble(pdb_site = get_pdb_site(prot1), site = get_site(prot1), msf, df2, de2, dr2)
+
 
 
   plot_site <- df %>%
@@ -64,7 +65,7 @@ response_nm_plot <- function(prot1, prot2) {
   de2 <- de2_mode(prot1, prot2)
   dr2 <- dr2_mode(prot1, prot2)
   msf <- get_msf_mode(prot1)
-  df <- tibble( mode = prot1$enm$mode, msf, df2, de2, dr2)
+  df <- tibble( mode = get_mode(prot1), msf, df2, de2, dr2)
 
   plot_mode <- df %>%
     pivot_longer(cols = df2:dr2,

@@ -25,13 +25,7 @@ plot_msf_vs_mlms <- function(prot) {
     theme_cowplot()
 }
 
-plot_stress <- function(prot) {
-  tibble(site = get_site(prot), stress = get_stress(prot)) %>%
-    ggplot(aes(site, stress)) +
-    geom_line() +
-    theme_cowplot()
 
-}
 
 plot_site_profiles <- function(prot) {
 
@@ -63,10 +57,6 @@ plot_site_profiles <- function(prot) {
 
 
 # Mode plots --------------------------------------------------------------
-
-
-
-
 
 
 #' Plot mode connectivity
@@ -123,15 +113,6 @@ plot_msf_mode_spectrum <- function(prot) {
 
 # site by mode matrices ---------------------------------------------------
 
-
-
-#' Plot umat2 matrix
-#'
-plot_umat2  <- function(prot) {
-  get_umat2(prot) %>%
-    plot_matrix(row_name = "site", col_name = "mode", value_name = "Uin^2")
-}
-
 #' Plot some normal modes of prot object
 #'
 plot_modes  <- function(prot, plot_modes = c(1, 2, 3, 4, 5)) {
@@ -144,6 +125,15 @@ plot_modes  <- function(prot, plot_modes = c(1, 2, 3, 4, 5)) {
     NULL
 
 }
+
+#' Plot umat2 matrix
+#'
+plot_umat2  <- function(prot) {
+  get_umat2(prot) %>%
+    plot_matrix(row_name = "site", col_name = "mode", value_name = "Uin^2")
+}
+
+
 
 #' Plot msf site by mode matrix
 #'

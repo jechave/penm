@@ -223,7 +223,7 @@ prot.
 
 ## 9 May 2020
 
-### Put update\_enm on stan by
+### Put update\_enm on stand by
 
   - Changed `update_enm` to `mut_model`, that can now be `lfenm` (K
     doesn’t change) or `sclfenm` (the update\_enm = T version previous).
@@ -235,3 +235,10 @@ prot.
   - Made “sclefnm” tests skip the test.
   - Tested
   - Commited
+
+## 12 May 2020
+
+  - Run and revisions of test\_mutate\_structure.Rmd
+  - created new perturbation\_response\_scanning.Rmd that produces
+    slides
+  - commited everything

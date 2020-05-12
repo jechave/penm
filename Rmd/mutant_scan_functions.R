@@ -1,33 +1,10 @@
-get_mut_energy <- function(wt, site, mutation, mut_model,
-                           seed = 2000 + site * mutation, beta = beta_boltzmann(T = 298)) {
-  mut <- get_mutant_site(wt,
-                         site,
-                         mutation,
-                         mut_model,
-                         mut_dl_sigma = param$mut$mut_dl_sigma,
-                         mut_sd_min = param$mut$mut_sd_min,
-                         seed)
- get_mutant_site()
-
-  tibble(v_min = enm_v_min(mut), g_entropy = enm_g_entropy(mut, beta))
-}
-
-get_mut <-function(wt, site, mutation = 1, mut_model = "sclfenm", mut_dl_sigma = 1) {
-  get_mutant_site(wt,
-                  site,
-                  mutation,
-                  mut_model,
-                  mut_dl_sigma = mut_dl_sigma,
-                  mut_sd_min = param$mut$mut_sd_min,
-                  seed = 2000 + site * mutation)
-}
 
 
 
 # get mutant table
 get_mutants_table <- function(wt, nmut_per_site) {
   mutation <- seq(from = 0, to = nmut_per_site)
-  j <- wt$site
+  j <- get_site(wt)
   # get mutants
   mutants <-  expand_grid(wt = list(wt), j, mutation)   %>%
     mutate(mut = pmap(list(wt, j, mutation), get_mutant_site))

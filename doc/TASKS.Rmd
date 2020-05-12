@@ -1,0 +1,24 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# To-dos
+
+## Perturbation response scanning
+
+### Revise perturbation_response_scanning.Rmd
+- [ ] Separate prs calculation from making figures
+- [ ] Write a prs.R file that performs the prs scan and generates the important necessary tables
+- [ ] Generate the data
+- [ ] Make perturbation_response_scanning.Rmd *read* the data, not calculate it
+- [ ] Revise .Rmd file until I'm happy with the output
+
+
+
+
+
