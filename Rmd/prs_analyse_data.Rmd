@@ -1,0 +1,382 @@
+---
+title: "Perturbation Response Scanning using penm"
+author: "Julian Echave"
+date: "5/12/2020"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+
+```{r}
+# Load libraries and functions
+
+library(tidyverse)
+library(ggridges)
+library(cowplot)
+library(bio3d)
+library(here)
+library(penm)
+library(jefuns)
+
+# source functions to use in this script
+source("lfenm_plot.R")
+```
+
+```{r}
+# Set parameters
+pdb_id = "2acy_A"
+```
+
+
+
+
+
+
+
+# Structural response theory
+
+## Structural response, definitions
+
+$f_{ij} = k_{ij} \delta l_{ij}$ is the force in the direction of contact $i-j$.
+
+Definitions:
+
+$$ de = K^{1/2}dr = C^{-1/2}df \\ dr = C df $$
+
+## Structural response, site and mode respresentations
+Therefore, in normal-mode representation: 
+
+$$de_{n} = \sigma_n df_{n} \\ dr_n = \sigma_n^2 df_n$$.
+
+By analogy, in site representation, check if it's approximately so that 
+
+$$de^2_{i} = \sigma_i^2 df^2_{i} \\ dr^2_i = \sigma_i^4 df^2_i$$.
+
+## Continuation
+
+Remember that, on average: 
+
+$$df^2_n \propto \frac{1}{\sigma_n^2}$$ 
+
+and probably 
+
+$$df^2_i \propto 1 / \sigma_i^2$$
+
+
+
+
+# Perturbation Response Scanning
+
+```{r}
+# Prepare site-site response data
+
+dfij <- here("data-raw", paste0(pdb_id, "_dfij.csv")) %>% 
+  read_csv()
+
+### Make long-version of dfij
+
+
+dfij_long <- dfij  %>% 
+  pivot_longer(cols = c(dr2ij, de2ij, df2ij),
+               names_to = "response",
+               values_to = "value") %>% 
+  mutate(response = factor(response, levels = c("df2ij", "de2ij", "dr2ij"))) 
+
+dfij_long
+
+```
+
+
+## Site-site average response matrices
+
+
+```{r}
+dfij_long %>%
+  group_by(i, j, response) %>%
+  summarise(value = mean(value)) %>% 
+  ungroup() %>% 
+  # filter(abs(j - i) >= 1) %>% 
+  group_by(response) %>% 
+  mutate(value = mMnorm(value)) %>% 
+  ggplot(aes(j, i, fill = value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  theme_cowplot() +
+  theme(legend.position = "none") +
+  coord_fixed() +
+  facet_grid(. ~ response) +
+  NULL 
+```
+
+## Response matrices are not symmetric
+
+
+```{r}
+plot_mji_vs_mij <- function(m, title = "") {
+  tm = t(m)
+  df <- matrix_to_tibble(m)
+  dft <- matrix_to_tibble(tm)
+  df$mji = dft$mij
+  
+  df %>% 
+    ggplot(aes(mij, mji)) +
+    geom_point(size = .3, alpha = .3) +
+    geom_smooth(method = "lm") +
+    geom_abline() +
+    ggtitle(title) +
+    coord_fixed() +
+    theme_cowplot()
+}
+
+
+#dr2ij asymmetry
+df <- dfij %>%
+  group_by(i, j) %>%
+  summarise(dr2ij = mean(dr2ij),
+            de2ij = mean(de2ij),
+            df2ij = mean(df2ij)) %>% 
+  arrange(j, i)
+
+nsites <- get_nsites(wt)
+
+p1 <- plot_mji_vs_mij(offdiag(matrix(df$df2ij, nsites, nsites)), "df2ij") 
+p2 <- plot_mji_vs_mij(offdiag(matrix(df$de2ij, nsites, nsites)), "de2ij") 
+p3 <- plot_mji_vs_mij(offdiag(matrix(df$dr2ij, nsites, nsites)), "dr2ij") 
+
+plot_grid(p1, p2, p3, ncol = 3)
+```
+
+
+## Response over a single scan is similar to average over scans
+
+```{r}
+dfij_long %>%
+  filter(mutation %in% c(1, 2)) %>% 
+  group_by(mutation, response) %>% 
+  mutate(value = mMnorm(value)) %>% 
+  ggplot(aes(j, i, fill = value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  theme_cowplot() +
+  theme(legend.position = "none") +
+  coord_fixed() +
+  facet_grid(mutation ~ response) +
+  NULL 
+```
+
+## Response over single scan similar to average, cont.
+```{r}
+dfij_long %>% 
+  filter(mutation %in% c(1, 2)) %>% 
+  pivot_wider(names_from = mutation,
+              names_prefix = "mutation_",
+              values_from = value)  %>% 
+  ggplot(aes(mutation_1, mutation_2)) +
+  geom_point() +
+  geom_smooth() +
+  geom_abline() +
+  theme_cowplot() +
+  facet_wrap(~ response, ncol = 3, scales = "free")
+```
+
+
+## sd(response) is proportional to mean(response)
+
+```{r}
+dfij_long %>% 
+  group_by(i, j, response) %>% 
+  mutate(value_mean = mean(value),
+         value_sd = sd(value)) %>% 
+  ggplot(aes(value_mean, value_sd)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_cowplot() +
+  facet_wrap(~ response, scales = "free")
+```
+
+
+# Average response of site i
+
+
+## Average response vs. site
+
+```{r}
+dfij_long %>% 
+  group_by(i, msfi, response) %>% 
+  summarise(value = mean(value)) %>% 
+  ggplot(aes(i, value)) +
+  geom_line() +
+  theme_cowplot() +
+  facet_grid(response ~ ., scales = "free_y") +
+  ggtitle("response_of(i) vs. site")
+```
+
+## Average response vs. msf
+
+```{r}
+dfij_long %>% 
+  group_by(i, msfi, response) %>% 
+  summarise(value = mean(value)) %>% 
+  ggplot(aes(msfi, value)) +
+  geom_point() +
+  geom_smooth() +
+  theme_cowplot() +
+  facet_grid(response ~ ., scales = "free_y") +
+  ggtitle("response_of(i) vs. msf(i)")
+```
+
+## Average response vs. local packing density
+
+```{r}
+dfij_long %>% 
+  group_by(i, mlmsi, response) %>% 
+  summarise(value = mean(value)) %>% 
+  ggplot(aes(mlmsi, value)) +
+  geom_point() +
+  geom_smooth() +
+  theme_cowplot() +
+  facet_grid(response ~ ., scales = "free_y") +
+  ggtitle("response_of(i) vs. cn(i)")
+```
+
+
+# Influence of site j
+
+## Average response vs. mutated site j
+
+```{r}
+dfij_long %>% 
+  group_by(j, msfj, response) %>% 
+  summarise(value = mean(value)) %>% 
+  ggplot(aes(j, value)) +
+  geom_line() +
+  theme_cowplot() +
+  facet_grid(response ~ ., scales = "free_y") +
+  ggtitle("response_to(j) vs. j")
+```
+
+
+## Average response vs. msf of mutated site j
+
+```{r}
+dfij_long %>% 
+  group_by(j, msfj, response) %>% 
+  summarise(value = mean(value)) %>% 
+  ggplot(aes(msfj, value)) +
+  geom_point() +
+  geom_smooth() +
+  theme_cowplot() +
+  facet_grid(response ~ ., scales = "free_y") +
+  ggtitle("response_of(j) vs. msf(j)")
+```
+
+## Average response vs. local packing density of mutated site j
+
+```{r}
+dfij_long %>% 
+  group_by(j, mlmsj, response) %>% 
+  summarise(value = mean(value)) %>% 
+  ggplot(aes(mlmsj, value)) +
+  geom_point() +
+  geom_smooth() +
+  theme_cowplot() +
+  facet_grid(response ~ ., scales = "free_y") +
+  ggtitle("response_of(j) vs. mlms(j)")
+```
+
+
+# Structural response along normal modes
+
+
+```{r}
+# Prepare data
+
+dfnj <- here("data-raw", paste0(pdb_id, "_dfnj.csv")) %>% 
+  read_csv()
+  
+dfnj_long  <- dfnj %>% 
+  pivot_longer(cols = c(dr2nj, de2nj, df2nj),
+               names_to = "response",
+               values_to = "value") %>% 
+  mutate(response = factor(response, levels = c("df2nj", "de2nj", "dr2nj"))) 
+
+dfnj_long
+```
+
+```{r}
+# prepare data
+df_prs_mode <- dfnj %>%
+  select(j, mutation, mode, dr2nj) %>%
+  rename(dr2 = dr2nj) 
+```
+
+
+## Structrural response along normal modes
+
+```{r}
+pnj = df_prs_mode %>%
+  group_by(mode, j) %>%
+  summarise(dr2_mean = mean(dr2),
+            dr2_sd = sd(dr2)) %>%
+  ggplot(aes(mode, j, fill = sqrt(dr2_mean))) +
+  geom_tile() +
+  scale_color_viridis_c() +
+  theme_cowplot()
+
+pn <- df_prs_mode %>%
+  group_by(mode) %>%
+  summarise(dr2_mean = mean(dr2),
+            dr2_sd = sd(dr2)) %>%
+  ggplot(aes(mode, dr2_mean)) +
+  geom_line() +
+  theme_cowplot()
+
+pj <- df_prs_mode %>%
+  group_by(j) %>%
+  summarise(dr2_mean = mean(dr2),
+            dr2_sd = sd(dr2)) %>%
+  ggplot(aes(j, dr2_mean)) +
+  geom_line() +
+  theme_cowplot()
+
+plot_grid(pnj, plot_grid(pn, pj), ncol = 1)
+```
+
+## Single scan similar to average over scans
+
+```{r message = F}
+p1 <- df_prs_mode %>% 
+  filter(mutation != 0) %>% 
+  group_by(mode, mutation) %>% 
+  summarise(dr2n = sum(dr2))  %>% 
+  mutate(mutation = factor(mutation)) %>% 
+  ggplot(aes(mode, dr2n, color = mutation)) +
+  geom_line() +
+  theme_cowplot() +
+  theme(legend.position = c(0.1, 0.9)) +
+  scale_color_viridis_d()
+
+p2 <- df_prs_mode %>% 
+  filter(mutation != 0) %>% 
+  group_by(mode, mutation) %>% 
+  summarise(dr2n = sum(dr2)) %>% 
+  ungroup() %>% 
+  group_by(mode) %>% 
+  mutate(dr2n_mean = mean(dr2n)) %>% 
+  mutate(mutation = factor(mutation)) %>% 
+  ggplot(aes(dr2n_mean, dr2n, color = mutation)) +
+  geom_point() +
+  geom_smooth() +
+  scale_color_viridis_d() +
+  theme_cowplot() +
+  theme(legend.position = c(0.1, 0.9)) +
+  NULL
+
+
+plot_grid(p1, p2)
+
+```
+

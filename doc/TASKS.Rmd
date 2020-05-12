@@ -12,11 +12,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Perturbation response scanning
 
 ### Revise perturbation_response_scanning.Rmd
-- [ ] Separate prs calculation from making figures
-- [ ] Write a prs.R file that performs the prs scan and generates the important necessary tables
-- [ ] Generate the data
-- [ ] Make perturbation_response_scanning.Rmd *read* the data, not calculate it
-- [ ] Revise .Rmd file until I'm happy with the output
+- [X] Separate prs calculation from making figures
+- [X] Write a prs_data_create.R file that performs the prs scan and generates the important necessary tables
+- [X] Generate the data
+- [X] Make prs_data_analyse.Rmd *read* the data, not calculate it
+- [X] Revise .Rmd file until I'm happy with the output
+
+### Complete *prs_data_analyse.Rmd* (add more normal mode analysis)
+
+### Revise mut_vs_wt.Rmd pair-comparison document
 
 
 

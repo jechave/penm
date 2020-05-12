@@ -212,6 +212,12 @@ I refactored set_enm by adding functions that depend as much as possible only on
 - created new perturbation_response_scanning.Rmd that produces slides
 - commited everything
 
+### Separated data creation and analysis of perturbation response scanning
+- Put all creation in "Rmd/prs_data_create.Rmd"
+- Put all analysis in "Rmd/prs_data_analyse.Rmd"
+- Kept in these files only "prs", not pair comparison mut vs. wt
+- Created s pair-comparison file "mut_vs_wt.Rmd", to be completed later
+
 
 
 

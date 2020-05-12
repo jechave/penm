@@ -2,12 +2,13 @@
 
 
 # get mutant table
-get_mutants_table <- function(wt, nmut_per_site) {
+get_mutants_table <- function(wt, nmut_per_site, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2) {
   mutation <- seq(from = 0, to = nmut_per_site)
   j <- get_site(wt)
   # get mutants
   mutants <-  expand_grid(wt = list(wt), j, mutation)   %>%
-    mutate(mut = pmap(list(wt, j, mutation), get_mutant_site))
+    mutate(mut = pmap(list(wt, j, mutation), get_mutant_site,
+                      mut_model = mut_model, mut_dl_sigma = mut_dl_sigma, mut_sd_min = mut_sd_min))
   mutants
 }
 
