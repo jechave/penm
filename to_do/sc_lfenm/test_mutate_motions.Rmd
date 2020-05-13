@@ -1,0 +1,234 @@
+---
+title: "Effect of mutating the ENM Kmat on motions"
+author: "Julian Echave"
+date: "4/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Load libraries and functions
+
+```{r}
+# load libraries
+library(tidyverse)
+library(ggridges)
+library(cowplot)
+library(bio3d)
+library(penm)
+library(jefuns)
+
+# source functions to use in this script
+source("mutant_scan_functions.R")
+source("lfenm_plot.R")
+
+# set paths and file names
+
+pdb_path <- "data" # pdb files repaired using FoldX (by Elisha)
+
+```
+
+
+
+# Set up parameters
+
+```{r}
+# global parameters
+beta <- beta_boltzmann()
+# other parameters
+
+param <- lst(
+  enm = lst(model = "ming_wall",
+            d_max = 10.5,
+            frustrated = NA),
+  mut = lst(model = "lfenm",
+            mut_dl_sigma = 0.3,
+            mut_sd_min = 1,
+            update_enm = NA),
+  prs = lst(nmut_per_site = 1),
+)
+
+str(param)
+
+```
+
+
+# Read and preform ENM NMA of wild-type protein
+
+## init wt
+
+```{r}
+pdb_file <- "data-raw/2acy_A.pdb"
+pdb <- read.pdb(pdb_file)
+
+wt <- set_enm(pdb, node = "sc", model = "ming_wall", d_max = 10.5, frustrated = TRUE)
+str(wt)
+```
+
+
+## ENM mutations chnage entropic contributions
+
+Check that entropic tontributions to energy change when update_enm = TRUE
+
+```{r}
+df <- tibble(prot = c("wt", "mutF", "mutT"),
+             site = c(3, 3, 3),
+             wt = lst(wt),
+             mutation = c(0, 1, 1),
+             update_enm = c(F, F, T),
+             frustrated = c(F, F, F)) %>%
+  mutate(mut_energy = pmap(list(wt, site, mutation, update_enm, frustrated), get_mut_energy)) %>%
+  unnest(mut_energy) %>%
+  arrange(mutation, frustrated, update_enm) %>%
+  select(-prot, -wt, -mutation)
+
+df
+
+```
+
+## Check effect of adding frustrations
+
+Adding frustrations affects entropic terms, thus only when updating ENM
+
+```{r}
+# with and without frustration
+
+df <- tibble(prot = c("wt", "mutff", "mutft", "muttf", "muttt"),
+             site = rep(80, 5),
+             wt = lst(wt),
+             mutation = c(0, 1, 1, 1, 1),
+             update_enm = c(F, F, F, T, T),
+             frustrated = c(F, F, T, F, T)) %>%
+  mutate(mut_energy = pmap(list(wt, site, mutation, update_enm, frustrated), get_mut_energy)) %>%
+  unnest(mut_energy) %>%
+  arrange(mutation, update_enm, frustrated) %>%
+  select(-prot, -wt, -mutation)
+
+df
+
+```
+
+## Plot change in msf profile
+
+```{r}
+
+# get mutant
+mutated_site <- 80
+update_enm <- T
+frustrated <- F
+mut <- get_mut(wt, mutated_site, mutation = 1, mut_dl_sigma = 1, update_enm, frustrated)
+
+# set msf data.frame for plotting
+site <- get_site(wt)
+wt_msf <- get_msf_site(wt)
+mut_msf <- get_msf_site(mut)
+df <- tibble(site, wt_msf, mut_msf)
+
+p1  = df %>%
+  pivot_longer(cols = c("wt_msf", "mut_msf"),
+               names_to = "protein",
+               values_to = "msf") %>%
+  ggplot(aes(site, msf, color = protein)) +
+  geom_line() +
+  scale_color_viridis_d() +
+  theme_cowplot() +
+  theme(axis.text.y = element_blank()) +
+  theme(legend.position = "top") +
+  NULL +
+  ggtitle(paste0("mutated_site:", mutated_site, ", update_enm = ", update_enm,
+                 ", frustrated = ", frustrated))
+
+p2 <- df %>%
+  ggplot(aes(site, mut_msf - wt_msf)) +
+  geom_line() +
+  theme_cowplot()  +
+  geom_hline(yintercept = 0) +
+  theme(axis.text.y = element_blank()) +
+  NULL
+
+plot_grid(p1, p2, ncol = 1)
+```
+
+
+
+
+
+## Change of msf along normal modes
+
+```{r}
+
+# get mutant
+mutated_site <- 80
+update_enm <- T
+frustrated <- F
+mut <- get_mut(wt, mutated_site, mutation = 1, mut_dl_sigma = 1, update_enm, frustrated)
+
+# set msf data.frame for plotting
+mode <- get_mode(wt)
+wt_msf <- 1 / get_evalue(wt)
+mut_msf <- 1 / get_evalue(mut)
+df <- tibble(mode, wt_msf, mut_msf)
+
+p1  = df %>%
+  pivot_longer(cols = c("wt_msf", "mut_msf"),
+               names_to = "protein",
+               values_to = "msf") %>%
+  ggplot(aes(mode, msf, color = protein)) +
+  geom_line() +
+  scale_color_viridis_d() +
+  theme_cowplot() +
+  theme(axis.text.y = element_blank()) +
+  theme(legend.position = "top") +
+  NULL +
+  ggtitle(paste0("mutated_site:", mutated_site, ", update_enm = ", update_enm,
+                 ", frustrated = ", frustrated))
+
+p2 <- df %>%
+  ggplot(aes(mode, mut_msf - wt_msf)) +
+  geom_line() +
+  theme_cowplot()  +
+  geom_hline(yintercept = 0) +
+  theme(axis.text.y = element_blank()) +
+  NULL
+
+plot_grid(p1, p2, ncol = 1)
+```
+
+
+```{r}
+omn <- t(wt$enm$umat) %*% mut$enm$umat
+
+nmodes <- nrow(omn)
+
+matrix_to_tibble <- function(mat) {
+  M <- nrow(mat)
+  N <- ncol(mat)
+  i <- rep(seq(N), M)
+  j <- rep(seq(M), each = N)
+  df <- tibble(i, j, mat_ij = as.vector(mat))
+  df
+}
+
+plot_matrix <- function(mat) {
+  df <- matrix_to_tibble(mat)
+  plot <-  df %>%
+    ggplot(aes(i, j, fill = mat_ij)) +
+    geom_tile() +
+    scale_fill_viridis_c() +
+    theme_cowplot() +
+    NULL +
+    # theme(legend.position = "none") +
+    coord_fixed() +
+    NULL
+  plot
+}
+
+plot_matrix(omn) +
+  xlab("n_wt") +
+  ylab("n_mut")
+
+plot(diag(omn^2))
+```

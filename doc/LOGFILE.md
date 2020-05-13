@@ -254,7 +254,18 @@ everything
 
 ## 13 May 2020
 
+### Complete penm\_data\_analyse.Rmd
+
   - Created some new notes on PRS
   - Completed first full version of penm\_data\_analyse.Rmd
   - Deleted TODO.Rmd (Using Trello and Things… already too much)
   - Tested and commited
+
+### Clean up
+
+  - moved `prs` functions into package: file *R/prs.R*
+  - created *./to\_do* directory to hold planned features
+  - moved relevant files related to planned features to */to\_do*
+  - run all Rmd reports
+  - run all tests
+  - Commit

@@ -29,7 +29,6 @@ if (FALSE)
 }
 \seealso{
 Other enm builders: 
-\code{\link{add_enm_activation}()},
 \code{\link{calculate_enm_kmat}()},
 \code{\link{calculate_enm_nma}()}
 }

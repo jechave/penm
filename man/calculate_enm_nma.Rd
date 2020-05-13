@@ -24,7 +24,6 @@ enm_anm(enm, 1.e-10)
 }
 \seealso{
 Other enm builders: 
-\code{\link{add_enm_activation}()},
 \code{\link{calculate_enm_graph}()},
 \code{\link{calculate_enm_kmat}()}
 }

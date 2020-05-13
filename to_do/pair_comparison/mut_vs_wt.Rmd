@@ -1,0 +1,120 @@
+---
+title: "Perturbation Response Scanning using penm"
+author: "Julian Echave"
+date: "5/12/2020"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+
+```{r}
+# Load libraries and functions
+
+library(tidyverse)
+library(ggridges)
+library(cowplot)
+library(bio3d)
+library(here)
+library(penm)
+library(jefuns)
+
+# source functions to use in this script
+source("lfenm_plot.R")
+```
+
+```{r}
+# Set parameters
+pdb_id = "2acy_A"
+```
+
+
+# Site-site response
+
+
+```{r}
+# Prepare site-site response data
+
+dfij <- here("data-raw", paste0(pdb_id, "_dfij.csv")) %>%
+  read_csv()
+
+### Make long-version of dfij
+
+
+dfij_long <- dfij  %>%
+  pivot_longer(cols = c(dr2ij, de2ij, df2ij),
+               names_to = "response",
+               values_to = "value") %>%
+  mutate(response = factor(response, levels = c("df2ij", "de2ij", "dr2ij")))
+
+dfij_long
+
+```
+
+
+
+
+
+```{r results = FALSE}
+# Set up wt
+
+pdb_file <- here("data-raw/2acy_A.pdb")
+pdb <- read.pdb(pdb_file)
+
+wt <- set_enm(pdb, node = "sc", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+
+str(wt)
+```
+
+
+
+# Test mutational model
+
+
+## Adding frustration to the LFENM mutational model
+
+Note that v_min changes from wt to mut, but g_entropy doesn't, because the "lfenm" model assumes $K_{mut} = K_{wt}$.
+Adding or not frustrations has no effect, because frustration affects the model via $K$, and `wt` is, by construction, fully relaxed.
+
+
+```{r}
+set_wt <- function(pdb, frustrated, node = "sc", model = "ming_wall", d_max = 10.5) {
+  set_enm(pdb, node, model, d_max, frustrated)
+}
+
+get_mut <- function(wt, site_mut, mutation) {
+  get_mutant_site(wt, site_mut, mutation, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
+}
+
+tibble(prot = c("mut_nofrust", "mut_frust"),
+       site_mut = rep(80, 2),
+       mutation = c(1, 1),
+       pdb = lst(pdb),
+       frustrated = c(F, T)) %>%
+  mutate(wt = map2(pdb, frustrated, set_wt)) %>%
+  mutate(mut = pmap(list(wt, site_mut, mutation), get_mut)) %>%
+  mutate(v_min_wt = map_dbl(wt, enm_v_min),
+         v_min_mut = map_dbl(mut, enm_v_min),
+         g_entropy_wt = map_dbl(wt, enm_g_entropy, beta = beta_boltzmann()),
+         g_entropy_mut = map_dbl(wt, enm_g_entropy, beta = beta_boltzmann())) %>%
+  select(frustrated, starts_with("v_min"), starts_with("g_"))
+```
+
+
+
+## Structural response along sites
+```{r}
+site = 80
+wt <- set_enm(pdb, node = "sc", model = "ming_wall", d_max = 10.5, frustrated = F)
+mut <- get_mutant_site(wt, 80, mutation = 1, "lfenm", 0.3, 10.5)
+response_site_plot(wt, mut)
+
+```
+
+## Structural response along normal modes
+
+```{r}
+response_nm_plot(wt, mut)
+```

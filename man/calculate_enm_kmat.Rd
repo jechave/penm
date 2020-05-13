@@ -27,7 +27,6 @@ calculate_enm_kmat(graph, eij)
 }
 \seealso{
 Other enm builders: 
-\code{\link{add_enm_activation}()},
 \code{\link{calculate_enm_graph}()},
 \code{\link{calculate_enm_nma}()}
 }
