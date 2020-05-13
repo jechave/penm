@@ -221,6 +221,14 @@ I refactored set_enm by adding functions that depend as much as possible only on
 
 
 
+## 13 May 2020
+
+- Created some new notes on PRS
+- Completed first full version of penm_data_analyse.Rmd
+- Deleted TODO.Rmd (Using Trello and Things... already too much)
+- Tested and commited
+
+
 
 
 

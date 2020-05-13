@@ -241,4 +241,20 @@ prot.
   - Run and revisions of test\_mutate\_structure.Rmd
   - created new perturbation\_response\_scanning.Rmd that produces
     slides
-  - commited everything
+  - commited
+everything
+
+### Separated data creation and analysis of perturbation response scanning
+
+  - Put all creation in “Rmd/prs\_data\_create.Rmd”
+  - Put all analysis in “Rmd/prs\_data\_analyse.Rmd”
+  - Kept in these files only “prs”, not pair comparison mut vs. wt
+  - Created s pair-comparison file “mut\_vs\_wt.Rmd”, to be completed
+    later
+
+## 13 May 2020
+
+  - Created some new notes on PRS
+  - Completed first full version of penm\_data\_analyse.Rmd
+  - Deleted TODO.Rmd (Using Trello and Things… already too much)
+  - Tested and commited
