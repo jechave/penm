@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 # load libraries
+library(here)
 library(tidyverse)
 library(ggridges)
 library(cowplot)
@@ -25,7 +26,7 @@ library(jefuns)
 ## Check pdb file and read wt coordinates
 
 ```{r}
-pdb_file <- "data-raw/2acy_A.pdb"
+pdb_file <- here("data-raw/2acy_A.pdb")
 pdb <- read.pdb(pdb_file)
 
 wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE) 
@@ -39,8 +40,7 @@ str(wt)
 
 ```{r}
 
-mut <- get_mutant_site(wt, site_mut = 80, mutation = 1, 
-                       wt0 = wt, mut_sd_min = 1, mut_dl_sigma = 0.3, update_enm = FALSE)
+mut <- get_mutant_site(wt, site_mut = 80, mutation = 1, mut_model = "lfenm",  mut_dl_sigma = 0.3, mut_sd_min = 2)
                        
 
 str(mut)
@@ -51,13 +51,12 @@ str(mut)
 
 ```{r}
 
-mut_update_enm <- get_mutant_site(wt, site_mut = 80, mutation = 1, 
-                       wt0 = wt,
-                       mut_sd_min = 1, mut_dl_sigma = 0.3, update_enm = TRUE)
+mut_update_enm <- get_mutant_site(wt, site_mut = 80, mutation = 1,  mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
 
 str(mut_update_enm)
 
 ```
+
 ```{r}
 df <- tibble(protein = c("wt", "mut_no_update_enm", "mut_update_enm"),
              v_min = c(

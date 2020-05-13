@@ -20,6 +20,8 @@ library(penm)
 library(jefuns)
 library(here)
 
+source(here("Rmd/enm_plot.R"))
+
 ```
 
 

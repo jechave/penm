@@ -12,18 +12,11 @@ knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = TRUE)
 
 ```{r}
 # Load libraries and functions
-
-library(tidyverse)
-library(ggridges)
-library(cowplot)
-library(bio3d)
 library(here)
+library(tidyverse)
+library(bio3d)
 library(penm)
 library(jefuns)
-
-# source functions to use in this script
-source("mutant_scan_functions.R")
-source("lfenm_plot.R")
 ```
 
 ## Set parameters
@@ -42,7 +35,7 @@ enm_frustrated <- F
 # mut parameters
 mut_model <- "lfenm"
 mut_dl_sigma <- 0.3
-mut_sd_min <- 2
+mut_sd_min <- 10
 
 # file names
 # input
