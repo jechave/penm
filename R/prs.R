@@ -1,8 +1,45 @@
+#' Calculate perturbation-response-scanning responses
+#'
+prs <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, beta) {
+  mutants <- get_mutants_table(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min)
+
+  mut_param <- lst(mut_model, mut_dl_sigma, mut_sd_min)
+  dej <- delta_energy(mutants, beta)
+  dfij <- delta_structure_site(mutants)
+  dfnj <- delta_structure_mode(mutants)
+
+  # add j-site info to dej
+  dfj <- tibble(j = get_site(wt), msfj = get_msf_site(wt), mlmsj = get_mlms(wt))
+
+  dej <- dej %>%
+    inner_join(dfj)
+
+  # add site info to dfij
+  dfi <- tibble(i = get_site(wt), msfi = get_msf_site(wt), mlmsi = get_mlms(wt))
+  dfj <- tibble(j = get_site(wt), msfj = get_msf_site(wt), mlmsj = get_mlms(wt))
+
+  dfij <- dfij %>%
+    inner_join(dfi) %>%
+    inner_join(dfj) %>%
+    select(i, j, mutation, msfi, msfj, mlmsi, mlmsj, everything())
+
+
+  # add mode info to dfnj
+  dn <- tibble(mode = get_mode(wt), msfn = get_msf_mode(wt))
+  dj <- tibble(j = get_site(wt), msfj = get_msf_site(wt), mlmsj = get_msf_site(wt))
+
+  dfnj <- dfnj %>%
+    inner_join(dn) %>%
+    inner_join(dj) %>%
+    select(mode, j, mutation, msfn, msfj, mlmsj, everything())
+
+  lst(mut_param, dej,  dfij,  dfnj)
+}
 
 
 
 # get mutant table
-get_mutants_table <- function(wt, nmut_per_site, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2) {
+get_mutants_table <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min) {
   mutation <- seq(from = 0, to = nmut_per_site)
   j <- get_site(wt)
   # get mutants
@@ -14,11 +51,13 @@ get_mutants_table <- function(wt, nmut_per_site, mut_model = "lfenm", mut_dl_sig
 
 
 #' Calculate energy mutational response
-delta_energy <- function(mutants) {
+delta_energy <- function(mutants, beta) {
   # energy differences
   mutants %>%
     mutate(delta_v_min = map2_dbl(wt, mut, delta_v_min),
-           delta_g_entropy = map2_dbl(wt, mut, delta_g_entropy)) %>%
+           delta_g_entropy = map2_dbl(wt, mut, delta_g_entropy, beta = beta),
+           delta_u = delta_v_min,
+           delta_a = delta_v_min + delta_g_entropy) %>%
     select(-wt, -mut)
 }
 

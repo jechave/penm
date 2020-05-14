@@ -1,0 +1,114 @@
+---
+title: "play around with ggplot extensions"
+author: "Julian Echave"
+date: "5/14/2020"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+
+```{r}
+# Load libraries and functions
+library(here)
+library(tidyverse)
+library(cowplot)
+library(jefuns)
+```
+
+```{r}
+# Set parameters
+pdb_id = "2acy_A"
+```
+
+
+# Site-dependent response matrix
+
+```{r}
+# Prepare site-site response data
+
+## Read dfij
+
+dfij <- here("data-raw", paste0(pdb_id, "_dfij.csv")) %>% 
+  read_csv()
+
+### Make long-version of dfij
+
+dfij_long <- dfij  %>% 
+  pivot_longer(cols = c(dr2ij, de2ij, df2ij),
+               names_to = "response",
+               values_to = "value") %>% 
+  mutate(response = factor(response, levels = c("df2ij", "de2ij", "dr2ij")))  %>% 
+  filter(mutation > 0) 
+
+```
+
+## esquisse
+```{r}
+library(esquisse)
+
+esquisser(dfij)
+
+
+```
+## gganimate
+
+```{r}
+library(gganimate) 
+library(transformr)
+library(gifski)
+
+plot <- dfij %>% 
+  filter(mutation %in% c(1, 2, 3, 4)) %>% 
+  group_by(mutation, j) %>% 
+  summarise(rmsd = (mean(dr2ij))) %>% 
+  ggplot(aes(j, rmsd)) +
+  geom_line() +
+    # labs(title = 'mutation: {frame_time}', x = 'mutated site, j', y = 'response, rmsd') +
+  transition_states(states = mutation) +
+  enter_fade() +
+  exit_fade()
+
+animate(plot, nframes = 100, end_pause = 10, rewind = TRUE)
+
+```
+
+```{r}
+library(patchwork)
+
+p1 <- dfij %>% 
+  group_by(i, j) %>% 
+  summarise(rmsd = sqrt(mean(dr2ij))) %>% 
+  ggplot(aes(j, i, size = rmsd, color = rmsd)) +
+  geom_point() +
+  scale_color_viridis_c() +
+  theme_minimal()
+
+p2 <- dfij %>% 
+  group_by(j) %>% 
+  summarise(rmsd = sqrt(mean(dr2ij))) %>% 
+  ggplot(aes(j, rmsd, color = rmsd)) +
+  geom_point() +
+  geom_line(color = "blue") +
+  scale_color_viridis_c() +
+  theme_minimal()
+
+p1 + p2 + p2 + p2
+
+```
+
+```{r}
+p2 / p1
+```
+
+```{r}
+p1 | p2 / p2
+```
+```{r}
+p2 + p2
+
+p2 + p2 + p2 + guide_area() + plot_layout(guides = 'collect')
+```
+

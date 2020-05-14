@@ -4,7 +4,7 @@
 \alias{delta_energy}
 \title{Calculate energy mutational response}
 \usage{
-delta_energy(mutants)
+delta_energy(mutants, beta)
 }
 \description{
 Calculate energy mutational response

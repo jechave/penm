@@ -35,19 +35,19 @@ enm_frustrated <- F
 # mut parameters
 mut_model <- "lfenm"
 mut_dl_sigma <- 0.3
-mut_sd_min <- 10
+mut_sd_min <- 2
 
 # file names
 # input
 pdb_fname <- here("data-raw", paste0(pdb_id, ".pdb"))
 
 # output
+mut_param_fname <- here("data-raw", paste0(pdb_id, "_mut_param.csv"))
+dej_fname <- here("data-raw", paste0(pdb_id, "_dfej.csv"))
 dfij_fname <- here("data-raw", paste0(pdb_id, "_dfij.csv"))
 dfnj_fname <- here("data-raw", paste0(pdb_id, "_dfnj.csv"))
 ```
 
-
-# Perturbation Response Scanning
 
 ## Scan mutations
 
@@ -56,62 +56,15 @@ dfnj_fname <- here("data-raw", paste0(pdb_id, "_dfnj.csv"))
 pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
 wt <- set_enm(pdb, enm_node, enm_model, enm_d_max, enm_frustrated)
 # get mutant table
-mutants <- get_mutants_table(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min)
-mutants[1:2,]
+prs <- prs(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, beta = beta_boltzmann())
+
+str(prs)
 ```
-
-
-##  Calculate and save dr2ij matrices
 
 ```{r}
-dfij <- delta_structure_site(mutants) 
-
-dfij
-
-### Add site info
-
-dfi <- tibble(i = get_site(wt), msfi = get_msf_site(wt), mlmsi = get_mlms(wt))
-dfj <- tibble(j = get_site(wt), msfj = get_msf_site(wt), mlmsj = get_mlms(wt))
-
-dfij <- dfij %>% 
-  inner_join(dfi) %>% 
-  inner_join(dfj) %>% 
-  select(i, j, mutation, msfi, msfj, mlmsi, mlmsj, everything())
-
-print(dfij)
-
-## Save dfij
-
-write_csv(dfij, dfij_fname)
+write_csv(as_tibble(prs$mut_param), mut_param_fname)
+write_csv(prs$dej, dej_fname)
+write_csv(prs$dfij, dfij_fname)
+write_csv(prs$dfnj, dfnj_fname)
 ```
-
-
-
-## Calculate and save dr2nj matrices
-
-```{r}
-dfnj <- delta_structure_mode(mutants)
-
-
-### Add mode and site info
-
-dn <- tibble(mode = get_mode(wt), msfn = get_msf_mode(wt))
-dj <- tibble(j = get_site(wt), msfj = get_msf_site(wt), mlmsj = get_msf_site(wt))
-
-dfnj <- dfnj %>% 
-  inner_join(dn) %>% 
-  inner_join(dj) %>% 
-  select(mode, j, mutation, msfn, msfj, mlmsj, everything())
-
-dfnj
-
-## Save files
-
-write_csv(dfnj, dfnj_fname)
-```
-
-
-
-
-
 

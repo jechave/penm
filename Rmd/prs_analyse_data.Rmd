@@ -16,6 +16,8 @@ library(here)
 library(tidyverse)
 library(cowplot)
 library(jefuns)
+
+library(patchwork)
 ```
 
 ```{r}
@@ -155,10 +157,13 @@ dfij_long %>%
 
 
 # Site-dependent response profile 
+
 ## Average response vs. site
 
+* As predicted by theory: $df^2 \propto 1/\sigma^2$,  $de^2 \approx \texttt{constant}$, and $dr^2 \propto \sigma^2$.
+
 ```{r}
-dfij_long %>% 
+p1 <- dfij_long %>% 
   group_by(i, msfi, response) %>% 
   summarise(value = mean(value)) %>% 
   ggplot(aes(i, value)) +
@@ -166,46 +171,35 @@ dfij_long %>%
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
   ggtitle("response_of(i) vs. site")
-```
-
-## Average response vs. msf
-
-* As predicted by theory: $df^2 \propto 1/\sigma^2$,  $de^2 \approx \texttt{constant}$, and $dr^2 \propto \sigma^2$.
 
 
-```{r}
-dfij_long %>% 
+p2 <- dfij_long %>% 
   group_by(i, msfi, response) %>% 
   summarise(value = mean(value)) %>% 
   ggplot(aes(msfi, value)) +
-  geom_point() +
+  geom_point(size = .5) +
   geom_smooth() +
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
-  ggtitle("response_of(i) vs. msf(i)")
-```
+  NULL
 
-## Average response vs. local packing density
-
-* $\texttt{mlms}_i = \sum_{j} k_{ij}$ is the mean local mutational stress, proportional to the local packing density (Echave 2015).
-* As predicted by theory: $df^2 \propto \texttt{mlms}$,  $de^2 \approx \texttt{constant}$, and $dr^2 \propto 1/\texttt{mlms}$.
-
-```{r}
-dfij_long %>% 
+p3 <- dfij_long %>% 
   group_by(i, mlmsi, response) %>% 
   summarise(value = mean(value)) %>% 
   ggplot(aes(mlmsi, value)) +
-  geom_point() +
+  geom_point(size = .5) +
   geom_smooth() +
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
-  ggtitle("response_of(i) vs. cn(i)")
+  NULL
+
+p1 + p2 + p3 + plot_layout(widths = c(2, 1, 1))
 ```
 
 ## Average response is similar for independent scans (1)
 
 ```{r}
-dfij_long %>% 
+p1 <- dfij_long %>% 
   filter(mutation %in% c(1, 2)) %>% 
   mutate(mutation = factor(mutation)) %>% 
   group_by(mutation, i, response) %>% 
@@ -214,13 +208,10 @@ dfij_long %>%
   geom_line() +
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
-  ggtitle("response_of(i) vs. site") 
-```
+  ggtitle("response_of(i) vs. site") +
+  theme(legend.position = 'none') 
 
-## Average response is similar for independent scans (2)
-
-```{r}
-dfij_long %>% 
+p2 <- dfij_long %>% 
   filter(mutation %in% c(1, 2)) %>% 
   mutate(mutation = factor(mutation)) %>% 
   group_by(mutation, i, response) %>% 
@@ -229,12 +220,14 @@ dfij_long %>%
               names_prefix = "mutation_",
               values_from = value) %>% 
   ggplot(aes(mutation_1, mutation_2)) +
-  geom_point() +
+  geom_point(size = .5) +
   geom_abline() +
   geom_smooth(method = "lm") +
   theme_cowplot() +
-  facet_wrap(~ response, scales = "free", ncol = 3) +
-  ggtitle("response_of(i): comparison of two scans") 
+  facet_wrap(~ response, scales = "free", ncol = 1) +
+  NULL
+
+p1 + p2 + plot_layout(widths = c(2, 1))
 ```
 
 
@@ -341,8 +334,11 @@ dfnj_long %>%
 
 ## Average response vs. mode
 
+* As predicted by theory: $df^2 \propto 1/\sigma^2$,  $de^2 \approx \texttt{constant}$, and $dr^2 \propto \sigma^2$.
+* As predicted by theory: $df^2 \propto \texttt{evalue}$,  $de^2 \approx \texttt{constant}$, and $dr^2 \propto 1/\texttt{evalue}$.
+
 ```{r}
-dfnj_long %>% 
+p1 <- dfnj_long %>% 
   group_by(n, msfn, response) %>% 
   summarise(value = mean(value)) %>% 
   ggplot(aes(n, value)) +
@@ -350,31 +346,18 @@ dfnj_long %>%
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
   ggtitle("response_of(n) vs. site")
-```
 
-## Average response vs. msf
-
-* As predicted by theory: $df^2 \propto 1/\sigma^2$,  $de^2 \approx \texttt{constant}$, and $dr^2 \propto \sigma^2$.
-
-
-```{r}
-dfnj_long %>% 
+p2 <- dfnj_long %>% 
   group_by(n, msfn, response) %>% 
   summarise(value = mean(value)) %>% 
   ggplot(aes(msfn, value)) +
-  geom_point() +
+  geom_point(size = .5) +
   geom_smooth() +
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
   ggtitle("response_of(n) vs. msf(n)")
-```
 
-## Average response vs. mode energy
-
-* As predicted by theory: $df^2 \propto \texttt{evalue}$,  $de^2 \approx \texttt{constant}$, and $dr^2 \propto 1/\texttt{evalue}$.
-
-```{r}
-dfnj_long %>% 
+p3 <- dfnj_long %>% 
   mutate(evalue = 1 / msfn)  %>% 
   group_by(n, evalue, response) %>% 
   summarise(value = mean(value)) %>% 
@@ -384,12 +367,14 @@ dfnj_long %>%
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
   ggtitle("response_of(n) vs. evalue(n)")
+
+p1 + p2 + p3 + plot_layout(widths = c(2, 1, 1))
 ```
 
 ## Average response is similar for independent scans (1)
 
 ```{r}
-dfnj_long %>% 
+p1 <- dfnj_long %>% 
   filter(mutation %in% c(1, 2)) %>% 
   mutate(mutation = factor(mutation)) %>% 
   group_by(mutation, n, response) %>% 
@@ -398,13 +383,10 @@ dfnj_long %>%
   geom_line() +
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
-  ggtitle("response_of(n) vs. site") 
-```
+  ggtitle("response_of(n) vs. site") +
+  theme(legend.position = "none")
 
-## Average response is similar for independent scans (2)
-
-```{r}
-dfnj_long %>% 
+p2 <- dfnj_long %>% 
   filter(mutation %in% c(1, 2)) %>% 
   mutate(mutation = factor(mutation)) %>% 
   group_by(mutation, n, response) %>% 
@@ -416,8 +398,9 @@ dfnj_long %>%
   geom_point() +
   geom_abline() +
   theme_cowplot() +
-  facet_wrap(~ response, scales = "free", ncol = 3) +
-  ggtitle("response_of(n): comparison of two scans") 
+  facet_wrap(~ response, scales = "free", ncol = 1) 
+
+p1 + p2 + plot_layout(width = c(2, 1))
 ```
 
 
@@ -428,7 +411,7 @@ dfnj_long %>%
 ## Average response vs. mutated site j
 
 ```{r}
-dfij_long %>% 
+p1 <- dfij_long %>% 
   group_by(j, msfj, response) %>% 
   summarise(value = mean(value)) %>% 
   ggplot(aes(j, value)) +
@@ -436,41 +419,35 @@ dfij_long %>%
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
   ggtitle("response_to(j) vs. j")
-```
 
 
-## Average response vs. msf of mutated site j
-
-```{r}
-dfij_long %>% 
+p2 <- dfij_long %>% 
   group_by(j, msfj, response) %>% 
   summarise(value = mean(value)) %>% 
   ggplot(aes(msfj, value)) +
-  geom_point() +
+  geom_point(size = .5) +
   geom_smooth() +
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
   ggtitle("response_of(j) vs. msf(j)")
-```
 
-## Average response vs. local packing density of mutated site j
-
-```{r}
-dfij_long %>% 
+p3 <- dfij_long %>% 
   group_by(j, mlmsj, response) %>% 
   summarise(value = mean(value)) %>% 
   ggplot(aes(mlmsj, value)) +
-  geom_point() +
+  geom_point(size = .5) +
   geom_smooth() +
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
   ggtitle("response_of(j) vs. mlms(j)")
+
+p1 + p2 + p3 + plot_layout(widths = c(2, 1, 1))
 ```
 
 ## Influence is similar for independent scans (1)
 
 ```{r}
-dfij_long %>% 
+p1 <- dfij_long %>% 
   filter(mutation %in% c(1, 2)) %>% 
   mutate(mutation = factor(mutation)) %>% 
   group_by(mutation, j, response) %>% 
@@ -479,13 +456,10 @@ dfij_long %>%
   geom_line() +
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
-  ggtitle("response_to(j) vs. site") 
-```
+  ggtitle("response_to(j) vs. site, two cans") +
+  theme(legend.position = "none")
 
-## Influence is similar for independent scans (2)
-
-```{r}
-dfij_long %>% 
+p2 <- dfij_long %>% 
   filter(mutation %in% c(1, 2)) %>% 
   mutate(mutation = factor(mutation)) %>% 
   group_by(mutation, j, response) %>% 
@@ -494,15 +468,101 @@ dfij_long %>%
               names_prefix = "mutation_",
               values_from = value) %>% 
   ggplot(aes(mutation_1, mutation_2)) +
-  geom_point() +
+  geom_point(size = .5) +
   geom_abline() +
   geom_smooth(method = "lm") +
   theme_cowplot() +
-  facet_wrap(~ response, scales = "free", ncol = 3) +
-  ggtitle("response_to(j): comparison of two scans") 
+  facet_wrap(~ response, scales = "free", ncol = 1) 
+
+p1 + p2  + plot_layout(widths = c(2, 1))
 ```
 
 
+
+
+# Energy response
+
+```{r}
+dfej <- read_csv(here("data-raw/2acy_A_dfej.csv"))
+```
+
+```{r, eval = FALSE}
+library(esquisse)
+esquisser(dfej)
+```
+
+```{r}
+dfej_long <- dfej %>% 
+  filter(mutation > 0) %>% 
+  pivot_longer(
+    cols = c("delta_u","delta_g_entropy", "delta_a"),
+    names_to = "response",
+    values_to = "delta_energy"
+  ) 
+```
+
+## Influence of mutating $j$ on energies
+
+```{r}
+p_site <- dfej_long %>% 
+  group_by(j, msfj, mlmsj, response) %>% 
+  mutate(delta_energy = mean(delta_energy)) %>% 
+  ggplot(aes(j, delta_energy)) +
+  geom_line() +
+  facet_wrap(~ response, scales = "free_y", ncol = 1) +
+  theme_minimal()
+
+
+p_msfj <- dfej_long %>% 
+  group_by(j, msfj, mlmsj, response) %>% 
+  mutate(delta_energy = mean(delta_energy)) %>% 
+  ggplot(aes(msfj, delta_energy)) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(~ response, scales = "free_y", ncol = 1) +
+  theme_minimal()
+
+p_mlmsj <- dfej_long %>% 
+  group_by(j, msfj, mlmsj, response) %>% 
+  mutate(delta_energy = mean(delta_energy)) %>% 
+  ggplot(aes(mlmsj, delta_energy)) +
+  geom_point(size = .5) +
+  geom_smooth() +
+  facet_wrap(~ response, scales = "free_y", ncol = 1) +
+  theme_minimal()
+
+p_site + p_msfj + p_mlmsj + plot_layout(widths = c(2, 1, 1))
+```
+
+
+## Variation of energy response from scan to scan
+
+```{r}
+p1 <- dfej_long %>% 
+  filter(mutation %in% c(1, 2)) %>% 
+  filter(response != "delta_v_min") %>% 
+  mutate(mutation = factor(mutation)) %>% 
+  ggplot(aes(j, delta_energy, color = mutation, group = mutation)) +
+  geom_line() +
+  scale_color_viridis_d() +
+  facet_wrap(~ response, scales = "free_y", ncol = 1) +
+  theme_minimal()
+
+p2 <- dfej_long %>% 
+  filter(mutation %in% c(1, 2)) %>% 
+  mutate(mutation = factor(mutation)) %>% 
+  select(j, mutation, response, delta_energy) %>% 
+  pivot_wider(names_from = mutation,
+              names_prefix = "mutation_",
+              values_from = delta_energy) %>% 
+  ggplot(aes(mutation_1, mutation_2)) +
+  geom_point(size = .5) +
+  geom_abline() +
+  theme_cowplot() +
+  facet_wrap(~ response, scales = "free", ncol = 1) 
+
+p1 + p2
+```
 
 
 

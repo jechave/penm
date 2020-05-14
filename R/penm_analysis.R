@@ -1,8 +1,8 @@
 delta_v_min <- function(prot1, prot2)
   enm_v_min(prot2) - enm_v_min(prot1)
 
-delta_g_entropy <- function(prot1, prot2)
-  enm_g_entropy(prot2) - enm_g_entropy(prot1)
+delta_g_entropy <- function(prot1, prot2, beta)
+  enm_g_entropy(prot2, beta) - enm_g_entropy(prot1, beta)
 
 
 
