@@ -281,3 +281,10 @@ everything
   - Added analysis of dfej to *prs\_analyse\_data.Rmd*
   - Tested
   - Commited
+
+## Add globality of respnse and influence to prs\_analyse\_data.Rmd
+
+  - Added a few slides analysing response and influence globaility in
+    site and mode spaces.
+  - Test
+  - Commit

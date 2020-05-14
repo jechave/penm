@@ -26,7 +26,7 @@ prs <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, beta) {
 
   # add mode info to dfnj
   dn <- tibble(mode = get_mode(wt), msfn = get_msf_mode(wt))
-  dj <- tibble(j = get_site(wt), msfj = get_msf_site(wt), mlmsj = get_msf_site(wt))
+  dj <- tibble(j = get_site(wt), msfj = get_msf_site(wt), mlmsj = get_mlms(wt))
 
   dfnj <- dfnj %>%
     inner_join(dn) %>%

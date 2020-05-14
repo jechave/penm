@@ -564,5 +564,145 @@ p2 <- dfej_long %>%
 p1 + p2
 ```
 
+# Globality
+
+How many sites are influenced by a mutation at $j$? How many mutations affect site $i$?
+
+## Globality of influence and response, site analysis
+
+```{r}
+# response
+p1 = dfij_long %>% 
+  group_by(i, mutation, msfi, mlmsi, response) %>% 
+  summarise(kn = Kn(value)) %>% 
+  group_by(i, msfi, mlmsi, response) %>% 
+  summarise(kn = mean(kn)) %>% 
+  ggplot(aes(i, kn)) +
+  geom_line() +
+  facet_wrap(~response, scales = "free_y", ncol = 1) +
+  theme_minimal()
+
+# influence
+p2 = dfij_long %>% 
+  group_by(j, mutation, msfj, mlmsj, response) %>% 
+  summarise(kn = Kn(value)) %>% 
+  group_by(j, msfj, mlmsj, response) %>% 
+  summarise(kn = mean(kn)) %>% 
+  ggplot(aes(j, kn)) +
+  geom_line() +
+  facet_wrap(~response, scales = "free_y", ncol = 1) +
+  theme_minimal()
+
+
+# influence vs response
+
+dfi = dfij_long %>% 
+  group_by(i, mutation, msfi, mlmsi, response) %>% 
+  summarise(kn = Kn(value)) %>%  
+  group_by(i, msfi, mlmsi, response) %>% 
+  summarise(kn = mean(kn)) %>% 
+  ungroup() %>% 
+  transmute(site = i, msf = msfi, mlms = mlmsi, response = response, kn_resp = kn)
+
+dfj = dfij_long %>% 
+  group_by(j, mutation,  response) %>% 
+  summarise(kn = Kn(value)) %>%  
+  group_by(j,  response) %>% 
+  summarise(kn = mean(kn)) %>% 
+  ungroup() %>% 
+  transmute(site = j, response = response, kn_influence = kn)
+
+df <- inner_join(dfi, dfj) 
+
+p3 <- df %>% 
+  ggplot(aes(kn_influence, kn_resp)) +
+  geom_point(size = .5) +
+  geom_smooth() +
+  theme_minimal() +
+  facet_wrap(~response, scales = "free", ncol = 1) +
+  NULL
+
+patch1 <- p1 / p2
+(patch1 | p3) + plot_layout(widths = c(2, 1))
+
+```
+
+## Globality of response, mode analysis
+
+* $K_n(n)$ is the number of sites that perturb mode $n$.
+
+
+```{r}
+# influence vs response
+
+dfn <-  dfnj_long %>% 
+  group_by(n, mutation, msfn, response) %>% 
+  summarise(kn = Kn(value)) %>%  
+  group_by(n, msfn,  response) %>% 
+  summarise(kn = mean(kn)) 
+
+# response
+p1_site <- dfn %>% 
+  ggplot(aes(n, kn)) +
+  geom_line() +
+  facet_wrap(~response, scales = "free_y", ncol = 1) +
+  theme_minimal()
+
+p1_msf <- dfn %>% 
+  ggplot(aes(msfn, kn)) +
+  geom_point(size = .5) +
+  geom_smooth() +
+  facet_wrap(~response, scales = "free_y", ncol = 1) +
+  theme_minimal()
+
+p1_evalue <- dfn %>% 
+  mutate(evalue = 1 / msfn) %>% 
+  ggplot(aes(evalue, kn)) +
+  geom_point(size = .5) +
+  geom_smooth() +
+  facet_wrap(~response, scales = "free_y", ncol = 1) +
+  theme_minimal()
+
+p1_site + p1_msf + p1_evalue
+
+
+
+```
+
+
+## Globality of influence, mode analysis
+- $K_n(j)$ is the number of modes perturbed by $j$
+
+```{r}
+# influence
+dfj <-  dfnj_long %>% 
+  group_by(j, msfj, mlmsj, mutation,  response) %>% 
+  summarise(kn = Kn(value)) %>%  
+  group_by(j,  msfj, mlmsj, response) %>% 
+  summarise(kn = mean(kn)) 
+p2_site <- dfj %>% 
+  ggplot(aes(j, kn)) +
+  geom_line() +
+  facet_wrap(~response, scales = "free_y", ncol = 1) +
+  theme_minimal()
+
+p2_msf <- dfj %>% 
+  ggplot(aes(msfj, kn)) +
+  geom_point(size = .5) +
+  geom_smooth() +
+  facet_wrap(~response, scales = "free_y", ncol = 1) +
+  theme_minimal()
+
+p2_mlms <- dfj %>% 
+  ggplot(aes(mlmsj, kn)) +
+  geom_point(size = .5) +
+  geom_smooth() +
+  facet_wrap(~response, scales = "free_y", ncol = 1) +
+  theme_minimal()
+
+
+
+p2_site + p2_msf + p2_mlms
+```
 
 

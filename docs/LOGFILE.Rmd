@@ -249,6 +249,12 @@ I refactored set_enm by adding functions that depend as much as possible only on
 - Tested
 - Commited
 
+## Add globality of respnse and influence to prs_analyse_data.Rmd
+
+- Added a few slides analysing response and influence globaility in site and mode spaces.
+- Test
+- Commit
+
 
 
 
