@@ -1,5 +1,7 @@
 # query prot object -------------------------------------------------------
 
+get_enm_param <- function(prot) prot$param
+
 get_enm_node <- function(prot)  prot$param$node
 
 get_enm_model <- function(prot)  prot$param$model

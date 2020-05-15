@@ -1,2 +1,2 @@
-mut_model,mut_dl_sigma,mut_sd_min
-lfenm,0.3,2
+nmut_per_site,mut_model,mut_dl_sigma,mut_sd_min
+10,lfenm,0.3,2

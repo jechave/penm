@@ -3,7 +3,8 @@
 prs <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, beta) {
   mutants <- get_mutants_table(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min)
 
-  mut_param <- lst(mut_model, mut_dl_sigma, mut_sd_min)
+  enm_param <- get_enm_param(wt)
+  mut_param <- lst(nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min)
   dej <- delta_energy(mutants, beta)
   dfij <- delta_structure_site(mutants)
   dfnj <- delta_structure_mode(mutants)
@@ -33,7 +34,7 @@ prs <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, beta) {
     inner_join(dj) %>%
     select(mode, j, mutation, msfn, msfj, mlmsj, everything())
 
-  lst(mut_param, dej,  dfij,  dfnj)
+  lst(enm_param, mut_param, dej,  dfij,  dfnj)
 }
 
 

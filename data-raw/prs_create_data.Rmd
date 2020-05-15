@@ -23,7 +23,6 @@ library(jefuns)
 
 ```{r}
 # set parameters
-nmut_per_site = 2
 pdb_id <- "2acy_A"
 
 # enm parameters
@@ -33,6 +32,7 @@ enm_d_max <- 10.5
 enm_frustrated <- F
 
 # mut parameters
+nmut_per_site <- 10
 mut_model <- "lfenm"
 mut_dl_sigma <- 0.3
 mut_sd_min <- 2
