@@ -61,3 +61,5 @@ We can turn the wild-type into the mutant by a vertical transition at $\rwt$ in 
 ## Problem: the model is not reversible
 
 If I start with the mutant and do the reverse mutation, I don't get the wild-type's potential... 
+
+#todo

@@ -1,5 +1,7 @@
 # Is $de^2 \approx \texttt{constant}$?
 
+#todo
+
 From [PRS theory](prs_theory.md) it follows that 
 $$
 <de_i^2>_j \approx \texttt{constant}

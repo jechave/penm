@@ -33,24 +33,7 @@ mutate_enm_activation <- add_enm_activation
 
 
 
-#' Stress-model local-mutational-stress energy
-enm_v_stress <- function(prot, ideal) {
-  prot_graph <- prot$enm$graph
-  ideal_graph <- ideal$enm$graph
 
-  ideal_graph <- ideal_graph  %>%
-    dplyr::select(edge, dij) %>%
-    rename(dij_ideal = dij)
-
-  joint_graph <- inner_join(prot_graph, ideal_graph, by = "edge")
-
-  kij <- joint_graph$kij
-  lij <- joint_graph$lij
-  v0ij <- joint_graph$v0ij
-  dij <- joint_graph$dij_ideal
-
-  v_dij(dij, v0ij, kij, lij)
-}
 
 #' Internal energy contribution to free energy of activaton
 enm_dv_activation <- function(prot, ideal) {
@@ -108,8 +91,6 @@ distance_to_active <- function(xyz, site_active) {
 }
 
 
-delta_v_stress <- function(prot1, prot2)
-  enm_v_stress(prot2) - enm_v_stress(prot1)
 
 delta_v_activation <- function(prot1, prot2)
   enm_dv_activation(prot2) - enm_dv_activation(prot1)

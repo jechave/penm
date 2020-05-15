@@ -272,7 +272,7 @@ everything
 
 ## 14 May 2020
 
-## Add energy response to prs module
+### Add energy response to prs module
 
   - Added theory doc to *docs*, and notes on energy differences
   - Refactored *prs.R*
@@ -282,9 +282,21 @@ everything
   - Tested
   - Commited
 
-## Add globality of respnse and influence to prs\_analyse\_data.Rmd
+### Add globality of respnse and influence to prs\_analyse\_data.Rmd
 
   - Added a few slides analysing response and influence globaility in
     site and mode spaces.
   - Test
   - Commit
+
+## Add v\_stress to prs
+
+  - Developed some more theory, regarding energies and separating them
+    into site contributions
+  - Added `enm_v_stress()` and `enm_delta_v_stress` to `penm` module
+  - Calculated delta\_v\_stress in *prs.R* (and removed `delta_u` and
+    `delta_a`)
+  - Recalculated response data using *prs\_create\_data.Rmd*
+  - Revised and rerun *prs\_analyse\_data.Rmd*
+  - Tested
+  - Commited

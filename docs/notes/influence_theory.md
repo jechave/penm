@@ -6,14 +6,14 @@ Let $R_{xj}$ be the response of $x$ averaged over  mutations at $j$, where $x$ i
 
 ## Average over sites
 
-#TODO 
+#todo 
 
 ## Average over modes
 
-#TODO
+#todo
 
 ## f(R)
 
 e.g. what if we use $[\sqrt{R_{xj}}]$?
 
-#TODO
+#todo

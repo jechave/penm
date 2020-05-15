@@ -55,9 +55,8 @@ delta_energy <- function(mutants, beta) {
   # energy differences
   mutants %>%
     mutate(delta_v_min = map2_dbl(wt, mut, delta_v_min),
-           delta_g_entropy = map2_dbl(wt, mut, delta_g_entropy, beta = beta),
-           delta_u = delta_v_min,
-           delta_a = delta_v_min + delta_g_entropy) %>%
+           delta_v_stress = map2_dbl(wt, mut, delta_v_stress),
+           delta_g_entropy = map2_dbl(wt, mut, delta_g_entropy, beta = beta)) %>%
     select(-wt, -mut)
 }
 

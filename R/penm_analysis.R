@@ -5,6 +5,26 @@ delta_g_entropy <- function(prot1, prot2, beta)
   enm_g_entropy(prot2, beta) - enm_g_entropy(prot1, beta)
 
 
+#' Stress-model difference of local-mutational-stress energy
+delta_v_stress <- function(prot1, prot2, ideal = prot1)
+  enm_v_stress(prot2, ideal) - enm_v_stress(prot1, ideal)
+
+#' Stress-model local-mutational-stress energy
+enm_v_stress <- function(prot, ideal) {
+  g <- get_graph(prot)
+
+  g <- g %>%
+    mutate(dij_ideal = dij_edge(get_xyz(ideal), i, j))
+
+  dij <- g$dij_ideal
+  v0ij <- g$v0ij
+  kij <- g$kij
+  lij <- g$lij
+
+  v_dij(dij, v0ij, kij, lij)
+}
+
+
 
 # Structure differences ---------------------------------------------------
 

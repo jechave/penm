@@ -480,7 +480,7 @@ p1 + p2  + plot_layout(widths = c(2, 1))
 
 
 
-# Energy response
+# Energy 
 
 ```{r}
 dfej <- read_csv(here("data-raw/2acy_A_dfej.csv"))
@@ -495,7 +495,7 @@ esquisser(dfej)
 dfej_long <- dfej %>% 
   filter(mutation > 0) %>% 
   pivot_longer(
-    cols = c("delta_u","delta_g_entropy", "delta_a"),
+    cols = c("delta_v_stress","delta_v_min", "delta_g_entropy"),
     names_to = "response",
     values_to = "delta_energy"
   ) 
@@ -540,7 +540,6 @@ p_site + p_msfj + p_mlmsj + plot_layout(widths = c(2, 1, 1))
 ```{r}
 p1 <- dfej_long %>% 
   filter(mutation %in% c(1, 2)) %>% 
-  filter(response != "delta_v_min") %>% 
   mutate(mutation = factor(mutation)) %>% 
   ggplot(aes(j, delta_energy, color = mutation, group = mutation)) +
   geom_line() +
@@ -562,6 +561,37 @@ p2 <- dfej_long %>%
   facet_wrap(~ response, scales = "free", ncol = 1) 
 
 p1 + p2
+```
+
+## $||de^2||/2 = \delta V_{stress} - \delta V_{min}$
+
+
+```{r}
+de2 <- dfij %>% 
+  group_by(j, mutation) %>% 
+  summarise(de2 = sum(de2ij) / 2)
+
+p1 <- inner_join(dfej, de2) %>% 
+  ggplot(aes(delta_v_stress - delta_v_min, de2)) +
+  geom_point() +
+  geom_abline() +
+  theme_minimal()
+  
+p2 <- inner_join(dfej, de2) %>% 
+  group_by(j) %>% 
+  summarise(delta_v_stress = mean(delta_v_stress),
+            delta_v_min = mean(delta_v_min),
+            de2 = mean(de2)) %>% 
+  ggplot(aes(delta_v_stress - delta_v_min, de2)) +
+  geom_point() +
+  geom_abline() +
+  theme_minimal() +
+  ggtitle("Averaged over mutations")
+
+p1 + p2
+  
+  
+  
 ```
 
 # Globality
