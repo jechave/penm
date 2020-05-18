@@ -68,6 +68,7 @@ dfij_long %>%
   NULL 
 ```
 
+
 ## Response matrices are not symmetric
 
 
@@ -734,5 +735,4 @@ p2_mlms <- dfj %>%
 
 p2_site + p2_msf + p2_mlms
 ```
-
 

@@ -300,3 +300,15 @@ everything
   - Revised and rerun *prs\_analyse\_data.Rmd*
   - Tested
   - Commited
+
+## 18 May 2020
+
+### Superfast calculation of response matrices
+
+  - Wrote the key formulae in *docs/notes*
+  - Wrote *prs\_fast.R* that contains functions for fast calcualation of
+    site responses: dr2ij, de2ij, and df2ij
+  - Wrote *prs\_fast.Rmd* that compares cpu times and results between
+    “fast” and “slow” methods
+  - Tested
+  - Commited
