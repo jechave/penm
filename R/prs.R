@@ -44,7 +44,9 @@ get_mutants_table <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd
   mutation <- seq(from = 0, to = nmut_per_site)
   j <- get_site(wt)
   # get mutants
-  mutants <-  expand_grid(wt = list(wt), j, mutation)   %>%
+  mutants <-  expand_grid(wt = list(wt), j, mutation)
+
+  mutants <- mutants %>%
     mutate(mut = pmap(list(wt, j, mutation), get_mutant_site,
                       mut_model = mut_model, mut_dl_sigma = mut_dl_sigma, mut_sd_min = mut_sd_min))
   mutants
@@ -85,11 +87,12 @@ delta_structure_site <- function(mutants) {
 #' Calculate structural mutational response, mode analysis
 delta_structure_mode <- function(mutants) {
   # structural differences, mode analysis
-  mutants %>%
+  result <- mutants %>%
     mutate(mode = map(wt, get_mode),
            dr2nj = map2(wt, mut, dr2_mode),
            de2nj = map2(wt, mut, de2_mode),
-           df2nj = map2(wt, mut, df2_mode)) %>%
+           df2nj = map2(wt, mut, df2_mode))
+  result <- result %>%
     select(-wt, -mut) %>%
     unnest(c(mode, dr2nj, de2nj, df2nj))
 }

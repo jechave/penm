@@ -36,6 +36,7 @@ library(profvis)
 # set wt
 pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
 wt <- set_enm(pdb,  "ca",  "ming_wall",  10.5,  F)
+mut <- get_mutant_site(wt, 80, 1)
 
 prs_slow <- function(wt, nmut_per_site = 10) {
   mutants <- get_mutants_table(wt, nmut_per_site, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
@@ -49,4 +50,38 @@ profvis(prs_fast(wt))
 
 profvis(prs_slow(wt))
 
+profvis(get_mutants_table(wt, 10, "lfenm", 0.3, 2))
+
+mutants <-  get_mutants_table(wt, 10, "lfenm", 0.3, 2)
+profvis(delta_structure_site(mutants))
+profvis(delta_structure_mode(mutants))
 ```
+
+```{r}
+library(microbenchmark)
+microbenchmark(delta_structure_site(mutants), delta_structure_mode(mutants), 
+               fast_delta_structure_site(wt), times = 1)
+
+
+
+```
+
+```{r}
+kmat_sqrt <- get_kmat_sqrt(wt)
+microbenchmark(de2_site(wt, mut, kmat_sqrt),
+               de2_mode(wt, mut),
+               dr2_site(wt, mut),
+               dr2_mode(wt, mut),
+               df2_site(wt, mut),
+               df2_mode(wt, mut),
+               times = 10)
+```
+```{r}
+microbenchmark(delta_structure_mode(mutants_10),
+               fast_delta_structure_mode(wt),
+               delta_structure_site(mutants_10),
+               fast_delta_structure_site(wt),
+               times = 1)
+
+```
+

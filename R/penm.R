@@ -64,7 +64,8 @@ get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_m
   set.seed(seed + site_mut * mutation)
 
   delta_lij <- get_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
-  dxyz <- get_dxyz(wt, delta_lij)
+  f <- get_force(wt, delta_lij)
+  dxyz <- get_dxyz(wt, f)
   mut <- wt
   mut$graph$lij <-  wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
   mut$nodes$xyz <- wt$nodes$xyz + dxyz
@@ -105,7 +106,8 @@ get_mutant_site_sclfenm <- function(wt, site_mut, mutation,  mut_dl_sigma, mut_s
   set.seed(seed + site_mut * mutation)
 
   delta_lij <- get_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
-  dxyz <- get_dxyz(wt, delta_lij)
+  f <- get_force(wt, delta_lij)
+  dxyz <- get_dxyz(wt, f)
   mut <- wt
   mut$graph$lij <-  wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
   mut$nodes$xyz <- wt$nodes$xyz + dxyz
@@ -128,8 +130,7 @@ get_delta_lij <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) {
   delta_lij
 }
 
-get_dxyz <- function(wt, delta_lij) {
-  f <- get_force(wt, delta_lij)
+get_dxyz <- function(wt, f) {
   cmat <- get_cmat(wt)
   nzf <- f != 0 # consider only non-zero forces, to make next step faster
   dxyz <-  crossprod(cmat[nzf, ], f[nzf]) # calculate mutant equilibrium conformation (LRA)
@@ -154,15 +155,22 @@ get_force <- function(wt, delta_lij) {
 
   stopifnot(nrow(graph) == length(delta_lij))
 
+  graph$dlij  <- delta_lij
+
+  graph <- graph %>%
+    filter(dlij != 0)
+
   i <- graph$i
   j <- graph$j
   kij <- graph$kij
-  eij <- get_eij(wt)
+  dlij <- graph$dlij
 
-  fij <-  -kij * delta_lij # Force on i in the direction from i to j.
+  eij <- get_eij(wt)[delta_lij != 0, ]
 
+  fij <-  -kij * dlij # Force on i in the direction from i to j.
 
   f <- matrix(0, nrow = 3, ncol = get_nsites(wt))
+
   for (k in seq(nrow(graph))) {
     ik <- i[k]
     jk <- j[k]
@@ -171,6 +179,7 @@ get_force <- function(wt, delta_lij) {
   }
   as.vector(f)
 }
+
 
 
 #' mutate enm following change in protein structure and lij parameters

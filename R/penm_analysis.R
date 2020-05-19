@@ -52,36 +52,15 @@ dr2_site <- function(prot1, prot2) {
 }
 
 #' @rdname dr2_site
-de2_site_slower <- function(prot1, prot2) {
+de2_site <- function(prot1, prot2, kmat_sqrt) {
   stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
   stopifnot(prot1$node$site == prot2$node$site) # this version of dr2_site is to compare proteins with no indels
-
-  evalue <- prot1$nma$evalue
-  umat <- prot1$nma$umat
-  kmat_sqrt <- umat %*% (sqrt(evalue) * t(umat))
-  dxyz <- my_as_xyz(prot2$nodes$xyz - prot1$nodes$xyz) # use c(3, nsites) representation of xyz
-  dr <- as.vector(dxyz)
+  dr <- as.vector(get_xyz(prot2) - get_xyz(prot1))
   de <- kmat_sqrt %*% dr
   de <- my_as_xyz(de)
   de2i <-  colSums(de^2)
   de2i
 }
-
-
-#' @rdname dr2_site
-de2_site <- function(prot1, prot2, kmat_sqrt = get_kmat_sqrt(prot1)) {
-  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
-  stopifnot(prot1$node$site == prot2$node$site) # this version of dr2_site is to compare proteins with no indels
-
-  dxyz <- my_as_xyz(prot2$nodes$xyz - prot1$nodes$xyz) # use c(3, nsites) representation of xyz
-  dr <- as.vector(dxyz)
-  de <- kmat_sqrt %*% dr
-  de <- my_as_xyz(de)
-  de2i <-  colSums(de^2)
-  de2i
-}
-
-
 
 
 
@@ -120,40 +99,20 @@ df2_site <- function(prot1, prot2) {
 #' @examples
 dr2_mode <- function(prot1, prot2) {
   stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
-  dxyz <- as.vector(prot2$nodes$xyz - prot1$nodes$xyz) # use c(3, nsites) representation of xyz
-  drn <- as.vector(crossprod(prot1$nma$umat, dxyz))
+  dr <- as.vector(get_xyz(prot2) - get_xyz(prot1))
+  drn <- as.vector(crossprod(get_umat(prot1), dr))
   stopifnot(length(prot1$nma$mode) == length(drn))
   dr2n <- drn^2
   as.vector(dr2n)
 }
 
+
 #' @rdname dr2_mode
 de2_mode <- function(prot1, prot2) {
-  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
-  stopifnot(prot1$node$site == prot2$node$site) # this version of dr2_site is to compare proteins with no indels
-
-  evalue <- prot1$nma$evalue
-  umat <- prot1$nma$umat
-  kmat_sqrt <- umat %*% (sqrt(evalue) * t(umat))
-  dr <- as.vector(prot2$nodes$xyz - prot1$nodes$xyz) # use c(3, nsites) representation of xyz
-  de <- kmat_sqrt %*% dr
-  den <- t(umat) %*% de
-  de2n <-  den^2
-  as.vector(de2n)
+  get_evalue(prot1) * dr2_mode(prot1, prot2)
 }
-
-
 
 #' @rdname dr2_mode
 df2_mode <- function(prot1, prot2) {
-  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
-
-  kmat <- prot1$kmat
-  umat <- prot1$nma$umat
-
-  dr <- as.vector(prot2$nodes$xyz - prot1$nodes$xyz)
-  df <- kmat %*% dr
-  dfn <- t(umat) %*% df
-  df2n <-  dfn^2
-  as.vector(df2n)
+  get_evalue(prot1)^2 * dr2_mode(prot1, prot2)
 }

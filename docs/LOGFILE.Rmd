@@ -286,6 +286,14 @@ I refactored set_enm by adding functions that depend as much as possible only on
 - Tested
 - Commited
 
+### Added `fast_delta_structure_mode() to *prs_fast.R*
+
+- Added fast_delta_structure_mode and needed functions called by it.
+- Made `delta_structure_mode()` in *prs.R* faster
+- Tested cpu-time and convergence in *prs_superfast_mode.Rmd*
+- Commited
+
+
 
 
 

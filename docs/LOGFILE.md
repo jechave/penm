@@ -325,3 +325,11 @@ everything
     as number of mutations per site increases
   - Tested
   - Commited
+
+### Added \`fast\_delta\_structure\_mode() to *prs\_fast.R*
+
+  - Added fast\_delta\_structure\_mode and needed functions called by
+    it.
+  - Made `delta_structure_mode()` in *prs.R* faster
+  - Tested cpu-time and convergence in *prs\_superfast\_mode.Rmd*
+  - Commited
