@@ -1,0 +1,52 @@
+---
+title: "Superfast PRS"
+author: "Julian Echave"
+date: "5/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+
+```{r}
+# Load libraries and functions
+library(here)
+library(bio3d)
+library(tidyverse)
+library(cowplot)
+library(penm)
+library(jefuns)
+
+library(patchwork)
+```
+
+```{r}
+# Set parameters
+pdb_id = "2acy_A"
+```
+
+
+# Superfast matrices
+
+```{r, eval = F}
+# profiling
+library(profvis)
+# set wt
+pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
+wt <- set_enm(pdb,  "ca",  "ming_wall",  10.5,  F)
+
+prs_slow <- function(wt, nmut_per_site = 10) {
+  mutants <- get_mutants_table(wt, nmut_per_site, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
+  delta_structure_site(mutants)
+}
+
+prs_fast <- function(wt) {
+  fast_delta_structure_site(wt)
+}
+profvis(prs_fast(wt))
+
+profvis(prs_slow(wt))
+
+```

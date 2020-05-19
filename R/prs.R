@@ -65,11 +65,19 @@ delta_energy <- function(mutants, beta) {
 delta_structure_site <- function(mutants) {
   # structural differences, site analysis
   wt <- mutants$wt[[1]]
-  mutants %>%
+  kmat_sqrt <- get_kmat_sqrt(wt)
+
+  result <- mutants %>%
     mutate(i = map(wt, get_site),
-           dr2ij = map2(wt, mut, dr2_site),
-           de2ij = map2(wt, mut, de2_site),
-           df2ij = map2(wt, mut, df2_site)) %>%
+           dr2ij = map2(wt, mut, dr2_site))
+
+  result <- result %>%
+    mutate(de2ij = map2(wt, mut, de2_site, kmat_sqrt = kmat_sqrt))
+
+  result <- result %>%
+    mutate(df2ij = map2(wt, mut, df2_site))
+
+  result %>%
     select(-wt, -mut) %>%
     unnest(c(i, dr2ij, de2ij, df2ij))
 }

@@ -65,7 +65,7 @@ calculate_fast_response_matrix <- function(wt, amat, mut_dl_sigma, mut_sd_min) {
 
   # response to site perturbations
   weight <-  ifelse(g$sdij >= mut_sd_min, 1, 0) * g$kij^2 * mut_dl_sigma^2
-  rxij <- t(t(rxij) * weight)
+  rxij <- t(t(rxij) * weight) # note that * mutliplies by row
 
   rxj <- matrix(NA, nsites, nsites)
   for (site in seq(nsites)) {

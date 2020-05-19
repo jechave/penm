@@ -312,3 +312,16 @@ everything
     “fast” and “slow” methods
   - Tested
   - Commited
+
+## 19 May 2020
+
+### Better cpu-time comparison of prs\_fast vs. prs
+
+  - Improved prs by making the de2\_site require kmat\_sqrt as input
+    that is calculated outside in the calling function only once for the
+    whole scan.
+  - Made a more relevant cpu-time comparison
+  - Verified that simulated prs responses converge to analytical values
+    as number of mutations per site increases
+  - Tested
+  - Commited

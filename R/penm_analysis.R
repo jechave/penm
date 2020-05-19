@@ -52,7 +52,7 @@ dr2_site <- function(prot1, prot2) {
 }
 
 #' @rdname dr2_site
-de2_site <- function(prot1, prot2) {
+de2_site_slower <- function(prot1, prot2) {
   stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
   stopifnot(prot1$node$site == prot2$node$site) # this version of dr2_site is to compare proteins with no indels
 
@@ -66,6 +66,24 @@ de2_site <- function(prot1, prot2) {
   de2i <-  colSums(de^2)
   de2i
 }
+
+
+#' @rdname dr2_site
+de2_site <- function(prot1, prot2, kmat_sqrt = get_kmat_sqrt(prot1)) {
+  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
+  stopifnot(prot1$node$site == prot2$node$site) # this version of dr2_site is to compare proteins with no indels
+
+  dxyz <- my_as_xyz(prot2$nodes$xyz - prot1$nodes$xyz) # use c(3, nsites) representation of xyz
+  dr <- as.vector(dxyz)
+  de <- kmat_sqrt %*% dr
+  de <- my_as_xyz(de)
+  de2i <-  colSums(de^2)
+  de2i
+}
+
+
+
+
 
 #' @rdname dr2_site
 df2_site <- function(prot1, prot2) {
@@ -81,6 +99,9 @@ df2_site <- function(prot1, prot2) {
   df2i <-  colSums(df^2)
   df2i
 }
+
+
+
 
 
 

@@ -97,6 +97,22 @@ get_reduced_kmat <- function(prot) {
 }
 
 
+get_kmat_sqrt <- function(prot) {
+  evalue <- get_evalue(prot)
+  umat <- get_umat(prot)
+  kmat_sqrt <- umat %*% (sqrt(evalue) * t(umat))
+  kmat_sqrt
+}
+
+get_cmat_sqrt <- function(prot) {
+  evalue <- get_evalue(prot)
+  umat <- get_umat(prot)
+  cmat_sqrt <- umat %*% (sqrt(1 / evalue) * t(umat))
+  cmat_sqrt
+}
+
+
+
 
 
 # site by mode matrices ---------------------------------------------------
@@ -121,4 +137,6 @@ get_umat2 <- function(prot) {
   umat2 <- apply(umat2, c(2, 3), sum)
   umat2
 }
+
+
 
