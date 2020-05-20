@@ -293,6 +293,19 @@ I refactored set_enm by adding functions that depend as much as possible only on
 - Tested cpu-time and convergence in *prs_superfast_mode.Rmd*
 - Commited
 
+## 20 May 2020
+
+### Added super-fast energy response
+
+- Developed theory (in *docs/notes*) to calculate dv_min and dv_stress
+- Added fucntions to *prs_fast.R*
+- Optimized a bit `enm_v_stress()` of *penm_analysis.R*
+- Added *prs_superfast_energy.Rmd*
+- Tested
+- Commited
+
+
+
 
 
 

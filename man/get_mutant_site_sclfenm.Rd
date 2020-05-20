@@ -15,7 +15,7 @@ get_mutant_site_sclfenm(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min, seed)
 
 \item{mut_dl_sigma}{The standard deviation of a normal distribution from which edge-length perturbation is picked.}
 
-\item{mut_sd_min}{An integer, only edges with \code{sdij > mut_sd_min} are mutated}
+\item{mut_sd_min}{An integer, only edges with \code{sdij >= mut_sd_min} are mutated}
 
 \item{seed}{An integer, the seed for set.seed before picking perturbations}
 }

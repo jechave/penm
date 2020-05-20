@@ -55,6 +55,8 @@ profvis(get_mutants_table(wt, 10, "lfenm", 0.3, 2))
 mutants <-  get_mutants_table(wt, 10, "lfenm", 0.3, 2)
 profvis(delta_structure_site(mutants))
 profvis(delta_structure_mode(mutants))
+
+profvis(delta_energy(mutants, beta))
 ```
 
 ```{r}
@@ -83,5 +85,11 @@ microbenchmark(delta_structure_mode(mutants_10),
                fast_delta_structure_site(wt),
                times = 1)
 
+```
+```{r}
+microbenchmark(enm_v_stress(mut, wt),
+               enm_v_stress_faster(mut, wt),
+               check = 'equal',
+               times = 100)
 ```
 

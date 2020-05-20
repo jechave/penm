@@ -1,0 +1,146 @@
+---
+title: "Superfast PRS, energy response"
+author: "Julian Echave"
+date: "5/12/2020"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+
+```{r}
+# Load libraries and functions
+library(here)
+library(bio3d)
+library(tidyverse)
+library(cowplot)
+library(penm)
+library(jefuns)
+
+library(patchwork)
+```
+
+```{r}
+# Set parameters
+pdb_id = "2acy_A"
+```
+
+
+
+## comparison of cpu times
+
+```{r}
+library(microbenchmark)
+# set wt
+pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
+wt <- set_enm(pdb,  "ca",  "ming_wall",  10.5,  F)
+
+
+get_mutants <- function(wt, nmut_per_site) get_mutants_table(wt, nmut_per_site, "lfenm", 0.3, 2)
+
+mutants_1 <- get_mutants_table(wt, 1, "lfenm", 0.3, 2)
+mutants_5 <- get_mutants_table(wt, 5, "lfenm", 0.3, 2)
+mutants_10 <- get_mutants_table(wt, 10, "lfenm", 0.3, 2)
+
+
+
+# mb <- microbenchmark(prs_slow(wt, 1), prs_slow(wt, 5), prs_slow(wt, 10),  prs_fast(wt),  times = 1)
+
+mb <- microbenchmark(get_mutants(wt, 1), delta_energy(mutants_1, beta_boltzmann()),
+                     get_mutants(wt, 5), delta_energy(mutants_5, beta_boltzmann()),
+                     get_mutants(wt, 10), delta_energy(mutants_10, beta_boltzmann()),
+                     fast_delta_energy(wt, 0.3, 2),
+                     times = 1) %>% 
+  mutate(expr = factor(expr, labels = c("slow.scan_1", "slow.de_1", "slow.scan_5", "slow.de_5", "slow.scan_10", "slow.de_10", "fast.de")))
+
+
+
+
+mb %>% 
+  ggplot(aes(expr, time / 10^6)) +
+  geom_col() +
+  ylab("cpu time (ms)") +
+  xlab("function call") +
+  geom_label(aes(label = round(time / 10^6, 0))) +
+  coord_flip()
+  
+```
+
+## Comparison of results
+
+```{r}
+# set wt
+pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
+wt <- set_enm(pdb, "ca", "ming_wall", 10.5, F)
+
+# Slow prs calculation (simulation)
+mutants <- get_mutants_table(wt, nmut_per_site = 30, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
+dej_slow <- delta_energy(mutants, beta_boltzmann())
+dej_fast <- fast_delta_energy(wt, 0.3, 2)  
+```
+```{r}
+dej_slow_long <- dej_slow %>% 
+  filter(mutation > 0) %>% 
+  group_by(j) %>% 
+  summarise(delta_v_min = mean(delta_v_min),
+            delta_v_stress = mean(delta_v_stress))  %>% 
+  pivot_longer(cols = c("delta_v_min", "delta_v_stress"),
+               names_to = "energy_type",
+               values_to = "delta_energy") %>% 
+  mutate(algorithm = "prs") 
+
+dej_fast_long <- dej_fast %>% 
+  pivot_longer(cols = c("delta_v_min", "delta_v_stress"),
+               names_to = "energy_type",
+               values_to = "delta_energy") %>% 
+  mutate(algorithm = "prs_fast") 
+
+dej <- rbind(dej_slow_long, dej_fast_long)
+
+dej %>% 
+  ggplot(aes(j, delta_energy, color = algorithm)) +
+  geom_line() +
+  facet_wrap(~ energy_type, ncol = 1)
+
+
+  
+```
+
+
+
+
+
+## Convergence
+
+```{r}
+dej_slow_long <- dej_slow %>% 
+  select(-delta_g_entropy) %>% 
+  filter(mutation > 0) %>% 
+  arrange(j, mutation) %>% 
+  group_by(j) %>% 
+  mutate(delta_v_min= cumsum(delta_v_min)/mutation,
+            delta_v_stress = cumsum(delta_v_stress)/mutation)  %>% 
+  pivot_longer(cols = c("delta_v_min", "delta_v_stress"),
+               names_to = "energy_type",
+               values_to = "delta_energy")  %>% 
+  rename(de_slow = delta_energy)
+
+dej_fast_long <- dej_fast %>% 
+  pivot_longer(cols = c("delta_v_min", "delta_v_stress"),
+               names_to = "energy_type",
+               values_to = "delta_energy")  %>% 
+  rename(de_fast = delta_energy)
+
+dej <- inner_join(dej_slow_long, dej_fast_long)
+
+dej %>% 
+  group_by(mutation, energy_type)  %>% 
+  summarise(rel_error = sd(de_slow - de_fast)/mean(de_fast)) %>% 
+  ggplot(aes(mutation, rel_error, color = energy_type)) +
+  geom_line()
+  
+
+```
+

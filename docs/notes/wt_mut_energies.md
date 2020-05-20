@@ -1,6 +1,21 @@
 # Wild-type and mutant energies
 
-
+$$
+\newcommand{\rvec}{\mathbf{r}}
+\newcommand{\wt}{\texttt{wt}}
+\newcommand{\mut}{\texttt{mut}}
+\newcommand{\rwt}{\rvec^0_\wt}
+\newcommand{\rmut}{\rvec^0_\mut}
+\newcommand{\kmat}{\mathbf{K}}
+\newcommand{\kwt}{\kmat_\wt}
+\newcommand{\kmut}{\kmat_\mut}
+\newcommand{\kij}{k_{ij}}
+\newcommand{\fvec}{\mathbf{f}}
+\newcommand{\dij}{d_{ij}}
+\newcommand{\lij}{l_{ij}}
+\newcommand{\dlij}{\delta l_{ij}}
+\newcommand{\half}{\frac{1}{2}}
+$$
 
 ## Wild-type energy
 

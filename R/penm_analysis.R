@@ -9,12 +9,16 @@ delta_g_entropy <- function(prot1, prot2, beta)
 delta_v_stress <- function(prot1, prot2, ideal = prot1)
   enm_v_stress(prot2, ideal) - enm_v_stress(prot1, ideal)
 
+
 #' Stress-model local-mutational-stress energy
 enm_v_stress <- function(prot, ideal) {
   g <- get_graph(prot)
+  g_ideal <- get_graph(ideal)
 
-  g <- g %>%
-    mutate(dij_ideal = dij_edge(get_xyz(ideal), i, j))
+  edge_in_ideal <- g$edge %in% g_ideal$edge
+  g$dij_ideal <- NA
+  g$dij_ideal[edge_in_ideal] <- g_ideal$dij
+  g$dij_ideal[!edge_in_ideal] <- dij_edge(get_xyz(ideal), g$i[!edge_in_ideal], g$j[!edge_in_ideal])
 
   dij <- g$dij_ideal
   v0ij <- g$v0ij

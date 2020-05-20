@@ -1,3 +1,57 @@
+
+# Energy response ---------------------------------------------------------
+
+
+#' Calculate energy mutational response
+fast_delta_energy <- function(wt, mut_dl_sigma, mut_sd_min,...) {
+  # energy differences
+
+  result <- tibble(j = get_site(wt),
+         delta_v_min =  calculate_fast_delta_v_min(wt, mut_dl_sigma, mut_sd_min),
+         delta_v_stress =  calculate_fast_delta_v_stress(wt, mut_dl_sigma, mut_sd_min))
+  result
+}
+
+calculate_fast_delta_v_min <- function(wt, mut_dl_sigma, mut_sd_min) {
+  de2ij <- calculate_fast_de2ij(wt, mut_dl_sigma, mut_sd_min)
+  dvsij <- calculate_fast_dvstress_ij(wt, mut_dl_sigma, mut_sd_min)
+  dvmij <- dvsij - de2ij
+  dvmj <- 1/2 * colSums(dvmij)
+  dvmj
+}
+
+calculate_fast_delta_v_stress <- function(wt, mut_dl_sigma, mut_sd_min) {
+  dvstress_ij <- calculate_fast_dvstress_ij(wt, mut_dl_sigma, mut_sd_min)
+  dvstress_j <- 1/2 * colSums(dvstress_ij)
+  dvstress_j
+}
+
+calculate_fast_dvstress_ij <- function(wt, mut_dl_sigma, mut_sd_min) {
+  g <- get_graph(wt) %>%
+    filter(abs(sdij) >= mut_sd_min) %>%
+    mutate(dv_stress_ij = 1/2 * kij * mut_dl_sigma^2)
+
+  nsites <- get_nsites(wt)
+  dv_stress_ij <- matrix(0, nsites, nsites)
+
+  nedges <- nrow(g)
+  for (edge in seq(nedges)) {
+    i = g$i[edge]
+    j = g$j[edge]
+    kij = g$kij[edge]
+    dv_stress_ij[i, j] = 1 / 2 * kij * mut_dl_sigma^2
+  }
+  dv_stress_ij <- dv_stress_ij + t(dv_stress_ij)
+  diag(dv_stress_ij) = rowSums(dv_stress_ij)
+
+  dv_stress_ij
+}
+
+
+
+# Structure response, site ------------------------------------------------
+
+
 #' Calculate structural mutational response, site analysis
 fast_delta_structure_site <- function(wt, mut_dl_sigma = 0.3, mut_sd_min = 2) {
   # structural differences, site analysis
@@ -84,7 +138,7 @@ calculate_fast_response_matrix <- function(wt, amat, mut_dl_sigma, mut_sd_min) {
 
 
 
-# Mode response -----------------------------------------------------------
+# Structure response, mode -----------------------------------------------------------
 
 #' Calculate structural mutational response, mode analysis
 fast_delta_structure_mode <- function(wt, mut_dl_sigma = 0.3, mut_sd_min = 2) {

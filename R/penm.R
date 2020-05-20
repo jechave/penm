@@ -7,7 +7,7 @@
 #' @param mutation An integer, if 0, return \code{wt} without mutating
 #' @param mut_model A string specifying mutational model ("lfenm" or "sclfenm")
 #' @param mut_dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
-#' @param mut_sd_min An integer, only edges with \code{sdij > mut_sd_min} are mutated
+#' @param mut_sd_min An integer, only edges with \code{sdij >= mut_sd_min} are mutated
 #' @param seed An integer, the seed for set.seed before picking perturbations
 #'
 #' @return A mutated protein
@@ -43,7 +43,7 @@ get_mutant_site <- function(wt, site_mut, mutation = 0, mut_model = "lfenm", mut
 #' @param site_mut The site to mutate (not the pdb_site, but sequential)
 #' @param mutation An integer, if 0, return \code{wt} without mutating
 #' @param mut_dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
-#' @param mut_sd_min An integer, only edges with \code{sdij > mut_sd_min} are mutated
+#' @param mut_sd_min An integer, only edges with \code{sdij >= mut_sd_min} are mutated
 #' @param seed An integer, the seed for set.seed before picking perturbations
 #'
 #' @return A mutated protein
@@ -83,7 +83,7 @@ get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_m
 #' @param site_mut The site to mutate (not the pdb_site, but sequential)
 #' @param mutation An integer, if 0, return \code{wt} without mutating
 #' @param mut_dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
-#' @param mut_sd_min An integer, only edges with \code{sdij > mut_sd_min} are mutated
+#' @param mut_sd_min An integer, only edges with \code{sdij >= mut_sd_min} are mutated
 #' @param seed An integer, the seed for set.seed before picking perturbations
 #'
 #' @return A mutated protein

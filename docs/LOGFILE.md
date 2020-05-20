@@ -333,3 +333,15 @@ everything
   - Made `delta_structure_mode()` in *prs.R* faster
   - Tested cpu-time and convergence in *prs\_superfast\_mode.Rmd*
   - Commited
+
+## 20 May 2020
+
+### Added super-fast energy response
+
+  - Developed theory (in *docs/notes*) to calculate dv\_min and
+    dv\_stress
+  - Added fucntions to *prs\_fast.R*
+  - Optimized a bit `enm_v_stress()` of *penm\_analysis.R*
+  - Added *prs\_superfast\_energy.Rmd*
+  - Tested
+  - Commited
