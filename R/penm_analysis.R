@@ -1,17 +1,17 @@
 calculate_dvm <- function(prot1, prot2)
   enm_v_min(prot2) - enm_v_min(prot1)
 
-delta_g_entropy <- function(prot1, prot2, beta)
+calculate_dg_entropy <- function(prot1, prot2, beta)
   enm_g_entropy(prot2, beta) - enm_g_entropy(prot1, beta)
 
 
 #' Stress-model difference of local-mutational-stress energy
 calculate_dvs <- function(prot1, prot2, ideal = prot1)
-  enm_v_stress(prot2, ideal) - enm_v_stress(prot1, ideal)
+  calculate_vs(prot2, ideal) - calculate_vs(prot1, ideal)
 
 
 #' Stress-model local-mutational-stress energy
-enm_v_stress <- function(prot, ideal) {
+calculate_vs <- function(prot, ideal) {
   g <- get_graph(prot)
   g_ideal <- get_graph(ideal)
 

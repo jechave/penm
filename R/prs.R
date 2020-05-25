@@ -5,36 +5,31 @@ prs <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, beta) {
 
   enm_param <- get_enm_param(wt)
   mut_param <- lst(nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min)
-  dej <- delta_energy(mutants, beta)
-  dfij <- delta_structure_site(mutants)
-  dfnj <- delta_structure_mode(mutants)
+  dfj <- calculate_dfj(mutants, beta)
+  dfij <- calculate_dfij(mutants)
+  dfnj <- calculate_dfnj(mutants)
 
-  # add j-site info to dej
-  dfj <- tibble(j = get_site(wt), msfj = get_msf_site(wt), mlmsj = get_mlms(wt))
-
-  dej <- dej %>%
-    inner_join(dfj)
 
   # add site info to dfij
-  dfi <- tibble(i = get_site(wt), msfi = get_msf_site(wt), mlmsi = get_mlms(wt))
-  dfj <- tibble(j = get_site(wt), msfj = get_msf_site(wt), mlmsj = get_mlms(wt))
+  dati <- tibble(i = get_site(wt), msfi = get_msf_site(wt), mlmsi = get_mlms(wt))
+  datj <- tibble(j = get_site(wt), msfj = get_msf_site(wt), mlmsj = get_mlms(wt))
 
   dfij <- dfij %>%
-    inner_join(dfi) %>%
-    inner_join(dfj) %>%
+    inner_join(dati) %>%
+    inner_join(datj) %>%
     select(i, j, mutation, msfi, msfj, mlmsi, mlmsj, everything())
 
 
   # add mode info to dfnj
-  dn <- tibble(mode = get_mode(wt), msfn = get_msf_mode(wt))
-  dj <- tibble(j = get_site(wt), msfj = get_msf_site(wt), mlmsj = get_mlms(wt))
+  datn <- tibble(n = get_mode(wt), msfn = get_msf_mode(wt))
+  datj <- tibble(j = get_site(wt), msfj = get_msf_site(wt), mlmsj = get_mlms(wt))
 
   dfnj <- dfnj %>%
-    inner_join(dn) %>%
-    inner_join(dj) %>%
-    select(mode, j, mutation, msfn, msfj, mlmsj, everything())
+    inner_join(datn) %>%
+    inner_join(datj) %>%
+    select(n, j, mutation, msfn, msfj, mlmsj, everything())
 
-  lst(enm_param, mut_param, dej,  dfij,  dfnj)
+  lst(enm_param, mut_param, dfj,  dfij,  dfnj)
 }
 
 
@@ -52,76 +47,62 @@ get_mutants_table <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd
   mutants
 }
 
-
 #' Calculate energy mutational response
-delta_energy <- function(mutants, beta) {
-  # energy differences
-  mutants %>%
-    mutate(dvm = map2_dbl(wt, mut, calculate_dvm),
-           dvs = map2_dbl(wt, mut, calculate_dvs),
-           delta_g_entropy = map2_dbl(wt, mut, delta_g_entropy, beta = beta)) %>%
-    select(-wt, -mut)
+calculate_dfj <- function(mutants, beta) {
+  # structural differences, site analysis
+  wt <- mutants$wt[[1]]
+  kmat_sqrt <- get_kmat_sqrt(wt)
+
+  dfij <- mutants %>%
+    mutate(i = map(wt, get_site),
+           de2ij = map2(wt, mut, calculate_de2i, kmat_sqrt = kmat_sqrt),
+           dvsij = map2(wt, mut, calculate_dvsi)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(i, de2ij, dvsij)) %>%
+    mutate(dvmij = dvsij - de2ij) %>%
+    select(i, j, mutation,  de2ij, dvsij, dvmij)
+
+  result <- dfij %>%
+    group_by(j, mutation) %>%
+    summarise(de2j = 1/2 * sum(de2ij),
+              dvsj = 1/2 * sum(dvsij),
+              dvmj = 1/2 * sum(dvmij))
+
+  result
 }
 
 
 #' Calculate structural mutational response, site analysis
-delta_energy_site <- function(mutants) {
+calculate_dfij <- function(mutants) {
   # structural differences, site analysis
   wt <- mutants$wt[[1]]
   kmat_sqrt <- get_kmat_sqrt(wt)
 
   result <- mutants %>%
     mutate(i = map(wt, get_site),
-           de2ij = map2(wt, mut, calculate_de2i, kmat_sqrt = kmat_sqrt))
-
-  # result <- result %>%
-  #   mutate(dvmij = map2(wt, mut, dvm_site))
-
-  result <- result %>%
-    mutate(dvsij = map2(wt, mut, calculate_dvsi))
-
-  result <- result %>%
-     mutate(dvmij = map2(dvsij, de2ij, ~ .x - .y))
-
-
-  result %>%
+           dr2ij = map2(wt, mut, calculate_dr2i),
+           df2ij = map2(wt, mut, calculate_df2i),
+           de2ij = map2(wt, mut, calculate_de2i, kmat_sqrt = kmat_sqrt),
+           dvsij = map2(wt, mut, calculate_dvsi)) %>%
     select(-wt, -mut) %>%
-    unnest(c(i,  dvsij, dvmij, de2ij)) %>%
-    select(i, j, mutation, de2ij, dvsij, dvmij)
-}
+    unnest(c(i, dr2ij, df2ij, de2ij, dvsij)) %>%
+    mutate(dvmij = dvsij - de2ij) %>%
+    select(i, j, mutation, dr2ij, df2ij, de2ij, dvsij, dvmij)
 
-
-
-#' Calculate structural mutational response, site analysis
-delta_structure_site <- function(mutants) {
-  # structural differences, site analysis
-  wt <- mutants$wt[[1]]
-  kmat_sqrt <- get_kmat_sqrt(wt)
-
-  result <- mutants %>%
-    mutate(i = map(wt, get_site),
-           dr2ij = map2(wt, mut, calculate_dr2i))
-
-  result <- result %>%
-    mutate(de2ij = map2(wt, mut, calculate_de2i, kmat_sqrt = kmat_sqrt))
-
-  result <- result %>%
-    mutate(df2ij = map2(wt, mut, calculate_df2i))
-
-  result %>%
-    select(-wt, -mut) %>%
-    unnest(c(i, dr2ij, de2ij, df2ij))
+  result
 }
 
 #' Calculate structural mutational response, mode analysis
-delta_structure_mode <- function(mutants) {
+calculate_dfnj <- function(mutants) {
   # structural differences, mode analysis
   result <- mutants %>%
-    mutate(mode = map(wt, get_mode),
+    mutate(n = map(wt, get_mode),
            dr2nj = map2(wt, mut, calculate_dr2n),
            de2nj = map2(wt, mut, calculate_de2n),
            df2nj = map2(wt, mut, calculate_df2n))
   result <- result %>%
     select(-wt, -mut) %>%
-    unnest(c(mode, dr2nj, de2nj, df2nj))
+    unnest(c(n, dr2nj, de2nj, df2nj)) %>%
+    select(n, j, mutation, dr2nj, df2nj, de2nj)
+  result
 }

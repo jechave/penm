@@ -12,17 +12,9 @@ source("R/prs_fast.R")
 
 fw <- foodweb()
 
-foodweb(prune =c("set_enm"))
-
-foodweb(prune =c("get_mutant_site"))
-
-foodweb(prune =c("get_mutant_site_lfenm"))
-
-foodweb(prune =c("get_mutant_site_sclfenm"),
-        generics = c("dij_edge", "sdij_edge"))
-
-foodweb(prune = c("prs"))
-foodweb(prune = c("delta_energy", "fast_delta_energy"))
+foodweb(prune = c("calculate_dfj", "fast_calculate_dfj"))
+foodweb(prune = c("calculate_dfij", "fast_calculate_dfij"))
+foodweb(prune = c("calculate_dfnj", "fast_calculate_dfnj"))
 
 # callers.of("get_mutant_site", fw)
 # callees.of("get_mutant_site", fw)

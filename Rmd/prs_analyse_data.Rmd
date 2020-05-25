@@ -33,17 +33,17 @@ pdb_id = "2acy_A"
 
 ## Read dfij
 
-dfij <- here("data-raw", paste0(pdb_id, "_dfij.csv")) %>% 
+dfij <- here("data-raw", paste0(pdb_id, "_dfij.csv")) %>%
   read_csv()
 
 ### Make long-version of dfij
 
-dfij_long <- dfij  %>% 
+dfij_long <- dfij  %>%
   pivot_longer(cols = c(dr2ij, de2ij, df2ij),
                names_to = "response",
-               values_to = "value") %>% 
-  mutate(response = factor(response, levels = c("df2ij", "de2ij", "dr2ij")))  %>% 
-  filter(mutation > 0) 
+               values_to = "value") %>%
+  mutate(response = factor(response, levels = c("df2ij", "de2ij", "dr2ij")))  %>%
+  filter(mutation > 0)
 
 ```
 
@@ -53,11 +53,11 @@ dfij_long <- dfij  %>%
 ```{r}
 dfij_long %>%
   group_by(i, j, response) %>%
-  summarise(value = mean(value)) %>% 
-  ungroup() %>% 
-  # filter(abs(j - i) >= 1) %>% 
-  group_by(response) %>% 
-  mutate(value = mMnorm(value)) %>% 
+  summarise(value = mean(value)) %>%
+  ungroup() %>%
+  # filter(abs(j - i) >= 1) %>%
+  group_by(response) %>%
+  mutate(value = mMnorm(value)) %>%
   ggplot(aes(j, i, fill = value)) +
   geom_tile() +
   scale_fill_viridis_c() +
@@ -65,7 +65,7 @@ dfij_long %>%
   theme(legend.position = "none") +
   coord_fixed() +
   facet_grid(. ~ response) +
-  NULL 
+  NULL
 ```
 
 
@@ -78,8 +78,8 @@ plot_mji_vs_mij <- function(m, title = "") {
   df <- matrix_to_tibble(m)
   dft <- matrix_to_tibble(tm)
   df$mji = dft$mij
-  
-  df %>% 
+
+  df %>%
     ggplot(aes(mij, mji)) +
     geom_point(size = .3, alpha = .3) +
     geom_smooth() +
@@ -95,14 +95,14 @@ df <- dfij %>%
   group_by(i, j) %>%
   summarise(dr2ij = mean(dr2ij),
             de2ij = mean(de2ij),
-            df2ij = mean(df2ij)) %>% 
+            df2ij = mean(df2ij)) %>%
   arrange(j, i)
 
 nsites <- length(unique(dfij$i))
 
-p1 <- plot_mji_vs_mij(offdiag(matrix(df$df2ij, nsites, nsites)), "df2ij") 
-p2 <- plot_mji_vs_mij(offdiag(matrix(df$de2ij, nsites, nsites)), "de2ij") 
-p3 <- plot_mji_vs_mij(offdiag(matrix(df$dr2ij, nsites, nsites)), "dr2ij") 
+p1 <- plot_mji_vs_mij(offdiag(matrix(df$df2ij, nsites, nsites)), "df2ij")
+p2 <- plot_mji_vs_mij(offdiag(matrix(df$de2ij, nsites, nsites)), "de2ij")
+p3 <- plot_mji_vs_mij(offdiag(matrix(df$dr2ij, nsites, nsites)), "dr2ij")
 
 plot_grid(p1, p2, p3, ncol = 3)
 ```
@@ -111,9 +111,9 @@ plot_grid(p1, p2, p3, ncol = 3)
 
 ```{r}
 dfij_long %>%
-  filter(mutation %in% c(1, 2)) %>% 
-  group_by(mutation, response) %>% 
-  mutate(value = mMnorm(value)) %>% 
+  filter(mutation %in% c(1, 2)) %>%
+  group_by(mutation, response) %>%
+  mutate(value = mMnorm(value)) %>%
   ggplot(aes(j, i, fill = value)) +
   geom_tile() +
   scale_fill_viridis_c() +
@@ -121,17 +121,17 @@ dfij_long %>%
   theme(legend.position = "none") +
   coord_fixed() +
   facet_grid(mutation ~ response) +
-  NULL 
+  NULL
 ```
 
 ## Response is similar for independent scans (2)
 
 ```{r}
-dfij_long %>% 
-  filter(mutation %in% c(1, 2)) %>% 
+dfij_long %>%
+  filter(mutation %in% c(1, 2)) %>%
   pivot_wider(names_from = mutation,
               names_prefix = "mutation_",
-              values_from = value)  %>% 
+              values_from = value)  %>%
   ggplot(aes(mutation_1, mutation_2)) +
   geom_point() +
   geom_smooth() +
@@ -145,10 +145,10 @@ dfij_long %>%
 
 
 ```{r}
-dfij_long %>% 
-  group_by(i, j, response) %>% 
+dfij_long %>%
+  group_by(i, j, response) %>%
   mutate(value_mean = mean(value),
-         value_sd = sd(value)) %>% 
+         value_sd = sd(value)) %>%
   ggplot(aes(value_mean, value_sd)) +
   geom_point() +
   geom_smooth(method = "lm") +
@@ -157,16 +157,16 @@ dfij_long %>%
 ```
 
 
-# Site-dependent response profile 
+# Site-dependent response profile
 
 ## Average response vs. site
 
 * As predicted by theory: $df^2 \propto 1/\sigma^2$,  $de^2 \approx \texttt{constant}$, and $dr^2 \propto \sigma^2$.
 
 ```{r}
-p1 <- dfij_long %>% 
-  group_by(i, msfi, response) %>% 
-  summarise(value = mean(value)) %>% 
+p1 <- dfij_long %>%
+  group_by(i, msfi, response) %>%
+  summarise(value = mean(value)) %>%
   ggplot(aes(i, value)) +
   geom_line() +
   theme_cowplot() +
@@ -174,9 +174,9 @@ p1 <- dfij_long %>%
   ggtitle("response_of(i) vs. site")
 
 
-p2 <- dfij_long %>% 
-  group_by(i, msfi, response) %>% 
-  summarise(value = mean(value)) %>% 
+p2 <- dfij_long %>%
+  group_by(i, msfi, response) %>%
+  summarise(value = mean(value)) %>%
   ggplot(aes(msfi, value)) +
   geom_point(size = .5) +
   geom_smooth() +
@@ -184,9 +184,9 @@ p2 <- dfij_long %>%
   facet_grid(response ~ ., scales = "free_y") +
   NULL
 
-p3 <- dfij_long %>% 
-  group_by(i, mlmsi, response) %>% 
-  summarise(value = mean(value)) %>% 
+p3 <- dfij_long %>%
+  group_by(i, mlmsi, response) %>%
+  summarise(value = mean(value)) %>%
   ggplot(aes(mlmsi, value)) +
   geom_point(size = .5) +
   geom_smooth() +
@@ -200,26 +200,26 @@ p1 + p2 + p3 + plot_layout(widths = c(2, 1, 1))
 ## Average response is similar for independent scans (1)
 
 ```{r}
-p1 <- dfij_long %>% 
-  filter(mutation %in% c(1, 2)) %>% 
-  mutate(mutation = factor(mutation)) %>% 
-  group_by(mutation, i, response) %>% 
-  summarise(value = mean(value)) %>% 
+p1 <- dfij_long %>%
+  filter(mutation %in% c(1, 2)) %>%
+  mutate(mutation = factor(mutation)) %>%
+  group_by(mutation, i, response) %>%
+  summarise(value = mean(value)) %>%
   ggplot(aes(i, value, color = mutation)) +
   geom_line() +
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
   ggtitle("response_of(i) vs. site") +
-  theme(legend.position = 'none') 
+  theme(legend.position = 'none')
 
-p2 <- dfij_long %>% 
-  filter(mutation %in% c(1, 2)) %>% 
-  mutate(mutation = factor(mutation)) %>% 
-  group_by(mutation, i, response) %>% 
-  summarise(value = mean(value)) %>% 
+p2 <- dfij_long %>%
+  filter(mutation %in% c(1, 2)) %>%
+  mutate(mutation = factor(mutation)) %>%
+  group_by(mutation, i, response) %>%
+  summarise(value = mean(value)) %>%
   pivot_wider(names_from = mutation,
               names_prefix = "mutation_",
-              values_from = value) %>% 
+              values_from = value) %>%
   ggplot(aes(mutation_1, mutation_2)) +
   geom_point(size = .5) +
   geom_abline() +
@@ -240,17 +240,17 @@ p1 + p2 + plot_layout(widths = c(2, 1))
 
 ## Read dfij
 
-dfnj <- here("data-raw", paste0(pdb_id, "_dfnj.csv")) %>% 
+dfnj <- here("data-raw", paste0(pdb_id, "_dfnj.csv")) %>%
   read_csv()
 
 ### Make long-version of dfij
 
-dfnj_long <- dfnj  %>% 
+dfnj_long <- dfnj  %>%
   pivot_longer(cols = c(dr2nj, de2nj, df2nj),
                names_to = "response",
-               values_to = "value") %>% 
-  mutate(response = factor(response, levels = c("df2nj", "de2nj", "dr2nj")))  %>% 
-  filter(mutation > 0) %>% 
+               values_to = "value") %>%
+  mutate(response = factor(response, levels = c("df2nj", "de2nj", "dr2nj")))  %>%
+  filter(mutation > 0) %>%
   mutate(n = mode)
 
 ```
@@ -261,11 +261,11 @@ dfnj_long <- dfnj  %>%
 ```{r}
 dfnj_long %>%
   group_by(n, j, response) %>%
-  summarise(value = mean(value)) %>% 
-  ungroup() %>% 
-  # filter(abs(j - i) >= 1) %>% 
-  group_by(response) %>% 
-  mutate(value = mMnorm(value)) %>% 
+  summarise(value = mean(value)) %>%
+  ungroup() %>%
+  # filter(abs(j - i) >= 1) %>%
+  group_by(response) %>%
+  mutate(value = mMnorm(value)) %>%
   ggplot(aes(j, n, fill = value)) +
   geom_tile() +
   scale_fill_viridis_c() +
@@ -273,7 +273,7 @@ dfnj_long %>%
   theme(legend.position = "none") +
   coord_fixed() +
   facet_grid(. ~ response) +
-  NULL 
+  NULL
 ```
 
 ## Response matrices are not symmetric
@@ -284,9 +284,9 @@ dfnj_long %>%
 
 ```{r}
 dfnj_long %>%
-  filter(mutation %in% c(1, 2)) %>% 
-  group_by(mutation, response) %>% 
-  mutate(value = mMnorm(value)) %>% 
+  filter(mutation %in% c(1, 2)) %>%
+  group_by(mutation, response) %>%
+  mutate(value = mMnorm(value)) %>%
   ggplot(aes(j, n, fill = value)) +
   geom_tile() +
   scale_fill_viridis_c() +
@@ -294,17 +294,17 @@ dfnj_long %>%
   theme(legend.position = "none") +
   coord_fixed() +
   facet_grid(mutation ~ response) +
-  NULL 
+  NULL
 ```
 
 ## Response matrix is *not* similar for independent scans (2)
 
 ```{r}
-dfnj_long %>% 
-  filter(mutation %in% c(1, 2)) %>% 
+dfnj_long %>%
+  filter(mutation %in% c(1, 2)) %>%
   pivot_wider(names_from = mutation,
               names_prefix = "mutation_",
-              values_from = value)  %>% 
+              values_from = value)  %>%
   ggplot(aes(mutation_1, mutation_2)) +
   geom_point(size = .3, alpha = .3) +
   geom_abline() +
@@ -319,10 +319,10 @@ dfnj_long %>%
 
 
 ```{r}
-dfnj_long %>% 
-  group_by(n, j, response) %>% 
+dfnj_long %>%
+  group_by(n, j, response) %>%
   mutate(value_mean = mean(value),
-         value_sd = sd(value)) %>% 
+         value_sd = sd(value)) %>%
   ggplot(aes(value_mean, value_sd)) +
   geom_point() +
   geom_abline() +
@@ -339,18 +339,18 @@ dfnj_long %>%
 * As predicted by theory: $df^2 \propto \texttt{evalue}$,  $de^2 \approx \texttt{constant}$, and $dr^2 \propto 1/\texttt{evalue}$.
 
 ```{r}
-p1 <- dfnj_long %>% 
-  group_by(n, msfn, response) %>% 
-  summarise(value = mean(value)) %>% 
+p1 <- dfnj_long %>%
+  group_by(n, msfn, response) %>%
+  summarise(value = mean(value)) %>%
   ggplot(aes(n, value)) +
   geom_line() +
   theme_cowplot() +
   facet_grid(response ~ ., scales = "free_y") +
   ggtitle("response_of(n) vs. site")
 
-p2 <- dfnj_long %>% 
-  group_by(n, msfn, response) %>% 
-  summarise(value = mean(value)) %>% 
+p2 <- dfnj_long %>%
+  group_by(n, msfn, response) %>%
+  summarise(value = mean(value)) %>%
   ggplot(aes(msfn, value)) +
   geom_point(size = .5) +
   geom_smooth() +
@@ -358,10 +358,10 @@ p2 <- dfnj_long %>%
   facet_grid(response ~ ., scales = "free_y") +
   ggtitle("response_of(n) vs. msf(n)")
 
-p3 <- dfnj_long %>% 
-  mutate(evalue = 1 / msfn)  %>% 
-  group_by(n, evalue, response) %>% 
-  summarise(value = mean(value)) %>% 
+p3 <- dfnj_long %>%
+  mutate(evalue = 1 / msfn)  %>%
+  group_by(n, evalue, response) %>%
+  summarise(value = mean(value)) %>%
   ggplot(aes(evalue, value)) +
   geom_point() +
   geom_smooth() +
@@ -375,11 +375,11 @@ p1 + p2 + p3 + plot_layout(widths = c(2, 1, 1))
 ## Average response is similar for independent scans (1)
 
 ```{r}
-p1 <- dfnj_long %>% 
-  filter(mutation %in% c(1, 2)) %>% 
-  mutate(mutation = factor(mutation)) %>% 
-  group_by(mutation, n, response) %>% 
-  summarise(value = mean(value)) %>% 
+p1 <- dfnj_long %>%
+  filter(mutation %in% c(1, 2)) %>%
+  mutate(mutation = factor(mutation)) %>%
+  group_by(mutation, n, response) %>%
+  summarise(value = mean(value)) %>%
   ggplot(aes(n, value, color = mutation)) +
   geom_line() +
   theme_cowplot() +
@@ -387,19 +387,19 @@ p1 <- dfnj_long %>%
   ggtitle("response_of(n) vs. site") +
   theme(legend.position = "none")
 
-p2 <- dfnj_long %>% 
-  filter(mutation %in% c(1, 2)) %>% 
-  mutate(mutation = factor(mutation)) %>% 
-  group_by(mutation, n, response) %>% 
-  summarise(value = mean(value)) %>% 
+p2 <- dfnj_long %>%
+  filter(mutation %in% c(1, 2)) %>%
+  mutate(mutation = factor(mutation)) %>%
+  group_by(mutation, n, response) %>%
+  summarise(value = mean(value)) %>%
   pivot_wider(names_from = mutation,
               names_prefix = "mutation_",
-              values_from = value) %>% 
+              values_from = value) %>%
   ggplot(aes(mutation_1, mutation_2)) +
   geom_point() +
   geom_abline() +
   theme_cowplot() +
-  facet_wrap(~ response, scales = "free", ncol = 1) 
+  facet_wrap(~ response, scales = "free", ncol = 1)
 
 p1 + p2 + plot_layout(width = c(2, 1))
 ```
@@ -407,14 +407,14 @@ p1 + p2 + plot_layout(width = c(2, 1))
 
 
 
-# Influence profiles 
+# Influence profiles
 
 ## Average response vs. mutated site j
 
 ```{r}
-p1 <- dfij_long %>% 
-  group_by(j, msfj, response) %>% 
-  summarise(value = mean(value)) %>% 
+p1 <- dfij_long %>%
+  group_by(j, msfj, response) %>%
+  summarise(value = mean(value)) %>%
   ggplot(aes(j, value)) +
   geom_line() +
   theme_cowplot() +
@@ -422,9 +422,9 @@ p1 <- dfij_long %>%
   ggtitle("response_to(j) vs. j")
 
 
-p2 <- dfij_long %>% 
-  group_by(j, msfj, response) %>% 
-  summarise(value = mean(value)) %>% 
+p2 <- dfij_long %>%
+  group_by(j, msfj, response) %>%
+  summarise(value = mean(value)) %>%
   ggplot(aes(msfj, value)) +
   geom_point(size = .5) +
   geom_smooth() +
@@ -432,9 +432,9 @@ p2 <- dfij_long %>%
   facet_grid(response ~ ., scales = "free_y") +
   ggtitle("response_of(j) vs. msf(j)")
 
-p3 <- dfij_long %>% 
-  group_by(j, mlmsj, response) %>% 
-  summarise(value = mean(value)) %>% 
+p3 <- dfij_long %>%
+  group_by(j, mlmsj, response) %>%
+  summarise(value = mean(value)) %>%
   ggplot(aes(mlmsj, value)) +
   geom_point(size = .5) +
   geom_smooth() +
@@ -448,11 +448,11 @@ p1 + p2 + p3 + plot_layout(widths = c(2, 1, 1))
 ## Influence is similar for independent scans (1)
 
 ```{r}
-p1 <- dfij_long %>% 
-  filter(mutation %in% c(1, 2)) %>% 
-  mutate(mutation = factor(mutation)) %>% 
-  group_by(mutation, j, response) %>% 
-  summarise(value = mean(value)) %>% 
+p1 <- dfij_long %>%
+  filter(mutation %in% c(1, 2)) %>%
+  mutate(mutation = factor(mutation)) %>%
+  group_by(mutation, j, response) %>%
+  summarise(value = mean(value)) %>%
   ggplot(aes(j, value, color = mutation)) +
   geom_line() +
   theme_cowplot() +
@@ -460,20 +460,20 @@ p1 <- dfij_long %>%
   ggtitle("response_to(j) vs. site, two cans") +
   theme(legend.position = "none")
 
-p2 <- dfij_long %>% 
-  filter(mutation %in% c(1, 2)) %>% 
-  mutate(mutation = factor(mutation)) %>% 
-  group_by(mutation, j, response) %>% 
-  summarise(value = mean(value)) %>% 
+p2 <- dfij_long %>%
+  filter(mutation %in% c(1, 2)) %>%
+  mutate(mutation = factor(mutation)) %>%
+  group_by(mutation, j, response) %>%
+  summarise(value = mean(value)) %>%
   pivot_wider(names_from = mutation,
               names_prefix = "mutation_",
-              values_from = value) %>% 
+              values_from = value) %>%
   ggplot(aes(mutation_1, mutation_2)) +
   geom_point(size = .5) +
   geom_abline() +
   geom_smooth(method = "lm") +
   theme_cowplot() +
-  facet_wrap(~ response, scales = "free", ncol = 1) 
+  facet_wrap(~ response, scales = "free", ncol = 1)
 
 p1 + p2  + plot_layout(widths = c(2, 1))
 ```
@@ -481,7 +481,7 @@ p1 + p2  + plot_layout(widths = c(2, 1))
 
 
 
-# Energy 
+# Energy
 
 ```{r}
 dfej <- read_csv(here("data-raw/2acy_A_dfej.csv"))
@@ -493,40 +493,40 @@ esquisser(dfej)
 ```
 
 ```{r}
-dfej_long <- dfej %>% 
-  filter(mutation > 0) %>% 
+dfej_long <- dfej %>%
+  filter(mutation > 0) %>%
   pivot_longer(
-    cols = c("dvs","dvm", "delta_g_entropy"),
+    cols = c("dvs","dvm", "dg_entropy"),
     names_to = "response",
-    values_to = "delta_energy"
-  ) 
+    values_to = "calculate_dfj"
+  )
 ```
 
 ## Influence of mutating $j$ on energies
 
 ```{r}
-p_site <- dfej_long %>% 
-  group_by(j, msfj, mlmsj, response) %>% 
-  mutate(delta_energy = mean(delta_energy)) %>% 
-  ggplot(aes(j, delta_energy)) +
+p_site <- dfej_long %>%
+  group_by(j, msfj, mlmsj, response) %>%
+  mutate(calculate_dfj = mean(calculate_dfj)) %>%
+  ggplot(aes(j, calculate_dfj)) +
   geom_line() +
   facet_wrap(~ response, scales = "free_y", ncol = 1) +
   theme_minimal()
 
 
-p_msfj <- dfej_long %>% 
-  group_by(j, msfj, mlmsj, response) %>% 
-  mutate(delta_energy = mean(delta_energy)) %>% 
-  ggplot(aes(msfj, delta_energy)) +
+p_msfj <- dfej_long %>%
+  group_by(j, msfj, mlmsj, response) %>%
+  mutate(calculate_dfj = mean(calculate_dfj)) %>%
+  ggplot(aes(msfj, calculate_dfj)) +
   geom_point() +
   geom_smooth() +
   facet_wrap(~ response, scales = "free_y", ncol = 1) +
   theme_minimal()
 
-p_mlmsj <- dfej_long %>% 
-  group_by(j, msfj, mlmsj, response) %>% 
-  mutate(delta_energy = mean(delta_energy)) %>% 
-  ggplot(aes(mlmsj, delta_energy)) +
+p_mlmsj <- dfej_long %>%
+  group_by(j, msfj, mlmsj, response) %>%
+  mutate(calculate_dfj = mean(calculate_dfj)) %>%
+  ggplot(aes(mlmsj, calculate_dfj)) +
   geom_point(size = .5) +
   geom_smooth() +
   facet_wrap(~ response, scales = "free_y", ncol = 1) +
@@ -539,27 +539,27 @@ p_site + p_msfj + p_mlmsj + plot_layout(widths = c(2, 1, 1))
 ## Variation of energy response from scan to scan
 
 ```{r}
-p1 <- dfej_long %>% 
-  filter(mutation %in% c(1, 2)) %>% 
-  mutate(mutation = factor(mutation)) %>% 
-  ggplot(aes(j, delta_energy, color = mutation, group = mutation)) +
+p1 <- dfej_long %>%
+  filter(mutation %in% c(1, 2)) %>%
+  mutate(mutation = factor(mutation)) %>%
+  ggplot(aes(j, calculate_dfj, color = mutation, group = mutation)) +
   geom_line() +
   scale_color_viridis_d() +
   facet_wrap(~ response, scales = "free_y", ncol = 1) +
   theme_minimal()
 
-p2 <- dfej_long %>% 
-  filter(mutation %in% c(1, 2)) %>% 
-  mutate(mutation = factor(mutation)) %>% 
-  select(j, mutation, response, delta_energy) %>% 
+p2 <- dfej_long %>%
+  filter(mutation %in% c(1, 2)) %>%
+  mutate(mutation = factor(mutation)) %>%
+  select(j, mutation, response, calculate_dfj) %>%
   pivot_wider(names_from = mutation,
               names_prefix = "mutation_",
-              values_from = delta_energy) %>% 
+              values_from = calculate_dfj) %>%
   ggplot(aes(mutation_1, mutation_2)) +
   geom_point(size = .5) +
   geom_abline() +
   theme_cowplot() +
-  facet_wrap(~ response, scales = "free", ncol = 1) 
+  facet_wrap(~ response, scales = "free", ncol = 1)
 
 p1 + p2
 ```
@@ -568,21 +568,21 @@ p1 + p2
 
 
 ```{r}
-de2 <- dfij %>% 
-  group_by(j, mutation) %>% 
+de2 <- dfij %>%
+  group_by(j, mutation) %>%
   summarise(de2 = sum(de2ij) / 2)
 
-p1 <- inner_join(dfej, de2) %>% 
+p1 <- inner_join(dfej, de2) %>%
   ggplot(aes(dvs - dvm, de2)) +
   geom_point() +
   geom_abline() +
   theme_minimal()
-  
-p2 <- inner_join(dfej, de2) %>% 
-  group_by(j) %>% 
+
+p2 <- inner_join(dfej, de2) %>%
+  group_by(j) %>%
   summarise(dvs = mean(dvs),
             dvm = mean(dvm),
-            de2 = mean(de2)) %>% 
+            de2 = mean(de2)) %>%
   ggplot(aes(dvs - dvm, de2)) +
   geom_point() +
   geom_abline() +
@@ -590,9 +590,9 @@ p2 <- inner_join(dfej, de2) %>%
   ggtitle("Averaged over mutations")
 
 p1 + p2
-  
-  
-  
+
+
+
 ```
 
 # Globality
@@ -603,22 +603,22 @@ How many sites are influenced by a mutation at $j$? How many mutations affect si
 
 ```{r}
 # response
-p1 = dfij_long %>% 
-  group_by(i, mutation, msfi, mlmsi, response) %>% 
-  summarise(kn = Kn(value)) %>% 
-  group_by(i, msfi, mlmsi, response) %>% 
-  summarise(kn = mean(kn)) %>% 
+p1 = dfij_long %>%
+  group_by(i, mutation, msfi, mlmsi, response) %>%
+  summarise(kn = Kn(value)) %>%
+  group_by(i, msfi, mlmsi, response) %>%
+  summarise(kn = mean(kn)) %>%
   ggplot(aes(i, kn)) +
   geom_line() +
   facet_wrap(~response, scales = "free_y", ncol = 1) +
   theme_minimal()
 
 # influence
-p2 = dfij_long %>% 
-  group_by(j, mutation, msfj, mlmsj, response) %>% 
-  summarise(kn = Kn(value)) %>% 
-  group_by(j, msfj, mlmsj, response) %>% 
-  summarise(kn = mean(kn)) %>% 
+p2 = dfij_long %>%
+  group_by(j, mutation, msfj, mlmsj, response) %>%
+  summarise(kn = Kn(value)) %>%
+  group_by(j, msfj, mlmsj, response) %>%
+  summarise(kn = mean(kn)) %>%
   ggplot(aes(j, kn)) +
   geom_line() +
   facet_wrap(~response, scales = "free_y", ncol = 1) +
@@ -627,25 +627,25 @@ p2 = dfij_long %>%
 
 # influence vs response
 
-dfi = dfij_long %>% 
-  group_by(i, mutation, msfi, mlmsi, response) %>% 
-  summarise(kn = Kn(value)) %>%  
-  group_by(i, msfi, mlmsi, response) %>% 
-  summarise(kn = mean(kn)) %>% 
-  ungroup() %>% 
+dfi = dfij_long %>%
+  group_by(i, mutation, msfi, mlmsi, response) %>%
+  summarise(kn = Kn(value)) %>%
+  group_by(i, msfi, mlmsi, response) %>%
+  summarise(kn = mean(kn)) %>%
+  ungroup() %>%
   transmute(site = i, msf = msfi, mlms = mlmsi, response = response, kn_resp = kn)
 
-dfj = dfij_long %>% 
-  group_by(j, mutation,  response) %>% 
-  summarise(kn = Kn(value)) %>%  
-  group_by(j,  response) %>% 
-  summarise(kn = mean(kn)) %>% 
-  ungroup() %>% 
+dfj = dfij_long %>%
+  group_by(j, mutation,  response) %>%
+  summarise(kn = Kn(value)) %>%
+  group_by(j,  response) %>%
+  summarise(kn = mean(kn)) %>%
+  ungroup() %>%
   transmute(site = j, response = response, kn_influence = kn)
 
-df <- inner_join(dfi, dfj) 
+df <- inner_join(dfi, dfj)
 
-p3 <- df %>% 
+p3 <- df %>%
   ggplot(aes(kn_influence, kn_resp)) +
   geom_point(size = .5) +
   geom_smooth() +
@@ -666,28 +666,28 @@ patch1 <- p1 / p2
 ```{r}
 # influence vs response
 
-dfn <-  dfnj_long %>% 
-  group_by(n, mutation, msfn, response) %>% 
-  summarise(kn = Kn(value)) %>%  
-  group_by(n, msfn,  response) %>% 
-  summarise(kn = mean(kn)) 
+dfn <-  dfnj_long %>%
+  group_by(n, mutation, msfn, response) %>%
+  summarise(kn = Kn(value)) %>%
+  group_by(n, msfn,  response) %>%
+  summarise(kn = mean(kn))
 
 # response
-p1_site <- dfn %>% 
+p1_site <- dfn %>%
   ggplot(aes(n, kn)) +
   geom_line() +
   facet_wrap(~response, scales = "free_y", ncol = 1) +
   theme_minimal()
 
-p1_msf <- dfn %>% 
+p1_msf <- dfn %>%
   ggplot(aes(msfn, kn)) +
   geom_point(size = .5) +
   geom_smooth() +
   facet_wrap(~response, scales = "free_y", ncol = 1) +
   theme_minimal()
 
-p1_evalue <- dfn %>% 
-  mutate(evalue = 1 / msfn) %>% 
+p1_evalue <- dfn %>%
+  mutate(evalue = 1 / msfn) %>%
   ggplot(aes(evalue, kn)) +
   geom_point(size = .5) +
   geom_smooth() +
@@ -706,25 +706,25 @@ p1_site + p1_msf + p1_evalue
 
 ```{r}
 # influence
-dfj <-  dfnj_long %>% 
-  group_by(j, msfj, mlmsj, mutation,  response) %>% 
-  summarise(kn = Kn(value)) %>%  
-  group_by(j,  msfj, mlmsj, response) %>% 
-  summarise(kn = mean(kn)) 
-p2_site <- dfj %>% 
+dfj <-  dfnj_long %>%
+  group_by(j, msfj, mlmsj, mutation,  response) %>%
+  summarise(kn = Kn(value)) %>%
+  group_by(j,  msfj, mlmsj, response) %>%
+  summarise(kn = mean(kn))
+p2_site <- dfj %>%
   ggplot(aes(j, kn)) +
   geom_line() +
   facet_wrap(~response, scales = "free_y", ncol = 1) +
   theme_minimal()
 
-p2_msf <- dfj %>% 
+p2_msf <- dfj %>%
   ggplot(aes(msfj, kn)) +
   geom_point(size = .5) +
   geom_smooth() +
   facet_wrap(~response, scales = "free_y", ncol = 1) +
   theme_minimal()
 
-p2_mlms <- dfj %>% 
+p2_mlms <- dfj %>%
   ggplot(aes(mlmsj, kn)) +
   geom_point(size = .5) +
   geom_smooth() +
@@ -735,4 +735,3 @@ p2_mlms <- dfj %>%
 
 p2_site + p2_msf + p2_mlms
 ```
-

@@ -42,13 +42,13 @@ wt <- set_enm(pdb,  "ca",  "ming_wall",  10.5,  F)
 
 prs_slow <- function(wt, nmut_per_site = 10) {
   mutants <- get_mutants_table(wt, nmut_per_site, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
-  delta_structure_mode(mutants)
+  calculate_dfnj(mutants)
 }
 
 
 
 prs_fast <- function(wt) {
-  fast_delta_structure_mode(wt)
+  fast_calculate_dfnj(wt)
 }
 
 get_mutants <- function(wt, nmut_per_site) get_mutants_table(wt, nmut_per_site, "lfenm", 0.3, 2)
@@ -61,10 +61,10 @@ mutants_10 <- get_mutants_table(wt, 10, "lfenm", 0.3, 2)
 
 # mb <- microbenchmark(prs_slow(wt, 1), prs_slow(wt, 5), prs_slow(wt, 10),  prs_fast(wt),  times = 1)
 
-mb <- microbenchmark(get_mutants(wt, 1), delta_structure_mode(mutants_1),
-                     get_mutants(wt, 5), delta_structure_mode(mutants_5),
-                     get_mutants(wt, 10), delta_structure_mode(mutants_10),
-                     fast_delta_structure_mode(wt),
+mb <- microbenchmark(get_mutants(wt, 1), calculate_dfnj(mutants_1),
+                     get_mutants(wt, 5), calculate_dfnj(mutants_5),
+                     get_mutants(wt, 10), calculate_dfnj(mutants_10),
+                     fast_calculate_dfnj(wt),
                      times = 1)
 
 mb %>% 
@@ -90,10 +90,10 @@ wt <- set_enm(pdb, "ca", "ming_wall", 10.5, F)
 
 # Slow prs calculation (simulation)
 mutants <- get_mutants_table(wt, nmut_per_site = 50, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
-dfnj_slow <- delta_structure_mode(mutants)
+dfnj_slow <- calculate_dfnj(mutants)
 
 # Fast prs calculation (analytical)
-dfnj_fast <- fast_delta_structure_mode(wt) %>% 
+dfnj_fast <- fast_calculate_dfnj(wt) %>% 
   rename(dr2nj_fast = dr2nj, de2nj_fast = de2nj, df2nj_fast = df2nj) 
 ```
 

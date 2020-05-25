@@ -42,13 +42,13 @@ wt <- set_enm(pdb,  "ca",  "ming_wall",  10.5,  F)
 
 prs_slow <- function(wt, nmut_per_site = 10) {
   mutants <- get_mutants_table(wt, nmut_per_site, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
-  delta_structure_site(mutants)
+  calculate_dfij(mutants)
 }
 
 
 
 prs_fast <- function(wt) {
-  fast_delta_structure_site(wt)
+  fast_calculate_dfij(wt)
 }
 
 get_mutants <- function(wt, nmut_per_site) get_mutants_table(wt, nmut_per_site, "lfenm", 0.3, 2)
@@ -61,10 +61,10 @@ mutants_10 <- get_mutants_table(wt, 10, "lfenm", 0.3, 2)
 
 # mb <- microbenchmark(prs_slow(wt, 1), prs_slow(wt, 5), prs_slow(wt, 10),  prs_fast(wt),  times = 1)
 
-mb <- microbenchmark(get_mutants(wt, 1), delta_structure_site(mutants_1),
-                     get_mutants(wt, 5), delta_structure_site(mutants_5),
-                     get_mutants(wt, 10), delta_structure_site(mutants_10),
-                     fast_delta_structure_site(wt),
+mb <- microbenchmark(get_mutants(wt, 1), calculate_dfij(mutants_1),
+                     get_mutants(wt, 5), calculate_dfij(mutants_5),
+                     get_mutants(wt, 10), calculate_dfij(mutants_10),
+                     fast_calculate_dfij(wt),
                      times = 1)
 
 mb %>% 
@@ -86,295 +86,181 @@ pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
 wt <- set_enm(pdb, "ca", "ming_wall", 10.5, F)
 
 # Slow prs calculation (simulation)
-mutants <- get_mutants_table(wt, nmut_per_site = 20, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
-dfij_slow <- delta_structure_site(mutants)
-
-# Fast prs calculation (analytical)
-dfij_fast <- fast_delta_structure_site(wt) %>% 
-  rename(dr2ij_fast = dr2ij, de2ij_fast = de2ij, df2ij_fast = df2ij) 
-```
-
-
-```{r}
-# prepare data
-
-dfij_mean <- dfij_slow %>% 
-  filter(mutation != 0) %>% 
-  group_by(i, j) %>% 
-  summarise(dr2ij = mean(dr2ij),
-            de2ij = mean(de2ij),
-            df2ij = mean(df2ij)) 
-
-dfij_mean_1 <- dfij_slow %>% 
-  filter(mutation != 0) %>% 
-  filter(mutation <= 10) %>% 
-  group_by(i, j) %>% 
-  summarise(dr2ij_1 = mean(dr2ij),
-            de2ij_1 = mean(de2ij),
-            df2ij_1 = mean(df2ij)) 
-
-dfij_mean_2 <- dfij_slow %>% 
-  filter(mutation != 0) %>% 
-  filter(mutation > 10) %>% 
-  group_by(i, j) %>% 
-  summarise(dr2ij_2 = mean(dr2ij),
-            de2ij_2 = mean(de2ij),
-            df2ij_2 = mean(df2ij)) 
-
-  
-dfij_all <- inner_join(dfij_mean, dfij_fast) %>% 
-  inner_join(dfij_mean_1) %>% 
-  inner_join(dfij_mean_2)
-
-dat  <- dfij_all %>% 
-  rename(dr2ij_all = dr2ij, de2ij_all = de2ij, df2ij_all = df2ij) %>% 
-  pivot_longer(cols = c("dr2ij_all", "dr2ij_fast", "dr2ij_1", "dr2ij_2"),
-               names_to = "dr2ij_method",
-               names_prefix = "dr2ij_",
-               values_to = "dr2ij")  %>% 
-  pivot_longer(cols = c("de2ij_all", "de2ij_fast", "de2ij_1", "de2ij_2"),
-               names_to = "de2ij_method",
-               names_prefix = "de2ij_",
-               values_to = "de2ij") %>% 
-  pivot_longer(cols = c("df2ij_all", "df2ij_fast", "df2ij_1", "df2ij_2"),
-               names_to = "df2ij_method",
-               names_prefix = "df2ij_",
-               values_to = "df2ij")   %>% 
-  filter(dr2ij_method == de2ij_method, dr2ij_method == df2ij_method) %>% 
-  mutate(method = dr2ij_method) %>% 
-  select(-dr2ij_method, -de2ij_method, -df2ij_method)  %>% 
-  select(i, j, method, everything()) %>% 
-  pivot_longer(
-    cols = dr2ij : df2ij,
-    names_to = "response",
-    values_to = "value"
-  )  %>% 
-  pivot_wider(names_from = method,
-              values_from = value,
-              names_prefix = "method_"
-  ) %>% 
-  mutate(response = factor(response, levels = c("df2ij", "de2ij", "dr2ij")))
-
-# response profiles
-dati <- dat %>% 
-  pivot_longer(cols = method_all:method_2,
-               names_to = "method",
-               values_to = "value") %>% 
-  group_by(i, response, method) %>% 
-  summarise(value_i = mean(value)) 
-
-# influence profiles
-datj <- dat %>% 
-  pivot_longer(cols = method_all:method_2,
-               names_to = "method",
-               values_to = "value") %>% 
-  group_by(j, response, method) %>% 
-  summarise(value_j = mean(value)) 
-
-```
-
-
-## dr2ij by different methods (or sets of scans)
-
-```{r}
-p1 <- dat %>%
-  ggplot(aes(method_fast, method_all)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  geom_abline() +
-  facet_wrap(~response, scales = "free", ncol = 1)
-
-
-p2 <- dat %>% 
-  ggplot(aes(method_1, method_2)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  geom_abline() +
-  facet_wrap(~response, scales = "free", ncol = 1)
-
-p1 + p2
-```
-
-## response profiles
-
-
-```{r}
-
-dati %>% 
-  ggplot(aes(i, value_i)) +
-  geom_line() +
-  facet_grid(response ~ method, scales = "free_y")
-
-```
-
-## Response profiles comparison
-
-```{r}
-p1 <- dati %>% 
-  pivot_wider(names_from = method,
-              values_from = value_i)  %>% 
-  ggplot(aes(method_fast, method_all)) +
-  geom_point() +
-  geom_abline() +
-  facet_wrap(~response, scales = "free", ncol = 1)
-
-p2 <- dati %>% 
-  pivot_wider(names_from = method,
-              values_from = value_i)  %>% 
-  ggplot(aes(method_1, method_2)) +
-  geom_point() +
-  geom_abline() +
-  facet_wrap(~response, scales = "free", ncol = 1)
-
-p1 + p2
-```
-
-## Influence profiles
-
-
-
-
-```{r}
-
-datj %>% 
-  ggplot(aes(j, value_j)) +
-  geom_line() +
-  facet_grid(response ~ method, scales = "free_y")
-
-```
-
-## Influence profiles comparison
-
-```{r}
-p1 <- datj %>% 
-  pivot_wider(names_from = method,
-              values_from = value_j)  %>% 
-  ggplot(aes(method_fast, method_all)) +
-  geom_point() +
-  geom_abline() +
-  facet_wrap(~response, scales = "free", ncol = 1)
-
-p2 <- datj %>% 
-  pivot_wider(names_from = method,
-              values_from = value_j)  %>% 
-  ggplot(aes(method_1, method_2)) +
-  geom_point() +
-  geom_abline() +
-  facet_wrap(~response, scales = "free", ncol = 1)
-
-p1 + p2
-```
-
-# Convergence
-
-## Convergence of prs_slow towards prs_fast
-
-```{r}
-# set wt
-pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
-wt <- set_enm(pdb, "ca", "ming_wall", 10.5, F)
-
-# Slow prs calculation (simulation)
 mutants <- get_mutants_table(wt, nmut_per_site = 100, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
-dfij_slow <- delta_structure_site(mutants)
+dfij_slow <- calculate_dfij(mutants)
 
 # Fast prs calculation (analytical)
-dfij_fast <- fast_delta_structure_site(wt) %>% 
-  rename(dr2ij_fast = dr2ij, de2ij_fast = de2ij, df2ij_fast = df2ij) 
+dfij_fast <- fast_calculate_dfij(wt) 
 
 dfij_mean <- dfij_slow %>% 
   filter(mutation > 0) %>% 
   select(i, j, mutation, everything()) %>% 
   arrange(i, j, mutation) %>% 
   group_by(i, j) %>% 
-  mutate(dr2ij_mean = cumsum(dr2ij) / mutation,
-         de2ij_mean = cumsum(de2ij) / mutation,
-         df2ij_mean = cumsum(df2ij) / mutation) 
-
-
-dfij_all <- inner_join(dfij_mean, dfij_fast)
-```
-
-```{r}
-
-# matrix convergence
-
-df_matrix <- dfij_all %>% 
-  ungroup() %>% 
-  group_by(mutation) %>% 
-  summarise(dr2ij_error = sd(dr2ij_mean - dr2ij_fast) / mean(dr2ij_fast),
-            de2ij_error = sd(de2ij_mean - de2ij_fast) / mean(de2ij_fast),
-            df2ij_error = sd(df2ij_mean - df2ij_fast) / mean(df2ij_fast)) %>% 
-  pivot_longer(cols = dr2ij_error:df2ij_error,
-               names_to = "error",
-               values_to = "value") %>% 
-  mutate(error = factor(error, levels = c("dr2ij_error", "de2ij_error", "df2ij_error"))) 
+  mutate(dr2ij = cumsum(dr2ij) / mutation,
+         df2ij = cumsum(df2ij) / mutation,
+         de2ij = cumsum(de2ij) / mutation,
+         dvsij = cumsum(dvsij) / mutation,
+         dvmij = cumsum(dvmij) / mutation )
 
 
 
-# response profile convergence
+dfij_slow_long <- dfij_mean %>% 
+  pivot_longer(cols = dr2ij:dvmij,
+               names_to = "response",
+               values_to = "value")
 
-df_response <- dfij_all %>% 
-  ungroup() %>% 
-  group_by(i, mutation) %>% 
-  summarise(dr2ij_mean = sum(dr2ij_mean),
-            dr2ij_fast = sum(dr2ij_fast),
-            de2ij_mean = sum(de2ij_mean),
-            de2ij_fast = sum(de2ij_fast),
-            df2ij_mean = sum(df2ij_mean),
-            df2ij_fast = sum(df2ij_fast)) %>% 
-  ungroup() %>% 
-  arrange(i, mutation) %>% 
-  group_by(mutation) %>% 
-  summarise(dr2ij_error = sd(dr2ij_mean - dr2ij_fast) / mean(dr2ij_fast),
-            de2ij_error = sd(de2ij_mean - de2ij_fast) / mean(de2ij_fast),
-            df2ij_error = sd(df2ij_mean - df2ij_fast) / mean(df2ij_fast)) %>% 
-  pivot_longer(cols = dr2ij_error:df2ij_error,
-               names_to = "error",
-               values_to = "value") %>% 
-  mutate(error = factor(error, levels = c("dr2ij_error", "de2ij_error", "df2ij_error"))) 
+dfij_fast_long <- dfij_fast %>% 
+  pivot_longer(cols = dr2ij:dvmij,
+               names_to = "response",
+               values_to = "value")
 
-# influence profile convergence
+dfij_long <- inner_join(dfij_slow_long, dfij_fast_long, by = c("i", "j", "response"), suffix = c(".slow", ".fast")) %>% 
+  mutate(response = factor(response, levels = c("dr2ij", "df2ij", "de2ij", "dvsij", "dvmij"))) 
 
-df_influence <- dfij_all %>% 
-  ungroup() %>% 
-  group_by(j, mutation) %>% 
-  summarise(dr2ij_mean = sum(dr2ij_mean),
-            dr2ij_fast = sum(dr2ij_fast),
-            de2ij_mean = sum(de2ij_mean),
-            de2ij_fast = sum(de2ij_fast),
-            df2ij_mean = sum(df2ij_mean),
-            df2ij_fast = sum(df2ij_fast)) %>% 
-  ungroup() %>% 
-  arrange(j, mutation) %>% 
-  group_by(mutation) %>% 
-  summarise(dr2ij_error = sd(dr2ij_mean - dr2ij_fast) / mean(dr2ij_fast),
-            de2ij_error = sd(de2ij_mean - de2ij_fast) / mean(de2ij_fast),
-            df2ij_error = sd(df2ij_mean - df2ij_fast) / mean(df2ij_fast)) %>% 
-  pivot_longer(cols = dr2ij_error:df2ij_error,
-               names_to = "error",
-               values_to = "value") %>% 
-  mutate(error = factor(error, levels = c("dr2ij_error", "de2ij_error", "df2ij_error")))
+dfij_long
 ```
 
 
+
+## dr2ij by different methods (or sets of scans)
+
 ```{r}
-df_matrix$type <- "Rij"
-df_response$type <- "response"
-df_influence$type  <- "influence"
+nmut_per_site = max(dfij_long$mutation)
+dfij_long %>% 
+  filter(mutation == nmut_per_site)  %>% 
+  ggplot(aes(value.fast, value.slow)) +
+  geom_point() +
+  geom_abline() +
+  facet_wrap( ~ response,  ncol = 5, scales = "free") +
+  theme_minimal()
+  
+```
+
+
+
+
+## response profiles
+
+```{r}
+nmut_per_site = max(dfij_long$mutation)
+dfij_long %>% 
+  filter(mutation == nmut_per_site)  %>% 
+  group_by(response, i) %>% 
+  summarise(value.slow = mean(value.slow), value.fast = mean(value.fast)) %>% 
+  pivot_longer(cols = value.slow:value.fast,
+               names_to = "algorithm",
+               names_prefix = "value.",
+               values_to = "value") %>% 
+  ggplot(aes(i, value, color = algorithm)) +
+  geom_line() +
+  facet_wrap( ~ response,  scales = "free") +
+  theme_minimal() +
+  ggtitle("response profiles")
+  
+```
+
+
+## response profiles, comparison
+
+```{r}
+nmut_per_site = max(dfij_long$mutation)
+dfij_long %>% 
+  filter(mutation == nmut_per_site)  %>% 
+  group_by(response, i) %>% 
+  summarise(value.slow = mean(value.slow), value.fast = mean(value.fast)) %>% 
+  ggplot(aes(value.fast, value.slow)) +
+  geom_point() +
+  geom_abline() +
+  facet_wrap( ~ response,   scales = "free") +
+  theme_minimal() +
+  ggtitle("response profiles")
+  
+```
+
+
+
+
+
+## Influence profiles
+
+```{r}
+nmut_per_site = max(dfij_long$mutation)
+dfij_long %>% 
+  filter(mutation == nmut_per_site)  %>% 
+  group_by(response, j) %>% 
+  summarise(value.slow = mean(value.slow), value.fast = mean(value.fast)) %>% 
+  pivot_longer(cols = value.slow:value.fast,
+               names_to = "algorithm",
+               names_prefix = "value.",
+               values_to = "value") %>% 
+  ggplot(aes(j, value, color = algorithm)) +
+  geom_line() +
+  facet_wrap( ~ response,  scales = "free") +
+  theme_minimal() +
+  ggtitle("influence profiles")
+  
+```
+
+## Influence profiles, comparison
+
+```{r}
+nmut_per_site = max(dfij_long$mutation)
+dfij_long %>% 
+  filter(mutation == nmut_per_site)  %>% 
+  group_by(response, j) %>% 
+  summarise(value.slow = mean(value.slow), value.fast = mean(value.fast)) %>% 
+  ggplot(aes(value.fast, value.slow)) +
+  geom_point() +
+  geom_abline() +
+  facet_wrap( ~ response,  scales = "free") +
+  theme_minimal() +
+  ggtitle("influence profiles")
+  
+```
+
+
+
+## Convergence 
+
+
+```{r}
+
+## Errors
+
+
+df_matrix <- dfij_long %>% 
+  group_by(mutation, response) %>% 
+  summarise(error_type = "Rij", error = sd(value.slow - value.fast) / mean(value.fast))
+
+df_response <- dfij_long %>% 
+  group_by(mutation, response, i) %>% 
+  summarise(value.slow = mean(value.slow), value.fast = mean(value.fast)) %>% 
+  group_by(mutation, response) %>% 
+  summarise(error_type = "response", error = sd(value.slow - value.fast) / mean(value.fast))
+
+df_influence <- dfij_long %>% 
+  group_by(mutation, response, j) %>% 
+  summarise(value.slow = mean(value.slow), value.fast = mean(value.fast)) %>% 
+  group_by(mutation, response) %>% 
+  summarise(error_type = "influence", error = sd(value.slow - value.fast) / mean(value.fast))
 
 df <- df_matrix %>% 
   rbind(df_response) %>% 
   rbind(df_influence)
 
+```
+
+
+```{r}
 df %>% 
-  ggplot(aes(mutation, value, color = type)) +
+  ggplot(aes(mutation, error, color = error_type)) +
   geom_line() +
-  facet_grid(. ~ error) +
+  facet_wrap(~ response, scales = "free") +
   ylab("relative error") +
   xlab("number of mutant scans") +
   scale_y_log10() +
   theme_minimal()
-
 ```
+
 

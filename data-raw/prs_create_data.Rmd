@@ -43,7 +43,7 @@ pdb_fname <- here("data-raw", paste0(pdb_id, ".pdb"))
 
 # output
 mut_param_fname <- here("data-raw", paste0(pdb_id, "_mut_param.csv"))
-dej_fname <- here("data-raw", paste0(pdb_id, "_dfej.csv"))
+djj_fname <- here("data-raw", paste0(pdb_id, "_dfj.csv"))
 dfij_fname <- here("data-raw", paste0(pdb_id, "_dfij.csv"))
 dfnj_fname <- here("data-raw", paste0(pdb_id, "_dfnj.csv"))
 ```
@@ -63,8 +63,7 @@ str(prs)
 
 ```{r}
 write_csv(as_tibble(prs$mut_param), mut_param_fname)
-write_csv(prs$dej, dej_fname)
+write_csv(prs$dfj, dfj_fname)
 write_csv(prs$dfij, dfij_fname)
 write_csv(prs$dfnj, dfnj_fname)
 ```
-

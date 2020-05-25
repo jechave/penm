@@ -95,5 +95,5 @@ distance_to_active <- function(xyz, site_active) {
 delta_v_activation <- function(prot1, prot2)
   enm_dv_activation(prot2) - enm_dv_activation(prot1)
 
-delta_g_entropy_activation <- function(prot1, prot2)
+dg_entropy_activation <- function(prot1, prot2)
   enm_g_entropy_activation(prot2) - enm_g_entropy_activation(prot1)
