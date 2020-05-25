@@ -7,44 +7,62 @@ fast_delta_energy <- function(wt, mut_dl_sigma, mut_sd_min,...) {
   # energy differences
 
   result <- tibble(j = get_site(wt),
-         delta_v_min =  calculate_fast_delta_v_min(wt, mut_dl_sigma, mut_sd_min),
-         delta_v_stress =  calculate_fast_delta_v_stress(wt, mut_dl_sigma, mut_sd_min))
+         dvmj =  calculate_fast_dvmj(wt, mut_dl_sigma, mut_sd_min),
+         dvsj =  calculate_fast_dvsj(wt, mut_dl_sigma, mut_sd_min))
   result
 }
 
-calculate_fast_delta_v_min <- function(wt, mut_dl_sigma, mut_sd_min) {
+
+
+#' Calculate energy mutational response
+fast_delta_energy_site <- function(wt, mut_dl_sigma, mut_sd_min,...) {
+  # energy differences
+  de2ij <- calculate_fast_de2ij(wt, mut_dl_sigma, mut_sd_min) %>%
+    matrix_to_tibble(value_name = "de2ij")
+  dvsij <- calculate_fast_dvsij(wt, mut_dl_sigma, mut_sd_min) %>%
+    matrix_to_tibble(value_name = "dvsij")
+
+  result <- inner_join(de2ij, dvsij) %>%
+    mutate(dvmij = dvsij - de2ij)
+
+  result
+}
+
+
+
+calculate_fast_dvmj <- function(wt, mut_dl_sigma, mut_sd_min) {
+  dvsij <- calculate_fast_dvsij(wt, mut_dl_sigma, mut_sd_min)
   de2ij <- calculate_fast_de2ij(wt, mut_dl_sigma, mut_sd_min)
-  dvsij <- calculate_fast_dvstress_ij(wt, mut_dl_sigma, mut_sd_min)
   dvmij <- dvsij - de2ij
   dvmj <- 1/2 * colSums(dvmij)
   dvmj
 }
 
-calculate_fast_delta_v_stress <- function(wt, mut_dl_sigma, mut_sd_min) {
-  dvstress_ij <- calculate_fast_dvstress_ij(wt, mut_dl_sigma, mut_sd_min)
-  dvstress_j <- 1/2 * colSums(dvstress_ij)
-  dvstress_j
+calculate_fast_dvsj <- function(wt, mut_dl_sigma, mut_sd_min) {
+  dvsij <- calculate_fast_dvsij(wt, mut_dl_sigma, mut_sd_min)
+  dvsj <- 1/2 * colSums(dvsij)
+  dvsj
 }
 
-calculate_fast_dvstress_ij <- function(wt, mut_dl_sigma, mut_sd_min) {
+calculate_fast_dvsij <- function(wt, mut_dl_sigma, mut_sd_min) {
   g <- get_graph(wt) %>%
     filter(abs(sdij) >= mut_sd_min) %>%
-    mutate(dv_stress_ij = 1/2 * kij * mut_dl_sigma^2)
+    mutate(dvsij = 1/2 * kij * mut_dl_sigma^2)
 
   nsites <- get_nsites(wt)
-  dv_stress_ij <- matrix(0, nsites, nsites)
+  dvsij <- matrix(0, nsites, nsites)
 
   nedges <- nrow(g)
   for (edge in seq(nedges)) {
     i = g$i[edge]
     j = g$j[edge]
     kij = g$kij[edge]
-    dv_stress_ij[i, j] = 1 / 2 * kij * mut_dl_sigma^2
+    dvsij[i, j] = 1 / 2 * kij * mut_dl_sigma^2
   }
-  dv_stress_ij <- dv_stress_ij + t(dv_stress_ij)
-  diag(dv_stress_ij) = rowSums(dv_stress_ij)
+  dvsij <- dvsij + t(dvsij)
+  diag(dvsij) = rowSums(dvsij)
 
-  dv_stress_ij
+  dvsij
 }
 
 

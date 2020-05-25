@@ -496,7 +496,7 @@ esquisser(dfej)
 dfej_long <- dfej %>% 
   filter(mutation > 0) %>% 
   pivot_longer(
-    cols = c("delta_v_stress","delta_v_min", "delta_g_entropy"),
+    cols = c("dvs","dvm", "delta_g_entropy"),
     names_to = "response",
     values_to = "delta_energy"
   ) 
@@ -573,17 +573,17 @@ de2 <- dfij %>%
   summarise(de2 = sum(de2ij) / 2)
 
 p1 <- inner_join(dfej, de2) %>% 
-  ggplot(aes(delta_v_stress - delta_v_min, de2)) +
+  ggplot(aes(dvs - dvm, de2)) +
   geom_point() +
   geom_abline() +
   theme_minimal()
   
 p2 <- inner_join(dfej, de2) %>% 
   group_by(j) %>% 
-  summarise(delta_v_stress = mean(delta_v_stress),
-            delta_v_min = mean(delta_v_min),
+  summarise(dvs = mean(dvs),
+            dvm = mean(dvm),
             de2 = mean(de2)) %>% 
-  ggplot(aes(delta_v_stress - delta_v_min, de2)) +
+  ggplot(aes(dvs - dvm, de2)) +
   geom_point() +
   geom_abline() +
   theme_minimal() +

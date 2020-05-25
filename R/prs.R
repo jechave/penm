@@ -57,11 +57,40 @@ get_mutants_table <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd
 delta_energy <- function(mutants, beta) {
   # energy differences
   mutants %>%
-    mutate(delta_v_min = map2_dbl(wt, mut, delta_v_min),
-           delta_v_stress = map2_dbl(wt, mut, delta_v_stress),
+    mutate(dvm = map2_dbl(wt, mut, calculate_dvm),
+           dvs = map2_dbl(wt, mut, calculate_dvs),
            delta_g_entropy = map2_dbl(wt, mut, delta_g_entropy, beta = beta)) %>%
     select(-wt, -mut)
 }
+
+
+#' Calculate structural mutational response, site analysis
+delta_energy_site <- function(mutants) {
+  # structural differences, site analysis
+  wt <- mutants$wt[[1]]
+  kmat_sqrt <- get_kmat_sqrt(wt)
+
+  result <- mutants %>%
+    mutate(i = map(wt, get_site),
+           de2ij = map2(wt, mut, calculate_de2i, kmat_sqrt = kmat_sqrt))
+
+  # result <- result %>%
+  #   mutate(dvmij = map2(wt, mut, dvm_site))
+
+  result <- result %>%
+    mutate(dvsij = map2(wt, mut, calculate_dvsi))
+
+  result <- result %>%
+     mutate(dvmij = map2(dvsij, de2ij, ~ .x - .y))
+
+
+  result %>%
+    select(-wt, -mut) %>%
+    unnest(c(i,  dvsij, dvmij, de2ij)) %>%
+    select(i, j, mutation, de2ij, dvsij, dvmij)
+}
+
+
 
 #' Calculate structural mutational response, site analysis
 delta_structure_site <- function(mutants) {
@@ -74,7 +103,7 @@ delta_structure_site <- function(mutants) {
            dr2ij = map2(wt, mut, dr2_site))
 
   result <- result %>%
-    mutate(de2ij = map2(wt, mut, de2_site, kmat_sqrt = kmat_sqrt))
+    mutate(de2ij = map2(wt, mut, calculate_de2i, kmat_sqrt = kmat_sqrt))
 
   result <- result %>%
     mutate(df2ij = map2(wt, mut, df2_site))
@@ -90,7 +119,7 @@ delta_structure_mode <- function(mutants) {
   result <- mutants %>%
     mutate(mode = map(wt, get_mode),
            dr2nj = map2(wt, mut, dr2_mode),
-           de2nj = map2(wt, mut, de2_mode),
+           de2nj = map2(wt, mut, calculate_de2n),
            df2nj = map2(wt, mut, df2_mode))
   result <- result %>%
     select(-wt, -mut) %>%

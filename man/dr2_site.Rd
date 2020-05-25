@@ -2,13 +2,13 @@
 % Please edit documentation in R/penm_analysis.R
 \name{dr2_site}
 \alias{dr2_site}
-\alias{de2_site}
+\alias{calculate_de2i}
 \alias{df2_site}
 \title{Compare the structures of two proteins in site representation}
 \usage{
 dr2_site(prot1, prot2)
 
-de2_site(prot1, prot2, kmat_sqrt)
+calculate_de2i(prot1, prot2, kmat_sqrt)
 
 df2_site(prot1, prot2)
 }

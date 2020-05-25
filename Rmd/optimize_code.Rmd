@@ -70,8 +70,8 @@ microbenchmark(delta_structure_site(mutants), delta_structure_mode(mutants),
 
 ```{r}
 kmat_sqrt <- get_kmat_sqrt(wt)
-microbenchmark(de2_site(wt, mut, kmat_sqrt),
-               de2_mode(wt, mut),
+microbenchmark(calculate_de2i(wt, mut, kmat_sqrt),
+               calculate_de2n(wt, mut),
                dr2_site(wt, mut),
                dr2_mode(wt, mut),
                df2_site(wt, mut),

@@ -1,4 +1,4 @@
-delta_v_min <- function(prot1, prot2)
+calculate_dvm <- function(prot1, prot2)
   enm_v_min(prot2) - enm_v_min(prot1)
 
 delta_g_entropy <- function(prot1, prot2, beta)
@@ -6,7 +6,7 @@ delta_g_entropy <- function(prot1, prot2, beta)
 
 
 #' Stress-model difference of local-mutational-stress energy
-delta_v_stress <- function(prot1, prot2, ideal = prot1)
+calculate_dvs <- function(prot1, prot2, ideal = prot1)
   enm_v_stress(prot2, ideal) - enm_v_stress(prot1, ideal)
 
 
@@ -56,7 +56,7 @@ dr2_site <- function(prot1, prot2) {
 }
 
 #' @rdname dr2_site
-de2_site <- function(prot1, prot2, kmat_sqrt) {
+calculate_de2i <- function(prot1, prot2, kmat_sqrt) {
   stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
   stopifnot(prot1$node$site == prot2$node$site) # this version of dr2_site is to compare proteins with no indels
   dr <- as.vector(get_xyz(prot2) - get_xyz(prot1))
@@ -82,6 +82,52 @@ df2_site <- function(prot1, prot2) {
   df2i <-  colSums(df^2)
   df2i
 }
+
+dvm_site <- function(prot1, prot2) {
+  stopifnot(get_nsites(prot1) == get_nsites(prot2)) # #warning, #check: I'm assuming no indels
+
+  g1 <- get_graph(prot1) %>%
+    mutate(vmij = v0ij + 1/2 * kij * (dij - lij)^2)
+  g2 <- get_graph(prot2) %>%
+    mutate(vmij = v0ij + 1/2 * kij * (dij - lij)^2)
+
+  g <- inner_join(g1, g2, by = c("edge", "i", "j")) %>%
+    mutate(dvmij = vmij.y - vmij.x)
+
+
+  nsites <- get_nsites(prot1)
+  dvmi <- rep(0, nsites)
+
+  for (site in seq(nsites)) {
+    dvmi[site] <-  sum(g$dvmij[g$i == site | g$j == site])
+  }
+
+  dvmi
+
+}
+
+calculate_dvsi <- function(wt, mut) {
+  stopifnot(get_nsites(wt) == get_nsites(mut)) # #warning, #check: I'm assuming no indels
+
+  gwt <- get_graph(wt)
+  gmut <- get_graph(mut)
+
+  stopifnot(all(gmut$edge == gwt$edge)) # for "lfenm": this works if the network didn't change its topology
+
+  g <- inner_join(gwt, gmut, by = c("edge", "i", "j"), suffix = c(".wt", ".mut"))  %>%
+    mutate(dvsij = 1/2 * kij.mut * (dij.wt - lij.mut)^2 - 1/2 * kij.wt * (dij.wt - lij.wt)^2)
+
+  nsites <- get_nsites(wt)
+  dvsi <- rep(0, nsites)
+
+  for (site in seq(nsites)) {
+    dvsi[site] <-  sum(g$dvsij[g$i == site | g$j == site])
+  }
+
+  dvsi
+
+}
+
 
 
 
@@ -112,7 +158,7 @@ dr2_mode <- function(prot1, prot2) {
 
 
 #' @rdname dr2_mode
-de2_mode <- function(prot1, prot2) {
+calculate_de2n <- function(prot1, prot2) {
   get_evalue(prot1) * dr2_mode(prot1, prot2)
 }
 

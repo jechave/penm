@@ -2,13 +2,13 @@
 % Please edit documentation in R/penm_analysis.R
 \name{dr2_mode}
 \alias{dr2_mode}
-\alias{de2_mode}
+\alias{calculate_de2n}
 \alias{df2_mode}
 \title{Compare the structures of two proteins in nm representation}
 \usage{
 dr2_mode(prot1, prot2)
 
-de2_mode(prot1, prot2)
+calculate_de2n(prot1, prot2)
 
 df2_mode(prot1, prot2)
 }
