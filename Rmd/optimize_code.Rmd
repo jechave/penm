@@ -72,10 +72,10 @@ microbenchmark(delta_structure_site(mutants), delta_structure_mode(mutants),
 kmat_sqrt <- get_kmat_sqrt(wt)
 microbenchmark(calculate_de2i(wt, mut, kmat_sqrt),
                calculate_de2n(wt, mut),
-               dr2_site(wt, mut),
-               dr2_mode(wt, mut),
-               df2_site(wt, mut),
-               df2_mode(wt, mut),
+               calculate_dr2i(wt, mut),
+               calculate_dr2n(wt, mut),
+               calculate_df2i(wt, mut),
+               calculate_df2n(wt, mut),
                times = 10)
 ```
 ```{r}

@@ -100,13 +100,13 @@ delta_structure_site <- function(mutants) {
 
   result <- mutants %>%
     mutate(i = map(wt, get_site),
-           dr2ij = map2(wt, mut, dr2_site))
+           dr2ij = map2(wt, mut, calculate_dr2i))
 
   result <- result %>%
     mutate(de2ij = map2(wt, mut, calculate_de2i, kmat_sqrt = kmat_sqrt))
 
   result <- result %>%
-    mutate(df2ij = map2(wt, mut, df2_site))
+    mutate(df2ij = map2(wt, mut, calculate_df2i))
 
   result %>%
     select(-wt, -mut) %>%
@@ -118,9 +118,9 @@ delta_structure_mode <- function(mutants) {
   # structural differences, mode analysis
   result <- mutants %>%
     mutate(mode = map(wt, get_mode),
-           dr2nj = map2(wt, mut, dr2_mode),
+           dr2nj = map2(wt, mut, calculate_dr2n),
            de2nj = map2(wt, mut, calculate_de2n),
-           df2nj = map2(wt, mut, df2_mode))
+           df2nj = map2(wt, mut, calculate_df2n))
   result <- result %>%
     select(-wt, -mut) %>%
     unnest(c(mode, dr2nj, de2nj, df2nj))

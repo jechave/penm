@@ -36,7 +36,7 @@ enm_v_stress <- function(prot, ideal) {
 
 #' Compare the structures of two proteins in site representation
 #'
-#' Calculate de difference between the structures of two proteins, return dr2_site.
+#' Calculate de difference between the structures of two proteins, return dr2i
 #'
 #' This version works only for prot1 and prot2 with no indels
 #'
@@ -47,18 +47,18 @@ enm_v_stress <- function(prot, ideal) {
 #' @export
 #'
 #' @examples
-dr2_site <- function(prot1, prot2) {
-  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
-  stopifnot(prot1$node$site == prot2$node$site) # this version of dr2_site is to compare proteins with no indels
+calculate_dr2i <- function(prot1, prot2) {
+  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # no indels
+  stopifnot(prot1$node$site == prot2$node$site) # no indels
   dxyz <- my_as_xyz(prot2$nodes$xyz - prot1$nodes$xyz) # use c(3, nsites) representation of xyz
   dr2i <- colSums(dxyz^2)
   dr2i
 }
 
-#' @rdname dr2_site
+#' @rdname calculate_dr2i
 calculate_de2i <- function(prot1, prot2, kmat_sqrt) {
-  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
-  stopifnot(prot1$node$site == prot2$node$site) # this version of dr2_site is to compare proteins with no indels
+  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # no indels
+  stopifnot(prot1$node$site == prot2$node$site) # no indels
   dr <- as.vector(get_xyz(prot2) - get_xyz(prot1))
   de <- kmat_sqrt %*% dr
   de <- my_as_xyz(de)
@@ -68,10 +68,10 @@ calculate_de2i <- function(prot1, prot2, kmat_sqrt) {
 
 
 
-#' @rdname dr2_site
-df2_site <- function(prot1, prot2) {
-  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
-  stopifnot(prot1$node$site == prot2$node$site) # this version of dr2_site is to compare proteins with no indels
+#' @rdname calculate_dr2i
+calculate_df2i <- function(prot1, prot2) {
+  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # no indels
+  stopifnot(prot1$node$site == prot2$node$site) # no indels
 
   kmat <- prot1$kmat
 
@@ -136,7 +136,7 @@ calculate_dvsi <- function(wt, mut) {
 
 #' Compare the structures of two proteins in nm representation
 #'
-#' Calculate de difference between the structures of two proteins, return dr2_mode.
+#' Calculate de difference between the structures of two proteins, return dr2n.
 #'
 #' This version works only for prot1 and prot2 with no indels
 #'
@@ -147,8 +147,8 @@ calculate_dvsi <- function(wt, mut) {
 #' @export
 #'
 #' @examples
-dr2_mode <- function(prot1, prot2) {
-  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # this version of dr2_site is to compare proteins with no indels
+calculate_dr2n <- function(prot1, prot2) {
+  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # no indels
   dr <- as.vector(get_xyz(prot2) - get_xyz(prot1))
   drn <- as.vector(crossprod(get_umat(prot1), dr))
   stopifnot(length(prot1$nma$mode) == length(drn))
@@ -157,12 +157,12 @@ dr2_mode <- function(prot1, prot2) {
 }
 
 
-#' @rdname dr2_mode
+#' @rdname calculate_dr2n
 calculate_de2n <- function(prot1, prot2) {
-  get_evalue(prot1) * dr2_mode(prot1, prot2)
+  get_evalue(prot1) * calculate_dr2n(prot1, prot2)
 }
 
-#' @rdname dr2_mode
-df2_mode <- function(prot1, prot2) {
-  get_evalue(prot1)^2 * dr2_mode(prot1, prot2)
+#' @rdname calculate_dr2n
+calculate_df2n <- function(prot1, prot2) {
+  get_evalue(prot1)^2 * calculate_dr2n(prot1, prot2)
 }
