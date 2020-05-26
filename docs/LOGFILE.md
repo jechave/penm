@@ -345,3 +345,15 @@ everything
   - Added *prs\_superfast\_energy.Rmd*
   - Tested
   - Commited
+
+## 26 May 2020
+
+### Major refactoring of prs.R and prs\_fast.R
+
+  - Changed everything to make the similarities most obvious
+  - Used dvm = dvs - de2 by definition so that prs and prs\_fast are
+    consistent
+  - Used similar names (e.g. calculate\_dr2ij.fast and
+    calculate\_dr2ij.prs, etc.)
+  - Tested that everything works in prs\_superfast.Rmd
+  - Commited

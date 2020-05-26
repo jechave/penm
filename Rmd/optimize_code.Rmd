@@ -44,7 +44,7 @@ prs_slow <- function(wt, nmut_per_site = 10) {
 }
 
 prs_fast <- function(wt) {
-  fast_calculate_dfij(wt)
+  calculate_dfij.fast(wt)
 }
 profvis(prs_fast(wt))
 
@@ -62,7 +62,7 @@ profvis(calculate_dfj(mutants, beta))
 ```{r}
 library(microbenchmark)
 microbenchmark(calculate_dfij(mutants), calculate_dfnj(mutants),
-               fast_calculate_dfij(wt), times = 1)
+               calculate_dfij.fast(wt), times = 1)
 
 
 
@@ -80,9 +80,9 @@ microbenchmark(calculate_de2i(wt, mut, kmat_sqrt),
 ```
 ```{r}
 microbenchmark(calculate_dfnj(mutants_10),
-               fast_calculate_dfnj(wt),
+               calculate_dfnj.fast(wt),
                calculate_dfij(mutants_10),
-               fast_calculate_dfij(wt),
+               calculate_dfij.fast(wt),
                times = 1)
 
 ```

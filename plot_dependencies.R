@@ -12,9 +12,16 @@ source("R/prs_fast.R")
 
 fw <- foodweb()
 
-foodweb(prune = c("calculate_dfj", "fast_calculate_dfj"))
-foodweb(prune = c("calculate_dfij", "fast_calculate_dfij"))
-foodweb(prune = c("calculate_dfnj", "fast_calculate_dfnj"))
+foodweb(prune = c("calculate_dfij.prs"))
+foodweb(prune = c("calculate_dfij.fast"))
+foodweb(prune = c("calculate_dfj.prs"))
+foodweb(prune = c("calculate_dfj.fast"))
+
+
+foodweb(prune = c("calculate_dfj.prs", "calculate_dfj.fast"))
+foodweb(prune = c("calculate_dfj", "calculate_dfj.fast"))
+foodweb(prune = c("calculate_dfij", "calculate_dfij.fast"))
+foodweb(prune = c("calculate_dfnj", "calculate_dfnj.fast"))
 
 # callers.of("get_mutant_site", fw)
 # callees.of("get_mutant_site", fw)

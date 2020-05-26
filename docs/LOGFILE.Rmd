@@ -304,6 +304,17 @@ I refactored set_enm by adding functions that depend as much as possible only on
 - Tested
 - Commited
 
+## 26 May 2020
+
+### Major refactoring of prs.R and prs_fast.R
+
+- Changed everything to make the similarities most obvious
+- Used dvm = dvs - de2 by definition so that prs and prs_fast are consistent 
+- Used similar names (e.g. calculate_dr2ij.fast and calculate_dr2ij.prs, etc.)
+- Tested that everything works in prs_superfast.Rmd
+- Commited
+
+
 
 
 
