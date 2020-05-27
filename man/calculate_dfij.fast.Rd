@@ -2,10 +2,10 @@
 % Please edit documentation in R/prs_fast.R
 \name{calculate_dfij.fast}
 \alias{calculate_dfij.fast}
-\title{Calculate structural mutational response, site analysis}
+\title{Calculate mutational response matrices, site-by-site}
 \usage{
-calculate_dfij.fast(wt, mut_dl_sigma = 0.3, mut_sd_min = 2)
+calculate_dfij.fast(wt, mut_dl_sigma, mut_sd_min)
 }
 \description{
-Calculate structural mutational response, site analysis
+Calculate mutational response matrices, site-by-site
 }

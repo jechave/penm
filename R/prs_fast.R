@@ -1,15 +1,47 @@
-#' Calculate perturbation-response-scanning responses
+#' Calcualte all fast response matrices and profiles
 #'
 prs.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
+
   enm_param <- get_enm_param(wt)
+
   mut_param <- lst(mut_dl_sigma, mut_sd_min)
-  dfj <- calculate_dfj.fast(wt, mut_dl_sigma, mut_sd_min)
-  dfi <- calculate_dfi.fast(wt, mut_dl_sigma, mut_sd_min)
+
+  # ij response matrices
   dfij <- calculate_dfij.fast(wt, mut_dl_sigma, mut_sd_min)
+
+  # influence profiles
+  dfj <- dfij %>%
+    group_by(j) %>%
+    summarise(dr2j = sum(dr2ij),
+              df2j = sum(df2ij),
+              de2j = 1/2 * sum(de2ij),
+              dvsj = 1/2 * sum(dvsij),
+              dvmj = 1/2 * sum(dvmij))
+
+  # response profiles
+  dfi <- dfij %>%
+    group_by(i) %>%
+    summarise(dr2i = mean(dr2ij),
+              df2i = mean(df2ij),
+              de2i = mean(de2ij),
+              dvsi = mean(dvsij),
+              dvmi = mean(dvmij))
+
+  # mode-site response matrices
   dfnj <- calculate_dfnj.fast(wt, mut_dl_sigma, mut_sd_min)
+
+  # mode response profiles
+  dfn <- dfnj %>%
+    group_by(n) %>%
+    summarise(dr2n = mean(dr2nj),
+              df2n = mean(df2nj),
+              de2n = mean(de2nj))
+
 
   lst(enm_param, mut_param, dfi, dfj,  dfij,  dfnj)
 }
+
+
 
 # Influence profiles ---------------------------------------------------------
 
@@ -17,121 +49,126 @@ prs.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
 #' Calculate several influence profiles
 #'
 calculate_dfj.fast <- function(wt, mut_dl_sigma, mut_sd_min,...) {
-  tibble(j = get_site(wt),
-         dr2j = calculate_dr2j.fast(wt, mut_dl_sigma, mut_sd_min),
-         df2j = calculate_df2j.fast(wt, mut_dl_sigma, mut_sd_min),
-         de2j = calculate_de2j.fast(wt, mut_dl_sigma, mut_sd_min),
-         dvsj = calculate_dvsj.fast(wt, mut_dl_sigma, mut_sd_min),
-         dvmj = calculate_dvmj.fast(wt, mut_dl_sigma, mut_sd_min))
+
+  calculate_dr2j.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    inner_join(calculate_df2j.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
+    inner_join(calculate_de2j.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
+    inner_join(calculate_dvsj.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
+    inner_join(calculate_dvmj.fast(wt, mut_dl_sigma, mut_sd_min))
 }
 
 
 calculate_dr2j.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  colSums(calculate_dr2ij.fast(wt, mut_dl_sigma, mut_sd_min))
+  calculate_dr2ij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    group_by(j) %>%
+    summarise(dr2j = sum(dr2ij))
 }
 
 calculate_df2j.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  colSums(calculate_df2ij.fast(wt, mut_dl_sigma, mut_sd_min))
+  calculate_df2ij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    group_by(j) %>%
+    summarise(df2j = sum(df2ij))
 }
 
-
 calculate_de2j.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  0.5 * colSums(calculate_de2ij.fast(wt, mut_dl_sigma, mut_sd_min))
+  calculate_de2ij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    group_by(j) %>%
+    summarise(de2j = 1/2 * sum(de2ij))
 }
 
 calculate_dvsj.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  0.5 * colSums(calculate_dvsij.fast(wt, mut_dl_sigma, mut_sd_min))
+  calculate_dvsij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    group_by(j) %>%
+    summarise(dvsj = 1/2 * sum(dvsij))
 }
 
 calculate_dvmj.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  0.5 * colSums(calculate_dvmij.fast(wt, mut_dl_sigma, mut_sd_min))
+  calculate_dvmij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    group_by(j) %>%
+    summarise(dvmj = 1/2 * sum(dvmij))
 }
+
+
+
 
 
 # Response profiles -------------------------------------------------------
 
 calculate_dfi.fast <- function(wt, mut_dl_sigma, mut_sd_min,...) {
-  tibble(i = get_site(wt),
-         dr2i = calculate_dr2i.fast(wt, mut_dl_sigma, mut_sd_min),
-         df2i = calculate_df2i.fast(wt, mut_dl_sigma, mut_sd_min),
-         de2i = calculate_de2i.fast(wt, mut_dl_sigma, mut_sd_min),
-         dvsi = calculate_dvsi.fast(wt, mut_dl_sigma, mut_sd_min),
-         dvmi = calculate_dvmi.fast(wt, mut_dl_sigma, mut_sd_min))
+  calculate_dr2i.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    inner_join(calculate_df2i.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
+    inner_join(calculate_de2i.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
+    inner_join(calculate_dvsi.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
+    inner_join(calculate_dvmi.fast(wt, mut_dl_sigma, mut_sd_min))
 }
 
 
 calculate_dr2i.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  rowMeans(calculate_dr2ij.fast(wt, mut_dl_sigma, mut_sd_min))
+  calculate_dr2ij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    group_by(i) %>%
+    summarise(dr2i = mean(dr2ij))
 }
 
 calculate_df2i.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  rowMeans(calculate_df2ij.fast(wt, mut_dl_sigma, mut_sd_min))
+  calculate_df2ij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    group_by(i) %>%
+    summarise(df2i = mean(df2ij))
 }
 
 calculate_de2i.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  rowMeans(calculate_de2ij.fast(wt, mut_dl_sigma, mut_sd_min))
+  calculate_de2ij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    group_by(i) %>%
+    summarise(de2i =  mean(de2ij))
 }
 
 calculate_dvsi.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  rowMeans(calculate_dvsij.fast(wt, mut_dl_sigma, mut_sd_min))
+  calculate_dvsij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    group_by(i) %>%
+    summarise(dvsi = mean(dvsij))
 }
 
 calculate_dvmi.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  rowMeans(calculate_dvmij.fast(wt, mut_dl_sigma, mut_sd_min))
+  calculate_dvmij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    group_by(i) %>%
+    summarise(dvmi = mean(dvmij))
 }
-
-
 
 
 
 # Response matrices -------------------------------------------------------
 
 
-#' Calculate structural mutational response, site analysis
-calculate_dfij.fast <- function(wt, mut_dl_sigma = 0.3, mut_sd_min = 2) {
-  # structural differences, site analysis
-  dr2ij <- calculate_dr2ij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
-    matrix_to_tibble() %>%
-    rename(dr2ij = mij)
-
-  df2ij <- calculate_df2ij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
-    matrix_to_tibble() %>%
-    rename(df2ij = mij)
-
-  de2ij <- calculate_de2ij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
-    matrix_to_tibble(value_name = "de2ij")
-
-  dvsij <- calculate_dvsij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
-    matrix_to_tibble(value_name = "dvsij")
-
-  dvmij <- calculate_dvmij.fast(wt, mut_dl_sigma, mut_sd_min)  %>%
-    matrix_to_tibble(value_name = "dvmij")
-
-  result <- dr2ij %>%
-    inner_join(df2ij) %>%
-    inner_join(de2ij) %>%
-    inner_join(dvsij) %>%
-    inner_join(dvmij)
-
-  result
+#' Calculate mutational response matrices, site-by-site
+calculate_dfij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
+  calculate_dr2ij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    inner_join(calculate_df2ij.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
+    inner_join(calculate_de2ij.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
+    inner_join(calculate_dvsij.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
+    inner_join(calculate_dvmij.fast(wt, mut_dl_sigma, mut_sd_min))
 }
 
 
 calculate_dr2ij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   cmat <- get_cmat(wt)
-  calculate_Rij.fast(wt, cmat, mut_dl_sigma, mut_sd_min)
+  calculate_Rij.fast(wt, cmat, mut_dl_sigma, mut_sd_min) %>%
+    matrix_to_tibble() %>%
+    rename(dr2ij = mij)
 }
 
 calculate_df2ij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   identity_matrix = diag(nrow = get_nsites(wt) * 3, ncol = get_nsites(wt) * 3)
-  calculate_Rij.fast(wt, identity_matrix, mut_dl_sigma, mut_sd_min)
+  calculate_Rij.fast(wt, identity_matrix, mut_dl_sigma, mut_sd_min) %>%
+    matrix_to_tibble() %>%
+    rename(df2ij = mij)
 }
 
 calculate_de2ij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   umat <- get_umat(wt)
   evalue <- get_evalue(wt)
   cmat_sqrt <- umat %*% (sqrt(1 / evalue) * t(umat))
-  calculate_Rij.fast(wt, cmat_sqrt, mut_dl_sigma, mut_sd_min)
+  calculate_Rij.fast(wt, cmat_sqrt, mut_dl_sigma, mut_sd_min) %>%
+    matrix_to_tibble() %>%
+    rename(de2ij = mij)
 }
 
 calculate_dvsij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
@@ -152,11 +189,16 @@ calculate_dvsij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   dvsij <- dvsij + t(dvsij)
   diag(dvsij) = rowSums(dvsij)
 
-  dvsij
+  dvsij %>%
+    matrix_to_tibble() %>%
+    rename(dvsij = mij)
 }
 
 calculate_dvmij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  calculate_dvsij.fast(wt, mut_dl_sigma, mut_sd_min) - calculate_de2ij.fast(wt, mut_dl_sigma, mut_sd_min)
+  calculate_dvsij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    inner_join(calculate_de2ij.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
+    mutate(dvmij = dvsij - de2ij) %>%
+    select(i, j, dvmij)
 }
 
 
@@ -207,37 +249,31 @@ calculate_Rij.fast <- function(wt, amat, mut_dl_sigma, mut_sd_min) {
 #' Calculate structural mutational response, mode analysis
 calculate_dfnj.fast <- function(wt, mut_dl_sigma = 0.3, mut_sd_min = 2) {
   # structural differences, site analysis
-  dr2nj <- calculate_dr2nj.fast(wt, mut_dl_sigma, mut_sd_min) %>%
-    matrix_to_tibble() %>%
-    rename(n = i, dr2nj = mij)
-
-  de2nj <- calculate_de2nj.fast(wt, mut_dl_sigma, mut_sd_min) %>%
-    matrix_to_tibble() %>%
-    rename(n = i, de2nj = mij)
-
-  df2nj <- calculate_df2nj.fast(wt, mut_dl_sigma, mut_sd_min) %>%
-    matrix_to_tibble() %>%
-    rename(n = i, df2nj = mij)
-
-  dr2nj %>%
-    inner_join(de2nj) %>%
-    inner_join(df2nj)
+  calculate_dr2nj.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    inner_join(calculate_df2nj.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
+    inner_join(calculate_de2nj.fast(wt, mut_dl_sigma, mut_sd_min))
 }
 
 
 calculate_dr2nj.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   avector <- 1 / get_evalue(wt)
-  calculate_Rnj.fast(wt, avector, mut_dl_sigma, mut_sd_min)
+  calculate_Rnj.fast(wt, avector, mut_dl_sigma, mut_sd_min) %>%
+    matrix_to_tibble() %>%
+    rename(n = i, dr2nj = mij)
 }
 
 calculate_df2nj.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   avector = rep(1, length(get_mode(wt)))
-  calculate_Rnj.fast(wt, avector, mut_dl_sigma, mut_sd_min)
+  calculate_Rnj.fast(wt, avector, mut_dl_sigma, mut_sd_min) %>%
+    matrix_to_tibble() %>%
+    rename(n = i, df2nj = mij)
 }
 
 calculate_de2nj.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   avector <- sqrt(1 / get_evalue(wt))
-  calculate_Rnj.fast(wt, avector, mut_dl_sigma, mut_sd_min)
+  calculate_Rnj.fast(wt, avector, mut_dl_sigma, mut_sd_min) %>%
+    matrix_to_tibble() %>%
+    rename(n = i, de2nj = mij)
 }
 
 

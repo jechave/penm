@@ -6,16 +6,16 @@
 \alias{calculate_df2n}
 \title{Compare the structures of two proteins in nm representation}
 \usage{
-calculate_dr2n(prot1, prot2)
+calculate_dr2n(wt, mut)
 
-calculate_de2n(prot1, prot2)
+calculate_de2n(wt, mut)
 
-calculate_df2n(prot1, prot2)
+calculate_df2n(wt, mut)
 }
 \arguments{
-\item{prot1}{A protein object with \code{xyz} and \code{enm} defined}
+\item{wt}{A protein object with \code{xyz} and \code{enm} defined}
 
-\item{prot2}{A second protein object  with \code{xyz} defined}
+\item{mut}{A second protein object  with \code{xyz} defined}
 }
 \value{
 A vector of square differences along normal modes \code{dr2n}
@@ -24,5 +24,5 @@ A vector of square differences along normal modes \code{dr2n}
 Calculate de difference between the structures of two proteins, return dr2n.
 }
 \details{
-This version works only for prot1 and prot2 with no indels
+This version works only for wt and mut with no indels
 }

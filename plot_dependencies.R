@@ -12,6 +12,8 @@ source("R/prs_fast.R")
 
 fw <- foodweb()
 
+foodweb(prune = c("prs"))
+
 foodweb(prune = c("calculate_dfij.prs"))
 foodweb(prune = c("calculate_dfij.fast"))
 foodweb(prune = c("calculate_dfj.prs"))

@@ -102,7 +102,7 @@ pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
 wt <- set_enm(pdb, "ca", "ming_wall", 10.5, F)
 
 # Slow prs calculation (simulation)
-mutants <- get_mutants_table(wt, nmut_per_site = 100, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
+mutants <- get_mutants_table(wt, nmut_per_site = 30, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
 dfij_slow <- calculate_dfij.prs(mutants)
 
 # Fast prs calculation (analytical)

@@ -4,7 +4,7 @@
 \alias{calculate_dvs}
 \title{Stress-model difference of local-mutational-stress energy}
 \usage{
-calculate_dvs(prot1, prot2, ideal = prot1)
+calculate_dvs(wt, mut, ideal = wt)
 }
 \description{
 Stress-model difference of local-mutational-stress energy

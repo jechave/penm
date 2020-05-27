@@ -1,13 +1,13 @@
-calculate_dvm <- function(prot1, prot2)
-  enm_v_min(prot2) - enm_v_min(prot1)
+calculate_dvm <- function(wt, mut)
+  enm_v_min(mut) - enm_v_min(wt)
 
-calculate_dg_entropy <- function(prot1, prot2, beta)
-  enm_g_entropy(prot2, beta) - enm_g_entropy(prot1, beta)
+calculate_dg_entropy <- function(wt, mut, beta)
+  enm_g_entropy(mut, beta) - enm_g_entropy(wt, beta)
 
 
 #' Stress-model difference of local-mutational-stress energy
-calculate_dvs <- function(prot1, prot2, ideal = prot1)
-  calculate_vs(prot2, ideal) - calculate_vs(prot1, ideal)
+calculate_dvs <- function(wt, mut, ideal = wt)
+  calculate_vs(mut, ideal) - calculate_vs(wt, ideal)
 
 
 #' Stress-model local-mutational-stress energy
@@ -38,28 +38,28 @@ calculate_vs <- function(prot, ideal) {
 #'
 #' Calculate de difference between the structures of two proteins, return dr2i
 #'
-#' This version works only for prot1 and prot2 with no indels
+#' This version works only for wt and mut with no indels
 #'
-#' @param prot1 A protein object with \code{xyz} defined
-#' @param prot2 A second protein object  with \code{xyz} defined
+#' @param wt A protein object with \code{xyz} defined
+#' @param mut A second protein object  with \code{xyz} defined
 #'
 #' @return A tibble with columns \code{pdb_site, site, dr2}
 #' @export
 #'
 #' @examples
-calculate_dr2i <- function(prot1, prot2) {
-  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # no indels
-  stopifnot(prot1$node$site == prot2$node$site) # no indels
-  dxyz <- my_as_xyz(prot2$nodes$xyz - prot1$nodes$xyz) # use c(3, nsites) representation of xyz
+calculate_dr2i <- function(wt, mut) {
+  stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
+  stopifnot(wt$node$site == mut$node$site) # no indels
+  dxyz <- my_as_xyz(mut$nodes$xyz - wt$nodes$xyz) # use c(3, nsites) representation of xyz
   dr2i <- colSums(dxyz^2)
   dr2i
 }
 
 #' @rdname calculate_dr2i
-calculate_de2i <- function(prot1, prot2, kmat_sqrt) {
-  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # no indels
-  stopifnot(prot1$node$site == prot2$node$site) # no indels
-  dr <- as.vector(get_xyz(prot2) - get_xyz(prot1))
+calculate_de2i <- function(wt, mut, kmat_sqrt) {
+  stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
+  stopifnot(wt$node$site == mut$node$site) # no indels
+  dr <- as.vector(get_xyz(mut) - get_xyz(wt))
   de <- kmat_sqrt %*% dr
   de <- my_as_xyz(de)
   de2i <-  colSums(de^2)
@@ -69,13 +69,13 @@ calculate_de2i <- function(prot1, prot2, kmat_sqrt) {
 
 
 #' @rdname calculate_dr2i
-calculate_df2i <- function(prot1, prot2) {
-  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # no indels
-  stopifnot(prot1$node$site == prot2$node$site) # no indels
+calculate_df2i <- function(wt, mut) {
+  stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
+  stopifnot(wt$node$site == mut$node$site) # no indels
 
-  kmat <- prot1$kmat
+  kmat <- wt$kmat
 
-  dxyz <- my_as_xyz(prot2$nodes$xyz - prot1$nodes$xyz) # use c(3, nsites) representation of xyz
+  dxyz <- my_as_xyz(mut$nodes$xyz - wt$nodes$xyz) # use c(3, nsites) representation of xyz
   dr <- as.vector(dxyz)
   df <- kmat %*% dr
   df <- my_as_xyz(df)
@@ -83,19 +83,19 @@ calculate_df2i <- function(prot1, prot2) {
   df2i
 }
 
-dvm_site <- function(prot1, prot2) {
-  stopifnot(get_nsites(prot1) == get_nsites(prot2)) # #warning, #check: I'm assuming no indels
+calculate_dvmi <- function(wt, mut) {
+  stopifnot(get_nsites(wt) == get_nsites(mut)) # #warning, #check: I'm assuming no indels
 
-  g1 <- get_graph(prot1) %>%
+  g1 <- get_graph(wt) %>%
     mutate(vmij = v0ij + 1/2 * kij * (dij - lij)^2)
-  g2 <- get_graph(prot2) %>%
+  g2 <- get_graph(mut) %>%
     mutate(vmij = v0ij + 1/2 * kij * (dij - lij)^2)
 
   g <- inner_join(g1, g2, by = c("edge", "i", "j")) %>%
     mutate(dvmij = vmij.y - vmij.x)
 
 
-  nsites <- get_nsites(prot1)
+  nsites <- get_nsites(wt)
   dvmi <- rep(0, nsites)
 
   for (site in seq(nsites)) {
@@ -103,7 +103,6 @@ dvm_site <- function(prot1, prot2) {
   }
 
   dvmi
-
 }
 
 calculate_dvsi <- function(wt, mut) {
@@ -123,14 +122,8 @@ calculate_dvsi <- function(wt, mut) {
   for (site in seq(nsites)) {
     dvsi[site] <-  sum(g$dvsij[g$i == site | g$j == site])
   }
-
   dvsi
-
 }
-
-
-
-
 
 
 
@@ -138,31 +131,31 @@ calculate_dvsi <- function(wt, mut) {
 #'
 #' Calculate de difference between the structures of two proteins, return dr2n.
 #'
-#' This version works only for prot1 and prot2 with no indels
+#' This version works only for wt and mut with no indels
 #'
-#' @param prot1 A protein object with \code{xyz} and \code{enm} defined
-#' @param prot2 A second protein object  with \code{xyz} defined
+#' @param wt A protein object with \code{xyz} and \code{enm} defined
+#' @param mut A second protein object  with \code{xyz} defined
 #'
 #' @return A vector of square differences along normal modes \code{dr2n}
 #' @export
 #'
 #' @examples
-calculate_dr2n <- function(prot1, prot2) {
-  stopifnot(prot1$node$pdb_site == prot2$node$pdb_site) # no indels
-  dr <- as.vector(get_xyz(prot2) - get_xyz(prot1))
-  drn <- as.vector(crossprod(get_umat(prot1), dr))
-  stopifnot(length(prot1$nma$mode) == length(drn))
+calculate_dr2n <- function(wt, mut) {
+  stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
+  dr <- as.vector(get_xyz(mut) - get_xyz(wt))
+  drn <- as.vector(crossprod(get_umat(wt), dr))
+  stopifnot(length(wt$nma$mode) == length(drn))
   dr2n <- drn^2
   as.vector(dr2n)
 }
 
 
 #' @rdname calculate_dr2n
-calculate_de2n <- function(prot1, prot2) {
-  get_evalue(prot1) * calculate_dr2n(prot1, prot2)
+calculate_de2n <- function(wt, mut) {
+  get_evalue(wt) * calculate_dr2n(wt, mut)
 }
 
 #' @rdname calculate_dr2n
-calculate_df2n <- function(prot1, prot2) {
-  get_evalue(prot1)^2 * calculate_dr2n(prot1, prot2)
+calculate_df2n <- function(wt, mut) {
+  get_evalue(wt)^2 * calculate_dr2n(wt, mut)
 }

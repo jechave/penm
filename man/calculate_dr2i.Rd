@@ -6,16 +6,16 @@
 \alias{calculate_df2i}
 \title{Compare the structures of two proteins in site representation}
 \usage{
-calculate_dr2i(prot1, prot2)
+calculate_dr2i(wt, mut)
 
-calculate_de2i(prot1, prot2, kmat_sqrt)
+calculate_de2i(wt, mut, kmat_sqrt)
 
-calculate_df2i(prot1, prot2)
+calculate_df2i(wt, mut)
 }
 \arguments{
-\item{prot1}{A protein object with \code{xyz} defined}
+\item{wt}{A protein object with \code{xyz} defined}
 
-\item{prot2}{A second protein object  with \code{xyz} defined}
+\item{mut}{A second protein object  with \code{xyz} defined}
 }
 \value{
 A tibble with columns \code{pdb_site, site, dr2}
@@ -24,5 +24,5 @@ A tibble with columns \code{pdb_site, site, dr2}
 Calculate de difference between the structures of two proteins, return dr2i
 }
 \details{
-This version works only for prot1 and prot2 with no indels
+This version works only for wt and mut with no indels
 }

@@ -2,10 +2,10 @@
 % Please edit documentation in R/prs_fast.R
 \name{prs.fast}
 \alias{prs.fast}
-\title{Calculate perturbation-response-scanning responses}
+\title{Calcualte all fast response matrices and profiles}
 \usage{
 prs.fast(wt, mut_dl_sigma, mut_sd_min)
 }
 \description{
-Calculate perturbation-response-scanning responses
+Calcualte all fast response matrices and profiles
 }
