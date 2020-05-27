@@ -357,3 +357,12 @@ everything
     calculate\_dr2ij.prs, etc.)
   - Tested that everything works in prs\_superfast.Rmd
   - Commited
+
+## 27 May 2020
+
+### Finished version 1 of prs() and prs.fast()
+
+### Moving to project superfast\_prs
+
+  - Moved all prs\_\*.Rmd files to superfast project, on which I’ll work
+    this and next week.
