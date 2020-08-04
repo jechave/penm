@@ -1,5 +1,8 @@
 $
 \newcommand{\rvec}{\mathbf{r}}
+\newcommand{\fmat}{\mathbf{F}}
+\newcommand{\svec}{\mathbf{s}}
+\newcommand{\smat}{\mathbf{S}}
 \newcommand{\wt}{\texttt{wt}}
 \newcommand{\mut}{\texttt{mut}}
 \newcommand{\rwt}{\rvec^0_\wt}
@@ -7,6 +10,7 @@ $
 \newcommand{\kmat}{\mathbf{K}}
 \newcommand{\kwt}{\kmat_\wt}
 \newcommand{\kmut}{\kmat_\mut}
+\newcommand{\amat}{\mathbf{A}}
 \newcommand{\kij}{k_{ij}}
 \newcommand{\fvec}{\mathbf{f}}
 \newcommand{\dij}{d_{ij}}
@@ -14,6 +18,7 @@ $
 \newcommand{\dlij}{\delta l_{ij}}
 \newcommand{\half}{\frac{1}{2}}
 $
+
 # Structural response theory
 
 Definitions:
@@ -121,3 +126,53 @@ When I want to pursue this further, I need to:
 4. If it works, I entropy can be separated as a sum of site-contributons and entropy changes studied as changes of $\sigma_i$ profiles.
 
 
+
+
+
+## Tricks for faster response calculation
+
+### Several perturbations at once
+
+Several response vectors are of the form:
+$$
+\svec = \amat \fvec
+$$
+
+where $\fvec$ is *one* perturbation (e.g. one contact, or one site). If we have several perturbations, (several sites, several mutations at same sites, whatever), we can write:
+$$
+\smat = \amat \fmat
+$$
+
+where $\fmat = (\fvec_1 \fvec_2 \ldots)$ is the matrix where each column is a forcing perturbation and $\smat = (\svec_1 \svec_2 \ldots)$ is the matrix of responses.
+
+
+
+### Adding perturbations before matrix multiplication
+
+Clearly:
+$$
+\svec_1 + \svec_2 = \amat (\fvec_1 + \fvec_2)
+$$
+Thus, for instance, the response to mutating a node is equal to the sum of the responses to mutating each of its contacts, which is what I use in the simulation.
+
+This should also be used to make 2-mutation scans faster.
+
+### Uses for *PRS*
+
+The response to several mutations at a given site $j$ can be written:
+$$
+\smat^j = \amat \fmat^j
+$$
+The mean response vector would be:
+
+```R
+rowMeans(Sj^2)
+```
+
+The response to one mutation at each site (a single mutational scan), I could define a matrix `fmat(3 * nsites, nsites)` where column `j`contains the mutating foce at site `j`. Then, 
+
+```R
+smat <- amat %*% fmat
+```
+
+has in each column the response to that site's forcing.

@@ -41,9 +41,13 @@ kij_ming_wall <- function(dij, sdij,
 
 #' Calculate kij for parameter-free anm (by Yang et al.)
 #'
-kij_pfgnm <- function(dij, ...) {
+kij_pfanm <- function(dij, ...) {
   1 / dij^2
 }
+
+#' Calculate kij for the pfanm
+#'
+kij_pfgnm <- kij_pfanm
 
 #' Calculate kij for model by Reach et al.
 #'

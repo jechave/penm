@@ -2,10 +2,10 @@
 % Please edit documentation in R/enm_kij_functions.R
 \name{kij_pfgnm}
 \alias{kij_pfgnm}
-\title{Calculate kij for parameter-free anm (by Yang et al.)}
+\title{Calculate kij for the pfanm}
 \usage{
 kij_pfgnm(dij, ...)
 }
 \description{
-Calculate kij for parameter-free anm (by Yang et al.)
+Calculate kij for the pfanm
 }

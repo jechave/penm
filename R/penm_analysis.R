@@ -127,6 +127,8 @@ calculate_dvsi <- function(wt, mut) {
 
 
 
+
+
 #' Compare the structures of two proteins in nm representation
 #'
 #' Calculate de difference between the structures of two proteins, return dr2n.

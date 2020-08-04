@@ -51,6 +51,81 @@ get_mutants_table <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd
   mutants
 }
 
+# Site-site response matrices ---------------------------------------------
+
+
+#' Calculate site-by-site response matrices
+#'
+calculate_dfij.prs <- function(mutants) {
+  mutants %>%
+    calculate_dr2ij.prs() %>%
+    inner_join(calculate_df2ij.prs(mutants)) %>%
+    inner_join(calculate_de2ij.prs(mutants)) %>%
+    inner_join(calculate_dvsij.prs(mutants)) %>%
+    mutate(dvmij = dvsij - de2ij)
+}
+
+calculate_dr2ij.prs <- function(mutants) {
+  result <- mutants %>%
+    mutate(i = map(wt, get_site),
+           dr2ij = map2(wt, mut, calculate_dr2i)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(i, dr2ij)) %>%
+    select(i, j, mutation, dr2ij)
+
+  result
+}
+
+calculate_df2ij.prs <- function(mutants) {
+  result <- mutants %>%
+    mutate(i = map(wt, get_site),
+           df2ij = map2(wt, mut, calculate_df2i)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(i, df2ij)) %>%
+    select(i, j, mutation, df2ij)
+
+  result
+}
+
+calculate_de2ij.prs <- function(mutants) {
+  # structural differences, site analysis
+  wt <- mutants$wt[[1]]
+  kmat_sqrt <- get_kmat_sqrt(wt)
+
+  result <- mutants %>%
+    mutate(i = map(wt, get_site),
+           de2ij = map2(wt, mut, calculate_de2i, kmat_sqrt = kmat_sqrt)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(i,  de2ij)) %>%
+    select(i, j, mutation, de2ij)
+
+  result
+}
+
+calculate_dvsij.prs <- function(mutants) {
+  # structural differences, site analysis
+  result <- mutants %>%
+    mutate(i = map(wt, get_site),
+           dvsij = map2(wt, mut, calculate_dvsi.noindel)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(i, dvsij)) %>%
+    select(i, j, mutation, dvsij)
+
+  result
+}
+
+calculate_dvmij.prs <- function(mutants) {
+  # structural differences, site analysis
+  de2ij <- calculate_de2ij.prs(mutants)
+  dvsij <- calculate_dvsij.prs(mutants)
+
+  result <- inner_join(de2ij, dvsij) %>%
+    mutate(dvmij = dvsij - de2ij) %>%
+    select(i, j, mutation, dvmij)
+
+  result
+}
+
 
 
 # Influence profiles ------------------------------------------------------
@@ -173,81 +248,6 @@ calculate_dvmi.prs <- function(mutants) {
 
 
 
-# Site-site response matrices ---------------------------------------------
-
-
-#' Calculate site-by-site response matrices
-#'
-calculate_dfij.prs <- function(mutants) {
-  mutants %>%
-    calculate_dr2ij.prs() %>%
-    inner_join(calculate_df2ij.prs(mutants)) %>%
-    inner_join(calculate_de2ij.prs(mutants)) %>%
-    inner_join(calculate_dvsij.prs(mutants)) %>%
-    inner_join(calculate_dvmij.prs(mutants))
-}
-
-calculate_dr2ij.prs <- function(mutants) {
-  result <- mutants %>%
-    mutate(i = map(wt, get_site),
-           dr2ij = map2(wt, mut, calculate_dr2i)) %>%
-    select(-wt, -mut) %>%
-    unnest(c(i, dr2ij)) %>%
-    select(i, j, mutation, dr2ij)
-
-  result
-}
-
-calculate_df2ij.prs <- function(mutants) {
-  result <- mutants %>%
-    mutate(i = map(wt, get_site),
-           df2ij = map2(wt, mut, calculate_df2i)) %>%
-    select(-wt, -mut) %>%
-    unnest(c(i, df2ij)) %>%
-    select(i, j, mutation, df2ij)
-
-  result
-}
-
-calculate_de2ij.prs <- function(mutants) {
-  # structural differences, site analysis
-  wt <- mutants$wt[[1]]
-  kmat_sqrt <- get_kmat_sqrt(wt)
-
-  result <- mutants %>%
-    mutate(i = map(wt, get_site),
-           de2ij = map2(wt, mut, calculate_de2i, kmat_sqrt = kmat_sqrt)) %>%
-    select(-wt, -mut) %>%
-    unnest(c(i,  de2ij)) %>%
-    select(i, j, mutation, de2ij)
-
-  result
-}
-
-calculate_dvsij.prs <- function(mutants) {
-  # structural differences, site analysis
-  result <- mutants %>%
-    mutate(i = map(wt, get_site),
-           dvsij = map2(wt, mut, calculate_dvsi)) %>%
-    select(-wt, -mut) %>%
-    unnest(c(i, dvsij)) %>%
-    select(i, j, mutation, dvsij)
-
-  result
-}
-
-calculate_dvmij.prs <- function(mutants) {
-  # structural differences, site analysis
-  de2ij <- calculate_de2ij.prs(mutants)
-  dvsij <- calculate_dvsij.prs(mutants)
-
-  result <- inner_join(de2ij, dvsij) %>%
-    mutate(dvmij = dvsij - de2ij) %>%
-    select(i, j, mutation, dvmij)
-
-  result
-}
-
 
 # Mode-site response matrices ---------------------------------------------
 
@@ -268,3 +268,45 @@ calculate_dfnj.prs <- function(mutants) {
     select(n, j, mutation, dr2nj, df2nj, de2nj)
   result
 }
+
+
+
+
+
+# pair comparison ---------------------------------------------------------
+
+calculate_dvsi.noindel <- function(wt, mut) {
+  gwt <- get_graph(wt)
+  gmut <- get_graph(mut)
+
+  stopifnot(all(gmut$edge == gwt$edge)) # for "lfenm": this works if the network didn't change its topology
+
+  gmut$vsij = 1/2 * gmut$kij * (gwt$dij - gmut$lij)^2
+  gwt$vsij = 1/2 * gwt$kij * (gwt$dij - gwt$lij)^2
+  dvsij = gmut$vsij - gwt$vsij
+
+  dvsij_non_zero <- !near(dvsij, 0)
+
+  dvsij <- dvsij[dvsij_non_zero]
+  i <- gwt$i[dvsij_non_zero]
+  j <- gwt$j[dvsij_non_zero]
+  sites_non_zero <- unique(c(i,j))
+
+  dvsi <- rep(0, nsites)
+
+  for (e in seq_along(dvsij))  {
+    dvsi[i[e]] = dvsi[i[e]] + dvsij[e]
+    dvsi[j[e]] = dvsi[j[e]] + dvsij[e]
+  }
+
+  dvsi
+}
+
+
+
+
+
+
+
+
+

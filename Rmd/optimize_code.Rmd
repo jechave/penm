@@ -25,7 +25,16 @@ library(patchwork)
 ```{r}
 # Set parameters
 pdb_id = "2acy_A"
+# set wt
+pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
+wt <- set_enm(pdb,  "ca",  "ming_wall",  10.5,  F)
+mut <- get_mutant_site(wt, 80, 1)
 ```
+
+```{r}
+dat <- calculate_dvsj_mut(wt, 10, "lfenm", 0.3, 1)
+```
+
 
 
 # Superfast matrices
@@ -33,24 +42,11 @@ pdb_id = "2acy_A"
 ```{r, eval = F}
 # profiling
 library(profvis)
-# set wt
-pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
-wt <- set_enm(pdb,  "ca",  "ming_wall",  10.5,  F)
-mut <- get_mutant_site(wt, 80, 1)
 
-prs_slow <- function(wt, nmut_per_site = 10) {
-  mutants <- get_mutants_table(wt, nmut_per_site, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
-  calculate_dfij(mutants)
-}
 
-prs_fast <- function(wt) {
-  calculate_dfij.fast(wt)
-}
-profvis(prs_fast(wt))
 
-profvis(prs_slow(wt))
+profvis(prs(wt, 2, "lfenm", 0.3, 2))
 
-profvis(get_mutants_table(wt, 10, "lfenm", 0.3, 2))
 
 mutants <-  get_mutants_table(wt, 10, "lfenm", 0.3, 2)
 profvis(calculate_dfij(mutants))
@@ -86,3 +82,66 @@ microbenchmark(calculate_dfnj(mutants_10),
                times = 1)
 
 ```
+
+```{r}
+library(microbenchmark)
+
+kmat <- get_kmat(wt)
+cmat <- get_cmat(wt)
+dr <- get_xyz(mut) - get_xyz(wt)
+f <- kmat %*% dr
+f10 <- cbind(f, f, f, f, f, f, f, f, f, f)
+f20 <- cbind(f10, f10, f10, f10, f10, f10)
+
+loop10 <- function(cmat, f10) {
+  smat <- matrix(NA, nrow(kmat), ncol(f10))
+  for (j in seq(ncol(f10))) {
+    smat[,j] <- kmat %*% f10[,j]
+  }
+  smat
+}
+
+nzf <- !near(f, 0)
+
+
+library(Matrix)
+cmat.matrix <- Matrix(cmat)
+f20.matrix <- Matrix(f20, sparse = T)
+
+microbenchmark(cmat %*% f20,  
+               cmat[,nzf] %*% f20[nzf, ], loop10(cmat, f20), 
+               cmat.matrix %*% f20.matrix, times = 10)
+
+```
+```{r}
+microbenchmark(prs.new(wt, 50, "lfenm", 0.3, 2, 1024), prs.old(wt, 50, "lfenm", 0.3, 2), prs.fast(wt, 0.3, 2), times = 1)
+
+
+microbenchmark(prs.new(wt, 50, "lfenm", 0.3, 2, 1024),  calculate_dfij.fast(wt, 0.3, 2), times = 1)
+```
+
+
+```{r}
+dat.new <- prs.new(wt, 50, "lfenm", 0.3, 2, 1024) %>% 
+  select(i, j, df2ij, de2ij, dr2ij) %>% 
+  pivot_longer(cols = df2ij:dr2ij,
+               names_to = "response_type",
+               values_to = "value")
+
+dat.fast <- calculate_dfij.fast(wt, 0.3, 2) %>% 
+  select(i, j, df2ij, de2ij, dr2ij) %>% 
+  pivot_longer(cols = df2ij:dr2ij,
+               names_to = "response_type",
+               values_to = "value")
+
+dat <- inner_join(dat.new, dat.fast, by = c("i", "j", "response_type"), suffix = c(".prs", ".fast"))
+
+dat %>% 
+  ggplot(aes(value.fast, value.prs)) +
+  geom_point() +
+  geom_abline() +
+  facet_wrap(~response_type, ncol = 3, scales = "free")
+
+
+```
+

@@ -155,6 +155,8 @@ calculate_dr2ij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
     rename(dr2ij = mij)
 }
 
+
+
 calculate_df2ij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   identity_matrix = diag(nrow = get_nsites(wt) * 3, ncol = get_nsites(wt) * 3)
   calculate_Rij.fast(wt, identity_matrix, mut_dl_sigma, mut_sd_min) %>%
