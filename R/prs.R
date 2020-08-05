@@ -292,7 +292,7 @@ calculate_dvsi.noindel <- function(wt, mut) {
   j <- gwt$j[dvsij_non_zero]
   sites_non_zero <- unique(c(i,j))
 
-  dvsi <- rep(0, nsites)
+  dvsi <- rep(0, get_nsites(wt))
 
   for (e in seq_along(dvsij))  {
     dvsi[i[e]] = dvsi[i[e]] + dvsij[e]

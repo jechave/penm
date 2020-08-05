@@ -176,3 +176,16 @@ smat <- amat %*% fmat
 ```
 
 has in each column the response to that site's forcing.
+
+
+
+## The whole mutational scan at once
+
+The whole mutational scan can be contained in a single force matrix $\fmat$. The size of this matrix is `(3*nsites, nsites * nmut)`. We can turn this into a response matrix $\smat = \amat \fmat$. Then we can change the dimentions of $\smat$ to `(3, nsites, nsites, nmut)`and get an `(nsites, nsites)`response matrix $\mathbf{R}$ by adding `S^2` over the 1st dimension and averaging the result over the 4th dimension. 
+
+
+
+Note that matrix $\fmat$ is very sparse (for a given column, only contacts of that site's j ill have nonzero values). This might be used to make matrix multiplication faster.
+
+
+
