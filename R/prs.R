@@ -1,45 +1,56 @@
 #' calcualte all fast response matrices and profiles
 #'
-prs <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min) {
+prs <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
 
-  mutants <- get_mutants_table(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min)
+  mutants <- get_mutants_table(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed)
 
   enm_param <- get_enm_param(wt)
   mut_param <- lst(nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min)
 
-  dfij <- calculate_dfij.prs(mutants)
+  dfij <- mutants %>%
+    calculate_dr2ij.prs() %>%
+    inner_join(calculate_df2ij.prs(mutants)) %>%
+    inner_join(calculate_de2ij.prs(mutants)) %>%
+    inner_join(calculate_dvsij.prs(mutants)) %>%
+    mutate(dvmij = dvsij - de2ij)
 
   dfj <- dfij %>%
-    group_by(j, mutation) %>%
+    group_by(j) %>%
     summarise(dr2j = sum(dr2ij),
               df2j = sum(df2ij),
               de2j = 1/2 * sum(de2ij),
               dvsj = 1/2 * sum(dvsij),
-              dvmj = 1/2 * sum(dvmij))
+              dvmj = 1/2 * sum(dvmij)) %>%
+    ungroup()
 
   dfi <- dfij %>%
-    group_by(i, mutation) %>%
+    group_by(i) %>%
     summarise(dr2i = mean(dr2ij),
               df2i = mean(df2ij),
               de2i = mean(de2ij),
               dvsi = mean(dvsij),
-              dvmi = mean(dvmij))
+              dvmi = mean(dvmij)) %>%
+    ungroup()
 
-  dfnj <- calculate_dfnj.prs(mutants)
+  # structural differences, mode analysis
+  dfnj <- calculate_df2nj.prs(mutants) %>%
+    inner_join(calculate_de2nj.prs(mutants)) %>%
+    inner_join(calculate_dr2nj.prs(mutants))
 
   dfn <- dfnj %>%
-    group_by(n, mutation) %>%
+    group_by(n) %>%
     summarise(dr2n = mean(dr2nj),
               df2n = mean(df2nj),
-              de2n = mean(de2nj))
+              de2n = mean(de2nj)) %>%
+    ungroup()
 
-  lst(enm_param, mut_param, dfi, dfj,  dfij,  dfnj, dfn)
+  lst(dfij, dfi, dfj, dfnj, dfn, enm_param, mut_param)
 }
 
 
 #' get mutant table
 #'
-get_mutants_table <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min) {
+get_mutants_table <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
   mutation <- seq(from = 0, to = nmut_per_site)
   j <- get_site(wt)
   # get mutants
@@ -47,42 +58,42 @@ get_mutants_table <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd
 
   mutants <- mutants %>%
     mutate(mut = pmap(list(wt, j, mutation), get_mutant_site,
-                      mut_model = mut_model, mut_dl_sigma = mut_dl_sigma, mut_sd_min = mut_sd_min))
+                      mut_model = mut_model, mut_dl_sigma = mut_dl_sigma, mut_sd_min = mut_sd_min, seed = seed))
   mutants
 }
 
 # Site-site response matrices ---------------------------------------------
 
 
-#' Calculate site-by-site response matrices
-#'
-calculate_dfij.prs <- function(mutants) {
-  mutants %>%
-    calculate_dr2ij.prs() %>%
-    inner_join(calculate_df2ij.prs(mutants)) %>%
-    inner_join(calculate_de2ij.prs(mutants)) %>%
-    inner_join(calculate_dvsij.prs(mutants)) %>%
-    mutate(dvmij = dvsij - de2ij)
-}
+
 
 calculate_dr2ij.prs <- function(mutants) {
   result <- mutants %>%
+    filter(mutation > 0) %>%  # mutation == 0  is the "no-mutation" case
     mutate(i = map(wt, get_site),
-           dr2ij = map2(wt, mut, calculate_dr2i)) %>%
+           dr2ijm = map2(wt, mut, calculate_dr2i)) %>%
     select(-wt, -mut) %>%
-    unnest(c(i, dr2ij)) %>%
-    select(i, j, mutation, dr2ij)
+    unnest(c(i, dr2ijm)) %>%
+    select(i, j, mutation, dr2ijm) %>%
+    group_by(i, j) %>%
+    summarise(dr2ij = mean(dr2ijm)) %>%  # average over mutations
+    ungroup()
 
   result
 }
 
 calculate_df2ij.prs <- function(mutants) {
   result <- mutants %>%
+    filter(mutation > 0) %>%  # mutation == 0  is the "no-mutation" case
     mutate(i = map(wt, get_site),
-           df2ij = map2(wt, mut, calculate_df2i)) %>%
+           df2ijm = map2(wt, mut, calculate_df2i)) %>%
     select(-wt, -mut) %>%
-    unnest(c(i, df2ij)) %>%
-    select(i, j, mutation, df2ij)
+    unnest(c(i, df2ijm)) %>%
+    select(i, j, mutation, df2ijm) %>%
+    group_by(i, j) %>%
+    summarise(df2ij = mean(df2ijm)) %>%  # average over mutations
+    ungroup()
+
 
   result
 }
@@ -93,11 +104,15 @@ calculate_de2ij.prs <- function(mutants) {
   kmat_sqrt <- get_kmat_sqrt(wt)
 
   result <- mutants %>%
+    filter(mutation > 0) %>%
     mutate(i = map(wt, get_site),
-           de2ij = map2(wt, mut, calculate_de2i, kmat_sqrt = kmat_sqrt)) %>%
+           de2ijm = map2(wt, mut, calculate_de2i, kmat_sqrt = kmat_sqrt)) %>%
     select(-wt, -mut) %>%
-    unnest(c(i,  de2ij)) %>%
-    select(i, j, mutation, de2ij)
+    unnest(c(i,  de2ijm)) %>%
+    select(i, j, mutation, de2ijm) %>%
+    group_by(i, j) %>%
+    summarise(de2ij = mean(de2ijm)) %>%  # average over mutations
+    ungroup()
 
   result
 }
@@ -105,12 +120,15 @@ calculate_de2ij.prs <- function(mutants) {
 calculate_dvsij.prs <- function(mutants) {
   # structural differences, site analysis
   result <- mutants %>%
+    filter(mutation > 0) %>%
     mutate(i = map(wt, get_site),
-           dvsij = map2(wt, mut, calculate_dvsi.noindel)) %>%
+           dvsijm = map2(wt, mut, calculate_dvsi.noindel)) %>%
     select(-wt, -mut) %>%
-    unnest(c(i, dvsij)) %>%
-    select(i, j, mutation, dvsij)
-
+    unnest(c(i, dvsijm)) %>%
+    select(i, j, mutation, dvsijm) %>%
+    group_by(i, j) %>%
+    summarise(dvsij = mean(dvsijm)) %>%  # average over mutations
+    ungroup()
   result
 }
 
@@ -121,155 +139,73 @@ calculate_dvmij.prs <- function(mutants) {
 
   result <- inner_join(de2ij, dvsij) %>%
     mutate(dvmij = dvsij - de2ij) %>%
-    select(i, j, mutation, dvmij)
+    select(i, j, dvmij)
 
   result
 }
-
-
-
-# Influence profiles ------------------------------------------------------
-
-#' calculate influence profiles
-#'
-calculate_dfj.prs <- function(mutants) {
-  calculate_dr2j.prs(mutants) %>%
-    inner_join(calculate_df2j.prs(mutants)) %>%
-    inner_join(calculate_de2j.prs(mutants)) %>%
-    inner_join(calculate_dvsj.prs(mutants)) %>%
-    inner_join(calculate_dvmj.prs(mutants))
-}
-
-
-#' calculate influence profile dr2j (structure)
-#'
-#' @param mutants is a set of mutants generated by get_mutants_table
-#'
-#' @return an influence vector, where each element is the total response to a mutation at site j
-#'
-calculate_dr2j.prs <- function(mutants) {
-  calculate_dr2ij.prs(mutants) %>%
-    group_by(j, mutation) %>%
-    summarise(dr2j = sum(dr2ij)) %>%
-    ungroup()
-}
-
-#' calculate influence profile df2j (force)
-#'
-#' @inherit calculate_dr2j.prs
-#'
-calculate_df2j.prs <- function(mutants) {
-  calculate_df2ij.prs(mutants) %>%
-    group_by(j, mutation) %>%
-    summarise(df2j = sum(df2ij)) %>%
-    ungroup()
-}
-
-
-#' calculate influence profile de2j (relaxation)
-#'
-#' @inherit calculate_dr2j.prs
-#'
-calculate_de2j.prs <- function(mutants) {
-  calculate_de2ij.prs(mutants) %>%
-    group_by(j, mutation) %>%
-    summarise(de2j = 0.5 * sum(de2ij)) %>%
-    ungroup()
-}
-
-#' calculate influence profile dvsj (stress)
-#'
-#' @inherit calculate_dr2j.prs
-#'
-calculate_dvsj.prs <- function(mutants) {
-  calculate_dvsij.prs(mutants) %>%
-    group_by(j, mutation) %>%
-    summarise(dvsj = 0.5 * sum(dvsij)) %>%
-    ungroup()
-}
-
-#' calculate influence profile dvmj (minimumn energy)
-#'
-#' @inherit calculate_dr2j.prs
-#'
-calculate_dvmj.prs <- function(mutants) {
-  calculate_dvmij.prs(mutants) %>%
-    group_by(j, mutation) %>%
-    summarise(dvmj = 0.5 * sum(dvmij)) %>%
-    ungroup()
-}
-
-# Response profiles ------------------------------------------------------
-
-
-calculate_dfi.prs <- function(mutants) {
-  calculate_dr2i.prs(mutants) %>%
-    inner_join(calculate_df2i.prs(mutants)) %>%
-    inner_join(calculate_de2i.prs(mutants)) %>%
-    inner_join(calculate_dvsi.prs(mutants)) %>%
-    inner_join(calculate_dvmi.prs(mutants))
-}
-
-
-calculate_dr2i.prs <- function(mutants) {
-  calculate_dr2ij.prs(mutants) %>%
-    group_by(i, mutation) %>%
-    summarise(dr2i = mean(dr2ij)) %>%
-    ungroup()
-}
-
-calculate_df2i.prs <- function(mutants) {
-  calculate_df2ij.prs(mutants) %>%
-    group_by(i, mutation) %>%
-    summarise(df2i = mean(df2ij)) %>%
-    ungroup()
-}
-
-calculate_de2i.prs <- function(mutants) {
-  calculate_de2ij.prs(mutants) %>%
-    group_by(i, mutation) %>%
-    summarise(de2i = mean(de2ij)) %>%
-    ungroup()
-}
-
-calculate_dvsi.prs <- function(mutants) {
-  calculate_dvsij.prs(mutants) %>%
-    group_by(i, mutation) %>%
-    summarise(dvsi = mean(dvsij)) %>%
-    ungroup()
-}
-
-calculate_dvmi.prs <- function(mutants) {
-  calculate_dvmij.prs(mutants) %>%
-    group_by(i, mutation) %>%
-    summarise(dvmi = mean(dvmij)) %>%
-    ungroup()
-}
-
 
 
 
 # Mode-site response matrices ---------------------------------------------
 
 
-
-#' Calculate structural mutational response, mode analysis
+#' Calculate df2nj , mode analysis
 #'
-calculate_dfnj.prs <- function(mutants) {
+calculate_df2nj.prs <- function(mutants) {
   # structural differences, mode analysis
+
   result <- mutants %>%
+    filter(mutation != 0) %>% # mutaiton == 0 is the wt
     mutate(n = map(wt, get_mode),
-           dr2nj = map2(wt, mut, calculate_dr2n),
-           de2nj = map2(wt, mut, calculate_de2n),
-           df2nj = map2(wt, mut, calculate_df2n))
-  result <- result %>%
+           df2njm = map2(wt, mut, calculate_df2n)) %>%
     select(-wt, -mut) %>%
-    unnest(c(n, dr2nj, de2nj, df2nj)) %>%
-    select(n, j, mutation, dr2nj, df2nj, de2nj)
+    unnest(c(n, df2njm)) %>%
+    select(n, j, mutation, df2njm) %>%
+    group_by(n, j) %>%
+    summarise(df2nj = mean(df2njm)) %>%
+    ungroup()
+
   result
 }
 
 
+#' Calculate de2nj, mode analysis
+#'
+calculate_de2nj.prs <- function(mutants) {
+  # structural differences, mode analysis
+
+  result <- mutants %>%
+    filter(mutation != 0) %>% # mutaiton == 0 is the wt
+    mutate(n = map(wt, get_mode),
+           de2njm = map2(wt, mut, calculate_de2n)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(n, de2njm)) %>%
+    select(n, j, mutation, de2njm) %>%
+    group_by(n, j) %>%
+    summarise(de2nj = mean(de2njm)) %>%
+    ungroup()
+
+  result
+}
+
+#' Calculate dr2nj , mode analysis
+#'
+calculate_dr2nj.prs <- function(mutants) {
+  # structural differences, mode analysis
+
+  result <- mutants %>%
+    filter(mutation != 0) %>% # mutaiton == 0 is the wt
+    mutate(n = map(wt, get_mode),
+           dr2njm = map2(wt, mut, calculate_dr2n)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(n, dr2njm)) %>%
+    select(n, j, mutation, dr2njm) %>%
+    group_by(n, j) %>%
+    summarise(dr2nj = mean(dr2njm)) %>%
+    ungroup()
+
+  result
+}
 
 
 

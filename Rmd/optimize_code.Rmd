@@ -36,88 +36,74 @@ mut <- get_mutant_site(wt, 80, 1)
 ```
 
 
-# Superfast matrices
-
-```{r, eval = F}
 
 
 
-profvis(prs(wt, 2, "lfenm", 0.3, 2))
+## compare cpu times
 
+prs.sim: simulation-based prs in which first a set of mutants is generated, then each wt vs mut pair comparison is performed before averaging over mutants.
 
-mutants <-  get_mutants_table(wt, 20, "lfenm", 0.3, 2)
-profvis(calculate_dfij.prs(mutants))
-profvis(calculate_dfnj.prs(mutants))
+prs.new:  instead of looping over mutations at a given site, prs.new calculates an fmat with nmut columns for each site. Thus f(i,j, m) is the force at i due to mutation m at a site j. 
 
-profvis(calculate_dfj.prs(mutants))
-profvis(calculate_dfi.prs(mutants))
-
-```
-
+prs.fast: analytic averaging over mutations, thus avods generating individual mutants.
 
 
 ```{r}
-kmat_sqrt <- get_kmat_sqrt(wt)
-microbenchmark(calculate_de2i(wt, mut, kmat_sqrt),
-               calculate_de2n(wt, mut),
-               calculate_dr2i(wt, mut),
-               calculate_dr2n(wt, mut),
-               calculate_df2i(wt, mut),
-               calculate_df2n(wt, mut),
-               times = 10)
-```
-```{r}
-microbenchmark(calculate_dfnj.prs(mutants),
-               calculate_dfnj.fast(wt, 0.3, 1),
-               calculate_dfij.prs(mutants),
-               calculate_dfij.fast(wt, 0.3, 1),
-               times = 1)
+microbenchmark(prs.sim(wt, 10, "lfenm", 0.3, 1, 1024),
+               prs.new(wt, 10, "lfenm", 0.3, 1, 1024),
+               prs.fast(wt, 0.3, 1),
+               times = 5)
 ```
 
 
 
 
-## prs.new makes prs faster by calculating all mutations at once
-Key: insteado of looping over mutations at a given site,
-prs.new calculates an fmat with nmut columns for each site. Thus f(i,m) is the force at i due to mutation m at a site j. 
-```{r}
-microbenchmark(prs_new(wt, 10, "lfenm", 0.3, 2, 1024),  
-               calculate_dfij.fast(wt, 0.3, 2), times = 1)
-```
+## Comparison of results
+
+prs.sim and prs.new give identical results which differ from prs.fast because of convergence (prs.fast is the asymptotic "true" average). 
+
 
 
 ```{r}
-dat.new <- prs_new(wt, 20, "lfenm", 0.3, 2, 1024) %>% 
-  select(i, j, df2ij, de2ij, dr2ij) %>% 
-  pivot_longer(cols = df2ij:dr2ij,
+dat.sim <- prs.sim(wt, 20, "lfenm", 0.3, 2, 1024)  %>% 
+  pivot_longer(cols = df2ij:de2ij,
                names_to = "response_type",
                values_to = "value")
 
-dat.fast <- calculate_dfij.fast(wt, 0.3, 2) %>% 
-  select(i, j, df2ij, de2ij, dr2ij) %>% 
-  pivot_longer(cols = df2ij:dr2ij,
+dat.new <- prs.new(wt, 20, "lfenm", 0.3, 2, 1024) %>% 
+  pivot_longer(cols = df2ij:de2ij,
                names_to = "response_type",
                values_to = "value")
 
-dat <- inner_join(dat.new, dat.fast, by = c("i", "j", "response_type"), suffix = c(".prs", ".fast"))
+dat.fast <- prs.fast(wt, 0.3, 2) %>% 
+  select(i, j, df2ij, dr2ij, de2ij) %>% 
+  pivot_longer(cols = df2ij:de2ij,
+               names_to = "response_type",
+               values_to = "value")
 
-dat %>% 
-  ggplot(aes(value.fast, value.prs)) +
+dat <- inner_join(dat.new, dat.fast, by = c("i", "j", "response_type"), suffix = c(".new", ".fast"))
+
+p1 <- dat %>% 
+  ggplot(aes(value.fast, value.new)) +
   geom_point() +
   geom_abline() +
-  facet_wrap(~response_type, ncol = 3, scales = "free")
+  facet_wrap(~response_type, ncol = 3, scales = "free") +
+  ggtitle("new vs fast")
+
+dat <- inner_join(dat.new, dat.sim, by = c("i", "j", "response_type"), suffix = c(".new", ".sim"))
+
+p2 <- dat %>% 
+  ggplot(aes(value.sim, value.new)) +
+  geom_point() +
+  geom_abline() +
+  facet_wrap(~response_type, ncol = 3, scales = "free") +
+  ggtitle("new vs sim")
+
+
+plot_grid(p1, p2, ncol = 1)
+
 
 
 ```
-## prs.new vs prs.new.new
 
-```{r}
-microbenchmark(
-  prs_old(wt, 30, "lfenm", 0.3, 1),
-prs_new(wt, 30, "lfenm", 0.3, 1, 1024),
-prs.fast(wt, 0.3, 1),
-times = 1
-)
-
-```
 

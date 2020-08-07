@@ -1,6 +1,12 @@
+prs.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
+  calculate_df2ij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
+    inner_join(calculate_dr2ij.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
+    inner_join(calculate_de2ij.fast(wt, mut_dl_sigma, mut_sd_min))
+}
+
 #' Calcualte all fast response matrices and profiles
 #'
-prs.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
+prs_matrices_and_profiles.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
 
   enm_param <- get_enm_param(wt)
 
