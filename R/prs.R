@@ -1,6 +1,18 @@
+# simulation method -------------------------------------------------------
+
+prs.sim <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
+  mutants <- get_mutants_table(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed)
+
+  mutants %>%
+    calculate_df2ij.prs() %>%
+    inner_join(calculate_dr2ij.prs(mutants)) %>%
+    inner_join(calculate_de2ij.prs(mutants))
+}
+
+
 #' calcualte all fast response matrices and profiles
 #'
-prs <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
+prs_all.sim <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
 
   mutants <- get_mutants_table(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed)
 
@@ -132,17 +144,7 @@ calculate_dvsij.prs <- function(mutants) {
   result
 }
 
-calculate_dvmij.prs <- function(mutants) {
-  # structural differences, site analysis
-  de2ij <- calculate_de2ij.prs(mutants)
-  dvsij <- calculate_dvsij.prs(mutants)
 
-  result <- inner_join(de2ij, dvsij) %>%
-    mutate(dvmij = dvsij - de2ij) %>%
-    select(i, j, dvmij)
-
-  result
-}
 
 
 
