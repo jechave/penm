@@ -36,6 +36,23 @@ mut <- get_mutant_site(wt, 80, 1)
 ```
 
 
+## temp tests
+
+```{r}
+d.new <- prs_all.new(wt, 2, "lfenm", 0.3, 1, 1024)
+d.sim <- prs_all.sim(wt, 2, "lfenm", 0.3, 1, 1024)
+
+
+plot(d.sim$dfi$dr2i, d.new$dfi$dr2i)
+plot(d.sim$dfi$dvsi, d.new$dfi$dvsi)
+plot(d.sim$dfi$dvmi, d.new$dfi$dvmi)
+
+
+
+
+
+
+```
 
 
 
@@ -56,8 +73,34 @@ microbenchmark(prs.sim(wt, 10, "lfenm", 0.3, 1, 1024),
                times = 5)
 ```
 
+```{r}
+mutants <- get_mutants_table(wt, 20, "lfenm", 0.3, 1, 1024)
+perturbations <- generate_perturbations(wt, 20, 0.3, 1, 1024)
+microbenchmark(calculate_dr2ij.prs(mutants),
+               calculate_dr2ij.new(wt, perturbations$fmat),
+               calculate_dr2ij.fast(wt, 0.3, 1),
+               times = 1)
+```
+```{r}
 
+microbenchmark(calculate_df2ij.prs(mutants),
+               calculate_df2ij.new(wt, perturbations$fmat),
+               calculate_df2ij.fast(wt, 0.3, 1),
+               times = 1)
+```
+```{r}
+microbenchmark(calculate_de2ij.prs(mutants),
+               calculate_de2ij.new(wt, perturbations$fmat),
+               calculate_de2ij.fast(wt, 0.3, 1),
+               times = 1)
+```
 
+```{r}
+microbenchmark(calculate_dvsij.prs(mutants),
+               calculate_dvsij.new(wt, perturbations$dlmat),
+               calculate_dvsij.fast(wt, 0.3, 1),
+               times = 1)
+```
 
 ## Comparison of results
 
