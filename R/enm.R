@@ -326,7 +326,7 @@ calculate_enm_nma <- function(kmat, too_small = 1.e-5) {
   umat  <- umat[, modes]
 
   nmodes <- sum(modes)
-  mode <- seq.int(from = nmodes, to = 1, by = -1)
+  mode <- order(seq(nmodes), decreasing = T)
   evalue <- evalue[mode]
   umat <- umat[, mode]
   mode <- mode[mode]

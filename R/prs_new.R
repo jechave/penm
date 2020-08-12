@@ -48,18 +48,16 @@ prs_all.new <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, 
     ungroup()
 #
 #   # structural differences, mode analysis
-  dfnj = NA
-  dfn = NA
-#   dfnj <- calculate_df2nj.prs(mutants) %>%
-#     inner_join(calculate_de2nj.prs(mutants)) %>%
-#     inner_join(calculate_dr2nj.prs(mutants))
-#
-#   dfn <- dfnj %>%
-#     group_by(n) %>%
-#     summarise(dr2n = mean(dr2nj),
-#               df2n = mean(df2nj),
-#               de2n = mean(de2nj)) %>%
-#     ungroup()
+  dfnj <- calculate_df2nj.new(wt, fmat) %>%
+    inner_join(calculate_de2nj.new(wt, fmat)) %>%
+    inner_join(calculate_dr2nj.new(wt, fmat))
+
+  dfn <- dfnj %>%
+    group_by(n) %>%
+    summarise(dr2n = mean(dr2nj),
+              df2n = mean(df2nj),
+              de2n = mean(de2nj)) %>%
+    ungroup()
 
   lst(dfij, dfi, dfj, dfnj, dfn, enm_param, mut_param)
 }
@@ -91,6 +89,7 @@ generate_perturbations <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
       fmat[, j, m] <- get_force(wt, dlmat[, j, m])
     }
   }
+
 
   lst(dlmat, fmat)
 
@@ -210,5 +209,64 @@ calculate_dvsjm.new <- function(wt, nmut_per_site, mut_dl_sigma, mut_sd_min,  se
   }
 
   dvsjm
+
+}
+
+
+# Mode-site response matrices ---------------------------------------------
+
+
+#' Calculate df2nj , mode analysis
+#'
+calculate_df2nj.new <- function(wt, fmat) {
+  # structural differences, mode analysis
+  calculate_fnmat(wt, fmat)^2 %>%
+    apply(MARGIN = c(1, 2), FUN = mean) %>%
+    matrix_to_tibble() %>%
+    rename(n = i, j = j, df2nj = mij)
+}
+
+#' Calculate fmat in normal mode representation
+#'
+calculate_fnmat <- function(wt, fmat) {
+  nsites <- dim(fmat)[2]
+  nmut <- dim(fmat)[3]
+  nmodes <- length(get_evalue(wt))
+  dim(fmat) <- c(3 * nsites, nsites * nmut)
+  fn <-   as.matrix(Matrix(t(get_umat(wt))) %*% Matrix(fmat, sparse = T))
+  dim(fn) <- c(nmodes, nsites, nmut)
+  fn
+}
+
+
+#' Calculate de2nj, mode analysis
+#'
+calculate_de2nj.new <- function(wt, fmat) {
+  # structural differences, mode analysis
+
+  fnmat <- calculate_fnmat(wt, fmat)
+
+  denjm <- sqrt(1 / get_evalue(wt)) * fnmat
+
+  denjm^2  %>%
+    apply(MARGIN = c(1, 2), FUN = mean) %>%
+    matrix_to_tibble() %>%
+    rename(n = i, j = j, de2nj = mij)
+
+}
+
+#' Calculate dr2nj, mode analysis
+#'
+calculate_dr2nj.new <- function(wt, fmat) {
+  # structural differences, modr analysis
+
+  fnmat <- calculate_fnmat(wt, fmat)
+
+  drnjm <- 1 / get_evalue(wt) * fnmat
+
+  drnjm^2  %>%
+    apply(MARGIN = c(1, 2), FUN = mean) %>%
+    matrix_to_tibble() %>%
+    rename(n = i, j = j, dr2nj = mij)
 
 }
