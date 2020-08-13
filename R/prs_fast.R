@@ -1,11 +1,6 @@
-prs.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  calculate_df2ij.fast(wt, mut_dl_sigma, mut_sd_min) %>%
-    inner_join(calculate_dr2ij.fast(wt, mut_dl_sigma, mut_sd_min)) %>%
-    inner_join(calculate_de2ij.fast(wt, mut_dl_sigma, mut_sd_min))
-}
-
-#' Calcualte all fast response matrices and profiles
+#' Calculate all response matrices and profiles, "fast prs" method
 #'
+
 prs_all.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
 
   enm_param <- get_enm_param(wt)
@@ -53,17 +48,11 @@ prs_all.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
 }
 
 
-# Response matrices -------------------------------------------------------
+# site-by-site response matrices -------------------------------------------------------
 
 
-calculate_dr2ij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  cmat <- get_cmat(wt)
-  calculate_Rij.fast(wt, cmat, mut_dl_sigma, mut_sd_min) %>%
-    matrix_to_tibble() %>%
-    rename(dr2ij = mij)
-}
-
-
+#' Calculate site-by-site force matrix df2(n, j) using method "fast"
+#'
 
 calculate_df2ij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   identity_matrix = diag(get_nsites(wt) * 3)
@@ -71,6 +60,9 @@ calculate_df2ij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
     matrix_to_tibble() %>%
     rename(df2ij = mij)
 }
+
+#' Calculate site-by-site energy response matrix de2(n, j) using method "fast"
+#'
 
 calculate_de2ij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   umat <- get_umat(wt)
@@ -80,6 +72,19 @@ calculate_de2ij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
     matrix_to_tibble() %>%
     rename(de2ij = mij)
 }
+
+#' Calculate site-by-site structure response matrix dr2(n, j) using method "fast"
+#'
+
+calculate_dr2ij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
+  cmat <- get_cmat(wt)
+  calculate_Rij.fast(wt, cmat, mut_dl_sigma, mut_sd_min) %>%
+    matrix_to_tibble() %>%
+    rename(dr2ij = mij)
+}
+
+#' Calculate site-by-site stress-energy response matrix dvs(n, j) using method "fast"
+#'
 
 calculate_dvsij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   g <- get_graph(wt) %>%
@@ -106,13 +111,13 @@ calculate_dvsij.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
 
 
 
-#' Calculate fast response matrix
+#' Calculate site-by-site "fast" response matrix, general
 #'
+
 calculate_Rij.fast <- function(wt, amat, mut_dl_sigma, mut_sd_min) {
 
   g <- get_graph(wt)
   eij  <- get_eij(wt)
-
 
   nsites <- get_nsites(wt)
   dim(amat) <- c(nrow(amat), 3, nsites)
@@ -146,15 +151,10 @@ calculate_Rij.fast <- function(wt, amat, mut_dl_sigma, mut_sd_min) {
 }
 
 
+# mode-by-site response matrices -----------------------------------------------------------
 
-# Structure response, mode -----------------------------------------------------------
-
-calculate_dr2nj.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
-  avector <- 1 / get_evalue(wt)
-  calculate_Rnj.fast(wt, avector, mut_dl_sigma, mut_sd_min) %>%
-    matrix_to_tibble() %>%
-    rename(n = i, dr2nj = mij)
-}
+#' Calculate mode-by-site force matrix df2(n, j) using method "fast"
+#'
 
 calculate_df2nj.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   avector = rep(1, length(get_mode(wt)))
@@ -163,6 +163,9 @@ calculate_df2nj.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
     rename(n = i, df2nj = mij)
 }
 
+#' Calculate mode-by-site energy response matrix de2(n, j) using method "fast"
+#'
+
 calculate_de2nj.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
   avector <- sqrt(1 / get_evalue(wt))
   calculate_Rnj.fast(wt, avector, mut_dl_sigma, mut_sd_min) %>%
@@ -170,9 +173,20 @@ calculate_de2nj.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
     rename(n = i, de2nj = mij)
 }
 
-
-#' Calculate fast response matrix
+#' Calculate mode-by-site structure response matrix dr2(n, j) using method "fast"
 #'
+
+calculate_dr2nj.fast <- function(wt, mut_dl_sigma, mut_sd_min) {
+  avector <- 1 / get_evalue(wt)
+  calculate_Rnj.fast(wt, avector, mut_dl_sigma, mut_sd_min) %>%
+    matrix_to_tibble() %>%
+    rename(n = i, dr2nj = mij)
+}
+
+
+#' Calculate fast response matrix, general
+#'
+
 calculate_Rnj.fast <- function(wt, avector, mut_dl_sigma, mut_sd_min) {
   g <- get_graph(wt)
   eij  <- get_eij(wt)

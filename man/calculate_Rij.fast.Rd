@@ -2,10 +2,10 @@
 % Please edit documentation in R/prs_fast.R
 \name{calculate_Rij.fast}
 \alias{calculate_Rij.fast}
-\title{Calculate fast response matrix}
+\title{Calculate site-by-site "fast" response matrix, general}
 \usage{
 calculate_Rij.fast(wt, amat, mut_dl_sigma, mut_sd_min)
 }
 \description{
-Calculate fast response matrix
+Calculate site-by-site "fast" response matrix, general
 }

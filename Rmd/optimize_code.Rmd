@@ -40,13 +40,13 @@ mut <- get_mutant_site(wt, 80, 1)
 
 ```{r}
 
-mutants <- get_mutants_table(wt, 2, "lfenm", 0.3, 1, 1024)
+mutants <- generate_mutants(wt, 2, "lfenm", 0.3, 1, 1024)
 perturbations <- generate_perturbations(wt, 2, 0.3, 1, 1024)
 
 df2nj.sim <- calculate_df2nj.prs(mutants)
 df2nj.new <- calculate_df2nj.new(wt, perturbations$fmat)
 
-inner_join(df2nj.sim, df2nj.new, by = c("n", "j")) %>% 
+inner_join(df2nj.sim, df2nj.new, by = c("n", "j")) %>%
   ggplot(aes(df2nj.x, df2nj.y)) +
   geom_point()
 
@@ -55,7 +55,7 @@ inner_join(df2nj.sim, df2nj.new, by = c("n", "j")) %>%
 de2nj.sim <- calculate_de2nj.prs(mutants)
 de2nj.new <- calculate_de2nj.new(wt, perturbations$fmat)
 
-inner_join(de2nj.sim, de2nj.new, by = c("n", "j")) %>% 
+inner_join(de2nj.sim, de2nj.new, by = c("n", "j")) %>%
   ggplot(aes(de2nj.x, de2nj.y)) +
   geom_point()
 
@@ -63,7 +63,7 @@ inner_join(de2nj.sim, de2nj.new, by = c("n", "j")) %>%
 dr2nj.sim <- calculate_dr2nj.prs(mutants)
 dr2nj.new <- calculate_dr2nj.new(wt, perturbations$fmat)
 
-inner_join(dr2nj.sim, dr2nj.new, by = c("n", "j")) %>% 
+inner_join(dr2nj.sim, dr2nj.new, by = c("n", "j")) %>%
   ggplot(aes(dr2nj.x, dr2nj.y)) +
   geom_point()
 
@@ -76,7 +76,7 @@ inner_join(dr2nj.sim, dr2nj.new, by = c("n", "j")) %>%
 ```{r}
 d.sim <- prs_all.sim(wt, 10, "lfenm", 0.3, 1, 1024)
 d.new <- prs_all.new(wt, 10, "lfenm", 0.3, 1, 1024)
-inner_join(d.sim$dfnj, d.new$dfnj, by = c("n", "j")) %>% 
+inner_join(d.sim$dfnj, d.new$dfnj, by = c("n", "j")) %>%
 
 
 
@@ -85,19 +85,13 @@ inner_join(d.sim$dfnj, d.new$dfnj, by = c("n", "j")) %>%
 
 ## compare cpu times
 
-prs.sim: simulation-based prs in which first a set of mutants is generated, then each wt vs mut pair comparison is performed before averaging over mutants.
+prs_all.sim: simulation-based prs in which first a set of mutants is generated, then each wt vs mut pair comparison is performed before averaging over mutants.
 
-prs.new:  instead of looping over mutations at a given site, prs.new calculates an fmat with nmut columns for each site. Thus f(i,j, m) is the force at i due to mutation m at a site j. 
+prs.new:  instead of looping over mutations at a given site, prs.new calculates an fmat with nmut columns for each site. Thus f(i,j, m) is the force at i due to mutation m at a site j.
 
 prs.fast: analytic averaging over mutations, thus avods generating individual mutants.
 
 
-```{r}
-microbenchmark(prs.sim(wt, 10, "lfenm", 0.3, 1, 1024),
-               prs.new(wt, 10, "lfenm", 0.3, 1, 1024),
-               prs.fast(wt, 0.3, 1),
-               times = 5)
-```
 
 ```{r}
 microbenchmark(prs_all.sim(wt, 10, "lfenm", 0.3, 1, 1024),
@@ -108,7 +102,7 @@ microbenchmark(prs_all.sim(wt, 10, "lfenm", 0.3, 1, 1024),
 
 
 ```{r}
-mutants <- get_mutants_table(wt, 20, "lfenm", 0.3, 1, 1024)
+mutants <- generate_mutants(wt, 20, "lfenm", 0.3, 1, 1024)
 perturbations <- generate_perturbations(wt, 20, 0.3, 1, 1024)
 microbenchmark(calculate_dr2ij.prs(mutants),
                calculate_dr2ij.new(wt, perturbations$fmat),
@@ -138,30 +132,30 @@ microbenchmark(calculate_dvsij.prs(mutants),
 
 ## Comparison of results
 
-prs.sim and prs.new give identical results which differ from prs.fast because of convergence (prs.fast is the asymptotic "true" average). 
+prs_all.sim and prs.new give identical results which differ from prs.fast because of convergence (prs.fast is the asymptotic "true" average).
 
 
 
 ```{r}
-dat.sim <- prs.sim(wt, 20, "lfenm", 0.3, 2, 1024)  %>% 
+dat.sim <- prs_all.sim(wt, 20, "lfenm", 0.3, 2, 1024)  %>%
   pivot_longer(cols = df2ij:de2ij,
                names_to = "response_type",
                values_to = "value")
 
-dat.new <- prs.new(wt, 20, "lfenm", 0.3, 2, 1024) %>% 
+dat.new <- prs.new(wt, 20, "lfenm", 0.3, 2, 1024) %>%
   pivot_longer(cols = df2ij:de2ij,
                names_to = "response_type",
                values_to = "value")
 
-dat.fast <- prs.fast(wt, 0.3, 2) %>% 
-  select(i, j, df2ij, dr2ij, de2ij) %>% 
+dat.fast <- prs.fast(wt, 0.3, 2) %>%
+  select(i, j, df2ij, dr2ij, de2ij) %>%
   pivot_longer(cols = df2ij:de2ij,
                names_to = "response_type",
                values_to = "value")
 
 dat <- inner_join(dat.new, dat.fast, by = c("i", "j", "response_type"), suffix = c(".new", ".fast"))
 
-p1 <- dat %>% 
+p1 <- dat %>%
   ggplot(aes(value.fast, value.new)) +
   geom_point() +
   geom_abline() +
@@ -170,7 +164,7 @@ p1 <- dat %>%
 
 dat <- inner_join(dat.new, dat.sim, by = c("i", "j", "response_type"), suffix = c(".new", ".sim"))
 
-p2 <- dat %>% 
+p2 <- dat %>%
   ggplot(aes(value.sim, value.new)) +
   geom_point() +
   geom_abline() +
@@ -183,5 +177,3 @@ plot_grid(p1, p2, ncol = 1)
 
 
 ```
-
-

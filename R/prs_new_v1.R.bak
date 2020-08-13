@@ -1,7 +1,7 @@
 
 #' calcualte all response matrices and profiles
 #'
-prs.new <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed = 241956) {
+prs_all.new <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed = 241956) {
   cmat <- get_cmat(wt)
   cmat_sqrt <- get_cmat_sqrt(wt)
   idmat <- diag(1, 3 * get_nsites(wt), 3 * get_nsites(wt))
@@ -59,7 +59,7 @@ calculate_s2i  <- function(f, amat) {
 #'
 prs.old <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min) {
 
-  mutants <- get_mutants_table(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min)
+  mutants <- generate_mutants(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min)
   mutants %>%
     calculate_dr2ij.prs() %>%
     inner_join(calculate_df2ij.prs(mutants)) %>%

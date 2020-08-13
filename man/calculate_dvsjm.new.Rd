@@ -4,8 +4,8 @@
 \alias{calculate_dvsjm.new}
 \title{calcualte stress energy change vector dvsjm}
 \usage{
-calculate_dvsjm.new(wt, nmut_per_site, mut_dl_sigma, mut_sd_min, seed = 241956)
+calculate_dvsjm.new(wt, nmut_per_site, mut_dl_sigma, mut_sd_min, seed)
 }
 \description{
-dvsjm is dvs at site j, for mutations m = c(1, 2, 3, ..., nmut_per_site)
+dvsjm is stress energy change dvs due to mutation at site j, for mutations m = c(1, 2, 3, ..., nmut_per_site)
 }

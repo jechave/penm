@@ -1,20 +1,8 @@
-#' Calculate response matrices using fmat multiplication
+
+#' Calcualte all response matrices and profiles, "new" prs method
 #'
-prs.new <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
 
-  perturbations <- generate_perturbations(wt, nmut_per_site, mut_dl_sigma, mut_sd_min, seed)
-  fmat <- perturbations$fmat
-  dlmat <- perturbations$dlmat
-
-  calculate_df2ij.new(wt, fmat) %>%
-    inner_join(calculate_dr2ij.new(wt, fmat)) %>%
-    inner_join(calculate_de2ij.new(wt, fmat))
-}
-
-#' calcualte all fast response matrices and profiles
-#'
 prs_all.new <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
-
 
   enm_param <- get_enm_param(wt)
   mut_param <- lst(nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min)
@@ -63,13 +51,16 @@ prs_all.new <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, 
 }
 
 
+# Generate perturbations (forces) -----------------------------------------
 
 
-#' Calculate matrices of perturbations (dlmat) and forces (fmat)
+
+#' Generate matrices of perturbations (dlmat) and forces (fmat)
 #'
 #' dlmat(edge, j, m) is the perturbation dl at edge e due to mutation m at site j
 #' fmat(i, j, m) is force at site i for mutation m = c(1,...nmut), at site j
 #'
+
 generate_perturbations <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
 
   mutation = seq(nmut)
@@ -96,26 +87,13 @@ generate_perturbations <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
 }
 
 
+# site-by-site response matrices ------------------------------------------
 
 
-#' Calciulate mean structural response matris dr2(i, j) using method "new"
+
+#' Calculate force response matrix df2(i, j) using method "new"
 #'
-calculate_dr2ij.new <- function(wt, fmat) {
-  calculate_s2ij(fmat, get_cmat(wt)) %>%
-    matrix_to_tibble() %>%
-    rename(dr2ij = mij)
-}
 
-#' Calciulate mean structural response matris de2(i, j) using method "new"
-#'
-calculate_de2ij.new <- function(wt, fmat) {
-  calculate_s2ij(fmat, get_cmat_sqrt(wt)) %>%
-    matrix_to_tibble() %>%
-    rename(de2ij = mij)
-}
-
-#' Calciulate mean structural response matris df2(i, j) using method "new"
-#'
 calculate_df2ij.new <- function(wt, fmat) {
   calculate_s2ij(fmat, diag(nrow(fmat))) %>%
     matrix_to_tibble() %>%
@@ -123,9 +101,30 @@ calculate_df2ij.new <- function(wt, fmat) {
 }
 
 
-
-#' Calculate response matrix given fmat
+#' Calculate energy response matrix de2(i, j) using method "new"
 #'
+
+calculate_de2ij.new <- function(wt, fmat) {
+  calculate_s2ij(fmat, get_cmat_sqrt(wt)) %>%
+    matrix_to_tibble() %>%
+    rename(de2ij = mij)
+}
+
+
+#' Calculate structure response matrix dr2(i, j) using method "new"
+#'
+
+calculate_dr2ij.new <- function(wt, fmat) {
+  calculate_s2ij(fmat, get_cmat(wt)) %>%
+    matrix_to_tibble() %>%
+    rename(dr2ij = mij)
+}
+
+
+
+#' Calculate response matrices given fmat
+#'
+
 calculate_s2ij<- function(fmat, amat) {
   nsites <- dim(fmat)[2]
   nmut <- dim(fmat)[3]
@@ -144,6 +143,8 @@ calculate_s2ij<- function(fmat, amat) {
 }
 
 
+#' Calculate stress energy response matrix dvs(i, j) using method "new"
+#'
 
 calculate_dvsij.new <- function(wt, dlmat) {
   # structural differences, site analysis
@@ -192,6 +193,7 @@ calculate_dvsi.noindel.new <- function(wt, dlij) {
 #'
 #'dvsjm is stress energy change dvs due to mutation at site j, for mutations m = c(1, 2, 3, ..., nmut_per_site)
 #'
+
 calculate_dvsjm.new <- function(wt, nmut_per_site, mut_dl_sigma, mut_sd_min,  seed) {
 
   nsites <- get_nsites(wt)
@@ -213,11 +215,14 @@ calculate_dvsjm.new <- function(wt, nmut_per_site, mut_dl_sigma, mut_sd_min,  se
 }
 
 
-# Mode-site response matrices ---------------------------------------------
+
+# mode-by-site response matrices ------------------------------------------
 
 
-#' Calculate df2nj , mode analysis
+
+#' Calculate mode-by-site force response matrix df2(n, j) using method "new"
 #'
+
 calculate_df2nj.new <- function(wt, fmat) {
   # structural differences, mode analysis
   calculate_fnmat(wt, fmat)^2 %>%
@@ -228,6 +233,7 @@ calculate_df2nj.new <- function(wt, fmat) {
 
 #' Calculate fmat in normal mode representation
 #'
+
 calculate_fnmat <- function(wt, fmat) {
   nsites <- dim(fmat)[2]
   nmut <- dim(fmat)[3]
@@ -239,8 +245,9 @@ calculate_fnmat <- function(wt, fmat) {
 }
 
 
-#' Calculate de2nj, mode analysis
+#' Calculate mode-by-site energy response matrix de2(n, j) using method "new"
 #'
+
 calculate_de2nj.new <- function(wt, fmat) {
   # structural differences, mode analysis
 
@@ -255,8 +262,9 @@ calculate_de2nj.new <- function(wt, fmat) {
 
 }
 
-#' Calculate dr2nj, mode analysis
+#' Calculate mode-by-site structure response matrix dr2(n, j) using method "new"
 #'
+
 calculate_dr2nj.new <- function(wt, fmat) {
   # structural differences, modr analysis
 

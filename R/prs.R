@@ -1,20 +1,10 @@
-# simulation method -------------------------------------------------------
 
-prs.sim <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
-  mutants <- get_mutants_table(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed)
-
-  mutants %>%
-    calculate_df2ij.prs() %>%
-    inner_join(calculate_dr2ij.prs(mutants)) %>%
-    inner_join(calculate_de2ij.prs(mutants))
-}
-
-
-#' calcualte all fast response matrices and profiles
+#' Calculate all response matrices and profiles, "simulation" prs method
 #'
+
 prs_all.sim <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
 
-  mutants <- get_mutants_table(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed)
+  mutants <- generate_mutants(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed)
 
   enm_param <- get_enm_param(wt)
   mut_param <- lst(nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min)
@@ -60,9 +50,15 @@ prs_all.sim <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, 
 }
 
 
-#' get mutant table
+
+# generate mutants --------------------------------------------------------
+
+
+
+#' Generarte table of single-point mutants
 #'
-get_mutants_table <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
+
+generate_mutants <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
   mutation <- seq(from = 0, to = nmut_per_site)
   j <- get_site(wt)
   # get mutants
@@ -74,25 +70,13 @@ get_mutants_table <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd
   mutants
 }
 
-# Site-site response matrices ---------------------------------------------
+
+# site-by-site response matrices ------------------------------------------
 
 
 
-
-calculate_dr2ij.prs <- function(mutants) {
-  result <- mutants %>%
-    filter(mutation > 0) %>%  # mutation == 0  is the "no-mutation" case
-    mutate(i = map(wt, get_site),
-           dr2ijm = map2(wt, mut, calculate_dr2i)) %>%
-    select(-wt, -mut) %>%
-    unnest(c(i, dr2ijm)) %>%
-    select(i, j, mutation, dr2ijm) %>%
-    group_by(i, j) %>%
-    summarise(dr2ij = mean(dr2ijm)) %>%  # average over mutations
-    ungroup()
-
-  result
-}
+#' Calculate site-by-site force matrix df2(i, j) using method "sim"
+#'
 
 calculate_df2ij.prs <- function(mutants) {
   result <- mutants %>%
@@ -109,6 +93,9 @@ calculate_df2ij.prs <- function(mutants) {
 
   result
 }
+
+#' Calculate site-by-site  energy response matrix de2(i, j) using method "sim"
+#'
 
 calculate_de2ij.prs <- function(mutants) {
   # structural differences, site analysis
@@ -129,6 +116,28 @@ calculate_de2ij.prs <- function(mutants) {
   result
 }
 
+#' Calculate site-by-site structure response matrix dr2(i, j) using method "sim"
+#'
+
+calculate_dr2ij.prs <- function(mutants) {
+  result <- mutants %>%
+    filter(mutation > 0) %>%  # mutation == 0  is the "no-mutation" case
+    mutate(i = map(wt, get_site),
+           dr2ijm = map2(wt, mut, calculate_dr2i)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(i, dr2ijm)) %>%
+    select(i, j, mutation, dr2ijm) %>%
+    group_by(i, j) %>%
+    summarise(dr2ij = mean(dr2ijm)) %>%  # average over mutations
+    ungroup()
+
+  result
+}
+
+
+#' Calculate site-by-site stress energy response matrix dvs(i, j) using method "sim"
+#'
+
 calculate_dvsij.prs <- function(mutants) {
   # structural differences, site analysis
   result <- mutants %>%
@@ -148,11 +157,15 @@ calculate_dvsij.prs <- function(mutants) {
 
 
 
-# Mode-site response matrices ---------------------------------------------
+
+# mode by site response matrices ------------------------------------------
 
 
-#' Calculate df2nj , mode analysis
+
+
+#' Calculate mode-by-site force response matrix df2(n, j) using method "sim"
 #'
+
 calculate_df2nj.prs <- function(mutants) {
   # structural differences, mode analysis
 
@@ -171,8 +184,9 @@ calculate_df2nj.prs <- function(mutants) {
 }
 
 
-#' Calculate de2nj, mode analysis
+#' Calculate mode-by-site energy response matrix de2(n, j) using method "sim"
 #'
+
 calculate_de2nj.prs <- function(mutants) {
   # structural differences, mode analysis
 
@@ -190,8 +204,9 @@ calculate_de2nj.prs <- function(mutants) {
   result
 }
 
-#' Calculate dr2nj , mode analysis
+#' Calculate mode-by-site structure response matrix dr2(n, j) using method "sim"
 #'
+
 calculate_dr2nj.prs <- function(mutants) {
   # structural differences, mode analysis
 
@@ -212,6 +227,9 @@ calculate_dr2nj.prs <- function(mutants) {
 
 
 # pair comparison ---------------------------------------------------------
+
+#' Calculate dvsi, site-dependent stress energy
+#'
 
 calculate_dvsi.noindel <- function(wt, mut) {
   gwt <- get_graph(wt)
@@ -239,12 +257,3 @@ calculate_dvsi.noindel <- function(wt, mut) {
 
   dvsi
 }
-
-
-
-
-
-
-
-
-

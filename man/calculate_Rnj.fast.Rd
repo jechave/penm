@@ -2,10 +2,10 @@
 % Please edit documentation in R/prs_fast.R
 \name{calculate_Rnj.fast}
 \alias{calculate_Rnj.fast}
-\title{Calculate fast response matrix}
+\title{Calculate fast response matrix, general}
 \usage{
 calculate_Rnj.fast(wt, avector, mut_dl_sigma, mut_sd_min)
 }
 \description{
-Calculate fast response matrix
+Calculate fast response matrix, general
 }
