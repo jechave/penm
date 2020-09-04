@@ -38,49 +38,15 @@ mut <- get_mutant_site(wt, 80, 1)
 
 ## temp tests
 
-```{r}
 
-mutants <- generate_mutants(wt, 2, "lfenm", 0.3, 1, 1024)
-perturbations <- generate_perturbations(wt, 2, 0.3, 1, 1024)
-
-df2nj.sim <- calculate_df2nj.prs(mutants)
-df2nj.new <- calculate_df2nj.new(wt, perturbations$fmat)
-
-inner_join(df2nj.sim, df2nj.new, by = c("n", "j")) %>%
-  ggplot(aes(df2nj.x, df2nj.y)) +
-  geom_point()
-
-
-
-de2nj.sim <- calculate_de2nj.prs(mutants)
-de2nj.new <- calculate_de2nj.new(wt, perturbations$fmat)
-
-inner_join(de2nj.sim, de2nj.new, by = c("n", "j")) %>%
-  ggplot(aes(de2nj.x, de2nj.y)) +
-  geom_point()
-
-
-dr2nj.sim <- calculate_dr2nj.prs(mutants)
-dr2nj.new <- calculate_dr2nj.new(wt, perturbations$fmat)
-
-inner_join(dr2nj.sim, dr2nj.new, by = c("n", "j")) %>%
-  ggplot(aes(dr2nj.x, dr2nj.y)) +
-  geom_point()
-
-```
 
 
 
 ## compare values
 
-```{r}
-d.sim <- prs_all.sim(wt, 10, "lfenm", 0.3, 1, 1024)
-d.new <- prs_all.new(wt, 10, "lfenm", 0.3, 1, 1024)
-inner_join(d.sim$dfnj, d.new$dfnj, by = c("n", "j")) %>%
 
 
 
-```
 
 
 ## compare cpu times
