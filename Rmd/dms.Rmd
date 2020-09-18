@@ -1,0 +1,222 @@
+---
+title: "Double Mutational Scanning (DMS)"
+author: "Julian Echave"
+date: "9/18/2020"
+output: ioslides_presentation
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+
+```{r}
+# Load libraries and functions
+library(here)
+library(bio3d)
+library(tidyverse)
+library(cowplot)
+library(penm)
+library(jefuns)
+library(Matrix)
+
+library(patchwork)
+
+library(microbenchmark) # benchmarking times
+library(tictoc)
+library(profvis) # profiling
+```
+
+```{r}
+# Set parameters
+pdb_id = "2acy_A"
+# set wt
+pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
+wt <- set_enm(pdb,  "ca",  "anm",  10.5,  F)
+```
+
+```{r}
+# calculate dmsmat with increasing nmut
+
+get_dmsmat_new <- function(wt, nmut, mut_dl_sigma = 0.1, mut_sd_min = 1, seed = 1024) {
+  t1 <- tic()
+  dmsmat <- dmsmat_dms.new(wt, nmut, mut_dl_sigma, mut_sd_min, seed)
+  t2 <- toc(quiet = T)
+  t = t2$toc - t2$tic
+  lst(dmsmat, t)
+  
+}
+
+get_dmsmat_fast <- function(wt,  mut_dl_sigma = 0.1, mut_sd_min = 1) {
+  t1 <- tic()
+  dmsmat <- dmsmat_dms.fast(wt, mut_dl_sigma, mut_sd_min)
+  t2 <- toc(quiet = T)
+  t = t2$toc - t2$tic
+  lst(dmsmat, t)
+}
+
+
+ dms_matrices <- tibble(nmut = c(10, 20, 50, 100, 200),
+               wt = lst(wt, wt, wt, wt, wt)) %>%
+   mutate(dms_new = map2(wt, nmut, get_dmsmat_new)) %>%
+   mutate(dms_fast = map(wt, get_dmsmat_fast))
+
+
+
+dms_matrices <- dms_matrices %>% 
+  mutate(t_new = map_dbl(dms_new, "t"),
+         t_fast = map_dbl(dms_fast, "t"),
+         dmsmat_new = map(dms_new, "dmsmat"),
+         dmsmat_fast = map(dms_fast, "dmsmat")) %>% 
+  select(-wt, -dms_fast, -dms_new)
+
+```
+
+## dms matrices
+dms(i,j) is the maximum possible compensation between mutations at i and j
+
+```{r}
+dmsmat_new <- filter(dms_matrices, nmut == 10)$dmsmat_new[[1]]
+dmsmat_fast <- filter(dms_matrices, nmut == 10)$dmsmat_fast[[1]]
+
+dat <- matrix_to_tibble(dmsmat_new, value_name = "dmsij_new") %>% 
+  inner_join(matrix_to_tibble(dmsmat_fast, value_name = "dmsij_fast")) 
+
+
+p1 <- plot_matrix(dmsmat_new) + ggtitle("dmsmat_new")
+p2 <- plot_matrix(dmsmat_fast) + ggtitle("dmsmat_fast")
+p3 <- dat %>% 
+  ggplot(aes(dmsij_fast, dmsij_new)) +
+  geom_point() +
+  geom_smooth() +
+  geom_abline(aes(intercept = 0, slope = 1, color = "y = x")) +
+  theme_minimal()
+
+(p1 / p2) | p3
+```
+
+## Comparison of dms profiles
+dms profiles are the marginal averages of the dms matrices
+
+```{r}
+pi1 <- dat %>% 
+  group_by(i) %>% 
+  summarise(dmsi_new = mean(dmsij_new),
+            dmsi_fast = mean(dmsij_fast)) %>% 
+  pivot_longer(
+    cols = c("dmsi_new", "dmsi_fast"),
+    names_to = "method",
+    names_prefix = "dmsi_",
+    values_to = "dmsi"
+  ) %>% 
+  ggplot(aes(i, dmsi, color = method)) +
+  geom_line()  +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+pi2 <- dat %>%
+  group_by(i) %>% 
+  summarise(dmsi_new = mean(dmsij_new),
+            dmsi_fast = mean(dmsij_fast)) %>% 
+  ggplot(aes(dmsi_fast, dmsi_new)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  geom_abline() +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+pi <- plot_grid(pi1, pi2, rel_widths = c(2, 1))
+
+
+pj1 <- dat %>% 
+  group_by(j) %>% 
+  summarise(dmsj_new = mean(dmsij_new),
+            dmsj_fast = mean(dmsij_fast)) %>% 
+  pivot_longer(
+    cols = c("dmsj_new", "dmsj_fast"),
+    names_to = "method",
+    names_prefix = "dmsj_",
+    values_to = "dmsj"
+  ) %>% 
+  ggplot(aes(j, dmsj, color = method)) +
+  geom_line()  +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+pj2 <- dat %>% 
+  group_by(j) %>% 
+  summarise(dmsj_new = mean(dmsij_new),
+            dmsj_fast = mean(dmsij_fast)) %>% 
+  ggplot(aes(dmsj_fast, dmsj_new)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  geom_abline() +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+pj <- plot_grid(pj1, pj2, rel_widths = c(2, 1))
+
+
+pi / pj
+
+
+```
+
+
+## Comparison of cpu times
+
+```{r}
+# cpu times
+dms_matrices %>% 
+  select(nmut, t_new, t_fast) %>% 
+  mutate(t_fast = mean(t_fast)) %>% 
+  mutate(t_rel = t_new / t_fast) %>% 
+  pivot_longer(
+    cols = c("t_new", "t_fast", "t_rel"),
+    names_to = "method",
+    values_to = "cpu_time"
+  ) %>% 
+  ggplot(aes(nmut, cpu_time)) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(~ method) +
+  theme_minimal()
+```
+
+
+## Convergence with increasing nmut
+
+```{r}
+# convergence plots
+
+rho <- function(m1, m2) {
+  cor(as.vector(m1), as.vector(m2))
+}
+
+rhoi <- function(m1, m2) {
+  cor(rowMeans(m1), rowMeans(m2))
+}
+
+rhoj <- function(m1, m2) {
+  cor(colMeans(m1), colMeans(m2))
+}
+
+dms_matrices %>% 
+  group_by(nmut) %>% 
+  summarise(rho = map2_dbl(dmsmat_new, dmsmat_fast, rho),
+            rhoi = map2_dbl(dmsmat_new, dmsmat_fast, rhoi),
+            rhoj = map2_dbl(dmsmat_new, dmsmat_fast, rhoj)
+            ) %>% 
+  pivot_longer(
+    cols = c(rho, rhoi, rhoj),
+    names_to = "measure",
+    values_to = "rho"
+  ) %>% 
+  ggplot(aes(nmut, rho, color = measure)) +
+  geom_point() +
+  geom_smooth(se  = F) +
+  theme_minimal()
+
+```
+

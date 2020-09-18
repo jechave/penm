@@ -31,12 +31,29 @@ library(profvis) # profiling
 pdb_id = "2acy_A"
 # set wt
 pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
-wt <- set_enm(pdb,  "ca",  "ming_wall",  10.5,  F)
+wt <- set_enm(pdb,  "ca",  "anm",  10.5,  F)
 mut <- get_mutant_site(wt, 80, 1)
 ```
 
 
 ## temp tests
+```{r}
+nmut <- 100
+mut_dl_sigma <- 0.3
+mut_sd_min <- 1
+tic()
+prs <- prs_dr2ij.new(wt, nmut, "lfenm", mut_dl_sigma, mut_sd_min, 1024)
+toc()
+tic()
+dms <- dmsmat <- dmsmat_dms.new(wt, nmut, mut_dl_sigma, mut_sd_min, 1024)
+toc()
+
+
+```
+
+
+
+
 
 
 
