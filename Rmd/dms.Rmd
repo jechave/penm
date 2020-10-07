@@ -32,9 +32,57 @@ library(profvis) # profiling
 # Set parameters
 pdb_id = "2acy_A"
 # set wt
-pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
+pdb <- read.pdb(here("data-raw/2l8m_A.pdb"))
 wt <- set_enm(pdb,  "ca",  "anm",  10.5,  F)
+
+
 ```
+
+```{r}
+m1 <- dmsmat_dms.new(wt,2, 0.1, 1, 1024)
+str(m1)
+m2 <- dmsmat_dms.new_v2(wt, 2, 0.1, 1, 1024)
+identical(m1$dmsmat, m2$dmsmat)
+str(m2)
+```
+
+## temp
+```{r}
+
+
+# profvis(dmsmat_dms.new(wt, 10, 0.1, 1, 1024))
+# profvis(dmsmat_dms_old.new(wt, 10, 0.1, 1, 1024))
+
+microbenchmark(dmsmat_dms.new(wt, 20, 0.1, 1, 1024), 
+               dmsmat_dms.fast(wt, 0.1, 1),
+               times = 1)
+
+
+
+
+```
+
+```{r}
+tic()
+m1 <-  calculate_sisjmin.fast(wt, get_cmat(wt), 0.1, 1)
+toc()
+profvis(calculate_sisjmin.fast(wt, get_cmat(wt), 0.1, 1))
+
+# m2 <-  calculate_sisjmin.fast_v1(wt, get_cmat(wt), 0.1, 1)
+# identical(m1, m2)
+# toc()
+```
+
+```{r}
+microbenchmark(
+  calculate_sisjmin.fast(wt, get_cmat(wt), 0.1, 1),
+  calculate_sisjmin.fast_v1(wt, get_cmat(wt), 0.1, 1),
+  times = 5
+)
+```
+
+
+
 
 ```{r}
 # calculate dmsmat with increasing nmut
