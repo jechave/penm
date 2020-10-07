@@ -44,6 +44,7 @@ str(m1)
 m2 <- dmsmat_dms.new_v2(wt, 2, 0.1, 1, 1024)
 identical(m1$dmsmat, m2$dmsmat)
 str(m2)
+
 ```
 
 ## temp
