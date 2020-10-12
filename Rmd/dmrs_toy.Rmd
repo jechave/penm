@@ -1,0 +1,112 @@
+---
+title: "toy dmrs"
+author: "Julian Echave"
+date: "10/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## toy problem
+```{r}
+
+admrs_mean_min <- function(dd, s) {
+  nx <- nrow(dd)
+  ny <- ncol(dd)
+  ax  <-  sqrt(nx) * s
+  ay <- sqrt(ny) * s
+  m <- dd %*% t(dd)
+  - ax * ay * sqrt(sum(diag(m)) / nx) # sqrt(mean(min(dri.drj)^2))
+}
+
+admrs_min_min <- function(dd, s) {
+  nx <- nrow(dd)
+  ny <- ncol(dd)
+  ax  <-  sqrt(nx) * s
+  ay <- sqrt(ny) * s
+  m <- dd %*% t(dd)
+  - ax * ay * sqrt(eigen(m)$values[1]) # minimum dri.drj
+}
+
+
+sdmrs_mean_min <- function(dd, nmut, seed, s) {
+  # simulation-based: try different x and y
+  set.seed(seed)
+  nx <- nrow(dd)
+  ny <- ncol(dd)
+  x = matrix(NA, nx, nmut)
+  y = matrix(NA, ny, nmut)
+  for (mx in seq(nmut)) {
+    x[,mx] <- rnorm(nx, 0, 1)
+    # x[,mx] <- runif(nx, -1, 1)
+    x[,mx] = x[,mx] / sqrt(sum(x[,mx]^2)) * sqrt(nx) * s
+  }
+  for (my in seq(nmut)) {
+    y[,my] <- rnorm(ny, 0, 1)
+    # y[,my] <- runif(ny, -1, 1)
+    y[,my] = y[,my] * sqrt(ny) * s / sqrt(sum(y[,my]^2))
+  }
+  
+  m <- t(x) %*% dd %*% y
+  
+  -sqrt(mean(matrixStats::rowMaxs(m^2)))
+}
+
+sdmrs_min_min <- function(dd, nmut, seed, s) {
+  # simulation-based: try different x and y
+  set.seed(seed)
+  nx <- nrow(dd)
+  ny <- ncol(dd)
+  x = matrix(NA, nx, nmut)
+  y = matrix(NA, ny, nmut)
+  for (mx in seq(nmut)) {
+    x[,mx] <- rnorm(nx, 0, 1)
+    # x[,mx] <- runif(nx, -1, 1)
+    x[,mx] = x[,mx] / sqrt(sum(x[,mx]^2)) * sqrt(nx) * s
+  }
+  for (my in seq(nmut)) {
+    y[,my] <- rnorm(ny, 0, 1)
+    # y[,my] <- runif(ny, -1, 1)
+    y[,my] = y[,my] * sqrt(ny) * s / sqrt(sum(y[,my]^2))
+  }
+  
+  m <- t(x) %*% dd %*% y
+  
+  min(m)
+}
+
+s = 0.1
+nx <- 2
+ny <- 3
+set.seed(1)
+dd <-  matrix(runif(nx * ny, -1, 1), nx, ny)
+
+# what's minimum of x' d  y, subject to y'y = ay^2 and x'x = ax^2?
+nmut = seq(from = 10, to = 5000, by = 100)
+dd_list = rep(list(dd), length(nmut))
+
+dat <- tibble(nmut, dd = dd_list) %>% 
+  mutate(seed = nmut)  %>% 
+  mutate(
+    a_min_min = map_dbl(dd, admrs_min_min, s = 0.1),
+    s_min_min = pmap_dbl(lst(dd, nmut, seed), sdmrs_min_min, s = 0.1),
+    a_mean_min = map_dbl(dd, admrs_mean_min, s = 0.1),
+    s_mean_min = pmap_dbl(lst(dd, nmut, seed), sdmrs_mean_min, s = 0.1)
+  )
+
+
+dat %>% 
+  pivot_longer(
+    cols = c(a_min_min, a_mean_min, s_min_min, s_mean_min),
+    names_to = "method",
+    values_to = "value"
+  ) %>% 
+  ggplot(aes(nmut, value, color = method)) +
+  geom_point() +
+  geom_smooth()  +
+  theme_minimal()
+
+
+```

@@ -32,30 +32,111 @@ library(profvis) # profiling
 # Set parameters
 pdb_id = "2acy_A"
 # set wt
-pdb <- read.pdb(here("data-raw/2l8m_A.pdb"))
+pdb <- read.pdb(here("data-raw/2acy_A.pdb"))
 wt <- set_enm(pdb,  "ca",  "anm",  10.5,  F)
 
 
 ```
 
+
+
+
+## test dms
+
 ```{r}
-m1 <- dmsmat_dms.new(wt,2, 0.1, 1, 1024)
-str(m1)
-m2 <- dmsmat_dms.new_v2(wt, 2, 0.1, 1, 1024)
-identical(m1$dmsmat, m2$dmsmat)
-str(m2)
+tic()
+admrs <- dmrs_analytical(wt, 0.1, 1, option = "mean_min")
+toc()
+
+tic()
+print("sim 50")
+sdmrs_50 <- dmrs_simulation(wt,50, 0.1, 1, 1024, "mean_min")
+toc()
+
+tic()
+print("sim  100")
+sdmrs_100 <- dmrs_simulation(wt,100, 0.1, 1, 2048, "mean_min")
+toc()
+
+tic()
+print("sim  200")
+sdmrs_200 <- dmrs_simulation(wt,200, 0.1, 1, 3 * 1024, "mean_min")
+toc()
+
+
 
 ```
 
+
+```{r}
+dmrs_df <- matrix_to_tibble(admrs, value_name = "admrs") %>% 
+  inner_join(matrix_to_tibble(sdmrs_50$dmrs_matrix, value_name = "sdmrs_50"))  %>% 
+  inner_join(matrix_to_tibble(sdmrs_100$dmrs_matrix, value_name = "sdmrs_100"))  %>% 
+  inner_join(matrix_to_tibble(sdmrs_200$dmrs_matrix, value_name = "sdmrs_200")) 
+
+
+dmrs_df %>% 
+  pivot_longer(
+    cols = c(sdmrs_50, sdmrs_100, sdmrs_200),
+    names_to = "method",
+    values_to = "sdmrs"
+  ) %>% 
+  ggplot(aes(admrs, sdmrs, color = method)) +
+  geom_point(size = .3) +
+  # geom_smooth() +
+  geom_abline() +
+  facet_grid(. ~ method) +
+  NULL 
+
+
+dmrs_df %>% 
+  pivot_longer(
+    cols = c(sdmrs_50, sdmrs_100),
+    names_to = "method",
+    values_to = "sdmrs"
+  ) %>% 
+  ggplot(aes(sdmrs_200, sdmrs, color = method)) +
+  geom_point(size = .3) +
+  # geom_smooth() +
+  geom_abline() +
+  facet_grid(. ~ method) +
+  NULL 
+
+
+
+dmrs_df %>% 
+  pivot_longer(
+    cols = c(sdmrs_50, sdmrs_100, sdmrs_200),
+    names_to = "method",
+    values_to = "sdmrs"
+  ) %>% 
+  group_by(method) %>% 
+  summarise(r = cor(admrs, sdmrs), 
+            s = cor(admrs, sdmrs, method = "spearman")) 
+
+
+dmrs_df %>% 
+  pivot_longer(
+    cols = c(sdmrs_50, sdmrs_100),
+    names_to = "method",
+    values_to = "sdmrs"
+  ) %>% 
+  group_by(method) %>% 
+  summarise(r = cor(admrs, sdmrs), 
+            r200 = cor(sdmrs_200, sdmrs),
+            s = cor(admrs, sdmrs, method = "spearman"),
+            s200 = cor(sdmrs_200, sdmrs)) 
+
+```
 ## temp
 ```{r}
 
 
-# profvis(dmsmat_dms.new(wt, 10, 0.1, 1, 1024))
-# profvis(dmsmat_dms_old.new(wt, 10, 0.1, 1, 1024))
+# profvis(dmrs_simulation(wt, 10, 0.1, 1, 1024))
+# profvis(dmrs_matrix_dms_old.new(wt, 10, 0.1, 1, 1024))
 
-microbenchmark(dmsmat_dms.new(wt, 20, 0.1, 1, 1024), 
-               dmsmat_dms.fast(wt, 0.1, 1),
+microbenchmark(dmrs_simulation(wt, 20, 0.1, 1, 1024), 
+               dmrs_analytical(wt, 0.1, 1),
                times = 1)
 
 
@@ -63,61 +144,44 @@ microbenchmark(dmsmat_dms.new(wt, 20, 0.1, 1, 1024),
 
 ```
 
-```{r}
-tic()
-m1 <-  calculate_sisjmin.fast(wt, get_cmat(wt), 0.1, 1)
-toc()
-profvis(calculate_sisjmin.fast(wt, get_cmat(wt), 0.1, 1))
 
-# m2 <-  calculate_sisjmin.fast_v1(wt, get_cmat(wt), 0.1, 1)
-# identical(m1, m2)
-# toc()
-```
-
-```{r}
-microbenchmark(
-  calculate_sisjmin.fast(wt, get_cmat(wt), 0.1, 1),
-  calculate_sisjmin.fast_v1(wt, get_cmat(wt), 0.1, 1),
-  times = 5
-)
-```
 
 
 
 
 ```{r}
-# calculate dmsmat with increasing nmut
+# calculate dmrs_matrix with increasing nmut
 
-get_dmsmat_new <- function(wt, nmut, mut_dl_sigma = 0.1, mut_sd_min = 1, seed = 1024) {
+get_dmrs_matrix_new <- function(wt, nmut, mut_dl_sigma = 0.1, mut_sd_min = 1, seed = 1024) {
   t1 <- tic()
-  dmsmat <- dmsmat_dms.new(wt, nmut, mut_dl_sigma, mut_sd_min, seed)
+  dmrs_matrix <- dmrs_simulation(wt, nmut, mut_dl_sigma, mut_sd_min, seed)
   t2 <- toc(quiet = T)
   t = t2$toc - t2$tic
-  lst(dmsmat, t)
+  lst(dmrs_matrix, t)
   
 }
 
-get_dmsmat_fast <- function(wt,  mut_dl_sigma = 0.1, mut_sd_min = 1) {
+get_dmrs_matrix_fast <- function(wt,  mut_dl_sigma = 0.1, mut_sd_min = 1) {
   t1 <- tic()
-  dmsmat <- dmsmat_dms.fast(wt, mut_dl_sigma, mut_sd_min)
+  dmrs_matrix <- dmrs_analytical(wt, mut_dl_sigma, mut_sd_min)
   t2 <- toc(quiet = T)
   t = t2$toc - t2$tic
-  lst(dmsmat, t)
+  lst(dmrs_matrix, t)
 }
 
 
  dms_matrices <- tibble(nmut = c(10, 20, 50, 100, 200),
                wt = lst(wt, wt, wt, wt, wt)) %>%
-   mutate(dms_new = map2(wt, nmut, get_dmsmat_new)) %>%
-   mutate(dms_fast = map(wt, get_dmsmat_fast))
+   mutate(dms_new = map2(wt, nmut, get_dmrs_matrix_new)) %>%
+   mutate(dms_fast = map(wt, get_dmrs_matrix_fast))
 
 
 
 dms_matrices <- dms_matrices %>% 
   mutate(t_new = map_dbl(dms_new, "t"),
          t_fast = map_dbl(dms_fast, "t"),
-         dmsmat_new = map(dms_new, "dmsmat"),
-         dmsmat_fast = map(dms_fast, "dmsmat")) %>% 
+         dmrs_matrix_new = map(dms_new, "dmrs_matrix"),
+         dmrs_matrix_fast = map(dms_fast, "dmrs_matrix")) %>% 
   select(-wt, -dms_fast, -dms_new)
 
 ```
@@ -126,15 +190,15 @@ dms_matrices <- dms_matrices %>%
 dms(i,j) is the maximum possible compensation between mutations at i and j
 
 ```{r}
-dmsmat_new <- filter(dms_matrices, nmut == 10)$dmsmat_new[[1]]
-dmsmat_fast <- filter(dms_matrices, nmut == 10)$dmsmat_fast[[1]]
+dmrs_matrix_new <- filter(dms_matrices, nmut == 10)$dmrs_matrix_new[[1]]
+dmrs_matrix_fast <- filter(dms_matrices, nmut == 10)$dmrs_matrix_fast[[1]]
 
-dat <- matrix_to_tibble(dmsmat_new, value_name = "dmsij_new") %>% 
-  inner_join(matrix_to_tibble(dmsmat_fast, value_name = "dmsij_fast")) 
+dat <- matrix_to_tibble(dmrs_matrix_new, value_name = "dmsij_new") %>% 
+  inner_join(matrix_to_tibble(dmrs_matrix_fast, value_name = "dmsij_fast")) 
 
 
-p1 <- plot_matrix(dmsmat_new) + ggtitle("dmsmat_new")
-p2 <- plot_matrix(dmsmat_fast) + ggtitle("dmsmat_fast")
+p1 <- plot_matrix(dmrs_matrix_new) + ggtitle("dmrs_matrix_new")
+p2 <- plot_matrix(dmrs_matrix_fast) + ggtitle("dmrs_matrix_fast")
 p3 <- dat %>% 
   ggplot(aes(dmsij_fast, dmsij_new)) +
   geom_point() +
@@ -253,9 +317,9 @@ rhoj <- function(m1, m2) {
 
 dms_matrices %>% 
   group_by(nmut) %>% 
-  summarise(rho = map2_dbl(dmsmat_new, dmsmat_fast, rho),
-            rhoi = map2_dbl(dmsmat_new, dmsmat_fast, rhoi),
-            rhoj = map2_dbl(dmsmat_new, dmsmat_fast, rhoj)
+  summarise(rho = map2_dbl(dmrs_matrix_new, dmrs_matrix_fast, rho),
+            rhoi = map2_dbl(dmrs_matrix_new, dmrs_matrix_fast, rhoi),
+            rhoj = map2_dbl(dmrs_matrix_new, dmrs_matrix_fast, rhoj)
             ) %>% 
   pivot_longer(
     cols = c(rho, rhoi, rhoj),
