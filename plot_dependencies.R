@@ -4,15 +4,13 @@ library(mvbutils)
 remove(list = ls())
 # source("R/enm.R")
 # source("R/penm.R")
-source("R/penm_analysis.R")
+# source("R/penm_analysis.R")
 
-source("R/prs.R")
 source("R/prs_new.R")
 source("R/prs_fast.R")
 
 fw <- foodweb()
 
-foodweb(prune = c("prs_all.sim"))
 foodweb(prune = c("prs_all.new"))
 foodweb(prune = c("prs_all.fast"))
 

@@ -133,3 +133,41 @@ Note that $\lambda_y$ must not be equal to an eigenvalue of $\Y'\Y$ for the inve
 $$
 
 $$
+
+## using least squares?
+
+What's the minimum of:
+$$
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\Y}{\mathbf{Y}}
+F(\x,\y) = (\X\x + \Y \y)'(\X\x + \Y \y)
+$$
+ given $\x$?
+$$
+F(\x,\y) = \x'\X'\X\x + \y'\Y'\Y\y + 2\x'\X'\Y\y
+$$
+
+
+$$
+\newcommand{\lx}{\mathbf{l}_x}
+L(\x,\y) =\y'\Y'\Y\y + 2\x'\X'\Y\y - \lx'(\x - \x_0)-\lambda_y(\y'\y-\alpha_y^2)
+$$
+
+The minimum satisfies:
+$$
+\begin{eqnarray}
+\y &=& 	-(\Y'\Y)^{-1}\Y'\X\x \\ 
+\end{eqnarray}
+$$
+which is the least-square solution of the overdetermined system of equations $\Y \y = - \X x$. Replacing the last equation in $F$, we find:
+$$
+F = \x´\X'[1 - (\Y'\Y)^{-1}\Y']^2\X\x
+$$
+
+### mean of min
+
+$$
+<F> = \texttt{Tr}(\X'[1 - (\Y'\Y)^{-1}\Y']^2\X<\x\x'>)\\
+=\alpha_x^2 \texttt{Tr}(\X'[1 - (\Y'\Y)^{-1}\Y']^2\X)/n_x
+$$
+

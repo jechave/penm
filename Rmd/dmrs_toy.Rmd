@@ -9,6 +9,13 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(tidyverse)
+library(here)
+library(cowplot)
+```
+
+
 ## toy problem
 ```{r}
 
@@ -79,7 +86,7 @@ sdmrs_min_min <- function(dd, nmut, seed, s) {
 
 s = 0.1
 nx <- 2
-ny <- 3
+ny <- 5
 set.seed(1)
 dd <-  matrix(runif(nx * ny, -1, 1), nx, ny)
 
@@ -90,11 +97,22 @@ dd_list = rep(list(dd), length(nmut))
 dat <- tibble(nmut, dd = dd_list) %>% 
   mutate(seed = nmut)  %>% 
   mutate(
+    ddt = map(dd, t)) %>% 
+  mutate(
     a_min_min = map_dbl(dd, admrs_min_min, s = 0.1),
-    s_min_min = pmap_dbl(lst(dd, nmut, seed), sdmrs_min_min, s = 0.1),
+    a_min_min_t = map_dbl(ddt, admrs_min_min, s = 0.1),
+    s_min_min = pmap_dbl(list(dd, nmut, seed), sdmrs_min_min, s = 0.1),
+    s_min_min_t = pmap_dbl(list(ddt, nmut, seed), sdmrs_min_min, s = 0.1),
     a_mean_min = map_dbl(dd, admrs_mean_min, s = 0.1),
-    s_mean_min = pmap_dbl(lst(dd, nmut, seed), sdmrs_mean_min, s = 0.1)
+    a_mean_min_t = map_dbl(ddt, admrs_mean_min, s = 0.1),
+    s_mean_min = pmap_dbl(list(dd, nmut, seed), sdmrs_mean_min, s = 0.1),
+    s_mean_min_t = pmap_dbl(list(ddt, nmut, seed), sdmrs_mean_min, s = 0.1)
   )
+
+dat %>% 
+  ggplot(aes(nmut, a_mean_min / a_mean_min_t)) +
+  geom_line(color = "green") +
+  geom_line(aes(y = s_mean_min / s_mean_min_t))
 
 
 dat %>% 
@@ -110,3 +128,9 @@ dat %>%
 
 
 ```
+
+
+```{r}
+
+```
+
