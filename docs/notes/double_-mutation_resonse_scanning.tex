@@ -1,0 +1,249 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+
+\hypertarget{double-mutation-response-scanning}{%
+\section{Double mutation-response
+scanning}\label{double-mutation-response-scanning}}
+
+\usepackage{amsmath}
+
+\renewcommand{\[}{\begin{equation}}
+\renewcommand{\]}{\end{equation}}
+
+\newcommand{\fvec}{\mathbf{f}}
+\newcommand{\evec}{\mathbf{e}}
+\newcommand{\avec}{\mathbf{a}}
+\newcommand{\amat}{\mathbf{A}}
+\newcommand{\umat}{\mathbf{U}}
+\newcommand{\kmat}{\mathbf{K}}
+\newcommand{\cmat}{\mathbf{C}}
+\newcommand{\bmat}{\mathbf{B}}
+\newcommand{\vvec}{\mathbf{v}}
+\newcommand{\uvec}{\mathbf{u}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\y}{\mathbf{y}}
+
+\hypertarget{simpler-problems}{%
+\subsection{Simpler problems}\label{simpler-problems}}
+
+\hypertarget{quadratic-form}{%
+\subsubsection{Quadratic form}\label{quadratic-form}}
+
+Let \(\mathbf{A}\) be a square matrix then find maximum of: \[
+\mathbf{x}'\mathbf{A}\mathbf{x}= x_iA_{ij}x_j
+\] subject to the constraint: \[
+\mathbf{x}'\mathbf{x}= \alpha^2
+\] The lagrange function is: \[
+L(\mathbf{x},\lambda) = \mathbf{x}'\mathbf{A}\mathbf{x}- \lambda (\mathbf{x}'\mathbf{x}-\alpha^2)
+\] then: \[
+ \frac{dL}{d\mathbf{x}} = \mathbf{A}\mathbf{x}+(x'\mathbf{A})'-2\lambda\mathbf{x}= 0  \\
+  dL/d\lambda = -(\mathbf{x}'\mathbf{x}- \alpha^2) = 0
+\] the solution is: \[
+\frac{\mathbf{A}+ \mathbf{A}'}{2}\mathbf{x}=\lambda\mathbf{x}\\
+\mathbf{x}'\mathbf{x}= \alpha^2
+\] Therefore, the solution os an eigenvector of a symmetric matrix. If
+we want the maximum, then it is the eigenvector with maximum eigenvalue.
+Plus, we normalize this vector so that \(|\mathbf{x}|^2 = \alpha^2\).
+
+To finish, the value of the quadratic form at the maximum is: \[
+\mathbf{x}'A\mathbf{x}=\mathbf{x}'(\mathbf{A}_s+\mathbf{A}_u)\mathbf{x}= \alpha^2\lambda_{\max}+\mathbf{x}'\mathbf{A}_u\mathbf{x}
+\] but the second term is zero because \(\mathbf{A}_u\) is
+anti-symmetric, thus: \[
+\max(\mathbf{x}'\mathbf{A}\mathbf{x}) = \alpha^2\lambda_\max \label{xAx_max}
+\]
+
+\hypertarget{maximum-of-bilinear-form-given-mathbfx}{%
+\subsubsection{\texorpdfstring{Maximum of bilinear form, given
+\(\mathbf{x}\)}{Maximum of bilinear form, given \textbackslash mathbf\{x\}}}\label{maximum-of-bilinear-form-given-mathbfx}}
+
+Let \$\mathbf{A} be an \(N \times M\) matrix, and \(\mathbf{x}\) and
+\(\mathbf{y}\) be column vectors of size \(N\) and \(M\) respectively.
+Then find \(\mathbf{y}\) that satisfies: \[
+\mathbf{x}'\mathbf{A}\mathbf{y}=\max \\
+\mathbf{y}'\mathbf{y}= \alpha^2
+\] then, we need to maximize: \[
+L(\mathbf{y},\lambda) = \mathbf{x}'\mathbf{A}\mathbf{y}- \lambda (\mathbf{y}'\mathbf{y}-\alpha^2)
+\]
+
+Deriving with respect to \(\mathbf{y}\) and \(\lambda\): \[
+\mathbf{A}'\mathbf{x}- 2\lambda\mathbf{y}= 0; \mathbf{y}'\mathbf{y}-\alpha^2=0
+\] with solutions: \[
+\mathbf{y}= \alpha \frac{\mathbf{A}'\mathbf{x}}{|\mathbf{A}'\mathbf{x}|}\\ %\label{ymax}
+\lambda =\frac{|\mathbf{A}' \mathbf{x}|}{2\alpha}
+\] Replacing this into the original quadratic form: \[
+\max(\mathbf{x}'\mathbf{A}\mathbf{y}) = \alpha |A'\mathbf{x}| \label{xAy_max_y}
+\] Note that if \(\mathbf{A}= \mathbf{I}\), \(\mathbf{y}\) is colinear
+with \(\mathbf{x}\) and \(\max(\mathbf{x}'\mathbf{y})\) is just the
+product of the length of \(\mathbf{y}\) times the length of
+\(\mathbf{x}\).
+
+\hypertarget{maximum-of-maximum}{%
+\subsubsection{Maximum of maximum}\label{maximum-of-maximum}}
+
+Now, let's find \(\mathbf{x}\) and \(\mathbf{y}\) that maximise the
+bilinear form, subject to conditions
+\(\mathbf{x}'\mathbf{x}= \alpha_x^2\) and
+\(\mathbf{y}'\mathbf{y}= \alpha_y^2\). For any given \(\mathbf{x}\), the
+\(\mathbf{y}\) that maximises the form is given by \eqref{ymax} and the
+maximum is given by \eqref{xAy_max_y}. Thus, now, we are looking to
+maximise \(\alpha_y \sqrt{\mathbf{x}' \mathbf{A}\mathbf{A}' x}\) over
+\(\mathbf{x}\). Equivalently, we need to maximise the quadratic form
+\(\alpha_y^2 \mathbf{x}' \mathbf{A}\mathbf{A}'º x\) with constraint
+\(\mathbf{x}'\mathbf{x}= \alpha_x^2\). As shown above, the solution to
+this is the eigenvector of \(\mathbf{A}\mathbf{A}'\) with eigenvalue
+\(\lambda_\max\), and, from \eqref{xAx_max} it follows: \[
+\begin{eqnarray}
+\max(\mathbf{x}' \mathbf{A}\mathbf{y}) & = & \alpha_y \sqrt{\max(\mathbf{x}'\mathbf{A}'\mathbf{A}\mathbf{x})} \\
+& = & \alpha_y \alpha_x \sqrt{\lambda_\max}
+\end{eqnarray}
+\]
+
+\hypertarget{mean-of-maximum}{%
+\subsubsection{Mean of maximum}\label{mean-of-maximum}}
+
+Easier: calculate the mean over \(\mathbf{x}\) of the square of the
+maximum given by \eqref{xAy_max_y}. \[
+\begin{eqnarray}
+<\max_\mathbf{y}(\mathbf{x}'\mathbf{A}\mathbf{y})^2> & = &  \alpha_y^2 <\mathbf{x}'\mathbf{A}\mathbf{A}'\mathbf{x}> \\
+& = & \alpha_y^2 \texttt{Tr}(\mathbf{A}\mathbf{A}' <\mathbf{x}\mathbf{x}'>) \\
+& = & \alpha_x^2 \alpha_y^2 \frac{\texttt{Tr}(\mathbf{A}\mathbf{A}')}{n_x}
+\end{eqnarray}
+\] To obtain the last equation, I assumed \(\mathbf{x}\) are uniformly
+distributed onto the hypersphere \(\mathbf{x}'\mathbf{x}= \alpha_x^2\).
+Then \(<x_i x_j> = \alpha_x^2 \delta_{ij}/n_x\), so that
+\(<\mathbf{x}\mathbf{x}'> = \frac{\alpha_x^2}{n_x} \mathbf{I}\).
+
+\hypertarget{minimum-of-sum-of-two-vectors}{%
+\subsection{Minimum of sum of two
+vectors}\label{minimum-of-sum-of-two-vectors}}
+
+What's the minimum of: \[
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\Y}{\mathbf{Y}}
+F(\mathbf{x},\mathbf{y}) = (\X\mathbf{x}+ \Y \mathbf{y})'(\X\mathbf{x}+ \Y \mathbf{y})-\mathbf{x}'\X'\X\mathbf{x}
+\] subject to constraints: \(\mathbf{x}'\mathbf{x}= \alpha_x^2\),
+\(\mathbf{y}'\mathbf{y}= \alpha_y^2\)? Equivalently: \[
+F(\mathbf{x},\mathbf{y}) = \mathbf{y}'\Y'\Y\mathbf{y}+ 2\mathbf{x}'\X'\Y\mathbf{y}\label{fxy_sum_vectors}
+\]
+
+Let's fist consider the problem of given \(\mathbf{x}= \mathbf{x}_0\)
+find \(\mathbf{y}\) of length \(\alpha_y\) that minimises
+\(F(\mathbf{x},\mathbf{y})\). The Lagrangian is: \[
+\newcommand{\lx}{\mathbf{l}_x}
+L(\mathbf{x},\mathbf{y}) =\mathbf{y}'\Y'\Y\mathbf{y}+ 2\mathbf{x}'\X'\Y\mathbf{y}- \lx'(\mathbf{x}- \mathbf{x}_0)-\lambda_y(\mathbf{y}'\mathbf{y}-\alpha_y^2)
+\]
+
+where \(\lx' = (\lambda_{x_1}, \lambda_{x_2},…)\). The minimum
+satisfies:
+
+\[
+\begin{eqnarray}
+\mathbf{y}&=&  (\Y'\Y - \lambda_y)^{-1}\Y'\X\mathbf{x}_0 \\ \label{ymin_sum_vectors}
+    \mathbf{y}'\mathbf{y}&=& \alpha_y^2
+\end{eqnarray}
+\]
+
+Note that \(\lambda_y\) must not be equal to an eigenvalue of \(\Y'\Y\)
+for the inverse of the factor in parenthesis to exist. Replacing
+\eqref{ymin_sum_vectors} into \eqref{fxy_sum_vectors} we find:
+
+\hypertarget{using-least-squares}{%
+\subsection{using least squares?}\label{using-least-squares}}
+
+What's the minimum of: \[
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\Y}{\mathbf{Y}}
+F(\mathbf{x},\mathbf{y}) = (\X\mathbf{x}+ \Y \mathbf{y})'(\X\mathbf{x}+ \Y \mathbf{y})
+\] given \(\mathbf{x}\)? \[
+F(\mathbf{x},\mathbf{y}) = \mathbf{x}'\X'\X\mathbf{x}+ \mathbf{y}'\Y'\Y\mathbf{y}+ 2\mathbf{x}'\X'\Y\mathbf{y}
+\]
+
+\[
+\newcommand{\lx}{\mathbf{l}_x}
+L(\mathbf{x},\mathbf{y}) =\mathbf{y}'\Y'\Y\mathbf{y}+ 2\mathbf{x}'\X'\Y\mathbf{y}- \lx'(\mathbf{x}- \mathbf{x}_0)-\lambda_y(\mathbf{y}'\mathbf{y}-\alpha_y^2)
+\]
+
+The minimum satisfies: \[
+\begin{eqnarray}
+\mathbf{y}&=&  -(\Y'\Y)^{-1}\Y'\X\mathbf{x}\\ 
+\end{eqnarray}
+\] which is the least-square solution of the overdetermined system of
+equations \(\Y \mathbf{y}= - \X x\). Replacing the last equation in
+\(F\), we find: \[
+F = \mathbf{x}´\X'[1 - (\Y'\Y)^{-1}\Y']^2\X\mathbf{x}
+\]
+
+\hypertarget{mean-of-min}{%
+\subsubsection{mean of min}\label{mean-of-min}}
+
+\[
+<F> = \texttt{Tr}(\X'[1 - (\Y'\Y)^{-1}\Y']^2\X<\mathbf{x}\mathbf{x}'>)\\
+=\alpha_x^2 \texttt{Tr}(\X'[1 - (\Y'\Y)^{-1}\Y']^2\X)/n_x
+\]
+
+\end{document}

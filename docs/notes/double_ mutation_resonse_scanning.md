@@ -1,7 +1,15 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 # Double mutation-response scanning
 
-$$
-\nonumber
+\usepackage{amsmath}
+
+\renewcommand{\[}{\begin{equation}}
+\renewcommand{\]}{\end{equation}}
+
 \newcommand{\fvec}{\mathbf{f}}
 \newcommand{\evec}{\mathbf{e}}
 \newcommand{\avec}{\mathbf{a}}
@@ -14,7 +22,8 @@ $$
 \newcommand{\uvec}{\mathbf{u}}
 \newcommand{\x}{\mathbf{x}}
 \newcommand{\y}{\mathbf{y}}
-$$
+
+
 ## Simpler problems
 ### Quadratic form
 
@@ -32,14 +41,12 @@ L(\x,\lambda) = \x'\amat\x - \lambda (\x'\x -\alpha^2)
 $$
 then:
 $$
-\begin{array}
-dL/d\x = \amat\x +(x'\amat)'-2\lambda\x  = 0\\
-dL/d\lambda = -(\x'\x - \alpha^2) = 0
-\end{array}
+ \frac{dL}{d\x} = \amat\x +(x'\amat)'-2\lambda\x  = 0  \\
+  dL/d\lambda = -(\x'\x - \alpha^2) = 0
 $$
 the solution is:
 $$
-\frac{(\amat + \amat')}{2}\x=\lambda\x \\
+\frac{\amat + \amat'}{2}\x=\lambda\x \\
 \x'\x = \alpha^2
 $$
 Therefore, the solution os an eigenvector of a symmetric matrix. If we want the maximum, then it is the eigenvector with maximum eigenvalue. Plus, we normalize this vector so that $|\x|^2 = \alpha^2$. 
@@ -72,7 +79,7 @@ $$
 $$
 with solutions:
 $$
-\y = \alpha \frac{\amat'\x}{|\amat'\x|}\\ \label{ymax}
+\y = \alpha \frac{\amat'\x}{|\amat'\x|}\\ %\label{ymax}
 \lambda =\frac{|\amat' \x|}{2\alpha}
 $$
 Replacing this into the original quadratic form:
@@ -80,10 +87,12 @@ $$
 \max(\x'\amat\y) = \alpha |A'\x| \label{xAy_max_y}
 $$
 Note that if $\amat = \mathbf{I}$, $\y$ is colinear with $\x$ and $\max(\x'\y)$ is just the product of the length of $\y$ times the length of $\x$. 
+
 ### Maximum of maximum
 
 Now, let's find $\x$ and $\y$ that maximise the bilinear form, subject to conditions $\x'\x = \alpha_x^2$ and $\y'\y = \alpha_y^2$.
-For any given $\x$, the $\y$ that maximises the form is given by $\eqref{ymax}$ and the maximum is given by $\eqref{xAy_max_y}$. Thus, now, we are looking to maximise $\alpha_y \sqrt{\x' \amat \amat' x}$ over $\x$. Equivalently, we need to maximise the quadratic form $\alpha_y^2 \x' \amat \amat'º x$ with constraint $\x'\x = \alpha_x^2$. As shown above, the solution to this is the eigenvector of $\amat\amat'$ with eigenvalue $\lambda_\max$, and, from $\eqref{xAx_max}$ it follows:
+For any given $\x$, the $\y$ that maximises the form is given by \eqref{ymax} and the maximum is given by \eqref{xAy_max_y}. 
+Thus, now, we are looking to maximise $\alpha_y \sqrt{\x' \amat \amat' x}$ over $\x$. Equivalently, we need to maximise the quadratic form $\alpha_y^2 \x' \amat \amat'º x$ with constraint $\x'\x = \alpha_x^2$. As shown above, the solution to this is the eigenvector of $\amat\amat'$ with eigenvalue $\lambda_\max$, and, from \eqref{xAx_max} it follows:
 $$
 \begin{eqnarray}
 \max(\x' \amat \y) & = & \alpha_y \sqrt{\max(\x'\amat'\amat\x)} \\
@@ -93,7 +102,7 @@ $$
 
 ### Mean of maximum
 
-Easier: calculate the mean over $\x$ of the square of the maximum given by $\eqref{xAy_max_y}$. 
+Easier: calculate the mean over $\x$ of the square of the maximum given by \eqref{xAy_max_y}. 
 $$
 \begin{eqnarray}
 <\max_\y(\x'\amat \y)^2> & = &  \alpha_y^2 <\x'\amat\amat'\x> \\
@@ -123,16 +132,16 @@ L(\x,\y) =\y'\Y'\Y\y + 2\x'\X'\Y\y - \lx'(\x - \x_0)-\lambda_y(\y'\y-\alpha_y^2)
 $$
 
 where $\lx' = (\lambda_{x_1}, \lambda_{x_2},…)$. The minimum satisfies:
+
 $$
 \begin{eqnarray}
 \y &=& 	(\Y'\Y - \lambda_y)^{-1}\Y'\X\x_0 \\ \label{ymin_sum_vectors}
 	\y'\y &=& \alpha_y^2
 \end{eqnarray}
 $$
-Note that $\lambda_y$ must not be equal to an eigenvalue of $\Y'\Y$ for the inverse of the factor in parenthesis to exist. Replacing $\eqref{ymin_sum_vectors}$ into $\eqref{fxy_sum_vectors}$ we find:
-$$
 
-$$
+Note that $\lambda_y$ must not be equal to an eigenvalue of $\Y'\Y$ for the inverse of the factor in parenthesis to exist. 
+Replacing \eqref{ymin_sum_vectors} into \eqref{fxy_sum_vectors} we find:
 
 ## using least squares?
 

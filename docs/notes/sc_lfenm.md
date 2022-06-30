@@ -1,6 +1,10 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 # Self Consistent Linearly Forced Elastic Network Model
 
-$$
 \newcommand{\rvec}{\mathbf{r}}
 \newcommand{\wt}{\texttt{wt}}
 \newcommand{\mut}{\texttt{mut}}
@@ -15,7 +19,6 @@ $$
 \newcommand{\lij}{l_{ij}}
 \newcommand{\dlij}{\delta l_{ij}}
 \newcommand{\half}{\frac{1}{2}}
-$$
 
 The [LFENM](lfenm.md) model is defined by:
 $$

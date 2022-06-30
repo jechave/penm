@@ -23,6 +23,3 @@ a `prot` object (list containing xyz, site, etc.)
 \description{
 Set up ENM from bio3d pdb object
 }
-\examples{
-
-}

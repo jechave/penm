@@ -2,10 +2,10 @@
 % Please edit documentation in R/dms.R
 \name{generate_fmat_dms}
 \alias{generate_fmat_dms}
-\title{Generate force-matrix for dmsmat calculation}
+\title{Generate force-matrix for dmrs_matrix calculation}
 \usage{
 generate_fmat_dms(wt, nmut, mut_dl_sigma, mut_sd_min, seed)
 }
 \description{
-Generate force-matrix for dmsmat calculation
+Generate force-matrix for dmrs_matrix calculation
 }

@@ -35,9 +35,6 @@ A mutated protein
 \description{
 Returns a mutant given a wt and a site to mutate (site_mut)
 }
-\examples{
-
-}
 \seealso{
 Other enm mutating functions: 
 \code{\link{get_force}()},

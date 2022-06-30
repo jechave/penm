@@ -5,7 +5,6 @@ output:
 ---
 # Superfast response theory
 
-$$
 \newcommand{\fvec}{\mathbf{f}}
 \newcommand{\evec}{\mathbf{e}}
 \newcommand{\avec}{\mathbf{a}}
@@ -13,7 +12,6 @@ $$
 \newcommand{\umat}{\mathbf{U}}
 \newcommand{\kmat}{\mathbf{K}}
 \newcommand{\cmat}{\mathbf{C}}
-$$
 
 ## Response to edge mutations
 
