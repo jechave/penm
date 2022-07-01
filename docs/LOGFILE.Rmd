@@ -324,6 +324,30 @@ I refactored set_enm by adding functions that depend as much as possible only on
 
 
 
+## 1 July 2022
+
+Trying to tidy up the package.
+
+It looks like I added "mrs" and "dmrs" functionality when working on the superfast_prs project.
+The superfast_prs project loads penm and uses some functions. I made a list.
+
+On the other hand, there's also another project that contains exclusively what I published and shared at time of publishing.
+This project is self-contained (doesn't require package penm).
+
+The only other project that uses penm is stokes-shift-1d
+
+Finally, also the penm package project uses some functions in the testing Rmd files.
+
+I need to separate somehow the basic penm functions (i.e. mutate a protein using different models: set_enm, mutate_enm, etc) from mutational-scan functions.
+Perhaps I could make a second "mut_scan" package? Or separate the mut_scan functions by using more appropriate names?
+If one package does one thing well, and penm is going to be used for mutational scans but also for running evolutionary trajectories, maybe it's best to separate penm and mutscan into two different smaller packages (with mutscan perhaps depending on penm).
+
+
+
+
+
+
+
 
 
 
