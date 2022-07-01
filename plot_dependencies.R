@@ -6,13 +6,30 @@ remove(list = ls())
 # source("R/penm.R")
 # source("R/penm_analysis.R")
 
-source("R/prs_new.R")
-source("R/prs_fast.R")
+list.files(path = "R")
+for (f in list.files(path = "R")) {
+  source(here("R",f))
+}
 
-fw <- foodweb()
+result <- foodweb(plotting = FALSE)
 
-foodweb(prune = c("prs_all.new"))
-foodweb(prune = c("prs_all.fast"))
+# The following line returns the number of times each function is called
+res <- sapply(rownames(result$funmat), function(n) length(callers.of(n, result)))
+
+
+# Get those functions that are never called:
+names(res[res==0])
+
+
+# callers.of("enm_v_min", fw)
+# callers.of("calculate_dvm", fw)
+#
+# callers.of("enm_v_min", fw)
+# callers.of("get_mutant_site", fw)
+#
+# foodweb(prune = c("prs_all.new"))
+# foodweb(prune = c("prs_all.fast"))
+
 
 
 
