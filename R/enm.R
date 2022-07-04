@@ -178,7 +178,7 @@ calculate_enm_graph <- function(xyz, pdb_site, model, d_max, ...) {
 
     site <- seq(nsites)
     # calculate graph
-    graph <- as_tibble(expand.grid(i = site, j = site)) %>%
+    graph <- as_tibble(expand_grid(i = site, j = site)) %>%
       filter(j > i) %>%
       arrange(i, j) %>%
       mutate(dij = dij_edge(xyz, i, j)) %>%

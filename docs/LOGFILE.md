@@ -364,6 +364,8 @@ only on prot objects, so that parameters are passed through prot.
 
 ## 1 July 2022
 
+### Day’s plan
+
 Trying to tidy up the package.
 
 It looks like I added “mrs” and “dmrs” functionality when working on the
@@ -377,7 +379,7 @@ project is self-contained (doesn’t require package penm).
 The only other project that uses penm is stokes-shift-1d
 
 Finally, also the penm package project uses some functions in the
-testing Rmd files.
+testing Rmd files.(These should be exported too)
 
 I need to separate somehow the basic penm functions (i.e. mutate a
 protein using different models: set_enm, mutate_enm, etc) from
@@ -387,3 +389,42 @@ names? If one package does one thing well, and penm is going to be used
 for mutational scans but also for running evolutionary trajectories,
 maybe it’s best to separate penm and mutscan into two different smaller
 packages (with mutscan perhaps depending on penm).
+
+### Changed expand.grid to expand_grid in `calculate_enm_graph`
+
+`expand.grid` adds attributes I don’t want to the tibble (plus test_enm
+failed, therefore).
+
+### Made sure tests run OK
+
+After the change of `expand.grid`, `devtools::test()` works fine (but,
+it tests only `enm` and `penm`, but none of `prs`).
+
+### Moved some files out of package
+
+Moved some non-used files from `.R/` to `./saved`.
+
+### Printed prs and dmrs dependencies
+
+### Commited to local git and pushed to github
+
+### notes and to-dos
+
+-   In `Rmd` there are some `.R` files with plotting functions. Perhaps
+    later I could move some of these into the package (plotting
+    functionality).
+
+-   The third test in `test_penm.R`, which tests the self-consistent
+    model `sclfenm` is currently skipped because `sclefnm` needs fixing
+    (see `./to_do` folder)
+
+#### Renaming
+
+-   Some `get_` functions are “getters”, but some others are
+    “calculators”. Rename to make names clearer and more consistent.
+
+-   Consider renaming “fast” to “analytical” (for consistency with dmrs)
+    and “new” to “new_sim” or “numerical” or … (See how I renamed the
+    code for sharing with superfast paper)
+
+-   Either use dms or dmrs, but not both.

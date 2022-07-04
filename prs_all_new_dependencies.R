@@ -6,14 +6,17 @@ remove(list = ls())
 # source("R/penm.R")
 # source("R/penm_analysis.R")
 
+source("R/prs_sim.R")
 source("R/prs_new.R")
 source("R/prs_fast.R")
 
 fw <- foodweb()
 
-foodweb(prune = c("prs_all.new"))
-foodweb(prune = c("prs_all.fast"))
+foodweb(prune = c("prs_all.sim"))
 
+foodweb(prune = c("prs_all.new"))
+
+foodweb(prune = c("prs_all.fast"))
 
 
 # callers.of("get_mutant_site", fw)
