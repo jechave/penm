@@ -27,8 +27,8 @@ names(res[res==0])
 # callers.of("enm_v_min", fw)
 # callers.of("get_mutant_site", fw)
 #
-# foodweb(prune = c("prs_all.new"))
-# foodweb(prune = c("prs_all.fast"))
+# foodweb(prune = c("smrs_all"))
+# foodweb(prune = c("amrs_all"))
 
 
 

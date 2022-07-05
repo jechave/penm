@@ -1,0 +1,1 @@
+R code that implements the models described in the manuscript "Fast and exact mutation-response scanning of proteins", by Julian Echave, 2020.  

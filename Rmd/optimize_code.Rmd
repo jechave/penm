@@ -42,7 +42,7 @@ nmut <- 100
 mut_dl_sigma <- 0.3
 mut_sd_min <- 1
 tic()
-prs <- prs_dr2ij.new(wt, nmut, "lfenm", mut_dl_sigma, mut_sd_min, 1024)
+prs <- prs_dr2ij_smrs(wt, nmut, "lfenm", mut_dl_sigma, mut_sd_min, 1024)
 toc()
 tic()
 dms <- dmsmat <- dmsmat_dms.new(wt, nmut, mut_dl_sigma, mut_sd_min, 1024)
@@ -68,18 +68,18 @@ toc()
 
 ## compare cpu times
 
-prs_all.sim: simulation-based prs in which first a set of mutants is generated, then each wt vs mut pair comparison is performed before averaging over mutants.
+mrs_all: simulation-based prs in which first a set of mutants is generated, then each wt vs mut pair comparison is performed before averaging over mutants.
 
-prs.new:  instead of looping over mutations at a given site, prs.new calculates an fmat with nmut columns for each site. Thus f(i,j, m) is the force at i due to mutation m at a site j.
+smrs_all:  instead of looping over mutations at a given site, smrs_all calculates an fmat with nmut columns for each site. Thus f(i,j, m) is the force at i due to mutation m at a site j.
 
-prs.fast: analytic averaging over mutations, thus avods generating individual mutants.
+amrs: analytic averaging over mutations, thus avods generating individual mutants.
 
 
 
 ```{r}
-microbenchmark(prs_all.sim(wt, 10, "lfenm", 0.3, 1, 1024),
-               prs_all.new(wt, 10, "lfenm", 0.3, 1, 1024),
-               prs_all.fast(wt, 0.3, 1),
+microbenchmark(mrs_all(wt, 10, "lfenm", 0.3, 1, 1024),
+               smrs_all(wt, 10, "lfenm", 0.3, 1, 1024),
+               amrs_all(wt, 0.3, 1),
                times = 1)
 ```
 
@@ -88,58 +88,58 @@ microbenchmark(prs_all.sim(wt, 10, "lfenm", 0.3, 1, 1024),
 mutants <- generate_mutants(wt, 20, "lfenm", 0.3, 1, 1024)
 perturbations <- generate_perturbations(wt, 20, 0.3, 1, 1024)
 microbenchmark(calculate_dr2ij.prs(mutants),
-               calculate_dr2ij.new(wt, perturbations$fmat),
-               calculate_dr2ij.fast(wt, 0.3, 1),
+               calculate_dr2ij_smrs(wt, perturbations$fmat),
+               calculate_dr2ij_amrs(wt, 0.3, 1),
                times = 1)
 ```
 ```{r}
 
 microbenchmark(calculate_df2ij.prs(mutants),
-               calculate_df2ij.new(wt, perturbations$fmat),
-               calculate_df2ij.fast(wt, 0.3, 1),
+               calculate_df2ij_smrs(wt, perturbations$fmat),
+               calculate_df2ij_amrs(wt, 0.3, 1),
                times = 1)
 ```
 ```{r}
 microbenchmark(calculate_de2ij.prs(mutants),
-               calculate_de2ij.new(wt, perturbations$fmat),
-               calculate_de2ij.fast(wt, 0.3, 1),
+               calculate_de2ij_smrs(wt, perturbations$fmat),
+               calculate_de2ij_amrs(wt, 0.3, 1),
                times = 1)
 ```
 
 ```{r}
 microbenchmark(calculate_dvsij.prs(mutants),
-               calculate_dvsij.new(wt, perturbations$dlmat),
-               calculate_dvsij.fast(wt, 0.3, 1),
+               calculate_dvsij_smrs(wt, perturbations$dlmat),
+               calculate_dvsij_amrs(wt, 0.3, 1),
                times = 1)
 ```
 
 ## Comparison of results
 
-prs_all.sim and prs.new give identical results which differ from prs.fast because of convergence (prs.fast is the asymptotic "true" average).
+mrs_all and smrs_all give identical results which differ from amrs because of convergence (prs_amrs is the asymptotic "true" average).
 
 
 
 ```{r}
-dat.sim <- prs_all.sim(wt, 20, "lfenm", 0.3, 2, 1024)  %>%
+dat.sim <- mrs_all(wt, 20, "lfenm", 0.3, 2, 1024)  %>%
   pivot_longer(cols = df2ij:de2ij,
                names_to = "response_type",
                values_to = "value")
 
-dat.new <- prs.new(wt, 20, "lfenm", 0.3, 2, 1024) %>%
+dat.new <- smrs_all(wt, 20, "lfenm", 0.3, 2, 1024) %>%
   pivot_longer(cols = df2ij:de2ij,
                names_to = "response_type",
                values_to = "value")
 
-dat.fast <- prs.fast(wt, 0.3, 2) %>%
+dat_amrs <- prs_amrs(wt, 0.3, 2) %>%
   select(i, j, df2ij, dr2ij, de2ij) %>%
   pivot_longer(cols = df2ij:de2ij,
                names_to = "response_type",
                values_to = "value")
 
-dat <- inner_join(dat.new, dat.fast, by = c("i", "j", "response_type"), suffix = c(".new", ".fast"))
+dat <- inner_join(dat.new, dat_amrs, by = c("i", "j", "response_type"), suffix = c(".new", "_amrs"))
 
 p1 <- dat %>%
-  ggplot(aes(value.fast, value.new)) +
+  ggplot(aes(value_amrs, value.new)) +
   geom_point() +
   geom_abline() +
   facet_wrap(~response_type, ncol = 3, scales = "free") +
