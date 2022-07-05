@@ -1,19 +1,21 @@
-#' Calculate double-mutational-scan matrix using analytical "fast" method
+#' Calculate double-mutational-scan matrix using analytical  method
 #'
-dmrs_analytical <- function(wt, mut_dl_sigma, mut_sd_min, option = "mean_min") {
-  stopifnot(option == "mean_min" | option == "min_min")
+
+admrs <- function(wt, mut_dl_sigma, mut_sd_min, option = "mean_max") {
+  stopifnot(option == "mean_max" | option == "max_max")
   cmat <- get_cmat(wt)
-  dmrs_analytical_amat(wt, cmat, mut_dl_sigma, mut_sd_min, option)
+  admrs_amat(wt, cmat, mut_dl_sigma, mut_sd_min, option)
 }
 
 
 
 
-#' Calculate site-by-site "fast" response matrix, general, o
+#' Calculate site-by-site analytic response matrix, general, o
 #' minimize over mutations at i and 3yyj
 #'
-dmrs_analytical_amat <- function(wt, amat, mut_dl_sigma, mut_sd_min, option) {
-  stopifnot(option == "mean_min" | option == "min_min")
+
+admrs_amat <- function(wt, amat, mut_dl_sigma, mut_sd_min, option) {
+  stopifnot(option == "mean_max" | option == "max_max")
 
   g <- get_graph(wt)
   eij  <- get_eij(wt)
@@ -50,11 +52,11 @@ dmrs_analytical_amat <- function(wt, amat, mut_dl_sigma, mut_sd_min, option) {
   for (i in seq(nsites)) {
     for( j in seq(nsites)) {
       dd_ij <- dd[edges_of_site[[i]], edges_of_site[[j]]] # edge-edge i-j submatrix
-      mij = dd_ij %*% t(dd_ij) # extrama have to do with eigenvectors and values of matrix m = a * tr(a)
-      if (option == "mean_min")
-        dmrs_matrix[i, j] <-  - alpha[i] * alpha[j] * sqrt(sum(diag(mij)) / cn[i]) # sqrt(mean(min(dri.drj)^2))
-      if (option == "min_min")
-        dmrs_matrix[i, j] <- - alpha[i] * alpha[j] * sqrt(eigen(mij)$values[1]) # minimum dri.drj
+      mij = dd_ij %*% t(dd_ij) # extrema have to do with eigenvectors and values of matrix m = a * tr(a)
+      if (option == "mean_max")
+        dmrs_matrix[i, j] <-   alpha[i] * alpha[j] * sqrt(sum(diag(mij)) / cn[i]) # sqrt(mean(max(dri.drj)^2))
+      if (option == "max_max")
+        dmrs_matrix[i, j] <-  alpha[i] * alpha[j] * sqrt(eigen(mij)$values[1]) #  maximum of dri.drj
     }
   }
 

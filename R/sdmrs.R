@@ -1,15 +1,16 @@
 
 #' Calculate double-mutational-scanning matrix
 #'
-dmrs_simulation <- function(wt, nmut, mut_dl_sigma, mut_sd_min, seed, option = "mean_min") {
-  # I tested this on a protein with 100 sites and 100 mutations, it's not better than the other option, and it will take more memory...
+
+sdmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min, seed, option = "mean_max") {
+
+  stopifnot(option == "mean_max" | option == "max_max")
 
   cmat <- get_cmat(wt)
 
-
   tic()
-  fmati <- generate_fmat_dms(wt, nmut, mut_dl_sigma, mut_sd_min, 1 * seed)
-  fmatj <- generate_fmat_dms(wt, nmut, mut_dl_sigma, mut_sd_min, 2 * seed)
+  fmati <- generate_fmat_dmrs(wt, nmut, mut_dl_sigma, mut_sd_min, 1 * seed)
+  fmatj <- generate_fmat_dmrs(wt, nmut, mut_dl_sigma, mut_sd_min, 2 * seed)
   t <-  toc(quiet = T)
   t_fmat <- t$toc - t$tic
 
@@ -40,10 +41,10 @@ dmrs_simulation <- function(wt, nmut, mut_dl_sigma, mut_sd_min, seed, option = "
       mi <- dri[ , i, ]
       mj <- drj[ , j, ]
       mimj <- t(mi) %*% mj
-      if (option == "mean_min")
-        dmrs_matrix[i,j] <- -sqrt(mean(matrixStats::rowMaxs(mimj^2)))
-      if (option == "min_min")
-        dmrs_matrix[i,j] <- min(mimj)
+      if (option == "mean_max")
+        dmrs_matrix[i,j] <- sqrt(mean(matrixStats::rowMaxs(mimj^2)))
+      if (option == "max_max")
+        dmrs_matrix[i,j] <- max(mimj^2)
     }
   }
   t <-  toc(quiet = T)
@@ -58,7 +59,7 @@ dmrs_simulation <- function(wt, nmut, mut_dl_sigma, mut_sd_min, seed, option = "
 
 #' Generate force-matrix for dmrs_matrix calculation
 #'
-generate_fmat_dms <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
+generate_fmat_dmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
   mutation = seq(nmut)
   nsites <- get_nsites(wt)
   nedges <- nrow(get_graph(wt))
@@ -72,8 +73,8 @@ generate_fmat_dms <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
   for(j in seq(nsites)) {
     for (m in mutation) {
       set.seed(seed + j * m)
-      dlmat[, j, m] <- get_delta_lij_dms(wt, site_mut = j, mut_sd_min, mut_dl_sigma)
-      fmat[, j, m] <- get_force_dms(wt, dlmat[, j, m])
+      dlmat[, j, m] <- get_delta_lij_dmrs(wt, site_mut = j, mut_sd_min, mut_dl_sigma)
+      fmat[, j, m] <- get_force_dmrs(wt, dlmat[, j, m])
     }
   }
   fmat
@@ -82,9 +83,9 @@ generate_fmat_dms <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
 
 
 
-#' get force from delta_lik for dms calculations
+#' get force from delta_lik for dmrs calculations
 #'
-get_force_dms <- function(wt, delta_lij) {
+get_force_dmrs <- function(wt, delta_lij) {
 
   graph <- get_graph(wt)
 
@@ -118,7 +119,7 @@ get_force_dms <- function(wt, delta_lij) {
 }
 
 
-get_delta_lij_dms <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) {
+get_delta_lij_dmrs <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) {
   graph <- get_graph(wt)
 
   delta_lij <-  rep(0, nrow(get_graph(wt)))
@@ -136,10 +137,6 @@ get_delta_lij_dms <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) {
 
   delta_lij
 }
-
-
-mean_min <- function(m) mean(matrixStats::rowMins(m))
-min_min <- function(m) min(m)
 
 
 

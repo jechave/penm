@@ -10,8 +10,8 @@ dmsmat_dms.new_v2 <- function(wt, nmut, mut_dl_sigma, mut_sd_min, seed) {
 
 
   tic()
-  fmati <- generate_fmat_dms(wt, nmut, mut_dl_sigma, mut_sd_min, 1 * seed)
-  fmatj <- generate_fmat_dms(wt, nmut, mut_dl_sigma, mut_sd_min, 2 * seed)
+  fmati <- generate_fmat_dmrs(wt, nmut, mut_dl_sigma, mut_sd_min, 1 * seed)
+  fmatj <- generate_fmat_dmrs(wt, nmut, mut_dl_sigma, mut_sd_min, 2 * seed)
   t <-  toc(quiet = T)
   t_fmat <- t$toc - t$tic
 

@@ -362,7 +362,7 @@ only on prot objects, so that parameters are passed through prot.
 -   Moved all prs\_\*.Rmd files to superfast project, on which I’ll work
     this and next week.
 
-## 1 July 2022
+## 4 July 2022
 
 ### Day’s plan
 
@@ -428,3 +428,27 @@ Moved some non-used files from `.R/` to `./saved`.
     code for sharing with superfast paper)
 
 -   Either use dms or dmrs, but not both.
+
+## 5 July 2022
+
+-   Renamed dms to dmrs, dmrs_analytical to admrs, dmrs_simulation to
+    sdmrs
+-   Wrote tests for admrs and sdmrs
+-   Changed admrs and sdmrs to versions used in paper (where instead of
+    minimizing I maximise to obtain the dmrs matrices).
+
+### Notes on impact of changes
+
+-   These changes will affect project `superfast_prs`, but not
+    `analytical_mrs_and_dmrs`.
+-   Once changes are over, `analytical_mrs_and_dmrs` should work using
+    penm rather than the code shared. Check that.
+-   Once I’ve checked that `analytical_mrs_and_dmrs` works with penm,
+    consider deleting `superfast_prs` (maybe saving some useful stuff?)
+-   More brodly, merge `superfast_prs` and `analytical_mrs_and_dmrs`
+    into a single folder/project…
+
+### TO-DO next
+
+-   Rename prs versions to smrs, amrs, etc. (consistent with
+    `analytical_mrs_and_dmrs`)

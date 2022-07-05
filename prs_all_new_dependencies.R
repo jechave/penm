@@ -2,9 +2,15 @@ library(here)
 library(mvbutils)
 
 remove(list = ls())
-# source("R/enm.R")
-# source("R/penm.R")
-# source("R/penm_analysis.R")
+source("R/enm.R")
+source("R/enm_energy.R")
+source("R/enm_analysis.R")
+source("R/enm_kij_functions.R")
+source("R/enm_prot_getters.R")
+source("R/penm.R")
+source("R/penm_analysis.R")
+source("R/sdmrs.R")
+source("R/admrs.R")
 
 source("R/prs_sim.R")
 source("R/prs_new.R")
@@ -17,6 +23,8 @@ foodweb(prune = c("prs_all.sim"))
 foodweb(prune = c("prs_all.new"))
 
 foodweb(prune = c("prs_all.fast"))
+
+foodweb(prune = c("sdmrs"))
 
 
 # callers.of("get_mutant_site", fw)

@@ -1,5 +1,5 @@
 ---
-title: "Double Mutational Scanning (DMS)"
+title: "Double Mutational Scanning (DRMS)"
 author: "Julian Echave"
 date: "9/18/2020"
 output: ioslides_presentation
@@ -41,26 +41,26 @@ wt <- set_enm(pdb,  "ca",  "anm",  10.5,  F)
 
 
 
-## test dms
+## test dmrs
 
 ```{r}
 tic()
-admrs <- dmrs_analytical(wt, 0.1, 1, option = "mean_min")
+admrs <- admrs(wt, 0.1, 1, option = "mean_max")
 toc()
 
 tic()
 print("sim 50")
-sdmrs_50 <- dmrs_simulation(wt,50, 0.1, 1, 1024, "mean_min")
+sdmrs_50 <- sdmrs(wt,50, 0.1, 1, 1024, "mean_max")
 toc()
 
 tic()
 print("sim  100")
-sdmrs_100 <- dmrs_simulation(wt,100, 0.1, 1, 2048, "mean_min")
+sdmrs_100 <- sdmrs(wt,100, 0.1, 1, 2048, "mean_max")
 toc()
 
 tic()
 print("sim  200")
-sdmrs_200 <- dmrs_simulation(wt,200, 0.1, 1, 3 * 1024, "mean_min")
+sdmrs_200 <- sdmrs(wt,200, 0.1, 1, 3 * 1024, "mean_max")
 toc()
 
 
@@ -132,11 +132,11 @@ dmrs_df %>%
 ```{r}
 
 
-# profvis(dmrs_simulation(wt, 10, 0.1, 1, 1024))
+# profvis(sdmrs(wt, 10, 0.1, 1, 1024))
 # profvis(dmrs_matrix_dms_old.new(wt, 10, 0.1, 1, 1024))
 
-microbenchmark(dmrs_simulation(wt, 20, 0.1, 1, 1024), 
-               dmrs_analytical(wt, 0.1, 1),
+microbenchmark(sdmrs(wt, 20, 0.1, 1, 1024), 
+               admrs(wt, 0.1, 1),
                times = 1)
 
 
@@ -154,7 +154,7 @@ microbenchmark(dmrs_simulation(wt, 20, 0.1, 1, 1024),
 
 get_dmrs_matrix_new <- function(wt, nmut, mut_dl_sigma = 0.1, mut_sd_min = 1, seed = 1024) {
   t1 <- tic()
-  dmrs_matrix <- dmrs_simulation(wt, nmut, mut_dl_sigma, mut_sd_min, seed)
+  dmrs_matrix <- sdmrs(wt, nmut, mut_dl_sigma, mut_sd_min, seed)
   t2 <- toc(quiet = T)
   t = t2$toc - t2$tic
   lst(dmrs_matrix, t)
@@ -163,7 +163,7 @@ get_dmrs_matrix_new <- function(wt, nmut, mut_dl_sigma = 0.1, mut_sd_min = 1, se
 
 get_dmrs_matrix_fast <- function(wt,  mut_dl_sigma = 0.1, mut_sd_min = 1) {
   t1 <- tic()
-  dmrs_matrix <- dmrs_analytical(wt, mut_dl_sigma, mut_sd_min)
+  dmrs_matrix <- admrs(wt, mut_dl_sigma, mut_sd_min)
   t2 <- toc(quiet = T)
   t = t2$toc - t2$tic
   lst(dmrs_matrix, t)
