@@ -461,3 +461,17 @@ Moved some non-used files from `.R/` to `./saved`.
 -   Export only some files, not everything, start by exporting as little
     as possible and add as needed
 -   Make an Rmd file to test mutscan functions
+
+## 6 July 2022
+
+-   Started adding @export and completing roxygen2 fields of functions:
+    completed files `enm_energy.R`, `enm_utils_kij_functions.R`,
+    `utils.R` (renamed from utility.R), `misc_exported.R` (where I put
+    small functions in utils.R that may be useful to export),
+    `demoted.R`.
+-   commited to local git and pushed to remote.
+
+### TO-DO next
+
+-   Continue adding @export and documentation fields to all .R files.
+    Next `enm.R` and `enm_analysis.R`

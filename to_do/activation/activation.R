@@ -4,7 +4,7 @@ add_active_site_indexes <- function(prot, pdb_site_active) {
   result <- prot
   result$pdb_site_active <- pdb_site_active # add pdb_site_active
   result$site_active <- prot$site[prot$pdb_site %in% pdb_site_active] # add site_active
-  result$ind_active <- site_to_ind(result$site_active) # add ind_active
+  result$ind_active <- xyz_indices_site(result$site_active) # add ind_active
   result
 }
 

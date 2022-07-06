@@ -1,7 +1,10 @@
-
-beta_boltzmann <- function(R = 1.986e-3, T = 298) 1/(R*T)
-
-
+#' Turn an xyz vector into a 3 x N matrix
+#'
+#' @param r is a vector of length 3 * nsites
+#' @returns a matrix of dimensions 3 x nsites with the vector's elments
+#'
+#' @noRd
+#'
 my_as_xyz <- function(r) {
   r <- as.vector(r)
   n3 <- length(r)
@@ -16,14 +19,15 @@ my_as_xyz <- function(r) {
   }
 }
 
-dr2_xyz <- function(xyz_1, xyz_2) {
-  r1 <- my_as_xyz(xyz_1)
-  r2 <- my_as_xyz(xyz_2)
-  dr = r2 - r1
-  colSums(dr^2)
-}
 
-
+#' Calculate wcn for all sites of protein
+#'
+#' @param xyz is the vector or matrix containing xyz coordinates
+#'
+#' @returns a vector of wcn values for all protein sites
+#'
+#' @noRd
+#'
 wcn_xyz <- function(xyz, ...) {
   xyz <- my_as_xyz(xyz)
   nsites <- ncol(xyz)
@@ -36,17 +40,15 @@ wcn_xyz <- function(xyz, ...) {
   wcn
 }
 
-#' Title Calculate contact number of sites
-#'
 #' Calculates number of contacts.
 #'
 #' @param xyz  xyz coordinates of sites (e.g. alpha carbons, or center of mass, etc.)
 #' @param d_max cutoff radius to define contacts
 #'
 #' @return vector of contact numbers
-#' @export
+
+#' @noRd
 #'
-#' @examples
 cn_xyz <-  function(xyz, d_max) {
   xyz <- my_as_xyz(xyz)
   nsites <- ncol(xyz)
@@ -59,7 +61,15 @@ cn_xyz <-  function(xyz, d_max) {
   cn
 }
 
+#' Calculates number of contacts.
+#'
+#' @param graph  graph representation of ENM
+#' @param d_max cutoff radius to define contacts
+#'
+#' @return vector of contact numbers
 
+#' @noRd
+#'
 cn_graph <- function(graph, nsites) {
   cn = rep(0,nsites)
   for (i in seq(nsites)) {
@@ -68,9 +78,10 @@ cn_graph <- function(graph, nsites) {
   cn
 }
 
-
-
-
+#' Reduce 3N x 3N matrix to N x N matrix
+#'
+#' @noRd
+#'
 reduce_matrix <- function(full.matrix) {
   N <- nrow(full.matrix) / 3
   reduced.matrix <- matrix(0, nrow = N, ncol = N)
@@ -91,7 +102,14 @@ reduce_matrix <- function(full.matrix) {
 
 
 
-site_to_ind <- function(site) {
+#' Set of indices of the 3N-long xyz vector that corresponds to a set of sites
+#'
+#' @param site is a vector of sites
+#' @returns a vector of indices such that xyz[xyz_indices_site(site)] are the xyz coorinates of site
+#'
+#' @noRd
+#'
+xyz_indices_site <- function(site) {
   s <- rep(site,each=3)
   i <- (s-1)*3+c(1,2,3)
   i
