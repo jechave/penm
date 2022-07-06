@@ -436,6 +436,13 @@ Moved some non-used files from `.R/` to `./saved`.
 -   Wrote tests for admrs and sdmrs
 -   Changed admrs and sdmrs to versions used in paper (where instead of
     minimizing I maximise to obtain the dmrs matrices).
+-   Renamed .new in prs_new.R to smrs.R, .fast in prs_fast.R to \_amrs,
+    and prs.sim to mrs
+-   renamed prs_nacho as sprs and prs_nacho_fast as aprs
+-   I prefixed all mutscan-related files with mutscan (to make easier
+    possible future split of package in two)
+-   I wrote tests for the main functions
+-   git commited and git pushed
 
 ### Notes on impact of changes
 
@@ -450,5 +457,7 @@ Moved some non-used files from `.R/` to `./saved`.
 
 ### TO-DO next
 
--   Rename prs versions to smrs, amrs, etc. (consistent with
-    `analytical_mrs_and_dmrs`)
+-   Make sure “get\_” functions are getters and not calculators.
+-   Export only some files, not everything, start by exporting as little
+    as possible and add as needed
+-   Make an Rmd file to test mutscan functions
