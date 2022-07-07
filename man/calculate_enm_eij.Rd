@@ -17,3 +17,11 @@ matrix with n_edge rows and 3 columns (x, y, z)
 \description{
 Calculate unit vectors of edges
 }
+\seealso{
+Other enm builders: 
+\code{\link{calculate_enm_graph}()},
+\code{\link{calculate_enm_kmat}()},
+\code{\link{calculate_enm_nma}()},
+\code{\link{calculate_enm_nodes}()}
+}
+\concept{enm builders}

@@ -2,10 +2,29 @@
 % Please edit documentation in R/enm_analysis.R
 \name{get_msf_site_mode}
 \alias{get_msf_site_mode}
-\title{MSF of each site contributed by each mode, as matrix}
+\title{Calculate MSF site-dependent profile for each mode}
 \usage{
 get_msf_site_mode(prot)
 }
-\description{
-MSF of each site contributed by each mode, as matrix
+\arguments{
+\item{prot}{is a protein object obtained using set_enm()}
 }
+\value{
+a matrix of size nsites x nmodes with the msf of each site contributed by each mode
+}
+\description{
+Calculate MSF site-dependent profile for each mode
+}
+\seealso{
+Other prot getters: 
+\code{\link{get_cn}()},
+\code{\link{get_mlms}()},
+\code{\link{get_msf_mode}()},
+\code{\link{get_msf_site}()},
+\code{\link{get_reduced_cmat}()},
+\code{\link{get_reduced_kmat}()},
+\code{\link{get_rho_matrix}()},
+\code{\link{get_stress}()},
+\code{\link{get_umat2}()}
+}
+\concept{prot getters}

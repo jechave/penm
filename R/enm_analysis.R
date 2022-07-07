@@ -1,29 +1,59 @@
 # Calculate various protein properties
 
 
+# Calculate site profiles ----------------------------------------------------
 
-# Get site profiles ----------------------------------------------------
-
-
+#' Calculate CN site-dependent profile
+#'
+#' Calculates the Contact Number (CN) of each site
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns a vector of size nsites with cn values for each site
+#'
+#' @export
+#'
+#' @family prot getters
+#'
 get_cn <- function(prot) cn_xyz(get_xyz(prot), get_d_max(prot))
 
+#' Calculate WCN site-dependent profile
+#'
+#' Calculates the Weighted Contact Number (WCN) of each site
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns a vector of size nsites with wcn values for each site
+#'
+#' @export
+#'
 get_wcn <- function(prot) wcn_xyz(get_xyz(prot))
 
-#' Calculate MSF profile of prot
+#' Calculate MSF site-dependent profile
 #'
+#' Calculates the mean-square-fluctuation of each site
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns a vector of size nsites with msf values for each site
+#'
+#' @export
+#'
+#' @family prot getters
 get_msf_site <- function(prot) {
   diag(get_reduced_cmat(prot))
 }
 
-#' Calculates mean local mutational stress
-#'
-#' The mlms of a site is the sum over its contacts of kij
-#'
-get_mlms_1 <-  function(prot) {
-  diag(get_reduced_kmat(prot))
-}
 
-#' Site-dependent ENM minimum stress energy
+
+#' Calculate MLMS site-dependent profile
+#'
+#' Calculates the Mean Local Mutational Stress (MLMS) profile using graph of prot object
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @param sdij_cut An integer cutoff of sequence distance to include in calculation
+#' @returns the profile of mean-local-mutational-stress (mlms) values
+#'
+#' @export
+#'
+#' @family prot getters
 #'
 get_mlms <- function(prot, sdij_cut = 2) {
   g1 <- get_graph(prot)
@@ -42,7 +72,16 @@ get_mlms <- function(prot, sdij_cut = 2) {
 
 }
 
-#' Site-dependent ENM minimum stress energy
+#' Site-dependent ENM minimum stress energy profile
+#'
+#' Calculates the sum for each site of the stress energy of each of it's springs at equilibrium
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns a vector of site-dependent stress-energy values
+#'
+#' @export
+#'
+#' @family prot getters
 #'
 get_stress <- function(prot) {
   g1 <- get_graph(prot)
@@ -65,7 +104,17 @@ get_stress <- function(prot) {
 
 # Get mode profiles -------------------------------------------------------
 
-
+#' Calculate MSF mode-dependent profile
+#'
+#' Calculates the mean-square-fluctuation in the direction of each normal mode
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns a vector of size nsites with msf values for each mode
+#'
+#' @export
+#'
+#' @family prot getters
+#'
 get_msf_mode <-  function(prot) 1 / get_evalue(prot)
 
 
@@ -75,40 +124,52 @@ get_msf_mode <-  function(prot) 1 / get_evalue(prot)
 
 
 
-#' Correlation matrix
+#' Calculate rho matrix
+#'
+#' Calculates the reduced correlation matrix (size nsites x nsites, diag(rho) = 1)
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns a matrix of size nsites x nsites with rho(i,j) = cmat(i,j)/sqrt(cmat(i,i) * cmat(j,j))
+#'
+#' @export
+#'
+#' @family prot getters
 #'
 get_rho_matrix <- function(prot) {
   cmat <- get_reduced_cmat(prot)
   t(cmat / sqrt(diag(cmat))) / sqrt(diag(cmat))
 }
 
-#'  Variance-covariance matrix
+#' Calculate reduced covariance matrix
+#'
+#' Calculates the reduced covariance matrix (size nsites x nsites)
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns a matrix of size nsites x nsites with \eqn{c_{ij} = < d\mathbf{r}_i . d\mathbf{r}_j >}
+#'
+#' @export
+#'
+#' @family prot getters
 #'
 get_reduced_cmat <- function(prot) {
   get_cmat(prot) %>%
     reduce_matrix()
 }
 
-#' Reduced network K matrix
+#' Calculate reduced ENM K matrix
+#'
+#' Calculates the reduced K matrix (size nsites x nsites)
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns a matrix of size nsites x nsites \eqn{K_{ij} = Tr(\mathbf{K}_{ij})}
+#'
+#' @export
+#'
+#' @family prot getters
 #'
 get_reduced_kmat <- function(prot) {
   get_kmat(prot) %>%
     reduce_matrix()
-}
-
-
-get_kmat_sqrt <- function(prot) {
-  evalue <- get_evalue(prot)
-  umat <- get_umat(prot)
-  kmat_sqrt <- umat %*% (sqrt(evalue) * t(umat))
-  kmat_sqrt
-}
-
-get_cmat_sqrt <- function(prot) {
-  evalue <- get_evalue(prot)
-  umat <- get_umat(prot)
-  cmat_sqrt <- umat %*% (sqrt(1 / evalue) * t(umat))
-  cmat_sqrt
 }
 
 
@@ -118,8 +179,14 @@ get_cmat_sqrt <- function(prot) {
 # site by mode matrices ---------------------------------------------------
 
 
-
-#' MSF of each site contributed by each mode, as matrix
+#' Calculate MSF site-dependent profile for each mode
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns a matrix of size nsites x nmodes with the msf of each site contributed by each mode
+#'
+#' @export
+#'
+#' @family prot getters
 #'
 get_msf_site_mode <- function(prot) {
   umat2 <- get_umat2(prot)
@@ -129,7 +196,16 @@ get_msf_site_mode <- function(prot) {
 
 
 
-#' Site-reduced `umat**2` matrix, as matrix
+#' Calculate Reduced \code{umat^2}
+#'
+#'Calculates a matrix of size nsites x nmodes. Element umat2(i,n) is the contribution of site i to mode n (amplitude squared, added over x,y,z)
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns a matrix of size nsites x nmodes with contribution of each site to each mode.
+#'
+#' @export
+#'
+#' @family prot getters
 #'
 get_umat2 <- function(prot) {
   umat2 <- get_umat(prot)^2

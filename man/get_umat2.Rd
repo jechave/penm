@@ -2,10 +2,29 @@
 % Please edit documentation in R/enm_analysis.R
 \name{get_umat2}
 \alias{get_umat2}
-\title{Site-reduced `umat**2` matrix, as matrix}
+\title{Calculate Reduced \code{umat^2}}
 \usage{
 get_umat2(prot)
 }
-\description{
-Site-reduced `umat**2` matrix, as matrix
+\arguments{
+\item{prot}{is a protein object obtained using set_enm()}
 }
+\value{
+a matrix of size nsites x nmodes with contribution of each site to each mode.
+}
+\description{
+Calculates a matrix of size nsites x nmodes. Element umat2(i,n) is the contribution of site i to mode n (amplitude squared, added over x,y,z)
+}
+\seealso{
+Other prot getters: 
+\code{\link{get_cn}()},
+\code{\link{get_mlms}()},
+\code{\link{get_msf_mode}()},
+\code{\link{get_msf_site_mode}()},
+\code{\link{get_msf_site}()},
+\code{\link{get_reduced_cmat}()},
+\code{\link{get_reduced_kmat}()},
+\code{\link{get_rho_matrix}()},
+\code{\link{get_stress}()}
+}
+\concept{prot getters}

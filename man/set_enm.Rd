@@ -2,24 +2,31 @@
 % Please edit documentation in R/enm.R
 \name{set_enm}
 \alias{set_enm}
-\title{Set up ENM from bio3d pdb object}
+\title{Set up 'prot' object}
 \usage{
 set_enm(pdb, node, model, d_max, frustrated)
 }
 \arguments{
-\item{pdb}{a pdb object obtained using bio3d::read.pdb}
+\item{pdb}{pdb object obtained using bio3d::read.pdb}
 
-\item{node}{network nodes: "sc" or "ca"}
+\item{node}{parameter specifying how network nodes should be built: "sc" (side chains) or "ca" (alpha carbons)}
 
-\item{model}{enm model: "anm", "ming_wall", "hnm", "hnm0", "pfanm", "reach"}
+\item{model}{parameter specifying model type: "anm", "ming_wall", "hnm", "hnm0", "pfanm", "reach"}
 
-\item{d_max}{cutoff to define enm contacts}
+\item{d_max}{distance cutoff used to define enm contacts}
 
-\item{frustrated}{logical indicating whether to include frustrations in calculation of kmat}
+\item{frustrated}{logical value indicating whether to include frustrations in calculation of kmat}
 }
 \value{
-a `prot` object (list containing xyz, site, etc.)
+an object of class `prot`, which is a list `lst(param, node, graph, eij, kmat, nma)`
 }
 \description{
-Set up ENM from bio3d pdb object
+`set_enm` set's up a `prot` object containing information on ENM structure, parameters, and normal modes
+}
+\examples{
+\dontrun{
+pdb <- bio3d::read.pdb("2acy")
+set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+set_enm(pdb, node = "sc", model = "anm", d_max = 12.5, frustrated = TRUE)
+}
 }

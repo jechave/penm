@@ -1,3 +1,59 @@
+#' set CA nodes
+#'
+#' @noRd
+#'
+prot_ca <- function(pdb) {
+  sel <- atom.select(pdb, elety = "CA") # select CA
+
+  nsites <- length(sel$atom)
+  site <- seq(length(sel$atom))
+  pdb_site <- pdb$atom$resno[sel$atom]
+  bfactor <- pdb$atom$b[sel$atom]
+  xyz <- pdb$xyz[sel$xyz]
+
+  lst(nsites, site, pdb_site, bfactor, xyz)
+}
+
+#' set side-chain nodes
+#'
+#' @noRd
+#'
+prot_sc <- function(pdb) {
+  # calculate xyz coordinates of ca, cb, com, qm (qb by Micheletti), ql (qb by Levitt)
+  r <-  residue.coordinates(pdb)
+  b <-  residue.bfactors(pdb)
+
+  pdb_site <- r$site
+  nsites <- length(r$site)
+  site <- seq(length(r$site))
+
+  xyz <-  r$com.xyz
+  xyz_na <- is.na(xyz)
+  xyz[xyz_na] <- r$m.xyz[xyz_na] #when center of mass is NA, use Michelettis approximation to Cbeta coordinates
+  xyz_na <- is.na(xyz)
+  xyz[xyz_na] <- r$ca.xyz[xyz_na] # use CA coordinates if neither com or micheletti are defined
+
+  b.c <- b$b.c
+  b.m <- b$b.m
+  b.a <- b$b.a
+
+  bfactor <- b.c # center-of-mass bfactors
+  bfactor[is.na(bfactor)] <- b.m[is.na(bfactor)] # Use Micheletti's bfactor when com bfactor undefined'
+  bfactor[is.na(bfactor)] <- b.a[is.na(bfactor)] # Use CA bfactor otherwise
+
+
+  lst(nsites, site, pdb_site, bfactor, xyz)
+}
+
+
+#' Various residue coordinates
+#'
+#' @param pdb an object obtained using bio3d::read.pdb()
+#'
+#' @returns a list  \code{lst(site,aa,ca.xyz,cb.xyz,com.xyz,m.xyz,l.xyz)}
+#'
+#' @noRd
+#'
 residue.coordinates = function(pdb,d=1.5) {
 # returns a list with the coordinates:
 # alpha carbon, beta carbon, side-chain center of mass
@@ -41,7 +97,14 @@ residue.coordinates = function(pdb,d=1.5) {
    r
 }
 
-
+#' Various residue B-factors
+#'
+#' @param pdb an object obtained using bio3d::read.pdb()
+#'
+#' @returns a data frame with b-factors  \code{data.fram(b.a,b.b,b.c, b.l, b.m)} (alpha carbon, beta carbon, center of mass, levitt, micheletti)
+#'
+#' @noRd
+#'
 residue.bfactors = function(pdb) {
 # returns a data.frame with alpha, beta, and com bfactors
     ca.inds = atom.select(pdb,"calpha",verbose=FALSE)
@@ -87,20 +150,58 @@ residue.bfactors = function(pdb) {
    df.bfactor
 }
 
-
+#' Norm of vector
+#'
+#' @param v a vector
+#'
+#' @returns the L2 norm
+#'
+#' @noRd
+#'
 vnorm = function(v)  sqrt(sum(v^2))
 
+
+#' Angle between two vectors
+#'
+#' @param v1 a vector
+#' @param v2 a vector
+#'
+#' @returns the angle between the vectors
+#'
+#' @noRd
+#'
 theta = function(v1,v2) {
   th = acos(sum(v1*v2)/sqrt(sum(v1^2)*sum(v2^2)))
   th
 }
 
+#' Distance between two points
+#'
+#' @param r1 a vector
+#' @param r2 a vector
+#'
+#' @returns the distance
+#'
+#' @noRd
+#'
 distance = function(r1,r2) {
   r12 = r2-r1
   d12 = sqrt(sum(r12^2))
   d12
 }
 
+#' Coordinates of beta carbon, estimated by Levitt (1996)
+#'
+#' (See Micheletti et al. 2004, beta gaussian model)
+#'
+#' @param ca.xyz coordinates of alpha carbons
+#' @param l distance between alpha carbon and model beta carbon
+#' @param theta angle
+#'
+#' @returns the distance
+#'
+#' @noRd
+#'
 qb.levitt = function(ca.xyz,l=3,theta=37.6){
   # quasi-beta (centroid) coordinates according to Levitt 1996
   nsites = length(ca.xyz)/3
@@ -124,6 +225,17 @@ qb.levitt = function(ca.xyz,l=3,theta=37.6){
   qb.xyz
 }
 
+#' Coordinates of beta carbon, estimated by Micheletti (2004)
+#'
+#' (See Micheletti et al. 2004, beta gaussian model)
+#'
+#' @param ca.xyz coordinates of alpha carbons
+#' @param l distance between alpha carbon and model beta carbon
+#'
+#' @returns the distance
+#'
+#' @noRd
+#'
 qb.micheletti = function(ca.xyz,l=3){
   # quasi-beta (centroid) coordinates according to Micheletti 2004 (also Jernigan and HSCa)
   nsites = length(ca.xyz)/3
@@ -145,7 +257,16 @@ qb.micheletti = function(ca.xyz,l=3){
   qb.xyz
 }
 
-
+#' B-factor of Levitt's beta carbon
+#'
+#' @param ca.xyz coordinates of alpha carbons
+#' @param l distance between alpha carbon and model beta carbon
+#' @param theta angle
+#'
+#' @returns the distance
+#'
+#' @noRd
+#'
 bfactor.levitt = function(ca.bfactor){
   nsites = length(ca.bfactor)
   qb.bfactor = c()
@@ -161,6 +282,16 @@ bfactor.levitt = function(ca.bfactor){
   qb.bfactor
 }
 
+#' B-factor of Levitt's beta carbon
+#'
+#' @param ca.xyz coordinates of alpha carbons
+#' @param l distance between alpha carbon and model beta carbon
+#' @param theta angle
+#'
+#' @returns the distance
+#'
+#' @noRd
+#'
 bfactor.micheletti = function(ca.bfactor){
   nsites = length(ca.bfactor)
   qb.bfactor = c()

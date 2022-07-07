@@ -6,6 +6,22 @@
 \usage{
 calculate_enm_nodes(pdb, node)
 }
+\arguments{
+\item{pdb}{pdb object obtained using bio3d::read.pdb()}
+
+\item{node}{type, either "ca" or "sc"}
+}
+\value{
+a list of node properties:  \code{lst(nsites, site, pdb_site, bfactor, xyz)}
+}
 \description{
 Calculate nodes of prot object
 }
+\seealso{
+Other enm builders: 
+\code{\link{calculate_enm_eij}()},
+\code{\link{calculate_enm_graph}()},
+\code{\link{calculate_enm_kmat}()},
+\code{\link{calculate_enm_nma}()}
+}
+\concept{enm builders}

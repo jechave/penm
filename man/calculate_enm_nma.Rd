@@ -12,19 +12,22 @@ calculate_enm_nma(kmat, too_small = 1e-05)
 \item{too_small=1.e-5}{A small value, eigenvectors with eigenvalues larger than `too_small` are discarded}
 }
 \value{
-A list with elements \code{mode}, \code{evalue}, \code{cmat}, and \code{umat}
+A list with elements \code{lst(mode,evalue,cmat,umat)}
 }
 \description{
 Given an enm `kmat`, perform NMA
 }
 \examples{
-
-enm_anm(enm, 1.e-10)
+\dontrun{
+calculate_enm_anm(kmat, too_small = 1.e-10)
+}
 
 }
 \seealso{
 Other enm builders: 
+\code{\link{calculate_enm_eij}()},
 \code{\link{calculate_enm_graph}()},
-\code{\link{calculate_enm_kmat}()}
+\code{\link{calculate_enm_kmat}()},
+\code{\link{calculate_enm_nodes}()}
 }
 \concept{enm builders}

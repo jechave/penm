@@ -22,12 +22,20 @@ The \code{3 nsites x 3 nsites} stiffness matrix of the ENM
 Calculate kmat given the ENM graph
 }
 \examples{
-calculate_enm_kmat(graph, eij)
+\dontrun{
+pdb <- read.pdb("2acy")
+nodes <- calculate_enm_nodes <- function(pdb, node = "ca")
+graph <- calculate_enm_graph(nodes$xyz, nodes$pdb_site, model = "anm", d_max = 10.5)
+eij <- calculate_enm_eij(nodes$xyz, graph$i, graph$j)
+kmat <- calculate_enm_kmat(graph, eij, nsite = )
+}
 
 }
 \seealso{
 Other enm builders: 
+\code{\link{calculate_enm_eij}()},
 \code{\link{calculate_enm_graph}()},
-\code{\link{calculate_enm_nma}()}
+\code{\link{calculate_enm_nma}()},
+\code{\link{calculate_enm_nodes}()}
 }
 \concept{enm builders}

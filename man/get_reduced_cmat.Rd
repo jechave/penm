@@ -2,10 +2,29 @@
 % Please edit documentation in R/enm_analysis.R
 \name{get_reduced_cmat}
 \alias{get_reduced_cmat}
-\title{Variance-covariance matrix}
+\title{Calculate reduced covariance matrix}
 \usage{
 get_reduced_cmat(prot)
 }
-\description{
-Variance-covariance matrix
+\arguments{
+\item{prot}{is a protein object obtained using set_enm()}
 }
+\value{
+a matrix of size nsites x nsites with \eqn{c_{ij} = < d\mathbf{r}_i . d\mathbf{r}_j >}
+}
+\description{
+Calculates the reduced covariance matrix (size nsites x nsites)
+}
+\seealso{
+Other prot getters: 
+\code{\link{get_cn}()},
+\code{\link{get_mlms}()},
+\code{\link{get_msf_mode}()},
+\code{\link{get_msf_site_mode}()},
+\code{\link{get_msf_site}()},
+\code{\link{get_reduced_kmat}()},
+\code{\link{get_rho_matrix}()},
+\code{\link{get_stress}()},
+\code{\link{get_umat2}()}
+}
+\concept{prot getters}

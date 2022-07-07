@@ -2,10 +2,29 @@
 % Please edit documentation in R/enm_analysis.R
 \name{get_reduced_kmat}
 \alias{get_reduced_kmat}
-\title{Reduced network K matrix}
+\title{Calculate reduced ENM K matrix}
 \usage{
 get_reduced_kmat(prot)
 }
-\description{
-Reduced network K matrix
+\arguments{
+\item{prot}{is a protein object obtained using set_enm()}
 }
+\value{
+a matrix of size nsites x nsites \eqn{K_{ij} = Tr(\mathbf{K}_{ij})}
+}
+\description{
+Calculates the reduced K matrix (size nsites x nsites)
+}
+\seealso{
+Other prot getters: 
+\code{\link{get_cn}()},
+\code{\link{get_mlms}()},
+\code{\link{get_msf_mode}()},
+\code{\link{get_msf_site_mode}()},
+\code{\link{get_msf_site}()},
+\code{\link{get_reduced_cmat}()},
+\code{\link{get_rho_matrix}()},
+\code{\link{get_stress}()},
+\code{\link{get_umat2}()}
+}
+\concept{prot getters}

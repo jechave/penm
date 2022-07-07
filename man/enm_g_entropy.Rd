@@ -2,10 +2,15 @@
 % Please edit documentation in R/enm_energy.R
 \name{enm_g_entropy}
 \alias{enm_g_entropy}
-\title{entropic total free energy}
+\title{Calculate entropic total free energy of prot object}
 \usage{
 enm_g_entropy(prot, beta)
 }
+\arguments{
+\item{prot}{is a prot object with known eigenvalues of enm model}
+
+\item{beta}{is 1 / kT}
+}
 \description{
-entropic total free energy
+Calculate entropic total free energy of prot object
 }

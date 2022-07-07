@@ -5,11 +5,8 @@
 \title{Depreciated, use sdmrs instead}
 \usage{
 dmrs_simulation(...)
-
-dmrs_simulation(...)
 }
 \description{
 Depreciated, use sdmrs instead
-
-Depreciated, use admrs instead
 }
+\keyword{internal}

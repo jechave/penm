@@ -23,13 +23,16 @@ a tibble that contains the graph representation of the network
 Calculates graph representation of Elastic Network Model (ENM), the typical relaxed case (lij = dij)
 }
 \examples{
-if (FALSE)
+\dontrun{
  calculate_enm_graph(xyz, pdb_site, model, d_max)
+}
 
 }
 \seealso{
 Other enm builders: 
+\code{\link{calculate_enm_eij}()},
 \code{\link{calculate_enm_kmat}()},
-\code{\link{calculate_enm_nma}()}
+\code{\link{calculate_enm_nma}()},
+\code{\link{calculate_enm_nodes}()}
 }
 \concept{enm builders}

@@ -2,10 +2,31 @@
 % Please edit documentation in R/enm_analysis.R
 \name{get_mlms}
 \alias{get_mlms}
-\title{Site-dependent ENM minimum stress energy}
+\title{Calculate MLMS site-dependent profile}
 \usage{
 get_mlms(prot, sdij_cut = 2)
 }
-\description{
-Site-dependent ENM minimum stress energy
+\arguments{
+\item{prot}{is a protein object obtained using set_enm()}
+
+\item{sdij_cut}{An integer cutoff of sequence distance to include in calculation}
 }
+\value{
+the profile of mean-local-mutational-stress (mlms) values
+}
+\description{
+Calculates the Mean Local Mutational Stress (MLMS) profile using graph of prot object
+}
+\seealso{
+Other prot getters: 
+\code{\link{get_cn}()},
+\code{\link{get_msf_mode}()},
+\code{\link{get_msf_site_mode}()},
+\code{\link{get_msf_site}()},
+\code{\link{get_reduced_cmat}()},
+\code{\link{get_reduced_kmat}()},
+\code{\link{get_rho_matrix}()},
+\code{\link{get_stress}()},
+\code{\link{get_umat2}()}
+}
+\concept{prot getters}

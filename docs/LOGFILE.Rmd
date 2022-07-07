@@ -409,6 +409,16 @@ Moved some non-used files from `.R/` to `./saved`.
 - Continue adding @export and documentation fields to all .R files. Next `enm.R` and `enm_analysis.R`
 
 
+## 7 July 2022
+
+- Added full roxygen2 documentation to enm.R and enm_analysis.R. 
+- Moved a couple of functions from enm_analysis.R to mutscan_utils.R
+- Moved together functions used to generate node coordinates to enm_utils_nodes.R
+- Updated the documentation
+
+
+
+
 
 
 

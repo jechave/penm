@@ -2,10 +2,29 @@
 % Please edit documentation in R/enm_analysis.R
 \name{get_msf_site}
 \alias{get_msf_site}
-\title{Calculate MSF profile of prot}
+\title{Calculate MSF site-dependent profile}
 \usage{
 get_msf_site(prot)
 }
-\description{
-Calculate MSF profile of prot
+\arguments{
+\item{prot}{is a protein object obtained using set_enm()}
 }
+\value{
+a vector of size nsites with msf values for each site
+}
+\description{
+Calculates the mean-square-fluctuation of each site
+}
+\seealso{
+Other prot getters: 
+\code{\link{get_cn}()},
+\code{\link{get_mlms}()},
+\code{\link{get_msf_mode}()},
+\code{\link{get_msf_site_mode}()},
+\code{\link{get_reduced_cmat}()},
+\code{\link{get_reduced_kmat}()},
+\code{\link{get_rho_matrix}()},
+\code{\link{get_stress}()},
+\code{\link{get_umat2}()}
+}
+\concept{prot getters}
