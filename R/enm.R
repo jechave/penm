@@ -24,6 +24,9 @@
 #' set_enm(pdb, node = "sc", model = "anm", d_max = 12.5, frustrated = TRUE)
 #' }
 set_enm <- function(pdb, node, model, d_max, frustrated) {
+
+  stopifnot(!frustrated) # WARNING: need to test frustrated = T option, not sure whether mut_graph is consistent with kmat calculation
+
   prot <- create_enm() %>%
     set_enm_param(node = node, model = model, d_max = d_max, frustrated = frustrated) %>%
     set_enm_nodes(pdb = pdb) %>%

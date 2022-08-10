@@ -73,8 +73,8 @@ generate_fmat_dmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
   for(j in seq(nsites)) {
     for (m in mutation) {
       set.seed(seed + j * m)
-      dlmat[, j, m] <- get_delta_lij_dmrs(wt, site_mut = j, mut_sd_min, mut_dl_sigma)
-      fmat[, j, m] <- get_force_dmrs(wt, dlmat[, j, m])
+      dlmat[, j, m] <- generate_delta_lij_dmrs(wt, site_mut = j, mut_sd_min, mut_dl_sigma)
+      fmat[, j, m] <- calculate_force_dmrs(wt, dlmat[, j, m])
     }
   }
   fmat
@@ -85,7 +85,7 @@ generate_fmat_dmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
 
 #' get force from delta_lik for dmrs calculations
 #'
-get_force_dmrs <- function(wt, delta_lij) {
+calculate_force_dmrs <- function(wt, delta_lij) {
 
   graph <- get_graph(wt)
 
@@ -119,7 +119,7 @@ get_force_dmrs <- function(wt, delta_lij) {
 }
 
 
-get_delta_lij_dmrs <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) {
+generate_delta_lij_dmrs <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) {
   graph <- get_graph(wt)
 
   delta_lij <-  rep(0, nrow(get_graph(wt)))

@@ -30,15 +30,21 @@ get_mutant_site(
 \item{seed}{An integer, the seed for set.seed before picking perturbations}
 }
 \value{
-A mutated protein
+A mutated protein object
 }
 \description{
 Returns a mutant given a wt and a site to mutate (site_mut)
 }
+\examples{
+\dontrun{
+pdb <- bio3d::read.pdb("2acy")
+wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, mut_model = "lfenm", seed = 1024)
+}
+
+}
 \seealso{
 Other enm mutating functions: 
-\code{\link{get_force}()},
-\code{\link{get_mutant_site_lfenm}()},
-\code{\link{get_mutant_site_sclfenm}()}
+\code{\link{mutate_graph}()}
 }
 \concept{enm mutating functions}

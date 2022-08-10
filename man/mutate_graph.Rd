@@ -7,5 +7,10 @@
 mutate_graph(prot)
 }
 \description{
-mutate graph following change in structure
+WARNING: I'm not sure that "frustrated" case is handled well, or in agreement with calc_kmat, etc.
 }
+\seealso{
+Other enm mutating functions: 
+\code{\link{get_mutant_site}()}
+}
+\concept{enm mutating functions}

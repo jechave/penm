@@ -78,8 +78,8 @@ generate_perturbations <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
   for(j in seq(nsites)) {
     for (m in mutation) {
       set.seed(seed + j * m)
-      dlmat[, j, m] <- get_delta_lij(wt, site_mut = j, mut_sd_min, mut_dl_sigma)
-      fmat[, j, m] <- get_force(wt, dlmat[, j, m])
+      dlmat[, j, m] <- generate_delta_lij(wt, site_mut = j, mut_sd_min, mut_dl_sigma)
+      fmat[, j, m] <- calculate_force(wt, dlmat[, j, m])
     }
   }
 
@@ -207,7 +207,7 @@ calculate_dvsjm_smrs <- function(wt, nmut_per_site, mut_dl_sigma, mut_sd_min,  s
   for(j in site) {
     for (m in mutation) {
       set.seed(seed + j * m)
-      dlij <- get_delta_lij(wt, j, mut_sd_min, mut_dl_sigma)
+      dlij <- generate_delta_lij(wt, j, mut_sd_min, mut_dl_sigma)
       dvsjm[j, m] <- sum(1 / 2 * get_graph(wt)$kij * dlij^2)
     }
   }

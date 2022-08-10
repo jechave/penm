@@ -214,7 +214,7 @@ only on prot objects, so that parameters are passed through prot.
 
 -   replaced all `calculate_enm_` functions by `set_enm_(prot)`
     functions in *penm.R*
--   Changed `get_force`
+-   Changed `calculate_force`
 -   Changed dlij from lij(mut) - dij(wt) to lij(mut) - lij(wt)
 -   Made `get_mutant_site` a bit shorter by adding get_dlij
 -   Removed `wt0` (I wasn’t using it, just confusing).
@@ -483,3 +483,10 @@ Moved some non-used files from `.R/` to `./saved`.
 -   Moved together functions used to generate node coordinates to
     enm_utils_nodes.R
 -   Updated the documentation
+
+## 10 Aug 2022
+
+-   Revised roxygen2 documentation for penm.R
+
+WARNING: mut_graph assumes frustrated = T? For now use frustrated = F
+option everywhere, until I check it thoroughly.

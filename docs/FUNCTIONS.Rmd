@@ -51,11 +51,11 @@ output: pdf_document
 
 * get_mutant_site_sclfenm <- function(wt, site_mut, mutation,  mut_dl_sigma, mut_sd_min,  seed) 
 
-* get_delta_lij <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) 
+* generate_delta_lij <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) 
 
-* get_dxyz <- function(wt, delta_lij) 
+* calculate_dxyz <- function(wt, delta_lij) 
 
-* get_force <- function(wt, delta_lij) 
+* calculate_force <- function(wt, delta_lij) 
 
 * mutate_enm <- function(prot) 
 
