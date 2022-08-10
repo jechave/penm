@@ -1,16 +1,49 @@
+## Energy diferences
+#' Calculate energy differences between a mutant and wild type
+#'
+#' @param wt A protein object with \code{xyz} defined
+#' @param mut A second protein object  with \code{xyz} defined
+#'
+#' @return A (scalar) energy difference between mutant and wild type.
+#'
+#' @name delta_energy
+#'
+NULL
+
+#' @rdname delta_energy
+#'
+#' @details `calculate_dvm` calculates the minimum-energy difference between \code{mut} and \code{wt}
+#'
+#' @export
+#'
 calculate_dvm <- function(wt, mut)
   enm_v_min(mut) - enm_v_min(wt)
 
+#' @rdname delta_energy
+#'
+#' @details `calculate_dg_enetropy` calculates the entropic free energ difference between \code{mut} and \code{wt}
+#'
+#' @export
+#'
 calculate_dg_entropy <- function(wt, mut, beta)
   enm_g_entropy(mut, beta) - enm_g_entropy(wt, beta)
 
 
-#' Stress-model difference of local-mutational-stress energy
+#' @rdname delta_energy
+#'
+#' @details `calculate_dvs` calculates the ideal-conformation stress-energy difference between \code{mut} and \code{wt}
+#'
+#' @export
+#'
 calculate_dvs <- function(wt, mut, ideal = wt)
   calculate_vs(mut, ideal) - calculate_vs(wt, ideal)
 
 
 #' Stress-model local-mutational-stress energy
+#'
+#' Calculate de energy of a configuration "ideal"
+#'
+#' @noRd
 calculate_vs <- function(prot, ideal) {
   g <- get_graph(prot)
   g_ideal <- get_graph(ideal)
@@ -31,22 +64,26 @@ calculate_vs <- function(prot, ideal) {
 
 
 # Structure differences ---------------------------------------------------
-
-
-
-#' Compare the structures of two proteins in site representation
-#'
-#' Calculate de difference between the structures of two proteins, return dr2i
+#' Compare two proteins site by site (site-dependent profiles)
 #'
 #' This version works only for wt and mut with no indels
+#'
 #'
 #' @param wt A protein object with \code{xyz} defined
 #' @param mut A second protein object  with \code{xyz} defined
 #'
-#' @return A tibble with columns \code{pdb_site, site, dr2}
+#' @return A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.
+#'
+#' @name site_profile
+#'
+NULL
+
+#' @rdname site_profile
+#'
+#' @details `calculate_dr2i` returns the square of structural difference vector \eqn{\mathbf{C}\mathbf{f}}
+#'
 #' @export
 #'
-#' @examples
 calculate_dr2i <- function(wt, mut) {
   stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
   stopifnot(wt$node$site == mut$node$site) # no indels
@@ -55,7 +92,11 @@ calculate_dr2i <- function(wt, mut) {
   dr2i
 }
 
-#' @rdname calculate_dr2i
+#' @rdname site_profile
+#' @details `calculate_de2i` returns the square of deformation energy vector \eqn{\mathbf{C}^{1/2}\mathbf{f}}
+#'
+#' @export
+#'
 calculate_de2i <- function(wt, mut, kmat_sqrt) {
   stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
   stopifnot(wt$node$site == mut$node$site) # no indels
@@ -67,8 +108,11 @@ calculate_de2i <- function(wt, mut, kmat_sqrt) {
 }
 
 
-
-#' @rdname calculate_dr2i
+#' @rdname site_profile
+#' @details `calculate_df2i` returns the square of force vector \eqn{\mathbf{f}}
+#'
+#' @export
+#'
 calculate_df2i <- function(wt, mut) {
   stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
   stopifnot(wt$node$site == mut$node$site) # no indels
@@ -83,6 +127,12 @@ calculate_df2i <- function(wt, mut) {
   df2i
 }
 
+
+#' @rdname site_profile
+#' @details `calculate_dvmi` returns the difference of site-dependent minimum-energy contributions
+#'
+#' @export
+#'
 calculate_dvmi <- function(wt, mut) {
   stopifnot(get_nsites(wt) == get_nsites(mut)) # #warning, #check: I'm assuming no indels
 
@@ -105,6 +155,11 @@ calculate_dvmi <- function(wt, mut) {
   dvmi
 }
 
+#' @rdname site_profile
+#' @details `calculate_dvsi` returns the difference of site-dependent stress-energy contributions
+#'
+#' @export
+#'
 calculate_dvsi <- function(wt, mut) {
   stopifnot(get_nsites(wt) == get_nsites(mut)) # #warning, #check: I'm assuming no indels
 
@@ -127,21 +182,26 @@ calculate_dvsi <- function(wt, mut) {
 
 
 
-
-
-#' Compare the structures of two proteins in nm representation
+#' Compare two proteins in nm representation
 #'
-#' Calculate de difference between the structures of two proteins, return dr2n.
-#'
-#' This version works only for wt and mut with no indels
+#' (This version works only for wt and mut with no indels)
 #'
 #' @param wt A protein object with \code{xyz} and \code{enm} defined
 #' @param mut A second protein object  with \code{xyz} defined
+#' @return A vector with contributions of each normal mode to the given property
 #'
-#' @return A vector of square differences along normal modes \code{dr2n}
+#' @name mode_profile
+#'
+NULL
+
+
+#' @rdname mode_profile
+#'
+#' @details `calculate_dr2n` calculates de square of the mode-contributions to \eqn{\delta \mathbf{r} = \mathbf{C}\mathbf{f}}
+#'
+#'
 #' @export
 #'
-#' @examples
 calculate_dr2n <- function(wt, mut) {
   stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
   dr <- as.vector(get_xyz(mut) - get_xyz(wt))
@@ -151,13 +211,24 @@ calculate_dr2n <- function(wt, mut) {
   as.vector(dr2n)
 }
 
-
-#' @rdname calculate_dr2n
+#' @rdname mode_profile
+#'
+#' @details `calculate_de2n` calculates de square of the mode-contributions to \eqn{\delta \mathbf{e} = \mathbf{C}^{1/2}\mathbf{f}}
+#'
+#'
+#' @export
+#'
 calculate_de2n <- function(wt, mut) {
   get_evalue(wt) * calculate_dr2n(wt, mut)
 }
 
-#' @rdname calculate_dr2n
+#' @rdname mode_profile
+#'
+#' @details `calculate_df2n` calculates de square of the mode-contributions to the force vecgtor \eqn{\mathbf{f}}
+#'
+#'
+#' @export
+#'
 calculate_df2n <- function(wt, mut) {
   get_evalue(wt)^2 * calculate_dr2n(wt, mut)
 }

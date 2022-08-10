@@ -219,6 +219,7 @@ mutate_enm <- function(prot) {
 #'
 #' WARNING: I'm not sure that "frustrated" case is handled well, or in agreement with calc_kmat, etc.
 #'
+#' @noRd
 #' @family enm mutating functions
 mutate_graph <- function(prot) {
 

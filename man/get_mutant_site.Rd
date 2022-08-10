@@ -43,8 +43,4 @@ mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, mut_model = "lfenm", see
 }
 
 }
-\seealso{
-Other enm mutating functions: 
-\code{\link{mutate_graph}()}
-}
 \concept{enm mutating functions}
