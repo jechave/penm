@@ -2,10 +2,26 @@
 % Please edit documentation in R/mutscan_mrs.R
 \name{generate_mutants}
 \alias{generate_mutants}
-\title{Generarte table of single-point mutants}
+\title{Generate a tibble of single-point mutants}
 \usage{
 generate_mutants(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed)
 }
+\arguments{
+\item{wt}{is the wild-type protein to mutate}
+
+\item{nmut_per_site}{is the number of mutations per site to introduce}
+
+\item{mut_model}{is the mutational model ("lfenm" doesn't change network K matrix,  "sclfenm" changes network K matrix)}
+
+\item{mut_dl_sigma}{is the \eqn{\sigma} of a normal distribution from which dlij are obtained}
+
+\item{mut_sd_min}{is the minimum sequence distance of contacts to perturbate (if sd < sd_min they're not perturbed)}
+
+\item{seed}{is the seed passed to `get_mutant_site()` to generate the mutations}
+}
+\value{
+a tibble that contains \code{nsites * nmut_per_site} mutants (mutation = 0 corresponds to wt).
+}
 \description{
-Generarte table of single-point mutants
+Generate a tibble of single-point mutants
 }

@@ -7,6 +7,7 @@
 \alias{calculate_df2i}
 \alias{calculate_dvmi}
 \alias{calculate_dvsi}
+\alias{calculate_dvsi_same_topology}
 \title{Compare two proteins site by site (site-dependent profiles)}
 \usage{
 calculate_dr2i(wt, mut)
@@ -18,6 +19,8 @@ calculate_df2i(wt, mut)
 calculate_dvmi(wt, mut)
 
 calculate_dvsi(wt, mut)
+
+calculate_dvsi_same_topology(wt, mut)
 }
 \arguments{
 \item{wt}{A protein object with \code{xyz} defined}
@@ -40,4 +43,6 @@ This version works only for wt and mut with no indels
 `calculate_dvmi` returns the difference of site-dependent minimum-energy contributions
 
 `calculate_dvsi` returns the difference of site-dependent stress-energy contributions
+
+`calculate_dvsi_same_topology` returns the difference of site-dependent stress-energy contributions, assumes no change in topology
 }

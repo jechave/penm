@@ -484,9 +484,16 @@ Moved some non-used files from `.R/` to `./saved`.
     enm_utils_nodes.R
 -   Updated the documentation
 
-## 10 Aug 2022
+## 10 August 2022
 
--   Revised roxygen2 documentation for penm.R
+-   Revised roxygen2 documentation for penm.R (WARNING: mut_graph
+    assumes frustrated = T? For now use frustrated = F option
+    everywhere, until I check it thoroughly.)
+-   Revised roxygen2 documentation for penm_analysis.R
 
-WARNING: mut_graph assumes frustrated = T? For now use frustrated = F
-option everywhere, until I check it thoroughly.
+## 11 August 2022
+
+### To-do
+
+-   Move mutscan to a different package?
+-   Generate NAMESPACE using roxygen2?

@@ -417,11 +417,27 @@ Moved some non-used files from `.R/` to `./saved`.
 - Updated the documentation
 
 
-## 10 Aug 2022
+## 10 August 2022
 
 - Revised roxygen2 documentation for penm.R
+(WARNING: mut_graph assumes frustrated = T? For now use frustrated = F option everywhere, until I check it thoroughly.)
+- Revised roxygen2 documentation for penm_analysis.R
 
-WARNING: mut_graph assumes frustrated = T? For now use frustrated = F option everywhere, until I check it thoroughly.
+
+## 11 August 2022
+
+### To-do
+- Generate NAMESPACE using roxygen2?
+
+
+### Done
+- Changed names ".prs" to "_mrs" (for scanning generating explicit mutants with generate_mutants)
+- Added roxygen2 fields to mutscan_mrs.R
+- Removed saved old versions of prs alternatives
+
+
+
+
 
 
 

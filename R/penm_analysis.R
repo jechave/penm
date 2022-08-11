@@ -180,6 +180,38 @@ calculate_dvsi <- function(wt, mut) {
   dvsi
 }
 
+#' @rdname site_profile
+#' @details `calculate_dvsi_same_topology` returns the difference of site-dependent stress-energy contributions, assumes no change in topology
+#'
+#' @export
+#'
+calculate_dvsi_same_topology <- function(wt, mut) {
+  gwt <- get_graph(wt)
+  gmut <- get_graph(mut)
+
+  stopifnot(all(gmut$edge == gwt$edge)) # for "lfenm": this works if the network didn't change its topology
+
+  gmut$vsij = 1/2 * gmut$kij * (gwt$dij - gmut$lij)^2
+  gwt$vsij = 1/2 * gwt$kij * (gwt$dij - gwt$lij)^2
+  dvsij = gmut$vsij - gwt$vsij
+
+  dvsij_non_zero <- !near(dvsij, 0)
+
+  dvsij <- dvsij[dvsij_non_zero]
+  i <- gwt$i[dvsij_non_zero]
+  j <- gwt$j[dvsij_non_zero]
+  sites_non_zero <- unique(c(i,j))
+
+  dvsi <- rep(0, get_nsites(wt))
+
+  for (e in seq_along(dvsij))  {
+    dvsi[i[e]] = dvsi[i[e]] + dvsij[e]
+    dvsi[j[e]] = dvsi[j[e]] + dvsij[e]
+  }
+
+  dvsi
+}
+
 
 
 #' Compare two proteins in nm representation
