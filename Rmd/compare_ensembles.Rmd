@@ -1,0 +1,213 @@
+---
+title: "Test penm modeule of penm package"
+author: "Julian Echave"
+date: "4/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load libraries and functions
+
+```{r}
+# load libraries
+library(here)
+library(tidyverse)
+library(ggridges)
+library(cowplot)
+library(patchwork)
+library(bio3d)
+library(penm)
+library(jefuns)
+```
+
+
+## Check pdb file and read wt coordinates
+
+```{r}
+pdb_file <- here("data-raw/2acy_A.pdb")
+pdb <- read.pdb(pdb_file)
+
+wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE) 
+
+str(wt)
+```
+
+
+
+
+```{r}
+
+mut_lfenm <- get_mutant_site(wt, site_mut = 80, mutation = 1,  mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 2)
+mut_sclfenm <- get_mutant_site(wt, site_mut = 80, mutation = 1, mut_model = "sclfenm",  mut_dl_sigma = 0.3, mut_sd_min = 2)
+
+df <- tibble(protein = c("wt", "mut_lfenm", "mut_sclfenm"),
+             v_min = c(
+               enm_v_min(wt), 
+               enm_v_min(mut_lfenm), 
+               enm_v_min(mut_sclfenm)),
+             g_entropy = c(
+               enm_g_entropy(wt, beta_boltzmann()),
+               enm_g_entropy(mut_lfenm, beta_boltzmann()),
+               enm_g_entropy(mut_sclfenm, beta_boltzmann()))
+             )
+df
+             
+
+```
+
+## Compare graphs
+
+```{r}
+tibble( 
+  site = get_site(wt),
+  cn_wt = cn_graph(get_graph(wt)),
+  cn_lfenm = cn_graph(get_graph(mut_lfenm)),
+  cn_sclfenm = cn_graph(get_graph(mut_sclfenm))) %>% 
+  mutate(
+    dcn_lfenm = cn_lfenm - cn_wt,
+    dcn_sclfenm = cn_sclfenm - cn_wt
+  ) %>% 
+  pivot_longer(
+    cols = starts_with("dcn_"),
+    names_to = "case",
+    values_to = "dcn"
+  ) %>% 
+  ggplot(aes(site, dcn, color = case)) +
+  geom_line()
+
+
+```
+```{r}
+site = get_site(wt)
+msf_wt <- get_msf_site(wt)
+msf_lfenm <- get_msf_site(mut_lfenm)
+msf_sclfenm <- get_msf_site(mut_sclfenm)
+
+dat <- tibble(site, msf_wt, msf_lfenm, msf_sclfenm) %>% 
+  mutate(
+    dmsf_wt = 0,
+    dmsf_lfenm = msf_lfenm - msf_wt,
+    dmsf_sclfenm = msf_sclfenm - msf_wt
+  )
+
+p1 <- dat %>% 
+  pivot_longer(
+    cols = starts_with("msf_"),
+    names_to = "case",
+    values_to = "value"
+  ) %>% 
+  ggplot(aes(site, value, color = case)) +
+  geom_line()
+
+p2 <- dat %>% 
+  pivot_longer(
+    cols = starts_with("dmsf_"),
+    names_to = "case",
+    values_to = "value"
+  ) %>% 
+  ggplot(aes(site, value, color = case)) +
+  geom_line()
+
+p1 / p2
+
+```
+
+## entropy per site
+```{r}
+
+tr <- function(m) sum(diag(m))
+
+logdet <- function(m) {
+  log(det(m))
+}
+
+dbhati <- function(ca, cb, N = 3, normalize = F) {
+  stopifnot(nrow(ca) == N, nrow(cb) == N)
+  if(normalize) {
+    ca <- ca/tr(ca)
+    cb <- cb/tr(cb)
+  }
+  dmat = (ca + cb) / 2
+  db <- 1/2 * logdet(dmat) -  1/4 * logdet(ca) - 1/4 * logdet(cb)
+  db
+}
+
+rwsipi <- function(ca, cb, N = 3, normalize = F) {
+  stopifnot(nrow(ca) == N, nrow(cb) == N)
+   if(normalize) {
+    ca <- ca/tr(ca)
+    cb <- cb/tr(cb)
+  }
+  eiga <- eigen(ca)
+  eigb <- eigen(cb)
+  m <- tcrossprod(eiga$values, eigb$values) * crossprod(eiga$vectors, eigb$vectors)^2 / sum(eiga$values * eigb$values)
+  rwsip <- sqrt(sum(m))
+  rwsip
+}
+
+
+
+e <- exp(1)
+cmat_wt <- get_cmat(wt)
+dim(cmat_wt) <- c(3, get_nsites(prot), 3, get_nsites(prot))
+
+mut <- mut_sclfenm
+cmat_mut <- get_cmat(mut)
+dim(cmat_mut) <- c(3, get_nsites(prot), 3, get_nsites(prot))
+
+dat <- tibble(site = get_site(wt),
+              hi_wt = rep(NA, get_nsites(wt)),
+              hi_mut = rep(NA, get_nsites(wt)),
+              dhi = rep(NA, get_nsites(wt)),
+              rwsipi = rep(NA, get_nsites(wt)),
+              rwsipi_norm = rep(NA, get_nsites(wt)),
+              dbhati = rep(NA, get_nsites(wt)),
+              dbhati_norm = rep(NA, get_nsites(wt)),
+              )
+
+
+for (site in dat$site) {
+  cwt <- cmat_wt[ ,site, , site]
+  cmut <- cmat_mut[ ,site, , site]
+  evv_wt <- eigen(cmat_wt[ ,site, , site])
+  evv_mut <- eigen(cmat_mut[ ,site, , site])
+  dat$hi_wt[site] <- sum(1/2 * log(2 * pi * e * evv_wt$values))
+  dat$hi_mut[site] <- sum(1/2 * log(2 * pi * e * evv_mut$values))
+  dat$dhi[site] <- dat$hi_mut[site] - dat$hi_wt[site]
+  dat$rwsipi[site] <- rwsipi(cwt, cmut)
+  dat$rwsipi_norm[site] <- rwsipi(cwt, cmut, normalize = T)
+  dat$dbhati[site] <- dbhati(cwt, cmut)
+  dat$dbhati_norm[site] <- dbhati(cwt, cmut, normalize = T)
+}
+
+dat
+
+
+
+
+```
+```{r}
+cor(dat[, -1])
+
+```
+```{r}
+dat %>% 
+  ggplot(aes(dhi, dbhati_norm)) +
+  geom_point() +
+  geom_smooth()
+
+dat %>% 
+  pivot_longer(
+    cols = c(dhi, rwsipi, dbhati, dbhati_norm),
+    names_to = "case",
+    values_to = "value"
+  ) %>% 
+  ggplot(aes(site, value)) +
+  geom_line() +
+  facet_wrap(~case, scales = "free_y", ncol = 1)
+
+```
+

@@ -79,7 +79,7 @@ get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_m
 
 
 
-#' Get a single-point mutant using sclfenm mode
+#' Get a single-point mutant using sclfenm model
 #'
 #' Returns a mutant given a wt and a site to mutate (site_mut).
 #' According to the sclfenm, the network matrix K is recalculated using the
@@ -101,8 +101,6 @@ get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_m
 #'
 get_mutant_site_sclfenm <- function(wt, site_mut, mutation,  mut_dl_sigma, mut_sd_min,  seed) {
 
-  stop("ERROR: sclfenm must be fixed before this option may be run")
-
   if (mutation == 0) {
     # if mutation is 0, return wt
     return(wt)
@@ -114,8 +112,8 @@ get_mutant_site_sclfenm <- function(wt, site_mut, mutation,  mut_dl_sigma, mut_s
   f <- calculate_force(wt, delta_lij)
   dxyz <- calculate_dxyz(wt, f)
   mut <- wt
-  mut$graph$lij <-  wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
   mut$nodes$xyz <- wt$nodes$xyz + dxyz
+  mut$graph$lij <-  wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
   mut <- mutate_enm(mut) # This recalculates K, normal modes, etc.
   return(mut)
 
@@ -223,14 +221,14 @@ mutate_enm <- function(prot) {
 #' @family enm mutating functions
 mutate_graph <- function(prot) {
 
-  # the mut graph with wt contacts but mut lij parameters...
+  # the mut graph with wt contacts and lij parameters
   g1 <- get_graph(prot)
 
-  # the "self-consistent" graph: add/rm edges according to new xyz
+  # the "self-consistent" mut graph for given xyz: lij = dij
   g2 <- set_enm_graph(prot)$graph
 
   # the "frustrated" graph: keep lij for edges that haven't changed
-  g2[g2$edge %in% g1$edge, "lij"] <- g1[g1$edge %in% g2$edge, "lij"]
+  g2[g2$edge %in% g1$edge, "lij"] <- g1[g1$edge %in% g2$edge, "lij"] # WARNING: this is true only if edges are ordered
 
   prot$graph <- g2
   prot

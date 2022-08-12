@@ -437,6 +437,10 @@ Moved some non-used files from `.R/` to `./saved`.
 
 
 
+## 12 August 2022
+
+- Fixed some issues with sclfenm
+- Started comparing structural ensembles, see "compare_ensembles.Rmd"
 
 
 

@@ -70,7 +70,8 @@ cn_xyz <-  function(xyz, d_max) {
 
 #' @noRd
 #'
-cn_graph <- function(graph, nsites) {
+cn_graph <- function(graph) {
+  nsites <- max(c(graph$i, graph$j))
   cn = rep(0,nsites)
   for (i in seq(nsites)) {
     cn[i] <- sum(graph$i == i) + sum(graph$j == i)

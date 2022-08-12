@@ -64,7 +64,7 @@ calculate_vs <- function(prot, ideal) {
 
 
 # Structure differences ---------------------------------------------------
-#' Compare two proteins site by site (site-dependent profiles)
+#' Compare two protein structures site by site (site-dependent profiles)
 #'
 #' This version works only for wt and mut with no indels
 #'
@@ -214,7 +214,7 @@ calculate_dvsi_same_topology <- function(wt, mut) {
 
 
 
-#' Compare two proteins in nm representation
+#' Compare two protein structures in nm representation
 #'
 #' (This version works only for wt and mut with no indels)
 #'
@@ -263,4 +263,35 @@ calculate_de2n <- function(wt, mut) {
 #'
 calculate_df2n <- function(wt, mut) {
   get_evalue(wt)^2 * calculate_dr2n(wt, mut)
+}
+
+
+# Compare protein ensembles ----------------------------------------------------
+
+#' Compare two protein nsembles site by site (site-dependent profiles)
+#'
+#' Given two proteins, compare their conformational ensembles (fluctuation patterns),
+#' the proteins'  \code{cmat}, and normal modes (Principal components) are assumed known.
+#'
+#' (This version works only for wt and mut with no indels)
+#'
+#' @param wt A protein object with \code{enm} defined
+#' @param mut A second protein object  with \code{enm} defined
+#'
+#' @return A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.
+#'
+#' @name site_ensemble_profile
+#'
+NULL
+
+#' @rdname site_ensemble_profile
+#'
+#' @details `calculate_dmsfi` returns change profile of changes of mean-square fluctuations \eqn{\delta \sigma_i^2}
+#'
+#' @export
+#'
+calculate_dmsfi <- function(wt, mut) {
+  stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
+
+
 }
