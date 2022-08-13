@@ -123,4 +123,73 @@ my_quad_form <- function(x,m,y) {
 }
 
 
+#' Matrix trace
+#'
+#'
+tr <- function(m) sum(diag(m))
+
+#' Log of determinant of matrix
+#'
+#'
+logdet <- function(m) {
+  log(det(m))
+}
+
+
+#' Matrix trace
+#'
+#'
+tr <- function(m) sum(diag(m))
+
+#' Bhat distance between two distributions
+#' (see Fugglebak 2012)
+#'
+#' @noRd
+dbhat <- function(ca, cb, normalize = F) {
+  stopifnot(nrow(ca) == nrow(cb))
+  if(normalize) {
+    ca <- ca/tr(ca)
+    cb <- cb/tr(cb)
+  }
+  dmat = (ca + cb) / 2
+  db <- 1/2 * logdet(dmat) -  1/4 * logdet(ca) - 1/4 * logdet(cb)
+  db
+}
+
+#' RWSIP similarity between two distributions
+#' (see Carnevale 2007)
+#'
+#' @noRd
+rwsip <- function(ca, cb, normalize = F) {
+  stopifnot(nrow(ca) == nrow(cb))
+  if(normalize) {
+    ca <- ca/tr(ca)
+    cb <- cb/tr(cb)
+  }
+  eiga <- eigen(ca)
+  eigb <- eigen(cb)
+  m <- tcrossprod(eiga$values, eigb$values) * crossprod(eiga$vectors, eigb$vectors)^2 / sum(eiga$values * eigb$values)
+  rwsip <- sqrt(sum(m))
+  rwsip
+}
+
+#' Entropy difference between two distribut2ions
+#'
+#' @noRd
+dh <- function(ca, cb, normalize = F) {
+  stopifnot(nrow(ca) == nrow(cb))
+  if(normalize) {
+    ca <- ca/tr(ca)
+    cb <- cb/tr(cb)
+  }
+  eiga <- eigen(ca)
+  eigb <- eigen(cb)
+  ha <- 1/2 * sum(log(2 * pi * exp(1) * eiga$values))
+  hb <- 1/2 * sum(log(2 * pi * exp(1) * eigb$values))
+  dh <- hb - ha
+  dh
+}
+
+
+
 

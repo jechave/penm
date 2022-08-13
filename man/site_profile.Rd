@@ -8,7 +8,7 @@
 \alias{calculate_dvmi}
 \alias{calculate_dvsi}
 \alias{calculate_dvsi_same_topology}
-\title{Compare two proteins site by site (site-dependent profiles)}
+\title{Compare two protein structures site by site (site-dependent profiles)}
 \usage{
 calculate_dr2i(wt, mut)
 

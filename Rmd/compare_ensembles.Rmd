@@ -115,93 +115,29 @@ p1 / p2
 
 ```
 
-## entropy per site
+## site-dependent ensemble changes
 ```{r}
-
-tr <- function(m) sum(diag(m))
-
-logdet <- function(m) {
-  log(det(m))
-}
-
-dbhati <- function(ca, cb, N = 3, normalize = F) {
-  stopifnot(nrow(ca) == N, nrow(cb) == N)
-  if(normalize) {
-    ca <- ca/tr(ca)
-    cb <- cb/tr(cb)
-  }
-  dmat = (ca + cb) / 2
-  db <- 1/2 * logdet(dmat) -  1/4 * logdet(ca) - 1/4 * logdet(cb)
-  db
-}
-
-rwsipi <- function(ca, cb, N = 3, normalize = F) {
-  stopifnot(nrow(ca) == N, nrow(cb) == N)
-   if(normalize) {
-    ca <- ca/tr(ca)
-    cb <- cb/tr(cb)
-  }
-  eiga <- eigen(ca)
-  eigb <- eigen(cb)
-  m <- tcrossprod(eiga$values, eigb$values) * crossprod(eiga$vectors, eigb$vectors)^2 / sum(eiga$values * eigb$values)
-  rwsip <- sqrt(sum(m))
-  rwsip
-}
-
-
-
-e <- exp(1)
-cmat_wt <- get_cmat(wt)
-dim(cmat_wt) <- c(3, get_nsites(prot), 3, get_nsites(prot))
+nsites <- get_nsites(wt)
 
 mut <- mut_sclfenm
-cmat_mut <- get_cmat(mut)
-dim(cmat_mut) <- c(3, get_nsites(prot), 3, get_nsites(prot))
 
 dat <- tibble(site = get_site(wt),
-              hi_wt = rep(NA, get_nsites(wt)),
-              hi_mut = rep(NA, get_nsites(wt)),
-              dhi = rep(NA, get_nsites(wt)),
-              rwsipi = rep(NA, get_nsites(wt)),
-              rwsipi_norm = rep(NA, get_nsites(wt)),
-              dbhati = rep(NA, get_nsites(wt)),
-              dbhati_norm = rep(NA, get_nsites(wt)),
+              dmsfi = calculate_dmsfi(wt, mut),
+              dhi = calculate_dhi(wt, mut),
+              rwsipi = calculate_rwsipi(wt, mut),
+              dbhati = calculate_dbhati(wt, mut)
               )
-
-
-for (site in dat$site) {
-  cwt <- cmat_wt[ ,site, , site]
-  cmut <- cmat_mut[ ,site, , site]
-  evv_wt <- eigen(cmat_wt[ ,site, , site])
-  evv_mut <- eigen(cmat_mut[ ,site, , site])
-  dat$hi_wt[site] <- sum(1/2 * log(2 * pi * e * evv_wt$values))
-  dat$hi_mut[site] <- sum(1/2 * log(2 * pi * e * evv_mut$values))
-  dat$dhi[site] <- dat$hi_mut[site] - dat$hi_wt[site]
-  dat$rwsipi[site] <- rwsipi(cwt, cmut)
-  dat$rwsipi_norm[site] <- rwsipi(cwt, cmut, normalize = T)
-  dat$dbhati[site] <- dbhati(cwt, cmut)
-  dat$dbhati_norm[site] <- dbhati(cwt, cmut, normalize = T)
-}
-
 dat
-
-
-
-
 ```
+
 ```{r}
 cor(dat[, -1])
 
 ```
 ```{r}
 dat %>% 
-  ggplot(aes(dhi, dbhati_norm)) +
-  geom_point() +
-  geom_smooth()
-
-dat %>% 
   pivot_longer(
-    cols = c(dhi, rwsipi, dbhati, dbhati_norm),
+    cols = c(dhi, rwsipi, dbhati, dmsfi),
     names_to = "case",
     values_to = "value"
   ) %>% 

@@ -442,6 +442,11 @@ Moved some non-used files from `.R/` to `./saved`.
 - Fixed some issues with sclfenm
 - Started comparing structural ensembles, see "compare_ensembles.Rmd"
 
+## 13 August 2022
+
+- Wrote functions to compare conformational ensembles at site level, put them in utils.R and penm_analysis.R
+
+
 
 
 

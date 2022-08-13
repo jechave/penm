@@ -286,12 +286,81 @@ NULL
 
 #' @rdname site_ensemble_profile
 #'
-#' @details `calculate_dmsfi` returns change profile of changes of mean-square fluctuations \eqn{\delta \sigma_i^2}
+#' @details `calculate_dmsfi` returns site-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_i^2}
 #'
 #' @export
 #'
 calculate_dmsfi <- function(wt, mut) {
   stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
-
-
+  dmsf = get_msf_site(mut) - get_msf_site(wt)
+  dmsf
 }
+
+
+#' @rdname site_ensemble_profile
+#'
+#' @details `calculate_dbhati` returns site-dependent profile of dbhat distances
+#'
+#' @export
+#'
+calculate_dbhati <- function(wt, mut) {
+  stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
+  nsites <- get_nsites(wt)
+  cmat_wt <- get_cmat(wt)
+  cmat_mut <- get_cmat(mut)
+  dim(cmat_wt) <- c(3, nsites, 3, nsites)
+  dim(cmat_mut) <- c(3, nsites, 3, nsites)
+  dbhati <- rep(NA, nsites)
+  for (i in seq(nsites)) {
+    dbhati[i] <- dbhat(cmat_wt[, i, , i], cmat_mut[, i, , i])
+  }
+  dbhati
+}
+
+
+#' @rdname site_ensemble_profile
+#'
+#' @details `calculate_rwsipi` returns site-dependent profile of rwsip similarity
+#'
+#' @export
+#'
+calculate_rwsipi <- function(wt, mut) {
+  stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
+  nsites <- get_nsites(wt)
+  cmat_wt <- get_cmat(wt)
+  cmat_mut <- get_cmat(mut)
+  dim(cmat_wt) <- c(3, nsites, 3, nsites)
+  dim(cmat_mut) <- c(3, nsites, 3, nsites)
+  rwsipi <- rep(NA, nsites)
+  for (i in seq(nsites)) {
+    rwsipi[i] <- rwsip(cmat_wt[, i, , i], cmat_mut[, i, , i])
+  }
+  rwsipi
+}
+
+
+#' @rdname site_ensemble_profile
+#'
+#' @details `calculate_dhi` returns site-dependent profile of dh similarity
+#'
+#' @export
+#'
+calculate_dhi <- function(wt, mut) {
+  stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
+  nsites <- get_nsites(wt)
+  cmat_wt <- get_cmat(wt)
+  cmat_mut <- get_cmat(mut)
+  dim(cmat_wt) <- c(3, nsites, 3, nsites)
+  dim(cmat_mut) <- c(3, nsites, 3, nsites)
+  dhi <- rep(NA, nsites)
+  for (i in seq(nsites)) {
+    dhi[i] <- dh(cmat_wt[, i, , i], cmat_mut[, i, , i])
+  }
+  dhi
+}
+
+
+
+
+
+

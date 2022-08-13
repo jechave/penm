@@ -5,7 +5,7 @@
 \alias{calculate_dr2n}
 \alias{calculate_de2n}
 \alias{calculate_df2n}
-\title{Compare two proteins in nm representation}
+\title{Compare two protein structures in nm representation}
 \usage{
 calculate_dr2n(wt, mut)
 
