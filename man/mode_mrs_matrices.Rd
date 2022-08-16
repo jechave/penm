@@ -5,6 +5,10 @@
 \alias{calculate_df2nj_mrs}
 \alias{calculate_de2nj_mrs}
 \alias{calculate_dr2nj_mrs}
+\alias{calculate_dmsfnj_mrs}
+\alias{calculate_dhnj_mrs}
+\alias{calculate_nhnj_mrs}
+\alias{calculate_rwsipnj_mrs}
 \title{Calculate mode-dependent structural response matrices}
 \usage{
 calculate_df2nj_mrs(mutants)
@@ -12,6 +16,14 @@ calculate_df2nj_mrs(mutants)
 calculate_de2nj_mrs(mutants)
 
 calculate_dr2nj_mrs(mutants)
+
+calculate_dmsfnj_mrs(mutants)
+
+calculate_dhnj_mrs(mutants)
+
+calculate_nhnj_mrs(mutants)
+
+calculate_rwsipnj_mrs(mutants)
 }
 \arguments{
 \item{mutants}{A tibble of single-point mutants generated using `generate_mutants`}
@@ -28,4 +40,12 @@ Calculate mode-dependent structural response matrices
 `calculate_de2nj_mrs()` calculates the energy matrix \code{de2(n, j)} averaged over mutations at \code{j}
 
 `calculate_dr2nj_mrs()` calculates the structural-difference matrix \code{dr2(n, j)} averaged over mutations at \code{j}
+
+`calculate_dmsfnj_mrs()` calculates the change of msf along mode n averaged over mutations at site j.
+
+`calculate_dhnj_mrs()` calculates change of entropy contribution of mode n averaged over mutations at site j.
+
+`calculate_nhnj_mrs()` calculates conservation score nh for mode n averaged over mutations at site j.
+
+`calculate_rwsipnj_mrs()` calculates rwsip for mode n averaged over mutations at j
 }

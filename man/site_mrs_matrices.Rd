@@ -6,6 +6,10 @@
 \alias{calculate_de2ij_mrs}
 \alias{calculate_dr2ij_mrs}
 \alias{calculate_dvsij_mrs}
+\alias{calculate_dmsfij_mrs}
+\alias{calculate_dhij_mrs}
+\alias{calculate_rwsipij_mrs}
+\alias{calculate_dbhatij_mrs}
 \title{Calculate site-dependent structural response matrices}
 \usage{
 calculate_df2ij_mrs(mutants)
@@ -15,6 +19,14 @@ calculate_de2ij_mrs(mutants)
 calculate_dr2ij_mrs(mutants)
 
 calculate_dvsij_mrs(mutants)
+
+calculate_dmsfij_mrs(mutants)
+
+calculate_dhij_mrs(mutants)
+
+calculate_rwsipij_mrs(mutants)
+
+calculate_dbhatij_mrs(mutants)
 }
 \arguments{
 \item{mutants}{A tibble of single-point mutants generated using `generate_mutants`}
@@ -33,4 +45,12 @@ Calculate site-dependent structural response matrices
 `calculate_dr2ij_mrs()` calculates the structural difference matrix \code{dr2(i, j)} averaged over mutations at \code{j}
 
 `calculate_dvsij_mrs()` calculates the stress-energy matrix \code{dvs(i, j)} averaged over mutations at \code{j}
+
+`calculate_dmsfij_mrs()` calculates the change of msf of site i due to mutations at j, averaged over mutations at \code{j}
+
+`calculate_dhij_mrs()` calculates the change in entropy of site i due to mutations at j averaged over mutations at \code{j}
+
+`calculate_rwsipij_mrs()` calculates rwsip between mutant and wt site i distributions due to mutations at j, averaged over mutations at j
+
+`calculate_dbhatij_mrs()` calculates dbhat distance between wt and mut site i distributions, averaged over mutations at j.
 }

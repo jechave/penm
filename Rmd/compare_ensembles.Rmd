@@ -146,4 +146,214 @@ dat %>%
   facet_wrap(~case, scales = "free_y", ncol = 1)
 
 ```
+## Compare mode by mode
+
+```{r}
+mut <- mut_sclfenm
+
+dat <- tibble(mode = get_mode(wt),
+              msf_wt = get_msf_mode(wt),
+              msf_mut = get_msf_mode(mut),
+              dmsfn = calculate_dmsfn(wt, mut),
+              dhn = calculate_dhn(wt, mut),
+              rwsipn = calculate_rwsipn(wt, mut),
+              nhn = calculate_nhn(wt, mut))
+
+dat %>% 
+  pivot_longer(
+    cols = c(dmsfn, dhn, rwsipn, nhn),
+    names_to = "case",
+    values_to = "value"
+  ) %>% 
+  ggplot(aes(mode, value )) +
+  geom_line() +
+  facet_wrap(~case, scales = "free_y", ncol = 1)
+
+dat %>% 
+  pivot_longer(
+    cols = c(dmsfn, dhn, rwsipn, nhn),
+    names_to = "case",
+    values_to = "value"
+  ) %>% 
+  ggplot(aes(msf_wt, value )) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(~case, scales = "free_y")
+
+
+```
+
+
+## Site by site ensemble responde matrices
+
+```{r}
+nmut_per_site = 10
+mutants <- generate_mutants(wt, nmut_per_site, mut_model = "sclfenm", mut_dl_sigma = 0.3, mut_sd_min = 2, seed = 1024)
+
+dat <- calculate_dmsfij_mrs(mutants)  %>% 
+  inner_join(calculate_dhij_mrs(mutants)) %>% 
+  inner_join(calculate_rwsipij_mrs(mutants)) %>%  
+  inner_join(calculate_dbhatij_mrs(mutants))
+
+dat %>% 
+  pivot_longer(
+    cols = c(dmsfij, dhij, rwsipij, dbhatij),
+    names_to = "case",
+    values_to = "value"
+  ) %>% 
+  ggplot(aes(i, j, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2() +
+  facet_wrap(~case, scales = "free")
+
+
+dat %>% 
+  pivot_longer(
+    cols = c(dmsfij, dhij, rwsipij, dbhatij),
+    names_to = "case",
+    values_to = "value"
+  ) %>% 
+  group_by(j, case) %>% 
+  summarise(value = mean(value)) %>% 
+  ggplot(aes(j, value)) +
+  geom_line() +
+  facet_wrap(~case, scales = "free_y", ncol = 1)
+
+dat %>% 
+  pivot_longer(
+    cols = c(dmsfij, dhij, rwsipij, dbhatij),
+    names_to = "case",
+    values_to = "value"
+  ) %>% 
+  group_by(i, case) %>% 
+  summarise(value = mean(value)) %>% 
+  ggplot(aes(i, value)) +
+  geom_line() +
+  facet_wrap(~case, scales = "free_y")
+
+
+
+
+```
+## Mode by site ensemble response matrices
+
+```{r}
+nmut_per_site = 1
+if(FALSE) mutants <- generate_mutants(wt, nmut_per_site, mut_model = "sclfenm", mut_dl_sigma = 0.3, mut_sd_min = 2, seed = 1024)
+
+dat <- calculate_dmsfnj_mrs(mutants)  %>% 
+  inner_join(calculate_dhnj_mrs(mutants)) %>% 
+  inner_join(calculate_rwsipnj_mrs(mutants)) %>%  
+  inner_join(calculate_nhnj_mrs(mutants))
+
+dat %>% 
+  pivot_longer(
+    cols = c(dmsfnj, dhnj, rwsipnj, nhnj),
+    names_to = "case",
+    values_to = "value"
+  ) %>% 
+  ggplot(aes(n, j, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2() +
+  facet_wrap(~case, scales = "free")
+
+
+dat %>% 
+  pivot_longer(
+    cols = c(dmsfnj, dhnj, rwsipnj, nhnj),
+    names_to = "case",
+    values_to = "value"
+  ) %>% 
+  group_by(j, case) %>% 
+  summarise(value = mean(value)) %>% 
+  ggplot(aes(j, value)) +
+  geom_line() +
+  facet_wrap(~case, scales = "free_y", ncol = 1)
+
+dat %>% 
+  pivot_longer(
+    cols = c(dmsfnj, dhnj, rwsipnj, nhnj),
+    names_to = "case",
+    values_to = "value"
+  ) %>% 
+  group_by(n, case) %>% 
+  summarise(value = mean(value)) %>% 
+  ggplot(aes(n, value)) +
+  geom_line() +
+  facet_wrap(~case, scales = "free_y")
+```
+```{r}
+dat2 <- tibble(n = get_mode(wt),
+               msf_wt = get_msf_mode(wt),
+               msf_gap = msf_wt - lag(msf_wt))
+
+dat %>% 
+  inner_join(dat2)  %>% 
+  ggplot(aes(msf_wt, nhnj)) +
+  geom_point()
+
+dat %>% 
+  inner_join(dat2)  %>% 
+  group_by(msf_wt, msf_gap) %>% 
+  summarise(nhnj = mean(nhnj)) %>% 
+  ggplot(aes(1/msf_wt, nhnj)) +
+  geom_point()
+
+dat %>% 
+  inner_join(dat2)  %>% 
+  group_by(n, msf_wt, msf_gap) %>% 
+  summarise(nhnj = mean(nhnj)) %>% 
+  filter(nhnj > 2, 1/msf_wt > 300)
+
+dat %>% 
+  inner_join(dat2)  %>% 
+  group_by(n, msf_wt, msf_gap) %>% 
+  ggplot(aes(n, -msf_gap)) +
+  geom_point() +
+  scale_y_log10()
+
+
+tibble(site = get_site(wt),
+       mode_240_wt = get_umat2(wt)[,240],
+       mode_240_mut = get_umat2(mut)[,240]) %>% 
+  pivot_longer(
+    cols = starts_with("mode_"),
+    names_to = "case",
+    values_to = "value"
+  ) %>% 
+  ggplot(aes(site, value, color = case)) +
+  geom_line()
+
+
+overlap <- crossprod(get_umat(wt), get_umat(mut))
+overlap[240,220:260]^2
+plot(overlap[240,]^2)
+overlap[240, 240]
+plot(diag(overlap^2))
+
+dkmat <- get_kmat(mut) - get_kmat(wt)
+str(dkmat)
+
+dkmatnm <- crossprod(get_umat(wt), dkmat %*% get_umat(wt))
+
+plot_matrix(dkmatnm)
+
+dl <- matrix(NA, nrow(dkmatnm),ncol(dkmatnm))
+for (n in get_mode(wt)) {
+  for (m in get_mode(wt)) if(n!=m) dl[n,m] <- get_evalue(wt)[m] - get_evalue(wt)[n]
+}
+
+plot_matrix((dkmatnm/dl)^2)
+plot_matrix(1/dl^2)
+
+m <- dkmatnm/dl
+m[,240]
+plot(m[240,])
+plot(m[240,])
+plot(m[210,])
+
+
+
+
+```
 

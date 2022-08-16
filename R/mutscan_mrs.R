@@ -193,6 +193,94 @@ calculate_dvsij_mrs <- function(mutants) {
   result
 }
 
+# Ensemble responde matrices----------------------------------------------------
+#' @rdname site_mrs_matrices
+#'
+#' @details  `calculate_dmsfij_mrs()` calculates the change of msf of site i due to mutations at j, averaged over mutations at \code{j}
+#'
+#' @export
+#'
+calculate_dmsfij_mrs <- function(mutants) {
+  # structural differences, site analysis
+  result <- mutants %>%
+    filter(mutation > 0) %>%
+    mutate(i = map(wt, get_site),
+           dmsfijm = map2(wt, mut, calculate_dmsfi)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(i, dmsfijm)) %>%
+    select(i, j, mutation, dmsfijm) %>%
+    group_by(i, j) %>%
+    summarise(dmsfij = mean(dmsfijm)) %>%  # average over mutations
+    ungroup()
+  result
+}
+
+
+#' @rdname site_mrs_matrices
+#'
+#' @details  `calculate_dhij_mrs()` calculates the change in entropy of site i due to mutations at j averaged over mutations at \code{j}
+#'
+#' @export
+#'
+calculate_dhij_mrs <- function(mutants) {
+  # structural differences, site analysis
+  result <- mutants %>%
+    filter(mutation > 0) %>%
+    mutate(i = map(wt, get_site),
+           dhijm = map2(wt, mut, calculate_dhi)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(i, dhijm)) %>%
+    select(i, j, mutation, dhijm) %>%
+    group_by(i, j) %>%
+    summarise(dhij = mean(dhijm)) %>%  # average over mutations
+    ungroup()
+  result
+}
+
+
+#' @rdname site_mrs_matrices
+#'
+#' @details  `calculate_rwsipij_mrs()` calculates rwsip between mutant and wt site i distributions due to mutations at j, averaged over mutations at j
+#'
+#' @export
+#'
+calculate_rwsipij_mrs <- function(mutants) {
+  # structural differences, site analysis
+  result <- mutants %>%
+    filter(mutation > 0) %>%
+    mutate(i = map(wt, get_site),
+           rwsipijm = map2(wt, mut, calculate_rwsipi)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(i, rwsipijm)) %>%
+    select(i, j, mutation, rwsipijm) %>%
+    group_by(i, j) %>%
+    summarise(rwsipij = mean(rwsipijm)) %>%  # average over mutations
+    ungroup()
+  result
+}
+
+
+#' @rdname site_mrs_matrices
+#'
+#' @details  `calculate_dbhatij_mrs()` calculates dbhat distance between wt and mut site i distributions, averaged over mutations at j.
+#'
+#' @export
+#'
+calculate_dbhatij_mrs <- function(mutants) {
+  # structural differences, site analysis
+  result <- mutants %>%
+    filter(mutation > 0) %>%
+    mutate(i = map(wt, get_site),
+           dbhatijm = map2(wt, mut, calculate_dbhati)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(i, dbhatijm)) %>%
+    select(i, j, mutation, dbhatijm) %>%
+    group_by(i, j) %>%
+    summarise(dbhatij = mean(dbhatijm)) %>%  # average over mutations
+    ungroup()
+  result
+}
+
 
 
 # Mode by site response matrices------------------------------------------------
@@ -276,6 +364,107 @@ calculate_dr2nj_mrs <- function(mutants) {
 
   result
 }
+
+
+# Ensemble mode-site response matrices----------------------------------------------
+
+
+#' @rdname mode_mrs_matrices
+#'
+#' @details  `calculate_dmsfnj_mrs()` calculates the change of msf along mode n averaged over mutations at site j.
+#'
+#' @export
+#'
+calculate_dmsfnj_mrs <- function(mutants) {
+  # structural differences, mode analysis
+
+  result <- mutants %>%
+    filter(mutation != 0) %>% # mutaiton == 0 is the wt
+    mutate(n = map(wt, get_mode),
+           dmsfnjm = map2(wt, mut, calculate_dmsfn)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(n, dmsfnjm)) %>%
+    select(n, j, mutation, dmsfnjm) %>%
+    group_by(n, j) %>%
+    summarise(dmsfnj = mean(dmsfnjm)) %>%
+    ungroup()
+
+  result
+}
+
+#' @rdname mode_mrs_matrices
+#'
+#' @details  `calculate_dhnj_mrs()` calculates change of entropy contribution of mode n averaged over mutations at site j.
+#'
+#' @export
+#'
+calculate_dhnj_mrs <- function(mutants) {
+  # structural differences, mode analysis
+
+  result <- mutants %>%
+    filter(mutation != 0) %>% # mutaiton == 0 is the wt
+    mutate(n = map(wt, get_mode),
+           dhnjm = map2(wt, mut, calculate_dhn)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(n, dhnjm)) %>%
+    select(n, j, mutation, dhnjm) %>%
+    group_by(n, j) %>%
+    summarise(dhnj = mean(dhnjm)) %>%
+    ungroup()
+
+  result
+}
+
+
+
+#' @rdname mode_mrs_matrices
+#'
+#' @details  `calculate_nhnj_mrs()` calculates conservation score nh for mode n averaged over mutations at site j.
+#'
+#' @export
+#'
+calculate_nhnj_mrs <- function(mutants) {
+  # structural differences, mode analysis
+
+  result <- mutants %>%
+    filter(mutation != 0) %>% # mutaiton == 0 is the wt
+    mutate(n = map(wt, get_mode),
+           nhnjm = map2(wt, mut, calculate_nhn)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(n, nhnjm)) %>%
+    select(n, j, mutation, nhnjm) %>%
+    group_by(n, j) %>%
+    summarise(nhnj = mean(nhnjm)) %>%
+    ungroup()
+
+  result
+}
+
+#' @rdname mode_mrs_matrices
+#'
+#' @details  `calculate_rwsipnj_mrs()` calculates rwsip for mode n averaged over mutations at j
+#'
+#' @export
+#'
+calculate_rwsipnj_mrs <- function(mutants) {
+  # structural differences, mode analysis
+
+  result <- mutants %>%
+    filter(mutation != 0) %>% # mutaiton == 0 is the wt
+    mutate(n = map(wt, get_mode),
+           rwsipnjm = map2(wt, mut, calculate_rwsipn)) %>%
+    select(-wt, -mut) %>%
+    unnest(c(n, rwsipnjm)) %>%
+    select(n, j, mutation, rwsipnjm) %>%
+    group_by(n, j) %>%
+    summarise(rwsipnj = mean(rwsipnjm)) %>%
+    ungroup()
+
+  result
+}
+
+
+
 
 
 

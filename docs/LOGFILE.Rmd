@@ -447,6 +447,16 @@ Moved some non-used files from `.R/` to `./saved`.
 - Wrote functions to compare conformational ensembles at site level, put them in utils.R and penm_analysis.R
 
 
+## 16 August 2022
+
+- Wrote functions to compare ensembles in mode representation, for a pair wt,mut, in penm_analysis.R
+- Wrote functions obtain i x j and n x j ensemble-response matrices, in mutscan_mrs.R
+
+
+
+
+
+
 
 
 
