@@ -453,6 +453,13 @@ Moved some non-used files from `.R/` to `./saved`.
 - Wrote functions obtain i x j and n x j ensemble-response matrices, in mutscan_mrs.R
 
 
+## 14 September 2022
+
+- Add comments, @export, and @noRd to roxygen2 fields un the mutscan_*.R files
+
+
+
+
 
 
 

@@ -30,7 +30,10 @@ library(jefuns)
 pdb_file <- here("data-raw/2acy_A.pdb")
 pdb <- read.pdb(pdb_file)
 
-wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE) 
+# wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE) 
+
+# wt <- set_enm(pdb, node = "ca", model = "anm", d_max = 10.5, frustrated = FALSE) 
+wt <- set_enm(pdb, node = "ca", model = "hnm", d_max = 10.5, frustrated = FALSE) 
 
 str(wt)
 ```
@@ -282,78 +285,107 @@ dat %>%
   geom_line() +
   facet_wrap(~case, scales = "free_y")
 ```
+
+
+## Effects of selection
+
 ```{r}
-dat2 <- tibble(n = get_mode(wt),
-               msf_wt = get_msf_mode(wt),
-               msf_gap = msf_wt - lag(msf_wt))
+dat_consurf <- read_csv(here("data-raw", "2acy.consurf.csv")) 
 
-dat %>% 
-  inner_join(dat2)  %>% 
-  ggplot(aes(msf_wt, nhnj)) +
-  geom_point()
+dat_weights <- dat_consurf %>% 
+  transmute(j = pos, pgap = (1 - nongap/nseq), wj_consurf = exp(entropy), zrate,
+            wj_jc = rep(1, get_nsites(wt)),
+            cn = get_cn(wt),
+            wj_cn = max(cn) - cn + 1)
 
-dat %>% 
-  inner_join(dat2)  %>% 
-  group_by(msf_wt, msf_gap) %>% 
-  summarise(nhnj = mean(nhnj)) %>% 
-  ggplot(aes(1/msf_wt, nhnj)) +
-  geom_point()
-
-dat %>% 
-  inner_join(dat2)  %>% 
-  group_by(n, msf_wt, msf_gap) %>% 
-  summarise(nhnj = mean(nhnj)) %>% 
-  filter(nhnj > 2, 1/msf_wt > 300)
-
-dat %>% 
-  inner_join(dat2)  %>% 
-  group_by(n, msf_wt, msf_gap) %>% 
-  ggplot(aes(n, -msf_gap)) +
-  geom_point() +
-  scale_y_log10()
-
-
-tibble(site = get_site(wt),
-       mode_240_wt = get_umat2(wt)[,240],
-       mode_240_mut = get_umat2(mut)[,240]) %>% 
+dat_weights %>% 
   pivot_longer(
-    cols = starts_with("mode_"),
+    cols = c(pgap, zrate, wj_consurf, wj_jc, wj_cn),
+    names_to = "case",
+    values_to ="value"
+  ) %>% 
+  ggplot(aes(cn, value)) +
+  geom_point() +
+  geom_smooth() +
+  ggpubr::stat_cor() +
+  facet_wrap(~case, scales = "free_y")
+
+
+  
+
+
+
+
+```
+```{r}
+dat2 <- inner_join(dat, dat_weights)
+dat2 %>% 
+  pivot_longer(
+    cols = c(dhnj, nhnj),
+    names_to = "measure",
+    values_to = "measure_value"
+  ) %>% 
+  group_by(n,  measure) %>% 
+  summarise(
+    measure_mean_jc = sum(wj_jc * measure_value) / sum(wj_jc),
+    measure_mean_cn = sum(cn * measure_value) / sum(cn),
+    measure_mean_cnm1 = sum(1/cn * measure_value) / sum(1/cn),
+  ) %>% 
+  pivot_longer(
+    cols = c(starts_with("measure_mean")),
     names_to = "case",
     values_to = "value"
   ) %>% 
-  ggplot(aes(site, value, color = case)) +
-  geom_line()
+  ggplot(aes(n, value, color = case)) +
+  geom_line() +
+  facet_wrap(~case+measure, scales = "free_y", ncol = 2)
 
+    
 
-overlap <- crossprod(get_umat(wt), get_umat(mut))
-overlap[240,220:260]^2
-plot(overlap[240,]^2)
-overlap[240, 240]
-plot(diag(overlap^2))
+```
+```{r}
+j0 <-  1
+dat  %>% 
+  inner_join(dat2) %>% 
+  mutate(rate_cut = cut(zrate, 5)) %>% 
+  ggplot(aes(n, nhnj)) +
+  geom_point(size = .3, alpha = .2) +
+  facet_wrap(~ rate_cut)
 
-dkmat <- get_kmat(mut) - get_kmat(wt)
-str(dkmat)
+```
+```{r}
+dat %>% 
+  mutate(ncut = cut(n, 10)) %>% 
+  ggplot(aes(j, nhnj, color = ncut, group = n)) +
+  geom_line() +
+  scale_color_viridis_d() +
+  facet_wrap(~ncut)
 
-dkmatnm <- crossprod(get_umat(wt), dkmat %*% get_umat(wt))
+```
+```{r}
+dat %>% 
+  filter(n %in% c(1,2,3,101,102, 103, 239, 240,241, 280,281, 282)) %>% 
+  ggplot(aes(j, nhnj, color = factor(n))) +
+  geom_line() +
+  scale_color_viridis_d() +
+  facet_wrap(~n, ncol = 3)
 
-plot_matrix(dkmatnm)
+dat %>% 
+  mutate(u2nj = as.vector(get_umat2(wt))) %>% 
+  filter(n %in% c(1,2,3,101,102, 103, 239, 240,241, 280,281, 282)) %>% 
+  ggplot(aes(j, u2nj, color = factor(n))) +
+  geom_line() +
+  scale_color_viridis_d() +
+  facet_wrap(~n, ncol = 3)
 
-dl <- matrix(NA, nrow(dkmatnm),ncol(dkmatnm))
-for (n in get_mode(wt)) {
-  for (m in get_mode(wt)) if(n!=m) dl[n,m] <- get_evalue(wt)[m] - get_evalue(wt)[n]
-}
-
-plot_matrix((dkmatnm/dl)^2)
-plot_matrix(1/dl^2)
-
-m <- dkmatnm/dl
-m[,240]
-plot(m[240,])
-plot(m[240,])
-plot(m[210,])
-
-
-
+dat %>% 
+  mutate(u2nj = as.vector(get_umat2(wt))) %>% 
+  filter(n %in% c(1,2,3,101,102, 103, 239, 240,241, 280,281, 282)) %>% 
+  ggplot(aes(u2nj, nhnj)) +
+  geom_point(size = .3) +
+  geom_smooth() +
+  facet_wrap(~factor(n), ncol = 3, scales = "free") +
+  NULL
 
 ```
 

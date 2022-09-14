@@ -22,11 +22,7 @@ kij_hnm <- function(dij, ...) {
   b <-  2390
   al <- 1280000
   c <- 4
-  if (dij <= c) {
-    kij <- ab * dij - b
-  } else {
-    kij <- al / dij^6
-  }
+  kij <- ifelse(dij <= c,  kij <- ab * dij - b,  kij <- al / dij^6)
   kij
 }
 
