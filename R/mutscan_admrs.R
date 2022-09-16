@@ -1,19 +1,61 @@
 #' Calculate double-mutational-scan matrix using analytical  method
 #'
+#' Returns a compensation matrix: element (i,j) measures the degree of compensation of structural deformations produced by pairs of mutations at sites i and j.
+#' It uses analytical methods (closed formulas).
+#' Two measures are implemented:
+#' "mean_max" (default), the structural compensation maximized over mutations at j and averaged over mutations at i;
+#' "max_max" is the structural compensation maximized over mutations at i and j.
+#'
+#' For details see \doi{10.7717/peerj.11330}
+#'
+#' @param wt is the (wild-type) protein to mutate (an object obtained using \code{set_enm})
+#' @param mut_dl_sigma is the standard deviation of a normal distribution from which edge-length perturbations are picked (LFENM model).
+#' @param mut_sd_min is integer sequence-distance cutoff, only edges with \code{sdij >= mut_sd_min} are mutated
+#' @param option is either "mean_max" (default) or "max_max", depending on which compensation measure is desired.
+#' @param response is the response desired, which maybe either "structure", "energy", or "force"
+#'
+#' @return A mutated protein object
 
-admrs <- function(wt, mut_dl_sigma, mut_sd_min, option = "mean_max") {
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' pdb <- bio3d::read.pdb("2acy")
+#' wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+#' dmat <- admrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_max")
+#' }
+#'
+#' @family mutscan functions
+#'
+admrs <- function(wt, mut_dl_sigma, mut_sd_min, option = "mean_max", response = "structure") {
   stopifnot(option == "mean_max" | option == "max_max")
-  cmat <- get_cmat(wt)
-  admrs_amat(wt, cmat, mut_dl_sigma, mut_sd_min, option)
+
+  if (response == "structure") {
+    amat <- get_cmat(wt)
+  } else if (response == "energy") {
+    amat <- get_cmat_sqrt(wt)
+  } else if (response == "force") {
+    amat <- diag(3 * get_nsites(wt))
+  } else {
+    stop("Unknown value of response, stop admrs")
+  }
+  admrs_amat(wt, amat, mut_dl_sigma, mut_sd_min, option)
 }
 
 
 
 
-#' Calculate site-by-site analytic response matrix, general, o
-#' minimize over mutations at i and 3yyj
+#' Calculate site-by-site analytic response matrix
 #'
-
+#' This is a general function for a response vector of the form \code{amat * f}.
+#' If \code{amat = cmat}, then it's the structural deformation,
+#' for \code{amat = identity}, then it's the force vector,
+#' for \code{amat = cmat^{1/2}}, it's a deformation-energy vector.
+#'
+#' @noRd
+#'
+#' @family mutscan functions
+#'
 admrs_amat <- function(wt, amat, mut_dl_sigma, mut_sd_min, option) {
   stopifnot(option == "mean_max" | option == "max_max")
 

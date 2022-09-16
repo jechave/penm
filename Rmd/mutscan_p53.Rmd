@@ -1,0 +1,220 @@
+---
+title: "admrs tutorial"
+output:
+  html_document:
+    df_print: paged
+date: "2022-09-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(bio3d)
+library(here)
+library(patchwork)
+library(jefuns)
+library(penm)
+
+library(cowplot) #needed by jefuns::plot_matrix
+```
+
+```{r}
+# ENM model parameters
+node = "sc"
+model = "ming_wall"
+d_max = 10.5
+
+
+# Parameters to pass to admrs
+option <- "max_max"
+response <- "structure"
+mut_dl_sigma = 0.3
+mut_sd_min = 1
+```
+
+
+## Set up wt protein object
+
+```{r}
+pdb <- read.pdb(here("data-raw", "2XWRa.pdb"))
+wt <- set_enm(pdb, node, model, d_max, frustrated = F)
+str(wt)
+```
+
+## Prepare rescue data
+
+```{r}
+dat_rescue <- read_csv(here("data-raw", "p53_rescue_data.csv"), col_names = T)  %>% 
+  slice(-1) %>% 
+  mutate(nrescue = map_int(rescue_site, nchar)) %>% 
+  filter(nrescue == 3)
+
+dat_rescue_sites <- dat_rescue %>% 
+  select(mutation_site, mutation, rescue_site)  %>% 
+  separate(rescue_site, into = "rescue_site") %>% 
+  mutate(rescue_site = as.numeric(rescue_site)) 
+  
+
+dat_rescue_mutations <- dat_rescue %>% 
+  select(mutation_site, mutation, rescue_mutation) %>% 
+  separate(rescue_mutation, into = "rescue_mutation")
+
+dat_rescue <- dat_rescue_sites %>% 
+  cbind(dat_rescue_mutations$rescue_mutation) 
+
+dat_rescue
+
+```
+
+## Compensation matrices
+
+```{r}
+
+
+dmat <- admrs(wt, mut_dl_sigma, mut_sd_min, option, response)
+
+plot_matrix(log10(dmat), row_name = "mutated_site", col_name = "rescue_site", value_name = "log10(Dij)") +
+  ggtitle(paste0("option = ", option, " response = ", response))
+
+
+```
+
+
+## Distance matrix
+
+```{r}
+distmat <- dm(pdb, "calpha", mask.lower = F)
+class(distmat) <- "matrix"
+plot_matrix(distmat)
+```
+
+## Compensation vs. distance
+
+```{r}
+dat1 <- matrix_to_tibble(dmat, "i", "j", "Dij") 
+dat2 <- matrix_to_tibble(distmat, "i", "j", "dij")
+dati <- tibble(i = get_site(wt), pdb_site_i = get_pdb_site(wt))
+datj <- tibble(j = get_site(wt), pdb_site_j = get_pdb_site(wt))
+
+dat <- dat1 %>% 
+  left_join(dati) %>% 
+  left_join(datj) %>% 
+  left_join(dat2) 
+
+dat %>% 
+  ggplot(aes(dij,Dij)) +
+  geom_point(size = .1, alpha = .1) +
+  geom_smooth() +
+  scale_y_log10() 
+
+```
+
+## Maximum compensation profile
+
+```{r}
+# mutated sites 
+rescue_sites <- unique(dat_rescue$rescue_site)
+
+# Add rescue annotations to dat
+dat_annotate <- tibble(j = get_site(wt), pdb_site_j = get_pdb_site(wt)) %>% 
+  mutate(observed_rescue = ifelse(pdb_site_j %in% rescue_sites, "rescue", NA_character_))
+
+dat2 <- dat %>% 
+  left_join(dat_annotate)  %>% 
+  group_by(pdb_site_j, observed_rescue) %>% 
+  summarise(Dxj_max = max(Dij), Dxj_mean = mean(Dij), Dxj_median = median(Dij) )  %>% 
+  pivot_longer(
+    cols = starts_with("Dxj"),
+    names_to = "key",
+    values_to = "value"
+  ) 
+
+# Plot rescue profile (maximum Dij over i)
+
+dat2 %>% 
+  ggplot(aes(pdb_site_j, value, group = key)) +
+  geom_line() + # compensation profile
+  geom_point(data = filter(dat2, observed_rescue == "rescue"), aes(color = observed_rescue)) +
+  facet_wrap(~key, scales = "free", ncol = 1) +
+  theme_minimal()
+
+dat2 %>% 
+  ggplot(aes(x = value, group = observed_rescue, color = observed_rescue)) +
+  geom_density() +
+  facet_wrap(~key, scales = "free") +
+  theme_minimal()
+```
+
+## Are rescue pairs different?
+
+```{r}
+dat1 <- dat_rescue %>% 
+  transmute(pdb_site_i = mutation_site, pdb_site_j = rescue_site) %>% 
+  mutate(rescue_pair = map2(.x = pdb_site_i, .y = pdb_site_j, .f = ~c(.x, .y)))
+
+dat2 <- dat %>% 
+  mutate(ij_pair = map2(.x = pdb_site_i, .y = pdb_site_j, .f = ~c(.x, .y))) %>% 
+  mutate(observed_rescue = ij_pair %in% dat1$rescue_pair) 
+
+p_Dij_vs_dij  <- dat2 %>% 
+  ggplot(aes(dij, Dij)) +
+  geom_point(size = .1, alpha = .1) +
+  geom_smooth() +
+  geom_point(data = subset(dat2, observed_rescue), color = "blue") +
+  scale_y_log10() +
+  theme_minimal()
+  
+
+p_Dij <- dat2 %>% 
+  ggplot(aes(x = Dij, group = observed_rescue, color = observed_rescue)) +
+  geom_density() +
+  theme_minimal() +
+  geom_point(data = filter(dat2, observed_rescue), aes(x = Dij, y = 0)) +
+  ggtitle("compensation") +
+  NULL
+
+p_dij <- dat2 %>% 
+  ggplot(aes(x = dij, group = observed_rescue, color = observed_rescue)) +
+  geom_density() +
+  theme_minimal() +
+  geom_point(data = filter(dat2, observed_rescue), aes(x = dij, y = 0)) +
+  ggtitle("distance") +
+  NULL
+  
+p_Dij_vs_dij /(p_Dij + p_dij)
+
+```
+
+
+
+## Compensation profiles for selected mutated sites
+
+```{r}
+# mutated sites 
+
+all_mut_sites <- unique(dat_rescue$mutation_site)
+paper_mutsites <- c(141, 143, 152, 205, 244, 245, 246, 249, 272, 273, 282, 286)
+mutsites <- paper_mutsites
+
+# keep only some mutated sites
+dat2 <-  dat %>% 
+  filter(pdb_site_i %in% mutsites) 
+
+# 
+dat_annotate = dat_rescue %>% 
+  transmute(pdb_site_i = mutation_site, pdb_site_j = rescue_site) %>%  #keep only mutated site and rescue site, and rename them
+  filter(pdb_site_i %in% mutsites)  # keep only some mutated sites
+
+
+dat2 %>% 
+  ggplot(aes(pdb_site_j, Dij)) +
+  geom_line() + # compensation profile
+  geom_vline(data = dat_annotate, aes(xintercept = pdb_site_j), color = "blue", alpha = .5) + # observed rescue site is vertical blue line
+  geom_vline(data = dat_annotate, aes(xintercept = pdb_site_i), color = "red", alpha = .5) + # mutated site is vertical red line
+  facet_wrap(~pdb_site_i, scales = "free_y") + # separate different mutated sites into panels
+  theme_minimal()
+```
+

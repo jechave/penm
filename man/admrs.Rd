@@ -6,6 +6,34 @@
 \usage{
 admrs(wt, mut_dl_sigma, mut_sd_min, option = "mean_max")
 }
-\description{
-Calculate double-mutational-scan matrix using analytical  method
+\arguments{
+\item{wt}{is the (wild-type) protein to mutate (an object obtained using \code{set_enm})}
+
+\item{mut_dl_sigma}{is the standard deviation of a normal distribution from which edge-length perturbations are picked (LFENM model).}
+
+\item{mut_sd_min}{is integer sequence-distance cutoff, only edges with \code{sdij >= mut_sd_min} are mutated}
+
+\item{option}{is either "mean_max" (default) or "max_max", depending on which compensation measure is desired.}
 }
+\value{
+A mutated protein object
+}
+\description{
+Returns a compensation matrix: element (i,j) measures the degree of compensation of structural deformations produced by pairs of mutations at sites i and j.
+It uses analytical methods (closed formulas).
+Two measures are implemented:
+"mean_max" (default), the structural compensation maximized over mutations at j and averaged over mutations at i;
+"max_max" is the structural compensation maximized over mutations at i and j.
+}
+\details{
+For details see \doi{10.7717/peerj.11330}
+}
+\examples{
+\dontrun{
+pdb <- bio3d::read.pdb("2acy")
+wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+dmat <- admrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_max")
+}
+
+}
+\concept{mutscan functions}
