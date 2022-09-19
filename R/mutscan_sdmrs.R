@@ -1,31 +1,81 @@
-
-#' Calculate double-mutational-scanning matrix
+#' Calculate double-mutational-scan matrix using simulation  method
 #'
+#' Returns a compensation matrix: element (i,j) measures the degree of compensation of structural deformations produced by pairs of mutations at sites i and j.
+#' It uses a simulation method (calculates responses for various instances of forces, then calculates means or maxima)
+#' Two measures are implemented:
+#' "mean_max" (default), the structural compensation maximized over mutations at j and averaged over mutations at i;
+#' "max_max" is the structural compensation maximized over mutations at i and j.
+#'
+#' For details see \doi{10.7717/peerj.11330}
+#'
+#' @param wt is the (wild-type) protein to mutate (an object obtained using \code{set_enm})
+#' @param nmut is the number of mutations per site to simulate
+#' @param mut_dl_sigma is the standard deviation of a normal distribution from which edge-length perturbations are picked (LFENM model).
+#' @param mut_sd_min is integer sequence-distance cutoff, only edges with \code{sdij >= mut_sd_min} are mutated
+#' @param option is either "mean_max" (default) or "max_max", depending on which compensation measure is desired.
+#' @param response is the response desired, which maybe either "structure", "energy", or "force"
+#'
+#' @return A mutated protein object
 
-sdmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min, seed, option = "mean_max") {
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' pdb <- bio3d::read.pdb("2acy")
+#' wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+#' dmat <- sdmrs(wt, nmut = 10, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_max", response = "structure")
+#' }
+#'
+#' @family mutscan functions
+#'
+sdmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  option = "mean_max", response = "structure", seed = 1024) {
+  stopifnot(option == "mean_max" | option == "max_max")
+
+  if (response == "structure") {
+    amat <- get_cmat(wt)
+  } else if (response == "energy") {
+    amat <- get_cmat_sqrt(wt)
+  } else if (response == "force") {
+    amat <- diag(3 * get_nsites(wt))
+  } else {
+    stop("Unknown value of response, stop admrs")
+  }
+  result <- sdmrs_amat(wt, amat, nmut, mut_dl_sigma, mut_sd_min, option, seed)
+  result
+}
+
+
+
+#' Calculate site-by-site response matrix
+#'
+#' This is a general function for a response vector of the form \code{amat * f}.
+#' If \code{amat = cmat}, then it's the structural deformation,
+#' for \code{amat = identity}, then it's the force vector,
+#' for \code{amat = cmat^{1/2}}, it's a deformation-energy vector.
+#'
+#' @noRd
+#'
+#' @family mutscan functions
+#'
+sdmrs_amat <- function(wt, amat, nmut, mut_dl_sigma, mut_sd_min,  option, seed) {
 
   stopifnot(option == "mean_max" | option == "max_max")
 
-  cmat <- get_cmat(wt)
-
-  tic()
   fmati <- generate_fmat_dmrs(wt, nmut, mut_dl_sigma, mut_sd_min, 1 * seed)
   fmatj <- generate_fmat_dmrs(wt, nmut, mut_dl_sigma, mut_sd_min, 2 * seed)
-  t <-  toc(quiet = T)
-  t_fmat <- t$toc - t$tic
 
 
   nsites <- get_nsites(wt)
 
-  # structural change due to mutations fmati
+  # response vectors due to mutations fmati (if amat = cmat, then response is structural change)
   dim(fmati) <- c(3 * nsites, nsites * nmut)
-  dri <-  as.matrix(Matrix(cmat) %*% Matrix(fmati, sparse = T))
+  dri <-  as.matrix(Matrix::Matrix(amat) %*% Matrix::Matrix(fmati, sparse = T))
   dim(dri) <- c(3 * nsites, nsites, nmut)
 
 
-  # structural change due to mutations fmatj
+  # response vectors due to mutations fmati (if amat = cmat, then response is structural change)
   dim(fmatj) <- c(3 * nsites, nsites * nmut)
-  drj <-  as.matrix(Matrix(cmat) %*% Matrix(fmatj, sparse = T))
+  drj <-  as.matrix(Matrix::Matrix(amat) %*% Matrix::Matrix(fmatj, sparse = T))
   dim(drj) <- c(3 * nsites, nsites, nmut)
 
   drj2 <- drj^2 %>%
@@ -33,8 +83,6 @@ sdmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min, seed, option = "mean_max")
   dmrs_matrix <- matrix(NA_real_, nrow = nsites, ncol = nsites)
 
   # compensation matrices
-
-  tic()
 
   for (i in seq(nsites)) {
     for (j in seq(nsites)) {
@@ -47,10 +95,8 @@ sdmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min, seed, option = "mean_max")
         dmrs_matrix[i,j] <- max(mimj^2)
     }
   }
-  t <-  toc(quiet = T)
-  t_dridrj <- t$toc - t$tic
 
-  lst(dmrs_matrix, t_fmat, t_dridrj)
+  dmrs_matrix
 }
 
 
@@ -58,6 +104,10 @@ sdmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min, seed, option = "mean_max")
 
 
 #' Generate force-matrix for dmrs_matrix calculation
+#'
+#' @noRd
+#'
+#' @family mutscan functions
 #'
 generate_fmat_dmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
   mutation = seq(nmut)
@@ -84,6 +134,10 @@ generate_fmat_dmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
 
 
 #' get force from delta_lik for dmrs calculations
+#'
+#' @noRd
+#'
+#' @family mutscan functions
 #'
 calculate_force_dmrs <- function(wt, delta_lij) {
 
@@ -119,6 +173,12 @@ calculate_force_dmrs <- function(wt, delta_lij) {
 }
 
 
+#' get spring-length  perturbations dmrs calculations
+#'
+#' @noRd
+#'
+#' @family mutscan functions
+#'
 generate_delta_lij_dmrs <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) {
   graph <- get_graph(wt)
 

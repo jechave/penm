@@ -22,7 +22,7 @@
 #' \dontrun{
 #' pdb <- bio3d::read.pdb("2acy")
 #' wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
-#' dmat <- admrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_max")
+#' dmat <- admrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_max", response = "structure")
 #' }
 #'
 #' @family mutscan functions

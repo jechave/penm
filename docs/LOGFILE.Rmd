@@ -455,7 +455,18 @@ Moved some non-used files from `.R/` to `./saved`.
 
 ## 14 September 2022
 
-- Add comments, @export, and @noRd to roxygen2 fields un the mutscan_*.R files
+- Add comments, @export, and @noRd to roxygen2 fields un the mutscan_admrs.R 
+- Write p53-based tutorial of admrs()
+- Generalized admrs to calculate responses of force, energy, and structure
+
+## 19 September 2022
+- Added comments, @export, and @noRd to roxygen2 fields to mutscan_sdmrs.R 
+- Generalized mutscan_sdmrs.R to "energy" and "force" response options
+- Checked that sdmrs converges towards admrs for different "response" values
+- Hacked the p53 Rmd file to explore other candidate compensation matrices (dr2ij, and matrices of correlations between columns of dr2ij)
+
+
+
 
 
 

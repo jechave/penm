@@ -72,26 +72,23 @@ dat_rescue
 ## Compensation matrices
 
 ```{r}
-
+# compensation matrix
 
 dmat <- admrs(wt, mut_dl_sigma, mut_sd_min, option, response)
 
-plot_matrix(log10(dmat), row_name = "mutated_site", col_name = "rescue_site", value_name = "log10(Dij)") +
-  ggtitle(paste0("option = ", option, " response = ", response))
-
-
-```
-
 
 ## Distance matrix
-
-```{r}
 distmat <- dm(pdb, "calpha", mask.lower = F)
 class(distmat) <- "matrix"
-plot_matrix(distmat)
-```
 
-## Compensation vs. distance
+p_admrs <- plot_matrix(log10(dmat), row_name = "mutated_site", col_name = "rescue_site", value_name = "log10(Dij)") +
+  ggtitle(paste0("option = ", option, " response = ", response))
+
+p_dij <- plot_matrix(distmat, row_name = "mutated_site", col_name = "rescue_site", value_name = "distance")
+
+p_admrs + p_dij
+
+```
 
 ```{r}
 dat1 <- matrix_to_tibble(dmat, "i", "j", "Dij") 
@@ -109,10 +106,54 @@ dat %>%
   geom_point(size = .1, alpha = .1) +
   geom_smooth() +
   scale_y_log10() 
+```
+```{r}
+# mrs matrix
+res <- calculate_dr2ij_amrs(wt, mut_dl_sigma, mut_sd_min)
+
+# corij
+dr2ij <- matrix(res$dr2ij, get_nsites(wt), get_nsites(wt))
+corij <- matrix(NA, get_nsites(wt), get_nsites(wt))
+for (j in seq(get_nsites(wt))) {
+  for (i in seq(get_nsites(wt))) {
+    if(j != i)  corij[i,j] <- cor(dr2ij[,i], dr2ij[,j], method = "spearman")
+  }
+}
+
+
+dat <- dat %>% 
+  left_join(res) %>% 
+  left_join(matrix_to_tibble(corij, value_name = "corij"))
+
+dat %>% 
+  ggplot(aes(dr2ij, Dij)) +
+  geom_point() +
+  geom_smooth()
+
+
+dat %>% 
+  ggplot(aes(corij, Dij)) +
+  geom_point() +
+  geom_smooth()
+
+dat %>% 
+  ggplot(aes(dij, corij)) +
+  geom_point() +
+  geom_smooth() +
+  NULL
 
 ```
 
-## Maximum compensation profile
+
+```{r}
+# hack 
+dat <- dat %>% 
+  mutate(Dij = corij) 
+
+```
+
+
+## Compensation profile
 
 ```{r}
 # mutated sites 
@@ -125,7 +166,9 @@ dat_annotate <- tibble(j = get_site(wt), pdb_site_j = get_pdb_site(wt)) %>%
 dat2 <- dat %>% 
   left_join(dat_annotate)  %>% 
   group_by(pdb_site_j, observed_rescue) %>% 
-  summarise(Dxj_max = max(Dij), Dxj_mean = mean(Dij), Dxj_median = median(Dij) )  %>% 
+  summarise(Dxj_max = max(Dij, na.rm = T), 
+            Dxj_mean = mean(Dij, na.rm = T), 
+            Dxj_median = median(Dij, na.rm = T) )  %>% 
   pivot_longer(
     cols = starts_with("Dxj"),
     names_to = "key",
@@ -217,4 +260,6 @@ dat2 %>%
   facet_wrap(~pdb_site_i, scales = "free_y") + # separate different mutated sites into panels
   theme_minimal()
 ```
+
+
 
