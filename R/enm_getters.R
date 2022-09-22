@@ -156,3 +156,13 @@ get_umat <- function(prot) prot$nma$umat
 #' @export
 #'
 get_cmat <- function(prot) prot$nma$cmat
+
+
+#' Get number of modes
+#'
+#' @param prot is a prot object
+#' @return number of normal modes
+#'
+#' @export
+#'
+get_nmodes <- function(prot) max(prot$nma$mode)

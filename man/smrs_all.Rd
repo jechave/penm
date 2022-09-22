@@ -2,10 +2,53 @@
 % Please edit documentation in R/mutscan_smrs.R
 \name{smrs_all}
 \alias{smrs_all}
-\title{Calcualte all response matrices and profiles, "new" prs method}
+\title{Calculate mutation-response matrix using a simulation  method}
 \usage{
 smrs_all(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed)
 }
-\description{
-Calcualte all response matrices and profiles, "new" prs method
+\arguments{
+\item{wt}{is the (wild-type) protein to mutate (an object obtained using \code{set_enm})}
+
+\item{nmut_per_site}{is the number of mutations per site to simulate}
+
+\item{mut_model}{is the mutational model, which may be "lfenm" or "sclfenm"}
+
+\item{mut_dl_sigma}{is the standard deviation of a normal distribution from which edge-length perturbations are picked (LFENM model).}
+
+\item{mut_sd_min}{is integer sequence-distance cutoff, only edges with \code{sdij >= mut_sd_min} are mutated}
+
+\item{seed}{is an integer seed to set_seed before generating random mutations}
 }
+\value{
+A list containing several response matrices and the corresponding response and influence profiles
+}
+\description{
+Returns several response matrices and profiles.
+}
+\details{
+It calculates two types of response matrices site-by-site and mode-by site.
+A site-by-site response matrix has elements Mij that measure the response (e.g. deformation) of site i averaged over mutations at site j.
+A mode-by-site response matrix has elements Mnj that measure the response (e.g. deformation) along mode n averaged over mutations at site j.
+Response profiles (i.e. sums over columns), and influence profiles (i.e., sums over rows) are also returned.
+It uses a simulation method (calculates responses for various instances of forces, then calculates averages)
+Three type of response are calculated, "structure " (dr2ij and dr2nj), "energy" (de2ij and de2nj), and "force" (df2ij and df2nj).
+
+For details see \doi{10.7717/peerj.11330}
+}
+\examples{
+\dontrun{
+pdb <- bio3d::read.pdb("2acy")
+wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+dmat <- smrs_all(wt, nmut_per_site = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1, seed = 1024)
+}
+
+}
+\seealso{
+Other mutscan functions: 
+\code{\link{admrs}()},
+\code{\link{amrs_all}()},
+\code{\link{amrs}()},
+\code{\link{sdmrs}()},
+\code{\link{smrs}()}
+}
+\concept{mutscan functions}

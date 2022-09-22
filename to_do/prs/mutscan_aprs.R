@@ -1,5 +1,12 @@
 #' Calculate Bahar's PRS matrix analytically
 #'
+#' @param cmat is a covariance matrix
+#' @param normalize is a logical valuable of whether to normalize the PRS matrix (default is F)
+#'
+#' @returns
+#'
+#' @export
+#'
 aprs <- function(cmat, normalise = F) {
   nsites <- nrow(cmat) / 3
   prsmat <- matrix(0, nrow = nsites, ncol = nsites)
@@ -20,5 +27,6 @@ aprs <- function(cmat, normalise = F) {
   dfij <- t(prsmat) %>%
     matrix_to_tibble(value_name = "dr2ij")
 
-  dfij
+  prsmat
+
 }

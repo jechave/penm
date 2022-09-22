@@ -1,9 +1,98 @@
-
-
-
-#' Calcualte all response matrices and profiles, "new" prs method
+#' Calculate mutation-response a mutation-response matrix, simulation methods
 #'
+#' Returns a mutation-response matrix
+#' It uses a simulation method (averages over perturbations). For details see \doi{10.7717/peerj.11330}
+#'
+#' A site-by-site response matrix has elements Mij that measure the response (e.g. deformation) of site i averaged over mutations at site j.
+#' A mode-by-site response matrix has elements Mnj that measure the response (e.g. deformation) along mode n averaged over mutations at site j.
+#'
+#'
+#' It may calculate either  site-by-site or mode-by site response matrices
+#' Three type of response may be calculated, "structure " (dr2ij and dr2nj), "energy" (de2ij and de2nj), and "force" (df2ij and df2nj).
+#'
+#'
+#' @param wt is the (wild-type) protein to mutate (an object obtained using \code{set_enm})
+#' @param nmut_per_site is the number of mutations per site to simulate
+#' @param mut_dl_sigma is the standard deviation of a normal distribution from which edge-length perturbations are picked (LFENM model).
+#' @param mut_sd_min is integer sequence-distance cutoff, only edges with \code{sdij >= mut_sd_min} are mutated
+#' @param option is either "site" (default) or "mode"
+#' @param response is either "structure" (default), "energy", or "force"
+#'
+#' @return A list containing several response matrices and the corresponding response and influence profiles
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' pdb <- bio3d::read.pdb("2acy")
+#' wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+#' dmat <- smrs_all(wt, nmut_per_site = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1, seed = 1024)
+#' }
+#'
+#' @family mutscan functions
+#'
+smrs <- function(wt, nmut_per_site, mut_dl_sigma, mut_sd_min, option = "site", response = "structure", seed = 1024) {
 
+  perturbations <- generate_perturbations(wt, nmut_per_site, mut_dl_sigma, mut_sd_min, seed)
+
+  if (option == "site") {
+    if (response == "structure") {
+      result <- calculate_dr2ij_smrs(wt, perturbations$fmat)
+    } else if (response == "energy") {
+      result <- calculate_de2ij_smrs(wt, perturbations$fmat)
+    } else if (response == "force") {
+      result <- calculate_df2ij_smrs(wt, perturbations$fmat)
+    } else if (response == "stress") {
+      result <- calculate_dvsij_smrs(wt, perturbations$dlmat)
+    }
+    result <- matrix(pull(result, 3), get_nsites(wt), get_nsites(wt))
+  } else if (option == "mode") {
+    if (response == "structure") {
+      result <- calculate_dr2nj_smrs(wt, perturbations$fmat)
+    } else if (response == "energy") {
+      result <- calculate_de2nj_smrs(wt, perturbations$fmat)
+    } else if (response == "force") {
+      result <- calculate_df2nj_smrs(wt, perturbations$fmat)
+    }
+    result <- matrix(pull(result, 3), get_nmodes(wt), get_nsites(wt))
+  }
+  result
+}
+
+
+#' Calculate mutation-response matrix using a simulation  method
+#'
+#' Returns several response matrices and profiles.
+#'
+#' It calculates two types of response matrices site-by-site and mode-by site.
+#' A site-by-site response matrix has elements Mij that measure the response (e.g. deformation) of site i averaged over mutations at site j.
+#' A mode-by-site response matrix has elements Mnj that measure the response (e.g. deformation) along mode n averaged over mutations at site j.
+#' Response profiles (i.e. sums over columns), and influence profiles (i.e., sums over rows) are also returned.
+#' It uses a simulation method (calculates responses for various instances of forces, then calculates averages)
+#' Three type of response are calculated, "structure " (dr2ij and dr2nj), "energy" (de2ij and de2nj), and "force" (df2ij and df2nj).
+#'
+#' For details see \doi{10.7717/peerj.11330}
+#'
+#' @param wt is the (wild-type) protein to mutate (an object obtained using \code{set_enm})
+#' @param nmut_per_site is the number of mutations per site to simulate
+#' @param mut_model is the mutational model, which may be "lfenm" or "sclfenm"
+#' @param mut_dl_sigma is the standard deviation of a normal distribution from which edge-length perturbations are picked (LFENM model).
+#' @param mut_sd_min is integer sequence-distance cutoff, only edges with \code{sdij >= mut_sd_min} are mutated
+#' @param seed is an integer seed to set_seed before generating random mutations
+#'
+#' @return A list containing several response matrices and the corresponding response and influence profiles
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' pdb <- bio3d::read.pdb("2acy")
+#' wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+#' dmat <- smrs_all(wt, nmut_per_site = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1, seed = 1024)
+#' }
+#'
+#' @family mutscan functions
+#'
 smrs_all <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
 
   enm_param <- get_enm_param(wt)
@@ -62,7 +151,8 @@ smrs_all <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, see
 #' dlmat(edge, j, m) is the perturbation dl at edge e due to mutation m at site j
 #' fmat(i, j, m) is force at site i for mutation m = c(1,...nmut), at site j
 #'
-
+#' @noRd
+#'
 generate_perturbations <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
 
   mutation = seq(nmut)
@@ -95,7 +185,8 @@ generate_perturbations <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  seed) {
 
 #' Calculate force response matrix df2(i, j) using method "new"
 #'
-
+#' @noRd
+#'
 calculate_df2ij_smrs <- function(wt, fmat) {
   calculate_s2ij(fmat, diag(nrow(fmat))) %>%
     matrix_to_tibble() %>%
@@ -105,7 +196,8 @@ calculate_df2ij_smrs <- function(wt, fmat) {
 
 #' Calculate energy response matrix de2(i, j) using method "new"
 #'
-
+#' @noRd
+#'
 calculate_de2ij_smrs <- function(wt, fmat) {
   calculate_s2ij(fmat, get_cmat_sqrt(wt)) %>%
     matrix_to_tibble() %>%
@@ -115,7 +207,8 @@ calculate_de2ij_smrs <- function(wt, fmat) {
 
 #' Calculate structure response matrix dr2(i, j) using method "new"
 #'
-
+#' @noRd
+#'
 calculate_dr2ij_smrs <- function(wt, fmat) {
   calculate_s2ij(fmat, get_cmat(wt)) %>%
     matrix_to_tibble() %>%
@@ -126,7 +219,8 @@ calculate_dr2ij_smrs <- function(wt, fmat) {
 
 #' Calculate response matrices given fmat
 #'
-
+#' @noRd
+#'
 calculate_s2ij<- function(fmat, amat) {
   nsites <- dim(fmat)[2]
   nmut <- dim(fmat)[3]
@@ -147,7 +241,8 @@ calculate_s2ij<- function(fmat, amat) {
 
 #' Calculate stress energy response matrix dvs(i, j) using method "new"
 #'
-
+#' @noRd
+#'
 calculate_dvsij_smrs <- function(wt, dlmat) {
   # structural differences, site analysis
   stopifnot(dim(dlmat[2]) == get_nsites(wt))
@@ -168,6 +263,10 @@ calculate_dvsij_smrs <- function(wt, dlmat) {
   dvsij
 }
 
+#' Calculate stress energy of a site
+#'
+#' @noRd
+#'
 calculate_dvsi.noindel_smrs <- function(wt, dlij) {
   gwt <- get_graph(wt)
 
@@ -193,9 +292,10 @@ calculate_dvsi.noindel_smrs <- function(wt, dlij) {
 
 #' calcualte stress energy change vector dvsjm
 #'
-#'dvsjm is stress energy change dvs due to mutation at site j, for mutations m = c(1, 2, 3, ..., nmut_per_site)
+#'dvsjm is the stress energy change dvs due to mutation at site j, for mutations m = c(1, 2, 3, ..., nmut_per_site)
 #'
-
+#' @noRd
+#'
 calculate_dvsjm_smrs <- function(wt, nmut_per_site, mut_dl_sigma, mut_sd_min,  seed) {
 
   nsites <- get_nsites(wt)
@@ -217,14 +317,13 @@ calculate_dvsjm_smrs <- function(wt, nmut_per_site, mut_dl_sigma, mut_sd_min,  s
 }
 
 
-
 # mode-by-site response matrices ------------------------------------------
-
 
 
 #' Calculate mode-by-site force response matrix df2(n, j) using method "new"
 #'
-
+#' @noRd
+#'
 calculate_df2nj_smrs <- function(wt, fmat) {
   # structural differences, mode analysis
   calculate_fnmat(wt, fmat)^2 %>%
@@ -235,7 +334,8 @@ calculate_df2nj_smrs <- function(wt, fmat) {
 
 #' Calculate fmat in normal mode representation
 #'
-
+#' @noRd
+#'
 calculate_fnmat <- function(wt, fmat) {
   nsites <- dim(fmat)[2]
   nmut <- dim(fmat)[3]
@@ -249,7 +349,8 @@ calculate_fnmat <- function(wt, fmat) {
 
 #' Calculate mode-by-site energy response matrix de2(n, j) using method "new"
 #'
-
+#' @noRd
+#'
 calculate_de2nj_smrs <- function(wt, fmat) {
   # structural differences, mode analysis
 
@@ -266,7 +367,8 @@ calculate_de2nj_smrs <- function(wt, fmat) {
 
 #' Calculate mode-by-site structure response matrix dr2(n, j) using method "new"
 #'
-
+#' @noRd
+#'
 calculate_dr2nj_smrs <- function(wt, fmat) {
   # structural differences, modr analysis
 

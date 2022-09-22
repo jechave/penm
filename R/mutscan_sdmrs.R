@@ -15,8 +15,7 @@
 #' @param option is either "mean_max" (default) or "max_max", depending on which compensation measure is desired.
 #' @param response is the response desired, which maybe either "structure", "energy", or "force"
 #'
-#' @return A mutated protein object
-
+#' @return A response matrix
 #' @export
 #'
 #' @examples

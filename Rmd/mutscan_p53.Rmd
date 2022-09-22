@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = FALSE)
 ```{r}
 library(tidyverse)
 library(bio3d)
+library(Matrix)
 library(here)
 library(patchwork)
 library(jefuns)
@@ -68,6 +69,24 @@ dat_rescue <- dat_rescue_sites %>%
 dat_rescue
 
 ```
+
+## Response Matrices
+
+```{r}
+
+smrs_all_df <- smrs_all(wt, 10, "lfenm", 0.3, 1, 1024)
+
+smrs_matrix <- smrs(wt, 10, 0.3, 1, "mode", "structure", 1024)
+
+sum(smrs_all_df$dfnj$dr2nj - smrs_matrix)
+
+sprs_matrix <- sprs(get_cmat(wt), 100, T)
+aprs_matrix <- aprs(get_cmat(wt),  T)
+
+plot(sprs_matrix, aprs_matrix)
+
+```
+
 
 ## Compensation matrices
 

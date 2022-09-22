@@ -465,8 +465,19 @@ Moved some non-used files from `.R/` to `./saved`.
 - Checked that sdmrs converges towards admrs for different "response" values
 - Hacked the p53 Rmd file to explore other candidate compensation matrices (dr2ij, and matrices of correlations between columns of dr2ij)
 
+## 22 September 2022
+
+- Revised mutscan_amrs and mutscan_smrs
+- Written "new" smrs and amrs interfaces that follow the model of admrs and sdmrs (i.e. they calculate just one matrix depending on a "response" choice)
+- Moved "prs" and "aprs" to "to_do/prs" because prs matrix doesn´t seem to converge to prs, therefore I need to look into this.
+- Make roxygen2 to generate NAMESPACE
+- Commit and push
 
 
+
+- Check documentation
+- Add dependencies to DESCRIPTION, using "use_this"
+- Make installation instructions in github's Readme.md
 
 
 

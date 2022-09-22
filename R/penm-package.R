@@ -5,3 +5,10 @@
 #' @keywords internal
 "_PACKAGE"
 #> [1] "_PACKAGE"
+
+#' @import tidyverse
+#' @import bio3d
+#' @import Matrix
+#' @import jefuns
+NULL
+#> NULL

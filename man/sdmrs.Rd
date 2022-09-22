@@ -10,7 +10,8 @@ sdmrs(
   mut_dl_sigma,
   mut_sd_min,
   option = "mean_max",
-  response = "structure"
+  response = "structure",
+  seed = 1024
 )
 }
 \arguments{
@@ -27,7 +28,7 @@ sdmrs(
 \item{response}{is the response desired, which maybe either "structure", "energy", or "force"}
 }
 \value{
-A mutated protein object
+A response matrix
 }
 \description{
 Returns a compensation matrix: element (i,j) measures the degree of compensation of structural deformations produced by pairs of mutations at sites i and j.
@@ -49,6 +50,10 @@ dmat <- sdmrs(wt, nmut = 10, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_m
 }
 \seealso{
 Other mutscan functions: 
-\code{\link{admrs}()}
+\code{\link{admrs}()},
+\code{\link{amrs_all}()},
+\code{\link{amrs}()},
+\code{\link{smrs_all}()},
+\code{\link{smrs}()}
 }
 \concept{mutscan functions}
