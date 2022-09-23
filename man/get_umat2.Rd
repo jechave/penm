@@ -16,15 +16,8 @@ a matrix of size nsites x nmodes with contribution of each site to each mode.
 Calculates a matrix of size nsites x nmodes. Element umat2(i,n) is the contribution of site i to mode n (amplitude squared, added over x,y,z)
 }
 \seealso{
-Other prot getters: 
-\code{\link{get_cn}()},
-\code{\link{get_mlms}()},
-\code{\link{get_msf_mode}()},
-\code{\link{get_msf_site_mode}()},
-\code{\link{get_msf_site}()},
-\code{\link{get_reduced_cmat}()},
-\code{\link{get_reduced_kmat}()},
-\code{\link{get_rho_matrix}()},
-\code{\link{get_stress}()}
+Other calculate site-by-mode matrices: 
+\code{\link{get_msf_site_mode}()}
 }
-\concept{prot getters}
+\concept{calculate site-by-mode matrices}
+\keyword{internal}

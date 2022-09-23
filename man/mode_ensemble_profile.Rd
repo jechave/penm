@@ -39,3 +39,4 @@ the proteins'  \code{cmat}, and normal modes (Principal components) are assumed 
 
 `calculate_nHn` returns mode-dependent profile of mode conservation  measure \eqn{nH_n}
 }
+\keyword{internal}

@@ -31,3 +31,4 @@ Calculate energy differences between a mutant and wild type
 
 `calculate_dvs` calculates the ideal-conformation stress-energy difference between \code{mut} and \code{wt}
 }
+\keyword{internal}

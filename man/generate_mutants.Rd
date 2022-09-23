@@ -25,3 +25,4 @@ a tibble that contains \code{nsites * nmut_per_site} mutants (mutation = 0 corre
 \description{
 Generate a tibble of single-point mutants
 }
+\keyword{internal}

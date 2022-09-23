@@ -46,3 +46,4 @@ Other mutscan functions:
 \code{\link{smrs}()}
 }
 \concept{mutscan functions}
+\keyword{internal}

@@ -44,3 +44,4 @@ mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, mut_model = "lfenm", see
 
 }
 \concept{enm mutating functions}
+\keyword{internal}

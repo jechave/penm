@@ -31,3 +31,4 @@ A vector with contributions of each normal mode to the given property
 
 `calculate_df2n` calculates de square of the mode-contributions to the force vecgtor \eqn{\mathbf{f}}
 }
+\keyword{internal}

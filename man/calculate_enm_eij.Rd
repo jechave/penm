@@ -25,3 +25,4 @@ Other enm builders:
 \code{\link{calculate_enm_nodes}()}
 }
 \concept{enm builders}
+\keyword{internal}

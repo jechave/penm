@@ -10,6 +10,7 @@
 #' @return a list that contains various average response matrices and profiles
 #'
 #' @export
+#' @keywords internal
 #'
 mrs_all <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
 
@@ -72,6 +73,7 @@ mrs_all <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed
 #' @return a tibble that contains \code{nsites * nmut_per_site} mutants (mutation = 0 corresponds to wt).
 #'
 #' @export
+#' @keywords internal
 #'
 generate_mutants <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
   mutation <- seq(from = 0, to = nmut_per_site)
@@ -98,6 +100,7 @@ generate_mutants <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_
 #' @return a response matrix of the form \eqn{R_{ij}} (response site is \code{i}, mutated site is \code{j})
 #'
 #' @name site_mrs_matrices
+#' @keywords internal
 #'
 NULL
 
@@ -193,7 +196,7 @@ calculate_dvsij_mrs <- function(mutants) {
   result
 }
 
-# Ensemble responde matrices----------------------------------------------------
+# Ensemble response matrices----------------------------------------------------
 #' @rdname site_mrs_matrices
 #'
 #' @details  `calculate_dmsfij_mrs()` calculates the change of msf of site i due to mutations at j, averaged over mutations at \code{j}
@@ -292,6 +295,8 @@ calculate_dbhatij_mrs <- function(mutants) {
 #' @return a response matrix of the form \eqn{R_{nj}} (response mode is \code{n}, mutated site is \code{j})
 #'
 #' @name mode_mrs_matrices
+#'
+#' @keywords internal
 #'
 NULL
 

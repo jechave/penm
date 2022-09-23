@@ -46,7 +46,6 @@ wcn_xyz <- function(xyz, ...) {
 #' @param d_max cutoff radius to define contacts
 #'
 #' @return vector of contact numbers
-
 #' @noRd
 #'
 cn_xyz <-  function(xyz, d_max) {
@@ -67,7 +66,7 @@ cn_xyz <-  function(xyz, d_max) {
 #' @param d_max cutoff radius to define contacts
 #'
 #' @return vector of contact numbers
-
+#'
 #' @noRd
 #'
 cn_graph <- function(graph) {
@@ -116,7 +115,10 @@ xyz_indices_site <- function(site) {
   i
 }
 
-
+#' Fast calculation of quadratic form
+#'
+#' @noRd
+#'
 my_quad_form <- function(x,m,y) {
   ret <- crossprod(y,crossprod(m,x))
   as.numeric(ret)
@@ -125,26 +127,26 @@ my_quad_form <- function(x,m,y) {
 
 #' Matrix trace
 #'
+#' @noRd
 #'
 tr <- function(m) sum(diag(m))
 
 #' Log of determinant of matrix
 #'
+#' @noRd
 #'
 logdet <- function(m) {
   log(det(m))
 }
 
 
-#' Matrix trace
-#'
-#'
-tr <- function(m) sum(diag(m))
+
 
 #' Bhat distance between two distributions
 #' (see Fugglebak 2012)
 #'
 #' @noRd
+#'
 dbhat <- function(ca, cb, normalize = F) {
   stopifnot(nrow(ca) == nrow(cb))
   if(normalize) {
@@ -160,6 +162,7 @@ dbhat <- function(ca, cb, normalize = F) {
 #' (see Carnevale 2007)
 #'
 #' @noRd
+#'
 rwsip <- function(ca, cb, normalize = F) {
   stopifnot(nrow(ca) == nrow(cb))
   if(normalize) {
@@ -176,6 +179,7 @@ rwsip <- function(ca, cb, normalize = F) {
 #' Entropy difference between two distribut2ions
 #'
 #' @noRd
+#'
 dh <- function(ca, cb, normalize = F) {
   stopifnot(nrow(ca) == nrow(cb))
   if(normalize) {

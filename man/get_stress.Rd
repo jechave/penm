@@ -16,15 +16,10 @@ a vector of site-dependent stress-energy values
 Calculates the sum for each site of the stress energy of each of it's springs at equilibrium
 }
 \seealso{
-Other prot getters: 
+Other calculate site profiles: 
 \code{\link{get_cn}()},
 \code{\link{get_mlms}()},
-\code{\link{get_msf_mode}()},
-\code{\link{get_msf_site_mode}()},
-\code{\link{get_msf_site}()},
-\code{\link{get_reduced_cmat}()},
-\code{\link{get_reduced_kmat}()},
-\code{\link{get_rho_matrix}()},
-\code{\link{get_umat2}()}
+\code{\link{get_msf_site}()}
 }
-\concept{prot getters}
+\concept{calculate site profiles}
+\keyword{internal}

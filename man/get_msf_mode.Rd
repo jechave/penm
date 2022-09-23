@@ -15,16 +15,5 @@ a vector of size nsites with msf values for each mode
 \description{
 Calculates the mean-square-fluctuation in the direction of each normal mode
 }
-\seealso{
-Other prot getters: 
-\code{\link{get_cn}()},
-\code{\link{get_mlms}()},
-\code{\link{get_msf_site_mode}()},
-\code{\link{get_msf_site}()},
-\code{\link{get_reduced_cmat}()},
-\code{\link{get_reduced_kmat}()},
-\code{\link{get_rho_matrix}()},
-\code{\link{get_stress}()},
-\code{\link{get_umat2}()}
-}
-\concept{prot getters}
+\concept{calculate mode profiles}
+\keyword{internal}

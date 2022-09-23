@@ -16,3 +16,4 @@ a scalar: the energy at the minimum-enegy conformation
 \description{
 Calculate minimum energy of a given prot object
 }
+\keyword{internal}

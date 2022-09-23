@@ -473,6 +473,18 @@ Moved some non-used files from `.R/` to `./saved`.
 - Make roxygen2 to generate NAMESPACE
 - Commit and push
 
+-  Fixed error in jefuns::matrix_to_tibble (the tibble was sorted with j varying faster than i, therefore the column that contains the matrix elements ends up in the wrong order, which makes backtransforming it to a matrix, as done in amrs() and smrs() fail.
+
+
+## 23 September 2022
+
+- Reduce the number of exported functions: don't export getters, (but add an interface to all getters)
+- Some "getters" are not actually getters but calculators, make them internal (for now, afterwards see whether renaming) and remove from documentation, plus make an interface to export the calculation of some useful properties (such as cn, wcn, etc.)
+
+
+
+- Don't export calculate_dr2ij_mrs etc. (but add an interface mrs() to all suh calculators)
+
 
 
 - Check documentation

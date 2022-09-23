@@ -25,3 +25,4 @@ Other enm builders:
 \code{\link{calculate_enm_nma}()}
 }
 \concept{enm builders}
+\keyword{internal}

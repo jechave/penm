@@ -39,3 +39,4 @@ the proteins'  \code{cmat}, and normal modes (Principal components) are assumed 
 
 `calculate_dhi` returns site-dependent profile of dh similarity
 }
+\keyword{internal}

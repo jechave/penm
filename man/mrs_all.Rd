@@ -25,3 +25,4 @@ a list that contains various average response matrices and profiles
 \description{
 Calculate all response matrices and profiles, "simulation" prs method
 }
+\keyword{internal}

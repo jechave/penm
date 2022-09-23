@@ -1,5 +1,5 @@
 ---
-title: "admrs tutorial"
+title: "Brief Mutational Scanning Tutorial"
 output:
   html_document:
     df_print: paged
@@ -11,60 +11,66 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ```{r}
-library(tidyverse)
-library(bio3d)
-library(Matrix)
-library(here)
-library(patchwork)
-library(jefuns)
-library(penm)
+# library(tidyverse)
+# library(bio3d)
+# library(Matrix)
+# library(jefuns)
 
 library(cowplot) #needed by jefuns::plot_matrix
+
+library(here)
+library(patchwork)
+library(penm)
+
 ```
+
+
+## Set up wild-type protein object
 
 ```{r}
-# ENM model parameters
-node = "sc"
-model = "ming_wall"
-d_max = 10.5
-
-
-# Parameters to pass to admrs
-option <- "max_max"
-response <- "structure"
-mut_dl_sigma = 0.3
-mut_sd_min = 1
+pdb <- bio3d::read.pdb(here("data-raw", "2XWRa.pdb")) # read protein structure
+wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = F) # set up wild-type 
+str(wt) # show components of wt
 ```
 
-
-## Set up wt protein object
+## Test get_prot_property
 
 ```{r}
-pdb <- read.pdb(here("data-raw", "2XWRa.pdb"))
-wt <- set_enm(pdb, node, model, d_max, frustrated = F)
-str(wt)
+get_prot_property(wt, "nsites")
+get_prot_property(wt, "site")
+get_prot_property(wt, "pdb_site")
+get_prot_property(wt, "xyz")
+
+calculate_prot_pro
+
+
+
+
+
 ```
 
-## Prepare rescue data
+## Prepare empirical rescue data
 
 ```{r}
 dat_rescue <- read_csv(here("data-raw", "p53_rescue_data.csv"), col_names = T)  %>% 
   slice(-1) %>% 
-  mutate(nrescue = map_int(rescue_site, nchar)) %>% 
-  filter(nrescue == 3)
+  mutate(nrescue = map_int(rescue_site, ~str_count(.x, pattern = "\\+")),
+         nrescue = nrescue + 1)
 
 dat_rescue_sites <- dat_rescue %>% 
-  select(mutation_site, mutation, rescue_site)  %>% 
-  separate(rescue_site, into = "rescue_site") %>% 
-  mutate(rescue_site = as.numeric(rescue_site)) 
-  
-
-dat_rescue_mutations <- dat_rescue %>% 
-  select(mutation_site, mutation, rescue_mutation) %>% 
-  separate(rescue_mutation, into = "rescue_mutation")
+  select(mutation_site, mutation, rescue_site, nrescue, rescue_mutation)  %>% 
+  separate(rescue_site, c("rs1", "rs2", "rs3", "rs4", "rs5" ))  %>% 
+  separate(rescue_mutation, c("rm1", "rm2", "rm3", "rm4", "rm5")) 
 
 dat_rescue <- dat_rescue_sites %>% 
-  cbind(dat_rescue_mutations$rescue_mutation) 
+  select(mutation_site, starts_with("rs")) %>% 
+  pivot_longer(
+    cols = starts_with("rs"),
+    names_to = "rs",
+    values_to = "rescue_site"
+  ) %>% 
+  na.omit() %>% 
+  mutate(rescue_site = as.numeric(rescue_site))
 
 dat_rescue
 
@@ -74,16 +80,21 @@ dat_rescue
 
 ```{r}
 
-smrs_all_df <- smrs_all(wt, 10, "lfenm", 0.3, 1, 1024)
+# Calculate the response matrix of (square) structural deformations using analytical method
 
-smrs_matrix <- smrs(wt, 10, 0.3, 1, "mode", "structure", 1024)
+dr2ij <- amrs(wt, mut_dl_sigma = .3, mut_sd_min = 1, option = "site", response = "structure")
+dr2nj <- amrs(wt, mut_dl_sigma = .3, mut_sd_min = 1, option = "mode", response = "structure")
 
-sum(smrs_all_df$dfnj$dr2nj - smrs_matrix)
+p1 <- jefuns::plot_matrix(log10(dr2ij), value_name = "log10(dr2ij)") 
+p2 <- jefuns::plot_matrix(log10(dr2nj[1:100,]), row_name = "mode", value_name = "log10(dr2nj)") 
 
-sprs_matrix <- sprs(get_cmat(wt), 100, T)
-aprs_matrix <- aprs(get_cmat(wt),  T)
+p1 + p2
 
-plot(sprs_matrix, aprs_matrix)
+df <- penm:::calculate_dr2nj_amrs(wt, 0.3, 1)
+str(df)
+
+
+
 
 ```
 

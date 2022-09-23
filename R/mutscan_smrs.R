@@ -84,6 +84,8 @@ smrs <- function(wt, nmut_per_site, mut_dl_sigma, mut_sd_min, option = "site", r
 #'
 #' @export
 #'
+#' @keywords internal
+#'
 #' @examples
 #' \dontrun{
 #' pdb <- bio3d::read.pdb("2acy")

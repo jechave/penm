@@ -14,3 +14,4 @@ enm_g_entropy(prot, beta)
 \description{
 Calculate entropic total free energy of prot object
 }
+\keyword{internal}

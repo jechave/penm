@@ -123,6 +123,8 @@ set_enm_nma <- function(prot) {
 #' @export
 #'
 #'@family enm builders
+#' @keywords internal
+#'
 calculate_enm_nodes <- function(pdb, node) {
   if (node == "calpha" | node == "ca") {
     nodes <- prot_ca(pdb)
@@ -155,6 +157,8 @@ calculate_enm_nodes <- function(pdb, node) {
 #' }
 #'
 #'@family enm builders
+#' @keywords internal
+#'
 calculate_enm_graph <- function(xyz, pdb_site, model, d_max, ...) {
     # Calculate (relaxed) enm graph from xyz
     # Returns graph for the relaxed case
@@ -230,6 +234,8 @@ sdij_edge <- function(pdb_site, i, j) {
 #' @export
 #'
 #' @family enm builders
+#' @keywords internal
+#'
 calculate_enm_eij <- function(xyz, i, j) {
 
   stopifnot(length(i) == length(j))
@@ -271,6 +277,8 @@ calculate_enm_eij <- function(xyz, i, j) {
 #' @export
 #'
 #' @family enm builders
+#' @keywords internal
+#'
 #'
 calculate_enm_kmat <- function(graph, eij, nsites, frustrated) {
   stopifnot(max(graph$i, graph$j) <= nsites,
@@ -316,6 +324,8 @@ calculate_enm_kmat <- function(graph, eij, nsites, frustrated) {
 #' @export
 #'
 #'@family enm builders
+#' @keywords internal
+#'
 #'
 calculate_enm_nma <- function(kmat, too_small = 1.e-5) {
   eig <- eigen(kmat, symmetric = TRUE)

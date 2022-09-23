@@ -78,6 +78,7 @@ amrs <- function(wt, mut_dl_sigma, mut_sd_min, option = "site", response = "stru
 #' @return A list containing several response matrices and the corresponding response and influence profiles
 #'
 #' @export
+#' @keywords internal
 #'
 #' @examples
 #' \dontrun{

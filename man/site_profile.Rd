@@ -46,3 +46,4 @@ This version works only for wt and mut with no indels
 
 `calculate_dvsi_same_topology` returns the difference of site-dependent stress-energy contributions, assumes no change in topology
 }
+\keyword{internal}

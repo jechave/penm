@@ -54,3 +54,4 @@ Calculate site-dependent structural response matrices
 
 `calculate_dbhatij_mrs()` calculates dbhat distance between wt and mut site i distributions, averaged over mutations at j.
 }
+\keyword{internal}

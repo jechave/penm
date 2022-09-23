@@ -16,15 +16,8 @@ a matrix of size nsites x nmodes with the msf of each site contributed by each m
 Calculate MSF site-dependent profile for each mode
 }
 \seealso{
-Other prot getters: 
-\code{\link{get_cn}()},
-\code{\link{get_mlms}()},
-\code{\link{get_msf_mode}()},
-\code{\link{get_msf_site}()},
-\code{\link{get_reduced_cmat}()},
-\code{\link{get_reduced_kmat}()},
-\code{\link{get_rho_matrix}()},
-\code{\link{get_stress}()},
+Other calculate site-by-mode matrices: 
 \code{\link{get_umat2}()}
 }
-\concept{prot getters}
+\concept{calculate site-by-mode matrices}
+\keyword{internal}

@@ -16,15 +16,9 @@ a matrix of size nsites x nsites with rho(i,j) = cmat(i,j)/sqrt(cmat(i,i) * cmat
 Calculates the reduced correlation matrix (size nsites x nsites, diag(rho) = 1)
 }
 \seealso{
-Other prot getters: 
-\code{\link{get_cn}()},
-\code{\link{get_mlms}()},
-\code{\link{get_msf_mode}()},
-\code{\link{get_msf_site_mode}()},
-\code{\link{get_msf_site}()},
+Other calculate site-by-site matrices: 
 \code{\link{get_reduced_cmat}()},
-\code{\link{get_reduced_kmat}()},
-\code{\link{get_stress}()},
-\code{\link{get_umat2}()}
+\code{\link{get_reduced_kmat}()}
 }
-\concept{prot getters}
+\concept{calculate site-by-site matrices}
+\keyword{internal}

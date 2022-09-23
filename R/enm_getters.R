@@ -1,11 +1,11 @@
-# query prot object -------------------------------------------------------
+# Functions to query prot object -------------------------------------------------------
 
 #' Get ENM parameters
 #'
 #' @param prot is a prot object
 #' @return list of ENM parameters
 #'
-#' @export
+#' @noRd
 #'
 get_enm_param <- function(prot) prot$param
 
@@ -14,7 +14,8 @@ get_enm_param <- function(prot) prot$param
 #' @param prot is a prot object
 #' @return node-type of ENM model (either "ca" or "sc" for alpha carbon and side-chain, respectively).
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_enm_node <- function(prot)  prot$param$node
 
@@ -24,7 +25,8 @@ get_enm_node <- function(prot)  prot$param$node
 #' @param prot is a prot object
 #' @return ENM model type ("anm", "hnm0", "hnm", "ming_wall", "pfanm")
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_enm_model <- function(prot)  prot$param$model
 
@@ -33,7 +35,8 @@ get_enm_model <- function(prot)  prot$param$model
 #' @param prot is a prot object
 #' @return d_max, the cut-off used to build the ENM network
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_d_max <- function(prot) prot$param$d_max
 
@@ -42,7 +45,8 @@ get_d_max <- function(prot) prot$param$d_max
 #' @param prot is a prot object
 #' @return frustrated, the parameter that defines whether the ENM is frustrated fully relaxed
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_frustrated <- function(prot)  prot$param$frustrated
 
@@ -52,7 +56,8 @@ get_frustrated <- function(prot)  prot$param$frustrated
 #' @param prot is a prot object
 #' @return number of sites (ENM nodes)
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_nsites <- function(prot) prot$nodes$nsites
 
@@ -61,7 +66,8 @@ get_nsites <- function(prot) prot$nodes$nsites
 #' @param prot is a prot object
 #' @return vector of site indexes (numbered from 1 to nsites)
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_site  <- function(prot) prot$nodes$site
 
@@ -70,7 +76,8 @@ get_site  <- function(prot) prot$nodes$site
 #' @param prot is a prot object
 #' @return vector of site indexes (pdb numbers)
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_pdb_site <- function(prot) prot$nodes$pdb_site
 
@@ -79,7 +86,7 @@ get_pdb_site <- function(prot) prot$nodes$pdb_site
 #' @param prot is a prot object
 #' @return a vector of X-ray B-factors for ENM nodes
 #'
-#' @export
+#' @noRd
 #'
 get_bfactor <- function(prot) prot$nodes$bfactor
 
@@ -88,7 +95,8 @@ get_bfactor <- function(prot) prot$nodes$bfactor
 #' @param prot is a prot object
 #' @return A 3*N vector of xyz coordinates of the N ENM nodes
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_xyz <- function(prot)  prot$nodes$xyz
 
@@ -98,7 +106,8 @@ get_xyz <- function(prot)  prot$nodes$xyz
 #' @param prot is a prot object
 #' @return graph, a tibble containing the graph representation of the ENM
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_graph <- function(prot) prot$graph
 
@@ -107,7 +116,8 @@ get_graph <- function(prot) prot$graph
 #' @param prot is a prot object
 #' @return a matrix of size nedges x 3, containing unit vectors eij for all edges
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_eij <- function(prot) prot$eij
 
@@ -117,7 +127,7 @@ get_eij <- function(prot) prot$eij
 #' @param prot is a prot object
 #' @return kmat, the 3N x 3N network matrix (N = nsites)
 #'
-#' @export
+#' @noRd
 #'
 get_kmat <- function(prot) prot$kmat
 
@@ -126,7 +136,8 @@ get_kmat <- function(prot) prot$kmat
 #' @param prot is a prot object
 #' @return a vector of eigenvector indexes
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_mode <- function(prot) prot$nma$mode
 
@@ -135,7 +146,8 @@ get_mode <- function(prot) prot$nma$mode
 #' @param prot is a prot object
 #' @return a vector  of eigenvalues
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_evalue <- function(prot) prot$nma$evalue
 
@@ -144,7 +156,7 @@ get_evalue <- function(prot) prot$nma$evalue
 #' @param prot is a prot object
 #' @return a matrix of eigenvectors U of size 3 nsites x nmodes
 #'
-#' @export
+#' @noRd
 #'
 get_umat <- function(prot) prot$nma$umat
 
@@ -153,7 +165,8 @@ get_umat <- function(prot) prot$nma$umat
 #' @param prot is a prot object
 #' @return cmat, the covariance matrix of the ENM network, of size 3 nsites x 3 nsites
 #'
-#' @export
+#'
+#' @noRd
 #'
 get_cmat <- function(prot) prot$nma$cmat
 
@@ -163,6 +176,6 @@ get_cmat <- function(prot) prot$nma$cmat
 #' @param prot is a prot object
 #' @return number of normal modes
 #'
-#' @export
+#' @noRd
 #'
 get_nmodes <- function(prot) max(prot$nma$mode)

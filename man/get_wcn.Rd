@@ -15,3 +15,4 @@ a vector of size nsites with wcn values for each site
 \description{
 Calculates the Weighted Contact Number (WCN) of each site
 }
+\keyword{internal}

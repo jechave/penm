@@ -49,3 +49,4 @@ Calculate mode-dependent structural response matrices
 
 `calculate_rwsipnj_mrs()` calculates rwsip for mode n averaged over mutations at j
 }
+\keyword{internal}
