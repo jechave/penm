@@ -1,4 +1,4 @@
-#' Calculate mutation-response a mutation-response matrix analitically
+#' Calculate a mutation-response matrix analitically
 #'
 #' Returns a mutation-response matrix
 #' It uses an analytical method (closed formulas). For details see \doi{10.7717/peerj.11330}
@@ -8,16 +8,17 @@
 #'
 #'
 #' It may calculate either  site-by-site or mode-by site response matrices
-#' Three type of response may be calculated, "structure " (dr2ij and dr2nj), "energy" (de2ij and de2nj), and "force" (df2ij and df2nj).
+#' Three type of response may be calculated, "dr2" (dr2ij and dr2nj), "de2" (de2ij and de2nj), and "df2" (df2ij and df2nj).
 #'
 #'
 #' @param wt is the (wild-type) protein to mutate (an object obtained using \code{set_enm})
 #' @param mut_dl_sigma is the standard deviation of a normal distribution from which edge-length perturbations are picked (LFENM model).
 #' @param mut_sd_min is integer sequence-distance cutoff, only edges with \code{sdij >= mut_sd_min} are mutated
 #' @param option is either "site" (default) or "mode"
-#' @param response is either "structure" (default), "energy", or "force"
+#' @param response is either "dr2" (default), "de2", or "df2"
 #'
-#' @return A list containing several response matrices and the corresponding response and influence profiles
+#' @return A response matrix, columns are mutated sites, rows are responses, of a given site or normal mode.
+#'
 #'
 #' @export
 #'
@@ -25,30 +26,30 @@
 #' \dontrun{
 #' pdb <- bio3d::read.pdb("2acy")
 #' wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
-#' dmat <- smrs_all(wt,  mut_dl_sigma = 0.3, mut_sd_min = 1, option = "site", resonse = "structure")
+#' mrs_matrix <- amrs(wt,  mut_dl_sigma = 0.3, mut_sd_min = 1, option = "site", resonse = "dr2")
 #' }
 #'
 #' @family mutscan functions
 #'
-amrs <- function(wt, mut_dl_sigma, mut_sd_min, option = "site", response = "structure") {
+amrs <- function(wt, mut_dl_sigma, mut_sd_min, option = "site", response = "dr2") {
 
   if (option == "site") {
-    if (response == "structure") {
+    if (response == "dr2") {
       result <- calculate_dr2ij_amrs(wt, mut_dl_sigma, mut_sd_min)
-    } else if (response == "energy") {
+    } else if (response == "de2") {
       result <- calculate_de2ij_amrs(wt, mut_dl_sigma, mut_sd_min)
-    } else if (response == "force") {
+    } else if (response == "df2") {
       result <- calculate_df2ij_amrs(wt, mut_dl_sigma, mut_sd_min)
     } else if (response == "stress") {
       result <- calculate_dvsij_amrs(wt, mut_dl_sigma, mut_sd_min)
     }
     result <- matrix(pull(result, 3), get_nsites(wt), get_nsites(wt))
   } else if (option == "mode") {
-    if (response == "structure") {
+    if (response == "dr2") {
       result <- calculate_dr2nj_amrs(wt, mut_dl_sigma, mut_sd_min)
-    } else if (response == "energy") {
+    } else if (response == "de2") {
       result <- calculate_de2nj_amrs(wt, mut_dl_sigma, mut_sd_min)
-    } else if (response == "force") {
+    } else if (response == "df2") {
       result <- calculate_df2nj_amrs(wt, mut_dl_sigma, mut_sd_min)
     }
     result <- matrix(pull(result, 3), get_nmodes(wt), get_nsites(wt))
@@ -58,7 +59,7 @@ amrs <- function(wt, mut_dl_sigma, mut_sd_min, option = "site", response = "stru
 
 
 
-#' Calculate mutation-response matrices and profiles using analytical methods
+#' Calculate several mutation-response matrices and profiles analytically
 #'
 #' Returns several response matrices and profiles.
 #'
@@ -67,7 +68,7 @@ amrs <- function(wt, mut_dl_sigma, mut_sd_min, option = "site", response = "stru
 #' A mode-by-site response matrix has elements Mnj that measure the response (e.g. deformation) along mode n averaged over mutations at site j.
 #' Response profiles (i.e. sums over columns), and influence profiles (i.e., sums over rows) are also returned.
 #' It uses an analytical method (closed formulas)
-#' Three type of response are calculated, "structure " (dr2ij and dr2nj), "energy" (de2ij and de2nj), and "force" (df2ij and df2nj).
+#' Three type of response are calculated, "dr2" (dr2ij and dr2nj), "de2" (de2ij and de2nj), and "df2" (df2ij and df2nj).
 #'
 #' For details see \doi{10.7717/peerj.11330}
 #'
@@ -75,16 +76,17 @@ amrs <- function(wt, mut_dl_sigma, mut_sd_min, option = "site", response = "stru
 #' @param mut_dl_sigma is the standard deviation of a normal distribution from which edge-length perturbations are picked (LFENM model).
 #' @param mut_sd_min is integer sequence-distance cutoff, only edges with \code{sdij >= mut_sd_min} are mutated
 #'
-#' @return A list containing several response matrices and the corresponding response and influence profiles
+#' @returns A list containing several response matrices and the corresponding response and influence profiles
 #'
 #' @export
-#' @keywords internal
+#'
+#' @noRd
 #'
 #' @examples
 #' \dontrun{
 #' pdb <- bio3d::read.pdb("2acy")
 #' wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
-#' dmat <- smrs_all(wt, nmut_per_site = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1, seed = 1024)
+#' dmat <- smrs_all(wt, nmut = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1, seed = 1024)
 #' }
 #'
 #' @family mutscan functions
@@ -163,7 +165,7 @@ calculate_de2ij_amrs <- function(wt, mut_dl_sigma, mut_sd_min) {
     rename(de2ij = mij)
 }
 
-#' Calculate site-by-site structure response matrix dr2(n, j) using method "fast"
+#' Calculate site-by-site structure response matrix "dr2"(n, j) using method "fast"
 #'
 #' @noRd
 #'
@@ -268,7 +270,7 @@ calculate_de2nj_amrs <- function(wt, mut_dl_sigma, mut_sd_min) {
     rename(n = i, de2nj = mij)
 }
 
-#' Calculate mode-by-site structure response matrix dr2(n, j) using method "fast"
+#' Calculate mode-by-site structure response matrix "dr2"(n, j) using method "fast"
 #'
 #' @noRd
 #'

@@ -1,4 +1,4 @@
-#' Calculate double-mutational-scan matrix using simulation  method
+#' Calculate a double-mutational-scan matrix numerically (simulation-based)
 #'
 #' Returns a compensation matrix: element (i,j) measures the degree of compensation of structural deformations produced by pairs of mutations at sites i and j.
 #' It uses a simulation method (calculates responses for various instances of forces, then calculates means or maxima)
@@ -13,28 +13,28 @@
 #' @param mut_dl_sigma is the standard deviation of a normal distribution from which edge-length perturbations are picked (LFENM model).
 #' @param mut_sd_min is integer sequence-distance cutoff, only edges with \code{sdij >= mut_sd_min} are mutated
 #' @param option is either "mean_max" (default) or "max_max", depending on which compensation measure is desired.
-#' @param response is the response desired, which maybe either "structure", "energy", or "force"
+#' @param response is the response desired, which maybe either "dr2", "de2", or "df2"
 #'
-#' @return A response matrix
+#' @return A compensation matrix, rows are initially mutated site, j is compensation site
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' pdb <- bio3d::read.pdb("2acy")
 #' wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
-#' dmat <- sdmrs(wt, nmut = 10, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_max", response = "structure")
+#' dmat <- sdmrs(wt, nmut = 10, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_max", response = "dr2")
 #' }
 #'
 #' @family mutscan functions
 #'
-sdmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  option = "mean_max", response = "structure", seed = 1024) {
+sdmrs <- function(wt, nmut, mut_dl_sigma, mut_sd_min,  option = "mean_max", response = "dr2", seed = 1024) {
   stopifnot(option == "mean_max" | option == "max_max")
 
-  if (response == "structure") {
+  if (response == "dr2") {
     amat <- get_cmat(wt)
-  } else if (response == "energy") {
+  } else if (response == "de2") {
     amat <- get_cmat_sqrt(wt)
-  } else if (response == "force") {
+  } else if (response == "df2") {
     amat <- diag(3 * get_nsites(wt))
   } else {
     stop("Unknown value of response, stop admrs")

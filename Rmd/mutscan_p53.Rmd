@@ -11,12 +11,11 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ```{r}
-# library(tidyverse)
-# library(bio3d)
+ library(tidyverse)
+ library(bio3d)
 # library(Matrix)
-# library(jefuns)
+ library(jefuns)
 
-library(cowplot) #needed by jefuns::plot_matrix
 
 library(here)
 library(patchwork)
@@ -33,21 +32,7 @@ wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = 
 str(wt) # show components of wt
 ```
 
-## Test get_prot_property
 
-```{r}
-get_prot_property(wt, "nsites")
-get_prot_property(wt, "site")
-get_prot_property(wt, "pdb_site")
-get_prot_property(wt, "xyz")
-
-calculate_prot_pro
-
-
-
-
-
-```
 
 ## Prepare empirical rescue data
 
@@ -82,19 +67,13 @@ dat_rescue
 
 # Calculate the response matrix of (square) structural deformations using analytical method
 
-dr2ij <- amrs(wt, mut_dl_sigma = .3, mut_sd_min = 1, option = "site", response = "structure")
-dr2nj <- amrs(wt, mut_dl_sigma = .3, mut_sd_min = 1, option = "mode", response = "structure")
+dr2ij <- amrs(wt, mut_dl_sigma = .3, mut_sd_min = 1, option = "site", response = "dr2")
+dr2nj <- amrs(wt, mut_dl_sigma = .3, mut_sd_min = 1, option = "mode", response = "dr2")
 
 p1 <- jefuns::plot_matrix(log10(dr2ij), value_name = "log10(dr2ij)") 
 p2 <- jefuns::plot_matrix(log10(dr2nj[1:100,]), row_name = "mode", value_name = "log10(dr2nj)") 
 
 p1 + p2
-
-df <- penm:::calculate_dr2nj_amrs(wt, 0.3, 1)
-str(df)
-
-
-
 
 ```
 
@@ -102,9 +81,16 @@ str(df)
 ## Compensation matrices
 
 ```{r}
-# compensation matrix
+# Calculate compensation matrix
+
+mut_dl_sigma <- 0.3 # (a parameter that defines de average size of the perturbations)
+mut_sd_min <- 2 # don't preturb contacts i-j if abs(j - i) < mut_sd_min
+option <-  "mean_max" # may also be "max_max"
+response <- "dr2" # with this, it calculates deformations. Other options: "de2" (energies) and "df2" (forces).
 
 dmat <- admrs(wt, mut_dl_sigma, mut_sd_min, option, response)
+
+str(dmat)
 
 
 ## Distance matrix

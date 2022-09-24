@@ -2,9 +2,9 @@
 % Please edit documentation in R/mutscan_amrs.R
 \name{amrs}
 \alias{amrs}
-\title{Calculate mutation-response a mutation-response matrix analitically}
+\title{Calculate a mutation-response matrix analitically}
 \usage{
-amrs(wt, mut_dl_sigma, mut_sd_min, option = "site", response = "structure")
+amrs(wt, mut_dl_sigma, mut_sd_min, option = "site", response = "dr2")
 }
 \arguments{
 \item{wt}{is the (wild-type) protein to mutate (an object obtained using \code{set_enm})}
@@ -15,10 +15,10 @@ amrs(wt, mut_dl_sigma, mut_sd_min, option = "site", response = "structure")
 
 \item{option}{is either "site" (default) or "mode"}
 
-\item{response}{is either "structure" (default), "energy", or "force"}
+\item{response}{is either "dr2" (default), "de2", or "df2"}
 }
 \value{
-A list containing several response matrices and the corresponding response and influence profiles
+A response matrix, columns are mutated sites, rows are responses, of a given site or normal mode.
 }
 \description{
 Returns a mutation-response matrix
@@ -30,22 +30,20 @@ A mode-by-site response matrix has elements Mnj that measure the response (e.g. 
 
 
 It may calculate either  site-by-site or mode-by site response matrices
-Three type of response may be calculated, "structure " (dr2ij and dr2nj), "energy" (de2ij and de2nj), and "force" (df2ij and df2nj).
+Three type of response may be calculated, "dr2" (dr2ij and dr2nj), "de2" (de2ij and de2nj), and "df2" (df2ij and df2nj).
 }
 \examples{
 \dontrun{
 pdb <- bio3d::read.pdb("2acy")
 wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
-dmat <- smrs_all(wt,  mut_dl_sigma = 0.3, mut_sd_min = 1, option = "site", resonse = "structure")
+mrs_matrix <- amrs(wt,  mut_dl_sigma = 0.3, mut_sd_min = 1, option = "site", resonse = "dr2")
 }
 
 }
 \seealso{
 Other mutscan functions: 
 \code{\link{admrs}()},
-\code{\link{amrs_all}()},
 \code{\link{sdmrs}()},
-\code{\link{smrs_all}()},
 \code{\link{smrs}()}
 }
 \concept{mutscan functions}

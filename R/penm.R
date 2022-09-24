@@ -13,7 +13,7 @@
 #' @return A mutated protein object
 
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 #' @examples
 #' \dontrun{

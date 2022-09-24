@@ -2,22 +2,22 @@
 % Please edit documentation in R/mutscan_smrs.R
 \name{smrs}
 \alias{smrs}
-\title{Calculate mutation-response a mutation-response matrix, simulation methods}
+\title{Calculate a mutation-response matrix numerically (simulation-based)}
 \usage{
 smrs(
   wt,
-  nmut_per_site,
+  nmut,
   mut_dl_sigma,
   mut_sd_min,
   option = "site",
-  response = "structure",
+  response = "dr2",
   seed = 1024
 )
 }
 \arguments{
 \item{wt}{is the (wild-type) protein to mutate (an object obtained using \code{set_enm})}
 
-\item{nmut_per_site}{is the number of mutations per site to simulate}
+\item{nmut}{is the number of mutations per site to simulate}
 
 \item{mut_dl_sigma}{is the standard deviation of a normal distribution from which edge-length perturbations are picked (LFENM model).}
 
@@ -25,10 +25,12 @@ smrs(
 
 \item{option}{is either "site" (default) or "mode"}
 
-\item{response}{is either "structure" (default), "energy", or "force"}
+\item{response}{is either "dr2" (default), "de2", or "df2"}
+
+\item{seed}{is a seed for random-number generation of mutations}
 }
 \value{
-A list containing several response matrices and the corresponding response and influence profiles
+A response matrix, columns are mutated sites, rows are responses, of a given site or normal mode.
 }
 \description{
 Returns a mutation-response matrix
@@ -40,22 +42,20 @@ A mode-by-site response matrix has elements Mnj that measure the response (e.g. 
 
 
 It may calculate either  site-by-site or mode-by site response matrices
-Three type of response may be calculated, "structure " (dr2ij and dr2nj), "energy" (de2ij and de2nj), and "force" (df2ij and df2nj).
+Three type of response may be calculated, "dr2" (dr2ij and dr2nj), "de2" (de2ij and de2nj), and "df2" (df2ij and df2nj).
 }
 \examples{
 \dontrun{
 pdb <- bio3d::read.pdb("2acy")
 wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
-dmat <- smrs_all(wt, nmut_per_site = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1, seed = 1024)
+mrs_matrix <- smrs(wt, nmut = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1, seed = 1024)
 }
 
 }
 \seealso{
 Other mutscan functions: 
 \code{\link{admrs}()},
-\code{\link{amrs_all}()},
 \code{\link{amrs}()},
-\code{\link{sdmrs}()},
-\code{\link{smrs_all}()}
+\code{\link{sdmrs}()}
 }
 \concept{mutscan functions}

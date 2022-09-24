@@ -7,7 +7,7 @@
 #' @return A (scalar) energy difference between mutant and wild type.
 #'
 #' @name delta_energy
-#' @keywords internal
+#' @noRd
 #'
 NULL
 
@@ -76,7 +76,7 @@ calculate_vs <- function(prot, ideal) {
 #' @return A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.
 #'
 #' @name site_profile
-#' @keywords internal
+#' @noRd
 #'
 NULL
 
@@ -225,7 +225,7 @@ calculate_dvsi_same_topology <- function(wt, mut) {
 #' @return A vector with contributions of each normal mode to the given property
 #'
 #' @name mode_profile
-#' @keywords internal
+#' @noRd
 #'
 NULL
 
@@ -284,7 +284,7 @@ calculate_df2n <- function(wt, mut) {
 #' @return A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.
 #'
 #' @name site_ensemble_profile
-#' @keywords internal
+#' @noRd
 #'
 NULL
 
@@ -378,7 +378,7 @@ calculate_dhi <- function(wt, mut) {
 #' @return A vector \code{(x_n)} of size \code{nmodes}, where \code{x_n} is the property compared, for mode n.
 #'
 #' @name mode_ensemble_profile
-#' @keywords internal
+#' @noRd
 #'
 NULL
 

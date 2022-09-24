@@ -2,7 +2,7 @@
 % Please edit documentation in R/mutscan_sdmrs.R
 \name{sdmrs}
 \alias{sdmrs}
-\title{Calculate double-mutational-scan matrix using simulation  method}
+\title{Calculate a double-mutational-scan matrix numerically (simulation-based)}
 \usage{
 sdmrs(
   wt,
@@ -10,7 +10,7 @@ sdmrs(
   mut_dl_sigma,
   mut_sd_min,
   option = "mean_max",
-  response = "structure",
+  response = "dr2",
   seed = 1024
 )
 }
@@ -25,10 +25,10 @@ sdmrs(
 
 \item{option}{is either "mean_max" (default) or "max_max", depending on which compensation measure is desired.}
 
-\item{response}{is the response desired, which maybe either "structure", "energy", or "force"}
+\item{response}{is the response desired, which maybe either "dr2", "de2", or "df2"}
 }
 \value{
-A response matrix
+A compensation matrix, rows are initially mutated site, j is compensation site
 }
 \description{
 Returns a compensation matrix: element (i,j) measures the degree of compensation of structural deformations produced by pairs of mutations at sites i and j.
@@ -44,16 +44,14 @@ For details see \doi{10.7717/peerj.11330}
 \dontrun{
 pdb <- bio3d::read.pdb("2acy")
 wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
-dmat <- sdmrs(wt, nmut = 10, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_max", response = "structure")
+dmat <- sdmrs(wt, nmut = 10, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_max", response = "dr2")
 }
 
 }
 \seealso{
 Other mutscan functions: 
 \code{\link{admrs}()},
-\code{\link{amrs_all}()},
 \code{\link{amrs}()},
-\code{\link{smrs_all}()},
 \code{\link{smrs}()}
 }
 \concept{mutscan functions}

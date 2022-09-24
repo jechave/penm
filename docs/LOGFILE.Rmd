@@ -461,7 +461,7 @@ Moved some non-used files from `.R/` to `./saved`.
 
 ## 19 September 2022
 - Added comments, @export, and @noRd to roxygen2 fields to mutscan_sdmrs.R 
-- Generalized mutscan_sdmrs.R to "energy" and "force" response options
+- Generalized mutscan_sdmrs.R to de2 and df2 response options
 - Checked that sdmrs converges towards admrs for different "response" values
 - Hacked the p53 Rmd file to explore other candidate compensation matrices (dr2ij, and matrices of correlations between columns of dr2ij)
 
@@ -489,8 +489,14 @@ Moved some non-used files from `.R/` to `./saved`.
 
 - Check documentation
 - Add dependencies to DESCRIPTION, using "use_this"
-- Make installation instructions in github's Readme.md
+- Make installation instructions in github's Readme.md = 2
 
+
+## 24 September 2022
+
+- I kept only set_enm, amrs, smrs, admrs, and sdmrs in the documentation by adding @noRd to everything else
+- I revised the Roxygen2 comments of the functions I show to make them clearer.
+- I also did some renaming (e.g. "structure" to "dr2", etc.)
 
 
 

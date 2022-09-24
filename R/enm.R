@@ -123,7 +123,7 @@ set_enm_nma <- function(prot) {
 #' @export
 #'
 #'@family enm builders
-#' @keywords internal
+#' @noRd
 #'
 calculate_enm_nodes <- function(pdb, node) {
   if (node == "calpha" | node == "ca") {
@@ -157,7 +157,7 @@ calculate_enm_nodes <- function(pdb, node) {
 #' }
 #'
 #'@family enm builders
-#' @keywords internal
+#' @noRd
 #'
 calculate_enm_graph <- function(xyz, pdb_site, model, d_max, ...) {
     # Calculate (relaxed) enm graph from xyz
@@ -234,7 +234,7 @@ sdij_edge <- function(pdb_site, i, j) {
 #' @export
 #'
 #' @family enm builders
-#' @keywords internal
+#' @noRd
 #'
 calculate_enm_eij <- function(xyz, i, j) {
 
@@ -277,7 +277,7 @@ calculate_enm_eij <- function(xyz, i, j) {
 #' @export
 #'
 #' @family enm builders
-#' @keywords internal
+#' @noRd
 #'
 #'
 calculate_enm_kmat <- function(graph, eij, nsites, frustrated) {
@@ -324,7 +324,7 @@ calculate_enm_kmat <- function(graph, eij, nsites, frustrated) {
 #' @export
 #'
 #'@family enm builders
-#' @keywords internal
+#' @noRd
 #'
 #'
 calculate_enm_nma <- function(kmat, too_small = 1.e-5) {

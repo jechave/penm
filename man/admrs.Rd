@@ -2,15 +2,9 @@
 % Please edit documentation in R/mutscan_admrs.R
 \name{admrs}
 \alias{admrs}
-\title{Calculate double-mutational-scan matrix using analytical  method}
+\title{Calculate a double-mutational-scan matrix analytically}
 \usage{
-admrs(
-  wt,
-  mut_dl_sigma,
-  mut_sd_min,
-  option = "mean_max",
-  response = "structure"
-)
+admrs(wt, mut_dl_sigma, mut_sd_min, option = "mean_max", response = "dr2")
 }
 \arguments{
 \item{wt}{is the (wild-type) protein to mutate (an object obtained using \code{set_enm})}
@@ -21,10 +15,10 @@ admrs(
 
 \item{option}{is either "mean_max" (default) or "max_max", depending on which compensation measure is desired.}
 
-\item{response}{is the response desired, which maybe either "structure", "energy", or "force"}
+\item{response}{is the response desired, which maybe either "dr2", "de2", or "df2"}
 }
 \value{
-A mutated protein object
+A compensation matrix, rows are initially mutated site, j is compensation site
 }
 \description{
 Returns a compensation matrix: element (i,j) measures the degree of compensation of structural deformations produced by pairs of mutations at sites i and j.
@@ -40,16 +34,14 @@ For details see \doi{10.7717/peerj.11330}
 \dontrun{
 pdb <- bio3d::read.pdb("2acy")
 wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
-dmat <- admrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_max", response = "structure")
+dmat <- admrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_max", response = "dr2")
 }
 
 }
 \seealso{
 Other mutscan functions: 
-\code{\link{amrs_all}()},
 \code{\link{amrs}()},
 \code{\link{sdmrs}()},
-\code{\link{smrs_all}()},
 \code{\link{smrs}()}
 }
 \concept{mutscan functions}

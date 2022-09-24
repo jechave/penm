@@ -9,7 +9,7 @@
 #' @return a scalar: the energy at the minimum-enegy conformation
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 enm_v_min <- function(prot) {
   graph <- get_graph(prot)
@@ -36,7 +36,7 @@ v_dij <- function(dij, v0ij, kij, lij) {
 #' @param beta is 1 / kT
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 enm_g_entropy <- function(prot, beta) {
   # Calculate T*S from the energy spectrum

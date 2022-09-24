@@ -13,7 +13,7 @@
 #' @export
 #'
 #' @family calculate site profiles
-#' @keywords internal
+#' @noRd
 #'
 get_cn <- function(prot) cn_xyz(get_xyz(prot), get_d_max(prot))
 
@@ -25,7 +25,7 @@ get_cn <- function(prot) cn_xyz(get_xyz(prot), get_d_max(prot))
 #' @returns a vector of size nsites with wcn values for each site
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 get_wcn <- function(prot) wcn_xyz(get_xyz(prot))
 
@@ -37,7 +37,7 @@ get_wcn <- function(prot) wcn_xyz(get_xyz(prot))
 #' @returns a vector of size nsites with msf values for each site
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 #' @family calculate site profiles
 #'
@@ -56,7 +56,7 @@ get_msf_site <- function(prot) {
 #' @returns the profile of mean-local-mutational-stress (mlms) values
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 #' @family calculate site profiles
 #'
@@ -85,7 +85,7 @@ get_mlms <- function(prot, sdij_cut = 2) {
 #' @returns a vector of site-dependent stress-energy values
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 #'
 #' @family calculate site profiles
@@ -119,7 +119,7 @@ get_stress <- function(prot) {
 #' @returns a vector of size nsites with msf values for each mode
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 #' @family calculate mode profiles
 #'
@@ -139,7 +139,7 @@ get_msf_mode <-  function(prot) 1 / get_evalue(prot)
 #' @returns a matrix of size nsites x nsites with rho(i,j) = cmat(i,j)/sqrt(cmat(i,i) * cmat(j,j))
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 #' @family calculate site-by-site matrices
 #'
@@ -156,7 +156,7 @@ get_rho_matrix <- function(prot) {
 #' @returns a matrix of size nsites x nsites with \eqn{c_{ij} = < d\mathbf{r}_i . d\mathbf{r}_j >}
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 #' @family calculate site-by-site matrices
 #'
@@ -173,7 +173,7 @@ get_reduced_cmat <- function(prot) {
 #' @returns a matrix of size nsites x nsites \eqn{K_{ij} = Tr(\mathbf{K}_{ij})}
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 #' @family calculate site-by-site matrices
 #'
@@ -195,7 +195,7 @@ get_reduced_kmat <- function(prot) {
 #' @returns a matrix of size nsites x nmodes with the msf of each site contributed by each mode
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 #' @family calculate site-by-mode matrices
 #'
@@ -215,7 +215,7 @@ get_msf_site_mode <- function(prot) {
 #' @returns a matrix of size nsites x nmodes with contribution of each site to each mode.
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 #' @family calculate site-by-mode matrices
 #'

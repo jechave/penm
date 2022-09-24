@@ -4,22 +4,22 @@
 response_site_plot <- function(prot1, prot2) {
   df2 <- calculate_df2i(prot1, prot2)
   de2 <- calculate_de2i(prot1, prot2)
-  dr2 <- calculate_dr2i(prot1, prot2)
+  "dr2" <- calculate_dr2i(prot1, prot2)
   msf <- get_msf_site(prot1)
-  df <- tibble(pdb_site = get_pdb_site(prot1), site = get_site(prot1), msf, df2, de2, dr2)
+  df <- tibble(pdb_site = get_pdb_site(prot1), site = get_site(prot1), msf, df2, de2, "dr2")
 
 
 
   plot_site <- df %>%
-    pivot_longer(cols = df2:dr2,
+    pivot_longer(cols = df2:"dr2",
                  names_to = "response_type",
                  values_to = "response") %>%
     group_by(response_type) %>%
     mutate(response = mMnorm(sqrt(response))) %>%
     ungroup() %>%
     mutate(response_type = factor(response_type,
-                                  levels = c("df2", "de2", "dr2"),
-                                  labels = c("sqrt(df2)", "sqrt(de2)", "sqrt(dr2)"))) %>%
+                                  levels = c("df2", "de2", ""dr2""),
+                                  labels = c("sqrt(df2)", "sqrt(de2)", "sqrt("dr2")"))) %>%
     ggplot(aes(x = site, y = response, color = response_type)) +
     geom_line() +
     ylab("response") +
@@ -32,15 +32,15 @@ response_site_plot <- function(prot1, prot2) {
     NULL
 
   plot_msf <- df %>%
-    pivot_longer(cols = df2:dr2,
+    pivot_longer(cols = df2:"dr2",
                  names_to = "response_type",
                  values_to = "response") %>%
     group_by(response_type) %>%
     mutate(response = mMnorm(sqrt(response))) %>%
     ungroup() %>%
     mutate(response_type = factor(response_type,
-                                  levels = c("df2", "de2", "dr2"),
-                                  labels = c("sqrt(df2)", "sqrt(de2)", "sqrt(dr2)"))) %>%
+                                  levels = c("df2", "de2", ""dr2""),
+                                  labels = c("sqrt(df2)", "sqrt(de2)", "sqrt("dr2")"))) %>%
     ggplot(aes(x =  msf, y = response, color = response_type)) +
     geom_point() +
     geom_smooth() +
@@ -63,20 +63,20 @@ response_nm_plot <- function(prot1, prot2) {
   # make tibble with data to plot
   df2 <- calculate_df2n(prot1, prot2)
   de2 <- calculate_de2n(prot1, prot2)
-  dr2 <- calculate_dr2n(prot1, prot2)
+  "dr2" <- calculate_dr2n(prot1, prot2)
   msf <- get_msf_mode(prot1)
-  df <- tibble( mode = get_mode(prot1), msf, df2, de2, dr2)
+  df <- tibble( mode = get_mode(prot1), msf, df2, de2, "dr2")
 
   plot_mode <- df %>%
-    pivot_longer(cols = df2:dr2,
+    pivot_longer(cols = df2:"dr2",
                  names_to = "response_type",
                  values_to = "response") %>%
     group_by(response_type) %>%
     mutate(response = mMnorm(sqrt(response))) %>%
     ungroup() %>%
     mutate(response_type = factor(response_type,
-                                  levels = c("df2", "de2", "dr2"),
-                                  labels = c("sqrt(df2)", "sqrt(de2)", "sqrt(dr2)"))) %>%
+                                  levels = c("df2", "de2", ""dr2""),
+                                  labels = c("sqrt(df2)", "sqrt(de2)", "sqrt("dr2")"))) %>%
     ggplot(aes(x = -mode, y = response, color = response_type)) +
     geom_line() +
     ylab("response") +
@@ -89,15 +89,15 @@ response_nm_plot <- function(prot1, prot2) {
     NULL
 
   plot_msf <- df %>%
-    pivot_longer(cols = df2:dr2,
+    pivot_longer(cols = df2:"dr2",
                  names_to = "response_type",
                  values_to = "response") %>%
     group_by(response_type) %>%
     mutate(response = mMnorm(sqrt(response))) %>%
     ungroup() %>%
     mutate(response_type = factor(response_type,
-                                  levels = c("df2", "de2", "dr2"),
-                                  labels = c("sqrt(df2)", "sqrt(de2)", "sqrt(dr2)"))) %>%
+                                  levels = c("df2", "de2", ""dr2""),
+                                  labels = c("sqrt(df2)", "sqrt(de2)", "sqrt("dr2")"))) %>%
     ggplot(aes(x =  msf, y = response, color = response_type)) +
     geom_point() +
     geom_smooth() +

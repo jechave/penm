@@ -48,7 +48,7 @@ param <- lst(
             mut_dl_sigma = 0.3,
             mut_sd_min = 1,
             update_enm = NA),
-  prs = lst(nmut_per_site = 1),
+  prs = lst(nmut = 1),
 )
 
 str(param)

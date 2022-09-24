@@ -1,6 +1,6 @@
 #' Depreciated, use sdmrs instead
 #'
-#' @keywords internal
+#' @noRd
 #' @export
 #'
 dmrs_simulation <- function(...) {
@@ -9,7 +9,7 @@ dmrs_simulation <- function(...) {
 
 #' Depreciated, use admrs instead
 #'
-#' @keywords internal
+#' @noRd
 #' @export
 #'
 dmrs_analytical <- function(...) {

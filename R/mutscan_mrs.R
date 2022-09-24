@@ -1,7 +1,11 @@
-#' Calculate all response matrices and profiles, "simulation" prs method
+#' Calculate all response matrices and profiles, slow simulation-based method
+#'
+#' This method calculates many mutants, compares wt with each mutant, then averages.
+#' It is slower than smrs and much slower than amrs.
+#' However, this approach can be extended to calculate "dynamical" responses (bhat, etc)
 #'
 #' @param wt is the wild-type protein to mutate
-#' @param nmut_per_site is the number of mutations per site to introduce
+#' @param nmut is the number of mutations per site to introduce
 #' @param mut_model is the mutational model ("lfenm" doesn't change network K matrix,  "sclfenm" changes network K matrix)
 #' @param mut_dl_sigma is the \eqn{\sigma} of a normal distribution from which dlij are obtained
 #' @param mut_sd_min is the minimum sequence distance of contacts to perturbate (if sd < sd_min they're not perturbed)
@@ -10,14 +14,14 @@
 #' @return a list that contains various average response matrices and profiles
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
-mrs_all <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
+mrs_all <- function(wt, nmut, mut_model, mut_dl_sigma, mut_sd_min, seed) {
 
-  mutants <- generate_mutants(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed)
+  mutants <- generate_mutants(wt, nmut, mut_model, mut_dl_sigma, mut_sd_min, seed)
 
   enm_param <- get_enm_param(wt)
-  mut_param <- lst(nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min)
+  mut_param <- lst(nmut, mut_model, mut_dl_sigma, mut_sd_min)
 
   dfij <- mutants %>%
     calculate_dr2ij_mrs() %>%
@@ -64,19 +68,19 @@ mrs_all <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed
 #' Generate a tibble of single-point mutants
 #'
 #' @param wt is the wild-type protein to mutate
-#' @param nmut_per_site is the number of mutations per site to introduce
+#' @param nmut is the number of mutations per site to introduce
 #' @param mut_model is the mutational model ("lfenm" doesn't change network K matrix,  "sclfenm" changes network K matrix)
 #' @param mut_dl_sigma is the \eqn{\sigma} of a normal distribution from which dlij are obtained
 #' @param mut_sd_min is the minimum sequence distance of contacts to perturbate (if sd < sd_min they're not perturbed)
 #' @param seed is the seed passed to `get_mutant_site()` to generate the mutations
 #'
-#' @return a tibble that contains \code{nsites * nmut_per_site} mutants (mutation = 0 corresponds to wt).
+#' @return a tibble that contains \code{nsites * nmut} mutants (mutation = 0 corresponds to wt).
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
-generate_mutants <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_min, seed) {
-  mutation <- seq(from = 0, to = nmut_per_site)
+generate_mutants <- function(wt, nmut, mut_model, mut_dl_sigma, mut_sd_min, seed) {
+  mutation <- seq(from = 0, to = nmut)
   j <- get_site(wt)
   # get mutants
   mutants <-  expand_grid(wt = list(wt), j, mutation)
@@ -100,7 +104,7 @@ generate_mutants <- function(wt, nmut_per_site, mut_model, mut_dl_sigma, mut_sd_
 #' @return a response matrix of the form \eqn{R_{ij}} (response site is \code{i}, mutated site is \code{j})
 #'
 #' @name site_mrs_matrices
-#' @keywords internal
+#' @noRd
 #'
 NULL
 
@@ -296,7 +300,7 @@ calculate_dbhatij_mrs <- function(mutants) {
 #'
 #' @name mode_mrs_matrices
 #'
-#' @keywords internal
+#' @noRd
 #'
 NULL
 
