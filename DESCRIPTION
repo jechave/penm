@@ -1,7 +1,7 @@
 Package: penm
 Type: Package
 Title: Build and Perturb Elastic Network Models
-Version: 0.1.0
+Version: 0.2.0
 Author: Julian Echave
 Maintainer: Julian Echave <jechave@unsam.edu.ar>
 Description: Functions to calculate ENMs of proteins and their mutants
