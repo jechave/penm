@@ -14,6 +14,7 @@
 #' @param mut_sd_min is integer sequence-distance cutoff, only edges with \code{sdij >= mut_sd_min} are mutated
 #' @param option is either "mean_max" (default) or "max_max", depending on which compensation measure is desired.
 #' @param response is the response desired, which maybe either "dr2", "de2", or "df2"
+#' @param seed seed for random generation of mutations
 #'
 #' @return A compensation matrix, rows are initially mutated site, j is compensation site
 #' @export

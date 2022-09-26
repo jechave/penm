@@ -5,3 +5,7 @@
 ^LICENSE\.md$
 ^data-raw$
 ^doc$
+^Readme\.Rmd$
+^docs$
+^Rmd$
+^images$

@@ -1,20 +1,38 @@
 ---
 title: "penm package"
 author: "Julian Echave"
-date: "5/2/2020"
+date: "26/09/2022"
 output:  github_document
 
 ---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, fig.cap = TRUE)
 ```
 
 
-The `penm` package contains functions to build Elastic Network Models (ENM) of proteins and to perturb them. Thus, `penm` stands for Perturbing Elastic Network Models.
+The `penm` package contains functions to build Elastic Network Models (ENM) of 
+proteins and to perturb them; 
+`penm` stands for Perturbing Elastic Network Models.
 
 
-## Usage
+## Overview
+
+In short:
+
+* `bio3d::read.pdb()`: Set up a __pdb__ protein object.
+* `set_enm()`:  Set up a `penm` __prot__ object, containing protein and its ENM info.
+* `amrs()`and `smrs()`:   perform single-mutation scans to calculate mutation-response matrices.
+* `admrs()`and `sdmrs()`:   perform double-mutation scans to calculate compensation matrices.
+
+
+## Installation
+
+
+## Getting started
 
 ### Set up the ENM for a protein
 
@@ -29,24 +47,6 @@ In this example, network nodes are placed at $C_\alpha$ coordinates, the model u
 
 
 
-\pagebreak
-## Package architecture
-
-### enm dependencies
-
-  ![Dependencies of `set_enm()`.](images/tree_set_enm.png)
-  
-    
-    
-    
-    
-### penm dependencies
-
-
-   ![Dependencies of `get_mutant_site()`](images/tree_get_mutant_site.png)
-   
-   
-   
   
                             
 

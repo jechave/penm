@@ -1,14 +1,9 @@
 #'@details
-#' For proteins, the \code{penm} package includes functions to calculate various Elastic Network Models,
+#'  The \code{penm} package includes functions to calculate various Elastic Network Models for proteins,
 #'     perform normal mode analysis, and using lfenm, obtain mutant proteins and the corresponding mutant ENMs.
+#'     In addition, it has functions to scan the various average-responses w.r.t. single-site mutations and double-site mutations.
 #'
-#' @noRd
+#'
 "_PACKAGE"
 #> [1] "_PACKAGE"
 
-#' @import tidyverse
-#' @import bio3d
-#' @import Matrix
-#' @import jefuns
-NULL
-#> NULL

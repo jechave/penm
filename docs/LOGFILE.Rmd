@@ -498,6 +498,18 @@ Moved some non-used files from `.R/` to `./saved`.
 - I revised the Roxygen2 comments of the functions I show to make them clearer.
 - I also did some renaming (e.g. "structure" to "dr2", etc.)
 
+## 26 September 2022
+
+Tidy up package to send it to Kristine Degn.
+
+- Resolve what to do woth "non-standard" files and folders
+- Make Vignette
+- Explain how the package is installed
+
+
+TODO: Warning: I've moved all data of tests to test/data and all scripts to refresh/produce these data to test/R, so now it is PENDING to edit all scripts in test/ that generate or use these data.
+
+
 
 
 

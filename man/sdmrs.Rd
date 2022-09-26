@@ -26,6 +26,8 @@ sdmrs(
 \item{option}{is either "mean_max" (default) or "max_max", depending on which compensation measure is desired.}
 
 \item{response}{is the response desired, which maybe either "dr2", "de2", or "df2"}
+
+\item{seed}{seed for random generation of mutations}
 }
 \value{
 A compensation matrix, rows are initially mutated site, j is compensation site

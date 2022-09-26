@@ -4,7 +4,10 @@ Title: Build and Perturb Elastic Network Models
 Version: 0.2.0
 Author: Julian Echave
 Maintainer: Julian Echave <jechave@unsam.edu.ar>
-Description: Functions to calculate ENMs of proteins and their mutants
+Description: Functions to calculate ENM models, mutate ENMs by perturbing them,
+    perform single-site mutional scans to calculate average mutation-response 
+    matrices, and perform double-site mutational scans to calculate compensation
+     matrices. 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -13,8 +16,15 @@ Suggests:
     testthat
 Depends: 
     R (>= 2.10),
-    tidyverse
 Imports: 
+    matrixStats,
+    pracma,
     bio3d,
+    dplyr,
     jefuns,
-    Matrix
+    magrittr,
+    Matrix,
+    purrr,
+    stats,
+    tibble,
+    tidyr
