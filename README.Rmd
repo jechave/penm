@@ -9,17 +9,20 @@ output:  github_document
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, fig.cap = TRUE)
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-"
+)
 ```
-
 
 The `penm` package contains functions to build Elastic Network Models (ENM) of 
 proteins and to perturb them; 
 `penm` stands for Perturbing Elastic Network Models.
 
 
-## Overview
+# Overview
 
 In short:
 
@@ -29,26 +32,199 @@ In short:
 * `admrs()`and `sdmrs()`:   perform double-mutation scans to calculate compensation matrices.
 
 
-## Installation
+# Installation
+Install packages `penm` (this package) and `jefuns` (miscelaneous functions, some of which `penm` uses).
+
+```
+# install.packages("devtools")
+
+devtools::install_github("jechave/jefuns")
+devtools::install_github("jechave/penm")
+```
+# Getting started
+
+Before using the package, it needs to be loaded. To run this file, also load the following packages: `tidyverse`, `patchwork`,   and `jefuns`.
+
+```{r}
+library(tidyverse)  
+library(patchwork)  
+library(jefuns)
+library(penm)
+```
 
 
-## Getting started
-
-### Set up the ENM for a protein
+## Set up the ENM for a protein
 
 First, read a pdb file using `bio3d::read.pdb` to generate a `pdb` object for a protein.
 Then, create the `prot` object, that contains the full ENM analysis.
 
+```{r}
+pdb <-  bio3d::read.pdb("data-raw/2XWRa.pdb") # read a pdb file
+wt <- set_enm(pdb, node = "calpha", model = "anm", d_max = 10.5, frustrated = FALSE)
 ```
-bio3d::read.pdb("data-raw/2acy_A.pdb") # read a pdb file
-prot <- set_enm(pdb, node = "calpha", model = "anm", d_max = 10.5, frustrated = FALSE)
+
+`wt` created here by `set_enm()` is an object of class _prot_. 
+In this example, network nodes are placed at $C_\alpha$ coordinates, the model used is Bahar's Anisotropic Network Model (`model = "anm"`) with a cut-off distance to define contacts of `d_max = 10.5`. `frustrated` indicates whether to add frustrations to the model (it defaults to `FALSE`, it may be ommited from the list of arguments).
+
+The  object `wt` created above is a list that contains several components:
+
+```{r}
+str(wt) # show structure of the object created
 ```
-In this example, network nodes are placed at $C_\alpha$ coordinates, the model used is Bahar's Anisotropic Network Model ("anm") with a cut-off distance to define contacts of `d_max = 10.5`. `frustrated` indicates whether to add frustrations to the model.
+
+* `wt$param` is a list of model parameters
+* `wt$nodes` has information on number of sites, site-indexes, B-factors, and cartesian coordinates of the nodes
+* `wt$graph` is a graph representation of the elastic network (used internally)
+* `wt$eij` is a matrix of unit vectors directed along contacts (used internally)
+* `wt$kmat` is the network's matrix (also called the Hessian, Laplacian, or Kirchhoff matrix)
+* `wt$nma` has various properties obtained from a so called "normal-mode analysis": mode index, eigenvalues (`evalue`), matrix of eigenvectors (`umat`), and the ENM's variance covariance matrix (`cmat`). 
+
+
+## Single-site mutation-response scanning
+
+There're two methods of scanning mutations to obtain mutation-response matrices, an analytical method, `amrs()`, and a simulation-based method `smrs`. The analytical method uses a theoretical formual to calculate the response averaged over mutations. The simulation method introduces a given number of mutations, calculates the responses, then averages.
 
 
 
+```{r}
+# Calculate analytical mutation-response matrix for deformations (response = "dr2")
+
+dr2ij_analytical <- amrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "site", response = "dr2")
+
+# Calculate simulation mutation-response matrix for deformations (response = "dr2")
+
+dr2ij_simulation <- smrs(wt, nmut = 10, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "site", response = "dr2", seed = 1024)
+
+# Plot both matrices side by side
+
+p_analytical <- plot_matrix(log10(dr2ij_analytical), value_name = "log10(dr2)") + 
+  ggtitle("analytical")
+
+p_simulation <- plot_matrix(log10(dr2ij_simulation), value_name = "log10(dr2)") + 
+  ggtitle("simulation")
+
+p_analytical + p_simulation 
+```
+
+### Three responses: structure, energy, and force
+
+There are three possible responses that can be calculated:
+
+* `response = "dr2"` (structural deformations): Matrix element `m[i,j]` represents the square distance between site `i` of the wild-type protein and site `i` of the mutant, averaged over mutations at site `j`.
+* `response = "de2"` (deformation energy): `m[i,j]` is the mechanical energy needed to movoe site  `i` back to its unperturbed position, averaged over mutations at site `j`).
+* `response = "df2"` (force): `m[i,j]` is the square-length of the mechanical force vector acting on site `i`, averaged over mutations at site `j`).
+
+
+```{r}
+# Calculate analytical mutation-response matrix for deformations (response = "dr2")
+
+dr2ij <- amrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "site", response = "dr2")
+de2ij <- amrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "site", response = "de2")
+df2ij <- amrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "site", response = "df2")
+
+# Plot matrices 
+
+p_dr2 <- plot_matrix(log10(dr2ij), value_name = "log10(dr2)") +  ggtitle("structure") +
+  theme(legend.position = "none")
+p_de2 <- plot_matrix(log10(de2ij), value_name = "log10(de2)") +  ggtitle("energy") +
+  theme(legend.position = "none")
+p_df2 <- plot_matrix(log10(df2ij), value_name = "log10(df2)") +  ggtitle("force") +
+  theme(legend.position = "none")
+
+p_dr2 + p_de2 + p_df2 
+```
+
+### Response in normal-mode coordinates
+
+Above, each row represents a site. 
+It is also possible to calculate responses (structure, energy, or force), in the direction of the normal modes,
+using `option = "mode"`:
+
+```{r}
+# Calculate analytical mutation-response matrix for deformations (response = "dr2")
+
+dr2ij <- amrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "mode", response = "dr2")
+de2ij <- amrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "mode", response = "de2")
+df2ij <- amrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "mode", response = "df2")
+
+# Plot matrices 
+
+p_dr2 <- plot_matrix(log10(dr2ij), row_name = "mode", value_name = "log10(dr2)") +  
+  ggtitle("structure") + theme(legend.position = "none")
+
+p_de2 <- plot_matrix(log10(de2ij), row_name = "mode", value_name = "log10(de2)") + 
+  ggtitle("energy") + theme(legend.position = "none")
+p_df2 <- plot_matrix(log10(df2ij), row_name = "mode", value_name = "log10(df2)") +  
+  ggtitle("force") + theme(legend.position = "none")
+
+p_dr2 + p_de2 + p_df2 
+```
   
                             
 
 
+## Double-site mutation-response scanning
 
+Double mutation-response scanning produces a so-called "compensation matrix". 
+This matrix can be obtained using `admrs()` (analytical method), or `sdmrs()` (simulation method).
+An element `d[i,j]` of the matrix obtained represents the maximum compensation due to mutations at `j` of an original mutation at `i`. If `option = "mean_max"`is used, the average over `i` is returned. If `option = `max_max`, then the maximum over mutations at `i` is returned.
+
+```{r}
+# Calculate analytical double mutation-response matrix for deformations (response = "dr2")
+
+D_analytical <- admrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "mean_max", response = "dr2")
+
+# Calculate simulation mutation-response matrix for deformations (response = "dr2")
+
+D_simulation <- sdmrs(wt, nmut = 5, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "mean_max", response = "dr2", seed = 1024)
+
+# Plot both matrices side by side
+
+p_analytical <- plot_matrix(log10(D_analytical), value_name = "log10(Dij)") + 
+  ggtitle("analytical")
+
+p_simulation <- plot_matrix(log10(D_simulation), value_name = "log10(Dij)") + 
+  ggtitle("simulation")
+
+p_analytical + p_simulation 
+```
+### Compensation matrices averaged or maximized over initial mutation
+
+Site `j` (columns of the compensaton matrix) are candidate "rescue" sites, therefore the compensation matrix looks for the maximum over possible mutations. Site `i` is the originally mutated site. To eliminate the *specific* mutation at `i`, there are two ways: maximize (i.e. pick the mutation at `i` that is most easily compensated by a mutation at `j`) or average. These two options are implemented:
+
+```{r}
+# Calculate analytical mutation-response matrix for deformations (response = "dr2")
+
+Dij_mean_max <- admrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "mean_max", response = "dr2")
+Dij_max_max <- admrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_max", response = "dr2")
+
+# Plot matrices 
+
+p_mean_max <- plot_matrix(log10(Dij_mean_max), value_name = "log10(Dij)") +  ggtitle("mean_max") 
+p_max_max <- plot_matrix(log10(Dij_max_max), value_name = "log10(Dij)") +  ggtitle("max_max") 
+
+p_mean_max + p_max_max
+```
+
+### Compensation matrices for structure, energy, and force
+
+As above, three compensation matrices can be calculated.
+
+```{r}
+# Calculate analytical mutation-response matrix for deformations (response = "dr2")
+
+dr2ij <- admrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "mean_max", response = "dr2")
+de2ij <- admrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "mean_max", response = "de2")
+df2ij <- admrs(wt, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "mean_max", response = "df2")
+
+# Plot matrices 
+
+p_dr2 <- plot_matrix(log10(dr2ij), value_name = "log10(dr2)") +  ggtitle("structure") +
+  theme(legend.position = "none")
+p_de2 <- plot_matrix(log10(de2ij), value_name = "log10(de2)") +  ggtitle("energy") +
+  theme(legend.position = "none")
+p_df2 <- plot_matrix(log10(df2ij), value_name = "log10(df2)") +  ggtitle("force") +
+  theme(legend.position = "none")
+
+p_dr2 + p_de2 + p_df2 
+```
