@@ -87,27 +87,27 @@ microbenchmark(mrs_all(wt, 10, "lfenm", 0.3, 1, 1024),
 ```{r}
 mutants <- generate_mutants(wt, 20, "lfenm", 0.3, 1, 1024)
 perturbations <- generate_perturbations(wt, 20, 0.3, 1, 1024)
-microbenchmark(calculate_dr2ij_mrs(mutants),
+microbenchmark(mrs_structure_dr2ij(mutants),
                calculate_dr2ij_smrs(wt, perturbations$fmat),
                calculate_dr2ij_amrs(wt, 0.3, 1),
                times = 1)
 ```
 ```{r}
 
-microbenchmark(calculate_df2ij_mrs(mutants),
+microbenchmark(mrs_structure_df2ij(mutants),
                calculate_df2ij_smrs(wt, perturbations$fmat),
                calculate_df2ij_amrs(wt, 0.3, 1),
                times = 1)
 ```
 ```{r}
-microbenchmark(calculate_de2ij_mrs(mutants),
+microbenchmark(mrs_structure_de2ij(mutants),
                calculate_de2ij_smrs(wt, perturbations$fmat),
                calculate_de2ij_amrs(wt, 0.3, 1),
                times = 1)
 ```
 
 ```{r}
-microbenchmark(calculate_dvsij_mrs(mutants),
+microbenchmark(mrs_structure_dvsij(mutants),
                calculate_dvsij_smrs(wt, perturbations$dlmat),
                calculate_dvsij_amrs(wt, 0.3, 1),
                times = 1)

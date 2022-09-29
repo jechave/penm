@@ -125,10 +125,10 @@ nsites <- get_nsites(wt)
 mut <- mut_sclfenm
 
 dat <- tibble(site = get_site(wt),
-              dmsfi = calculate_dmsfi(wt, mut),
-              dhi = calculate_dhi(wt, mut),
-              rwsipi = calculate_rwsipi(wt, mut),
-              dbhati = calculate_dbhati(wt, mut)
+              dmsfi = delta_motion_dmsfi(wt, mut),
+              dhi = delta_motion_dhi(wt, mut),
+              rwsipi = delta_motion_rwsipi(wt, mut),
+              dbhati = delta_motion_dbhati(wt, mut)
               )
 dat
 ```
@@ -157,10 +157,10 @@ mut <- mut_sclfenm
 dat <- tibble(mode = get_mode(wt),
               msf_wt = get_msf_mode(wt),
               msf_mut = get_msf_mode(mut),
-              dmsfn = calculate_dmsfn(wt, mut),
-              dhn = calculate_dhn(wt, mut),
-              rwsipn = calculate_rwsipn(wt, mut),
-              nhn = calculate_nhn(wt, mut))
+              dmsfn = delta_motion_dmsfn(wt, mut),
+              dhn = delta_motion_dhn(wt, mut),
+              rwsipn = delta_motion_rwsipn(wt, mut),
+              nhn = delta_motion_nhn(wt, mut))
 
 dat %>% 
   pivot_longer(
@@ -193,10 +193,10 @@ dat %>%
 nmut = 10
 mutants <- generate_mutants(wt, nmut, mut_model = "sclfenm", mut_dl_sigma = 0.3, mut_sd_min = 2, seed = 1024)
 
-dat <- calculate_dmsfij_mrs(mutants)  %>% 
-  inner_join(calculate_dhij_mrs(mutants)) %>% 
-  inner_join(calculate_rwsipij_mrs(mutants)) %>%  
-  inner_join(calculate_dbhatij_mrs(mutants))
+dat <- mrs_motion_dmsfij(mutants)  %>% 
+  inner_join(mrs_motion_dhij(mutants)) %>% 
+  inner_join(mrs_motion_rwsipij(mutants)) %>%  
+  inner_join(mrs_motion_dbhatij(mutants))
 
 dat %>% 
   pivot_longer(
@@ -244,10 +244,10 @@ dat %>%
 nmut = 1
 if(FALSE) mutants <- generate_mutants(wt, nmut, mut_model = "sclfenm", mut_dl_sigma = 0.3, mut_sd_min = 2, seed = 1024)
 
-dat <- calculate_dmsfnj_mrs(mutants)  %>% 
-  inner_join(calculate_dhnj_mrs(mutants)) %>% 
-  inner_join(calculate_rwsipnj_mrs(mutants)) %>%  
-  inner_join(calculate_nhnj_mrs(mutants))
+dat <- mrs_motion_dmsfnj(mutants)  %>% 
+  inner_join(mrs_motion_dhnj(mutants)) %>% 
+  inner_join(mrs_motion_rwsipnj(mutants)) %>%  
+  inner_join(mrs_motion_nhnj(mutants))
 
 dat %>% 
   pivot_longer(
