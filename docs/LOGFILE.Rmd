@@ -513,6 +513,15 @@ TODO: Warning: I've moved all data of tests to test/data and all scripts to refr
 
 
 
+## 29 September 2022
+- Major renaming of `delta_` functions that compare two proteins, and `mrs_` 
+functions that calculate structure-based and motion-based mutation-response matrices.
+- Improvement of documentation (and manual)
+- Up the the dev_version indicator
+- Generated manual of new version
+- Commited and pushed everything
+
+
 
 
 
