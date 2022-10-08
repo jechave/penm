@@ -29,6 +29,31 @@ get_cn <- function(prot) cn_xyz(get_xyz(prot), get_d_max(prot))
 #'
 get_wcn <- function(prot) wcn_xyz(get_xyz(prot))
 
+
+#' Calculate distance to active site
+#'
+#' Calculates the distance from each site to the closest active residue
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @param pdb_site_active is a vector of pdb resno of active residues.
+#'
+#' @returns a vector of size nsites with dactive values for each site
+#'
+#' @export
+#' @noRd
+#'
+get_dactive <- function(prot, pdb_site_active) {
+  xyz <- get_xyz(prot)
+  asite <- active_site_indexes(prot, pdb_site_active)
+  site_active <- asite$site_active
+  result <- dactive.xyz(xyz, site_active)
+  result
+}
+
+
+
+
+
 #' Calculate MSF site-dependent profile
 #'
 #' Calculates the mean-square-fluctuation of each site

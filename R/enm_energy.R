@@ -1,7 +1,4 @@
-
-
-
-
+## ENM energies
 
 #' Calculate minimum energy of a given prot object
 #' @param prot is a prot object, wit a component graph tibble
@@ -9,7 +6,7 @@
 #' @return a scalar: the energy at the minimum-enegy conformation
 #'
 #' @export
-#' @noRd
+#' @family enm_energy
 #'
 enm_v_min <- function(prot) {
   graph <- get_graph(prot)
@@ -18,6 +15,22 @@ enm_v_min <- function(prot) {
   })
   v
 }
+
+
+#' Calculate entropic total free energy of prot object
+#'
+#' @param prot is a prot object with known eigenvalues of enm model
+#' @param beta is 1 / kT
+#' @family enm_energy
+#' @export
+#'
+enm_g_entropy <- function(prot, beta) {
+  # Calculate T*S from the energy spectrum
+  energy <- get_evalue(prot)
+  sum(enm_g_entropy_mode(energy, beta))
+}
+
+## Internal
 
 #' Calculate energy of a single spring
 #'
@@ -30,19 +43,7 @@ v_dij <- function(dij, v0ij, kij, lij) {
 
 
 
-#' Calculate entropic total free energy of prot object
-#'
-#' @param prot is a prot object with known eigenvalues of enm model
-#' @param beta is 1 / kT
-#'
-#' @export
-#' @noRd
-#'
-enm_g_entropy <- function(prot, beta) {
-  # Calculate T*S from the energy spectrum
-  energy <- get_evalue(prot)
-  sum(enm_g_entropy_mode(energy, beta))
-}
+
 
 
 #' Entropic contribution of a single mode

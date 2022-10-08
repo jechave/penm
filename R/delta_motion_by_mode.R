@@ -14,13 +14,49 @@
 #'
 NULL
 
+
 #' @rdname delta_motion_by_mode
 #'
-#' @details `delta_motion_dmsfn` returns mode-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_n^2}
+#' @details `delta_motion_dmsfn` returns mode-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_n^2}.
+#' This version calculates fluctuations along normal modes of wt, it's independent of possible assignment issues.
+#'
 #'
 #' @export
 #'
 delta_motion_dmsfn <- function(wt, mut) {
+  stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
+  msf_wt <- get_msf_mode(wt)
+  msf_mut <- diag(t(get_umat(wt)) %*% (get_cmat(mut) %*% get_umat(wt)))
+  dmsf = msf_mut - msf_wt
+  dmsf
+}
+
+#' @rdname delta_motion_by_mode
+#'
+#' @details `delta_motion_dhn` returns mode-dependent profile of entropy differences \eqn{\delta H_n}
+#' This version calculates fluctuations along normal modes of wt, it's independent of possible assignment issues.
+#'
+#' @export
+#'
+delta_motion_dhn <- function(wt, mut) {
+  stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
+  msf_wt <- get_msf_mode(wt)
+  msf_mut <- diag(t(get_umat(wt)) %*% (get_cmat(mut) %*% get_umat(wt)))
+  ha <- 1/2 * log(2 * pi * exp(1) * msf_wt)
+  hb <- 1/2 * log(2 * pi * exp(1) * msf_mut)
+  dhn <- hb - ha
+  dhn
+}
+
+
+#' @rdname delta_motion_by_mode
+#'
+#' @details `delta_motion_dmsfn.old` returns mode-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_n^2}
+#' This version assumes mode n of mut corresponds to mode n of wt (i.e. no reassignment issues)
+#'
+#' @export
+#'
+delta_motion_dmsfn.old <- function(wt, mut) {
   stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
   dmsf = get_msf_mode(mut) - get_msf_mode(wt)
   dmsf
@@ -29,11 +65,12 @@ delta_motion_dmsfn <- function(wt, mut) {
 
 #' @rdname delta_motion_by_mode
 #'
-#' @details `delta_motion_dhn` returns mode-dependent profile of entropy differences \eqn{\delta H_n}
+#' @details `delta_motion_dhn.old` returns mode-dependent profile of entropy differences \eqn{\delta H_n}
+#' This version assumes mode n of mut corresponds to mode n of wt (i.e. no reassignment issues)
 #'
 #' @export
 #'
-delta_motion_dhn <- function(wt, mut) {
+delta_motion_dhn.old <- function(wt, mut) {
   stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
   ha <- 1/2 * log(2 * pi * exp(1) * get_msf_mode(wt))
   hb <- 1/2 * log(2 * pi * exp(1) * get_msf_mode(mut))

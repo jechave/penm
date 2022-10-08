@@ -4,6 +4,8 @@
 \alias{delta_motion_by_mode}
 \alias{delta_motion_dmsfn}
 \alias{delta_motion_dhn}
+\alias{delta_motion_dmsfn.old}
+\alias{delta_motion_dhn.old}
 \alias{delta_motion_rwsipn}
 \alias{delta_motion_nhn}
 \title{Compare two protein ensembles mode by mode (mode-dependent profiles)}
@@ -11,6 +13,10 @@
 delta_motion_dmsfn(wt, mut)
 
 delta_motion_dhn(wt, mut)
+
+delta_motion_dmsfn.old(wt, mut)
+
+delta_motion_dhn.old(wt, mut)
 
 delta_motion_rwsipn(wt, mut)
 
@@ -31,9 +37,17 @@ the proteins'  \code{cmat}, and normal modes (Principal components) are assumed 
 \details{
 (This version works only for wt and mut with no indels)
 
-`delta_motion_dmsfn` returns mode-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_n^2}
+`delta_motion_dmsfn` returns mode-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_n^2}.
+This version calculates fluctuations along normal modes of wt, it's independent of possible assignment issues.
 
 `delta_motion_dhn` returns mode-dependent profile of entropy differences \eqn{\delta H_n}
+This version calculates fluctuations along normal modes of wt, it's independent of possible assignment issues.
+
+`delta_motion_dmsfn.old` returns mode-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_n^2}
+This version assumes mode n of mut corresponds to mode n of wt (i.e. no reassignment issues)
+
+`delta_motion_dhn.old` returns mode-dependent profile of entropy differences \eqn{\delta H_n}
+This version assumes mode n of mut corresponds to mode n of wt (i.e. no reassignment issues)
 
 `delta_motion_rwsipn` returns mode-dependent profile of rwsip similarity
 

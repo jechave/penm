@@ -1,0 +1,51 @@
+---
+title: "Test enm functions"
+author: "Julian Echave"
+date: "4/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Load libraries and functions
+
+```{r}
+# load libraries
+library(tidyverse)
+library(ggridges)
+library(cowplot)
+library(bio3d)
+library(penm)
+library(jefuns)
+library(here)
+
+source(here("Rmd/enm_plot.R"))
+
+```
+
+
+# Read and perform ENM NMA of wild-type protein
+
+
+## Set up Elastic Network Model
+
+```{r}
+## read pdb filec
+pdb_file <- here("data-raw/2acy_A.pdb")
+pdb <- read.pdb(pdb_file)
+
+# set up the protein's enm
+
+wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+mut = get_mutant_site(wt, 13, 1, mut_model = "sclfenm")
+mut2 = get_mutant_site(wt, 13, 10, mut_model = "sclfenm")
+
+```
+
+```{r}
+dgact_tds(mut2, wt, c(23,40))
+ddgact_tds(mut2, mut, wt, c(23,40))
+ddgact_dv(mut, mut2, wt, c(23,40))
+```
+

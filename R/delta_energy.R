@@ -1,8 +1,8 @@
 ## Energy diferences
 #' Calculate energy differences between a mutant and wild type
 #'
-#' @param wt A protein object with \code{xyz} defined
-#' @param mut A second protein object  with \code{xyz} defined
+#' @param wt A protein object
+#' @param mut A second protein
 #'
 #' @return A (scalar) energy difference between mutant and wild type.
 #'
@@ -12,32 +12,62 @@ NULL
 
 #' @rdname delta_energy
 #'
-#' @details `calculate_dvm` calculates the minimum-energy difference between \code{mut} and \code{wt}
+#' @details `delta_energy_dvm` calculates the minimum-energy difference between \code{mut} and \code{wt}
 #'
 #' @export
 #'
-calculate_dvm <- function(wt, mut)
+delta_energy_dvm <- function(wt, mut)
   enm_v_min(mut) - enm_v_min(wt)
 
 #' @rdname delta_energy
 #'
-#' @details `calculate_dg_enetropy` calculates the entropic free energ difference between \code{mut} and \code{wt}
+#' @details `delta_energy_dg_entropy` calculates the entropic free energ difference between \code{mut} and \code{wt}
 #'
 #' @export
 #'
-calculate_dg_entropy <- function(wt, mut, beta)
+delta_energy_dg_entropy <- function(wt, mut, beta = beta_boltzmann())
   enm_g_entropy(mut, beta) - enm_g_entropy(wt, beta)
 
 
 #' @rdname delta_energy
 #'
-#' @details `calculate_dvs` calculates the ideal-conformation stress-energy difference between \code{mut} and \code{wt}
+#' @details `delta_energy_dvs` calculates the ideal-conformation stress-energy difference between \code{mut} and \code{wt}
 #'
 #' @export
 #'
-calculate_dvs <- function(wt, mut, ideal = wt)
+delta_energy_dvs <- function(wt, mut, ideal = wt)
   calculate_vs(mut, ideal) - calculate_vs(wt, ideal)
 
+
+## Activation energy
+
+
+#' @rdname delta_energy
+#'
+#' @details `ddgact_dv` calculates the energy contribution to the change in activation energy between \code{mut} and \code{wt}
+#'
+#' @export
+#'
+ddgact_dv <- function(wt, mut, ideal = wt, pdb_site_active) {
+  result <- dgact_dv(mut, ideal, pdb_site_active) - dgact_dv(wt, ideal, pdb_site_active)
+  result
+}
+
+
+#' @rdname delta_energy
+#'
+#' @details `ddgact_tds` calculates the entropy contribution to the change in activation energy between \code{mut} and \code{wt}
+#'
+#' @export
+#'
+ddgact_tds <- function(wt, mut, ideal = wt, pdb_site_active, beta = beta_boltzmann()) {
+  result <- dgact_tds(mut, ideal, pdb_site_active) - dgact_tds(wt, ideal, pdb_site_active)
+  result
+}
+
+
+
+## Non-exported helper functions
 
 #' Stress-model local-mutational-stress energy
 #'
