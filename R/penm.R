@@ -176,12 +176,19 @@ calculate_force <- function(wt, delta_lij) {
   graph <- graph %>%
     filter(dlij != 0)
 
+  stopifnot(nrow(graph) > 0)
+
+
+
   i <- graph$i
   j <- graph$j
   kij <- graph$kij
   dlij <- graph$dlij
 
   eij <- get_eij(wt)[delta_lij != 0, ]
+
+  if(nrow(graph) == 1) dim(eij) = c(1, 3)
+
 
   fij <-  -kij * dlij # Force on i in the direction from i to j.
 

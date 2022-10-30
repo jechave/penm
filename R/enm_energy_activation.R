@@ -25,18 +25,15 @@ dgact_tds <- function(prot, ideal, pdb_site_active = NA, beta = beta_boltzmann()
   if (anyNA(pdb_site_active)) {
     result <- NA
   } else {
-    # prot
+    # prot, with its active site in a "relaxed" state
     kmat_asite <- kmat_asite(prot, pdb_site_active)
     eig <- eigen(kmat_asite, symmetric = TRUE, only.values = TRUE)
     evalue <- eig$values
     gact_prot <- sum(enm_g_entropy_mode(evalue, beta))
-    # ideal
-    kmat_asite <- kmat_asite(ideal, pdb_site_active)
-    eig <- eigen(kmat_asite, symmetric = TRUE, only.values = TRUE)
-    evalue <- eig$values
-    gact_ideal <- sum(enm_g_entropy_mode(evalue, beta))
+    # prot, with its active site in the ideal conformation
+    gact_ideal <- 0 # assume in the TS the active-site is rigid
 
-    result <- gact_prot - gact_ideal
+    result <- gact_ideal - gact_prot
   }
   result
 }
