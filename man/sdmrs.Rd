@@ -54,7 +54,7 @@ dmat <- sdmrs(wt, nmut = 10, mut_dl_sigma = 0.3, mut_sd_min = 1, option = "max_m
 Other mutscan functions: 
 \code{\link{admrs}()},
 \code{\link{amrs}()},
-\code{\link{ddgact_smrs}()},
+\code{\link{smrs_ddgact}()},
 \code{\link{smrs_ddg}()},
 \code{\link{smrs}()}
 }

@@ -24,12 +24,12 @@
 #' pdb <- bio3d::read.pdb("2acy")
 #' wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
 #' pdb_site_active <- c(10,14,21)
-#' responses <- ddgact_smrs(wt, pdb_site_active, nmut = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1, seed = 1024)
+#' responses <- smrs_ddgact(wt, pdb_site_active, nmut = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1, seed = 1024)
 #' }
 #'
 #' @family mutscan functions
 #'
-ddgact_smrs <- function(wt, pdb_site_active, nmut, mut_model, mut_dl_sigma, mut_sd_min, seed) {
+smrs_ddgact <- function(wt, pdb_site_active, nmut, mut_model, mut_dl_sigma, mut_sd_min, seed) {
 
   stopifnot(mut_model == "lfenm") # no ddgact_tds implementation yet
 

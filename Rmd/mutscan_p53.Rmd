@@ -33,6 +33,24 @@ str(wt) # show components of wt
 ```
 
 
+## Calculate ddg and ddgact
+
+```{r}
+
+dat_ddg <- smrs_ddg(wt, mut_model ="lfenm", nmut = 10, mut_dl_sigma = .3, mut_sd_min = 2, seed = 1024)
+
+dat_ddg
+```
+
+```{r}
+pdb_site_active <- c(273, 275, 280, 281)
+
+dat_ddgact <- smrs_ddgact(wt, pdb_site_active, mut_model ="lfenm", nmut = 10, mut_dl_sigma = .3, mut_sd_min = 2, seed = 1024)
+dat_ddgact 
+
+```
+
+
 
 ## Prepare empirical rescue data
 

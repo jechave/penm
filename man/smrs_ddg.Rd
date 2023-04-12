@@ -42,8 +42,8 @@ responses <- smrs_ddg(wt, nmut = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mu
 Other mutscan functions: 
 \code{\link{admrs}()},
 \code{\link{amrs}()},
-\code{\link{ddgact_smrs}()},
 \code{\link{sdmrs}()},
+\code{\link{smrs_ddgact}()},
 \code{\link{smrs}()}
 }
 \concept{mutscan functions}
