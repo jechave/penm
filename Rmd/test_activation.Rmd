@@ -44,8 +44,11 @@ mut2 = get_mutant_site(wt, 13, 10, mut_model = "sclfenm")
 ```
 
 ```{r}
-dgact_tds(mut2, wt, c(23,40))
-ddgact_tds(mut2, mut, wt, c(23,40))
-ddgact_dv(mut, mut2, wt, c(23,40))
+ddgact_dv(wt, mut, wt, c(23,40))
+ddgact_tds(wt, mut, wt, c(23,40))
+ddgact_dv(wt, mut2, wt, c(23,40))
+ddgact_tds(wt, mut2, wt, c(23,40))
 ```
+
+
 

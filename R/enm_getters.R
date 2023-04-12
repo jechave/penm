@@ -1,19 +1,33 @@
 # Functions to query prot object -------------------------------------------------------
 
-#' Get ENM parameters
+
+#' Get various properties of a prot object
 #'
-#' @param prot is a prot object
-#' @return list of ENM parameters
+#' @param prot A protein with its associated ENM model, obtained using `set_enm`
 #'
-#' @noRd
+#' @name get_prot_property
+#'
+NULL
+
+
+
+
+
+
+#' @rdname get_prot_property
+#'
+#' @return \code{get_enm_param}: list of ENM parameters
+#'
+#' @export
 #'
 get_enm_param <- function(prot) prot$param
 
-#' Get ENM node-type
+
+
+#' @rdname get_prot_property
 #'
-#' @param prot is a prot object
-#' @return node-type of ENM model (either "ca" or "sc" for alpha carbon and side-chain, respectively).
 #'
+#' @return \code{get_enm_node}: ENM node type ("ca" or "sc")
 #'
 #' @noRd
 #'
@@ -29,6 +43,7 @@ get_enm_node <- function(prot)  prot$param$node
 #' @noRd
 #'
 get_enm_model <- function(prot)  prot$param$model
+
 
 #' Get ENM contact distance cut-off
 #'
@@ -51,53 +66,52 @@ get_d_max <- function(prot) prot$param$d_max
 get_frustrated <- function(prot)  prot$param$frustrated
 
 
-#' Get protein size
-#'
-#' @param prot is a prot object
-#' @return number of sites (ENM nodes)
+#' @rdname get_prot_property
 #'
 #'
-#' @noRd
+#' @return \code{get_nsites}: number of sites (ENM nodes)
+#'
+#' @export
 #'
 get_nsites <- function(prot) prot$nodes$nsites
 
-#' Get protein sites
-#'
-#' @param prot is a prot object
-#' @return vector of site indexes (numbered from 1 to nsites)
+
+#' @rdname get_prot_property
 #'
 #'
-#' @noRd
+#' @return \code{get_site}: site indexes, from `1` to `nsites`
+#'
+#' @export
 #'
 get_site  <- function(prot) prot$nodes$site
 
-#' Get protein sites, pdb numeration
-#'
-#' @param prot is a prot object
-#' @return vector of site indexes (pdb numbers)
+
+#' @rdname get_prot_property
 #'
 #'
-#' @noRd
+#' @return \code{get_pdb_site}: site indexes, pdb numeration (resno)
+#'
+#' @export
 #'
 get_pdb_site <- function(prot) prot$nodes$pdb_site
 
-#' Get the X-ray b-factor
+#' @rdname get_prot_property
 #'
-#' @param prot is a prot object
-#' @return a vector of X-ray B-factors for ENM nodes
 #'
-#' @noRd
+#' @return \code{get_bfactor}: B-factors of the X-ray file for the ENM nodes
+#'
+#' @export
 #'
 get_bfactor <- function(prot) prot$nodes$bfactor
 
-#' Get xyz coordinates
-#'
-#' @param prot is a prot object
-#' @return A 3*N vector of xyz coordinates of the N ENM nodes
+#' @rdname get_prot_property
 #'
 #'
-#' @noRd
+#' @return \code{get_xyz}: A 3*N vector of xyz coordinates of the N ENM nodes
 #'
+#' @export
+#'
+
 get_xyz <- function(prot)  prot$nodes$xyz
 
 

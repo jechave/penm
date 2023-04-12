@@ -2,22 +2,22 @@
 % Please edit documentation in R/delta_energy.R
 \name{delta_energy}
 \alias{delta_energy}
-\alias{delta_energy_dvm}
-\alias{delta_energy_dg_entropy}
+\alias{ddg_dv}
+\alias{ddg_tds}
 \alias{delta_energy_dvs}
 \alias{ddgact_dv}
 \alias{ddgact_tds}
 \title{Calculate energy differences between a mutant and wild type}
 \usage{
-delta_energy_dvm(wt, mut)
+ddg_dv(wt, mut)
 
-delta_energy_dg_entropy(wt, mut, beta = beta_boltzmann())
+ddg_tds(wt, mut, beta = beta_boltzmann())
 
 delta_energy_dvs(wt, mut, ideal = wt)
 
-ddgact_dv(wt, mut, ideal = wt, pdb_site_active)
+ddgact_dv(wt, mut, ideal = wt, pdb_site_active = NA)
 
-ddgact_tds(wt, mut, ideal = wt, pdb_site_active, beta = beta_boltzmann())
+ddgact_tds(wt, mut, ideal = wt, pdb_site_active = NA, beta = beta_boltzmann())
 }
 \arguments{
 \item{wt}{A protein object}
@@ -31,9 +31,9 @@ A (scalar) energy difference between mutant and wild type.
 Calculate energy differences between a mutant and wild type
 }
 \details{
-`delta_energy_dvm` calculates the minimum-energy difference between \code{mut} and \code{wt}
+`ddg_dv` calculates the minimum-energy difference between \code{mut} and \code{wt}
 
-`delta_energy_dg_entropy` calculates the entropic free energ difference between \code{mut} and \code{wt}
+`ddg_tds` calculates the entropic free energ difference between \code{mut} and \code{wt}
 
 `delta_energy_dvs` calculates the ideal-conformation stress-energy difference between \code{mut} and \code{wt}
 

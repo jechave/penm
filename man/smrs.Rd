@@ -48,7 +48,7 @@ Three type of response may be calculated, "dr2" (dr2ij and dr2nj), "de2" (de2ij 
 \dontrun{
 pdb <- bio3d::read.pdb("2acy")
 wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
-mrs_matrix <- smrs(wt, nmut = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1, seed = 1024)
+mrs_matrix <- smrs(wt, nmut = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1, response = "dr2", seed = 1024)
 }
 
 }
@@ -56,6 +56,8 @@ mrs_matrix <- smrs(wt, nmut = 10, mut_model = "lfenm", mut_dl_sigma = 0.3, mut_s
 Other mutscan functions: 
 \code{\link{admrs}()},
 \code{\link{amrs}()},
-\code{\link{sdmrs}()}
+\code{\link{ddgact_smrs}()},
+\code{\link{sdmrs}()},
+\code{\link{smrs_ddg}()}
 }
 \concept{mutscan functions}

@@ -70,6 +70,8 @@ kmat_asite <- function(prot, pdb_site_active) {
 }
 
 
+
+
 #' Activation energy, internal energy term
 #'
 #' @noRd

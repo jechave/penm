@@ -502,7 +502,7 @@ Moved some non-used files from `.R/` to `./saved`.
 
 Tidy up package to send it to Kristine Degn.
 
-- Resolve what to do woth "non-standard" files and folders
+- Resolve what to do with "non-standard" files and folders
 - Make Vignette
 - Explain how the package is installed
 
@@ -520,6 +520,20 @@ functions that calculate structure-based and motion-based mutation-response matr
 - Up the the dev_version indicator
 - Generated manual of new version
 - Commited and pushed everything
+
+
+## 7 April 2023
+
+- Added default pdb_site_active = NA to delta_energy.R so that ddgact can be calculated even if pdb_site_active is not passed to the function (it will return NA)
+
+- Renamed delta_energy_dvm to ddg_dv
+- Renamed delta_energy_dg_entropy to ddg_tds
+- Added the old names to "defunct_functions.R" so that they are exported but return the new name in an error message.
+
+
+
+
+
 
 
 

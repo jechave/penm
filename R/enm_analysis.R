@@ -1,7 +1,7 @@
 # Calculate various protein properties
 
 
-# Calculate site profiles ----------------------------------------------------
+# site profiles ----------------------------------------------------
 
 #' Calculate CN site-dependent profile
 #'
@@ -12,8 +12,8 @@
 #'
 #' @export
 #'
-#' @family calculate site profiles
-#' @noRd
+#' @family site profiles
+#'
 #'
 get_cn <- function(prot) cn_xyz(get_xyz(prot), get_d_max(prot))
 
@@ -25,7 +25,8 @@ get_cn <- function(prot) cn_xyz(get_xyz(prot), get_d_max(prot))
 #' @returns a vector of size nsites with wcn values for each site
 #'
 #' @export
-#' @noRd
+#'
+#' @family site profiles
 #'
 get_wcn <- function(prot) wcn_xyz(get_xyz(prot))
 
@@ -40,7 +41,8 @@ get_wcn <- function(prot) wcn_xyz(get_xyz(prot))
 #' @returns a vector of size nsites with dactive values for each site
 #'
 #' @export
-#' @noRd
+#'
+#' @family site profiles
 #'
 get_dactive <- function(prot, pdb_site_active) {
   xyz <- get_xyz(prot)
@@ -62,9 +64,9 @@ get_dactive <- function(prot, pdb_site_active) {
 #' @returns a vector of size nsites with msf values for each site
 #'
 #' @export
-#' @noRd
 #'
-#' @family calculate site profiles
+#'
+#' @family site profiles
 #'
 get_msf_site <- function(prot) {
   diag(get_reduced_cmat(prot))
@@ -81,9 +83,9 @@ get_msf_site <- function(prot) {
 #' @returns the profile of mean-local-mutational-stress (mlms) values
 #'
 #' @export
-#' @noRd
 #'
-#' @family calculate site profiles
+#'
+#' @family site profiles
 #'
 get_mlms <- function(prot, sdij_cut = 2) {
   g1 <- get_graph(prot)
@@ -110,10 +112,10 @@ get_mlms <- function(prot, sdij_cut = 2) {
 #' @returns a vector of site-dependent stress-energy values
 #'
 #' @export
-#' @noRd
 #'
 #'
-#' @family calculate site profiles
+#'
+#' @family site profiles
 #'
 get_stress <- function(prot) {
   g1 <- get_graph(prot)
@@ -144,9 +146,9 @@ get_stress <- function(prot) {
 #' @returns a vector of size nsites with msf values for each mode
 #'
 #' @export
-#' @noRd
 #'
-#' @family calculate mode profiles
+#'
+#' @family mode profiles
 #'
 get_msf_mode <-  function(prot) 1 / get_evalue(prot)
 
@@ -164,9 +166,9 @@ get_msf_mode <-  function(prot) 1 / get_evalue(prot)
 #' @returns a matrix of size nsites x nsites with rho(i,j) = cmat(i,j)/sqrt(cmat(i,i) * cmat(j,j))
 #'
 #' @export
-#' @noRd
 #'
-#' @family calculate site-by-site matrices
+#'
+#' @family site-by-site matrices
 #'
 get_rho_matrix <- function(prot) {
   cmat <- get_reduced_cmat(prot)
@@ -181,9 +183,9 @@ get_rho_matrix <- function(prot) {
 #' @returns a matrix of size nsites x nsites with \eqn{c_{ij} = < d\mathbf{r}_i . d\mathbf{r}_j >}
 #'
 #' @export
-#' @noRd
 #'
-#' @family calculate site-by-site matrices
+#'
+#' @family site-by-site matrices
 #'
 get_reduced_cmat <- function(prot) {
   get_cmat(prot) %>%
@@ -198,9 +200,9 @@ get_reduced_cmat <- function(prot) {
 #' @returns a matrix of size nsites x nsites \eqn{K_{ij} = Tr(\mathbf{K}_{ij})}
 #'
 #' @export
-#' @noRd
 #'
-#' @family calculate site-by-site matrices
+#'
+#' @family site-by-site matrices
 #'
 get_reduced_kmat <- function(prot) {
   get_kmat(prot) %>%
@@ -220,9 +222,9 @@ get_reduced_kmat <- function(prot) {
 #' @returns a matrix of size nsites x nmodes with the msf of each site contributed by each mode
 #'
 #' @export
-#' @noRd
 #'
-#' @family calculate site-by-mode matrices
+#'
+#' @family site-by-mode matrices
 #'
 get_msf_site_mode <- function(prot) {
   umat2 <- get_umat2(prot)
@@ -240,9 +242,9 @@ get_msf_site_mode <- function(prot) {
 #' @returns a matrix of size nsites x nmodes with contribution of each site to each mode.
 #'
 #' @export
-#' @noRd
 #'
-#' @family calculate site-by-mode matrices
+#'
+#' @family site-by-mode matrices
 #'
 get_umat2 <- function(prot) {
   umat2 <- get_umat(prot)^2

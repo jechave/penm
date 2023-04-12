@@ -22,7 +22,7 @@ names(res[res==0])
 
 
 # callers.of("enm_v_min", fw)
-# callers.of("delta_energy_dvm", fw)
+# callers.of("ddg_dv", fw)
 #
 # callers.of("enm_v_min", fw)
 # callers.of("get_mutant_site", fw)

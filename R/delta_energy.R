@@ -12,20 +12,20 @@ NULL
 
 #' @rdname delta_energy
 #'
-#' @details `delta_energy_dvm` calculates the minimum-energy difference between \code{mut} and \code{wt}
+#' @details `ddg_dv` calculates the minimum-energy difference between \code{mut} and \code{wt}
 #'
 #' @export
 #'
-delta_energy_dvm <- function(wt, mut)
+ddg_dv <- function(wt, mut)
   enm_v_min(mut) - enm_v_min(wt)
 
 #' @rdname delta_energy
 #'
-#' @details `delta_energy_dg_entropy` calculates the entropic free energ difference between \code{mut} and \code{wt}
+#' @details `ddg_tds` calculates the entropic free energ difference between \code{mut} and \code{wt}
 #'
 #' @export
 #'
-delta_energy_dg_entropy <- function(wt, mut, beta = beta_boltzmann())
+ddg_tds <- function(wt, mut, beta = beta_boltzmann())
   enm_g_entropy(mut, beta) - enm_g_entropy(wt, beta)
 
 
@@ -48,7 +48,7 @@ delta_energy_dvs <- function(wt, mut, ideal = wt)
 #'
 #' @export
 #'
-ddgact_dv <- function(wt, mut, ideal = wt, pdb_site_active) {
+ddgact_dv <- function(wt, mut, ideal = wt, pdb_site_active = NA) {
   result <- dgact_dv(mut, ideal, pdb_site_active) - dgact_dv(wt, ideal, pdb_site_active)
   result
 }
@@ -60,7 +60,7 @@ ddgact_dv <- function(wt, mut, ideal = wt, pdb_site_active) {
 #'
 #' @export
 #'
-ddgact_tds <- function(wt, mut, ideal = wt, pdb_site_active, beta = beta_boltzmann()) {
+ddgact_tds <- function(wt, mut, ideal = wt, pdb_site_active = NA, beta = beta_boltzmann()) {
   result <- dgact_tds(mut, ideal, pdb_site_active) - dgact_tds(wt, ideal, pdb_site_active)
   result
 }
@@ -71,7 +71,7 @@ ddgact_tds <- function(wt, mut, ideal = wt, pdb_site_active, beta = beta_boltzma
 
 #' Stress-model local-mutational-stress energy
 #'
-#' Calculate de energy of a configuration "ideal"
+#' Calculate the energy of  `prot` in the conformation of `ideal`
 #'
 #' @noRd
 calculate_vs <- function(prot, ideal) {
