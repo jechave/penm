@@ -3,6 +3,8 @@
 export(admrs)
 export(amrs)
 export(amrs_all)
+export(amrs_ddg)
+export(amrs_ddgact)
 export(calculate_enm_eij)
 export(calculate_enm_graph)
 export(calculate_enm_kmat)

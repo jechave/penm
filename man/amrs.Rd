@@ -43,6 +43,8 @@ mrs_matrix <- amrs(wt,  mut_dl_sigma = 0.3, mut_sd_min = 1, option = "site", res
 \seealso{
 Other mutscan functions: 
 \code{\link{admrs}()},
+\code{\link{amrs_ddgact}()},
+\code{\link{amrs_ddg}()},
 \code{\link{sdmrs}()},
 \code{\link{smrs_ddgact}()},
 \code{\link{smrs_ddg}()},
