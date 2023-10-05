@@ -3,7 +3,7 @@
 #' @noRd
 #'
 prot_ca <- function(pdb) {
-  sel <- atom.select(pdb, elety = "CA") # select CA
+  sel <- atom.select(pdb, "calpha") # select CA
 
   nsites <- length(sel$atom)
   site <- seq(length(sel$atom))
