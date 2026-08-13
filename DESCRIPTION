@@ -1,0 +1,31 @@
+Package: penm
+Type: Package
+Title: Build and Perturb Elastic Network Models
+Version: 0.1.0
+Authors@R: person("Julian", "Echave",
+                  email = "jechave@unsam.edu.ar",
+                  role = c("aut", "cre"),
+                  comment = c(ORCID = "0000-0003-0678-5593"))
+Description: Functions to calculate ENM models, mutate ENMs by perturbing them,
+    and measure the resulting differences between wild-type and mutant in
+    energy, structure, and motion.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Suggests:
+    testthat
+Depends:
+    R (>= 2.10),
+Imports:
+    pracma,
+    bio3d,
+    digest,
+    dplyr,
+    jefuns,
+    magrittr,
+    Matrix,
+    purrr,
+    stats,
+    tibble,
+    tidyr
+Config/roxygen2/version: 8.0.0
