@@ -41,7 +41,7 @@ returns a mutant `prot`. Two models:
 
 - `lfenm` — Linear Force ENM. Perturbs edge equilibrium lengths, keeps the contact map.
 - `sclfenm` — Self-Consistent LFENM. Recalculates the ENM from mutant coordinates.
-  **Not verified correct** — see below.
+  **Something is off about it and it hasn't been looked into** — see below.
 
 `mutation = 0` returns `wt` unmutated. Anything other than those two `mut_model`
 values hits a `stop()`.
@@ -71,28 +71,34 @@ sites. `check_seeds_distinct()` errors on collision rather than warning.
 3. `prot` → `get_mutant_site()` → mutant `prot`
 4. (wt, mut) → `delta_*` functions → per-site or per-mode profiles
 
-## sclfenm is not verified — do not settle it as a side effect
+## sclfenm — something smells, unexplored
 
-The `sclfenm` model is **not confirmed correct**. Its tests skip on purpose
-(`"Skip sclfenm test until sclefnm is fixed"` in `test_penm.R` and `test_penm_sc.R`),
-and the refresh scripts guard its fixtures behind `skip <- TRUE`. This is a science
-question for a dedicated session.
+**Something is off about `sclfenm`, and what exactly is not yet known.** Julian has
+not investigated it; as of 2026-08-13 it is an open question he intends to explore
+and think about, not a diagnosed defect with a known fix. Treat every statement below
+as an observation, not a conclusion.
 
-Consequences to respect:
+What is actually observed:
 
-- `tests/testthat/fixtures/mut_qf.rda` holds values from before the 2026-08 seed-key
-  change, and `mut_sc_qf.rda` **does not exist**. Both are intentional. They are
-  unused while the tests skip. Regenerating them would freeze the output of a model
-  whose correctness is unestablished, making a future correct implementation look
-  like a regression.
-- Open markers, both pre-existing: `R/penm.R:117` (`#TODO revise this: mut parameters
+- Its tests skip, with the message `"Skip sclfenm test until sclefnm is fixed"`
+  (`test_penm.R`, `test_penm_sc.R`).
+- The refresh scripts guard its fixtures behind `skip <- TRUE`, so
+  `tests/testthat/fixtures/mut_qf.rda` predates the 2026-08 seed-key change and
+  `mut_sc_qf.rda` was never created. Both are unused while the tests skip.
+- Two markers left in the source: `R/penm.R:117` (`#TODO revise this: mut parameters
   are w.r.t. w0, not wt`) on the `lij` update, and `R/penm.R:226` (frustrated handling
   in `mutate_graph()`).
-- **Not a defect:** sclfenm changes the *number of graph edges* (e.g. 956 → 962 for
-  2acy site 80). It recalculates the contact map from mutant coordinates, so new
-  coordinates cross the cutoff differently.
+- sclfenm changes the *number of graph edges* (e.g. 956 → 962 for 2acy site 80),
+  which follows from recalculating the contact map from mutant coordinates. This one
+  looks like the model working as designed rather than part of the smell — but that
+  reading has not been checked against the science either.
 
-If a task touches sclfenm fixtures or skips, stop and ask.
+Whether these are one problem, several, or mostly harmless is unresolved.
+
+**So: do not regenerate the fixtures, un-skip the tests, or "fix" the TODOs as a side
+effect of other work.** Not because the model is known wrong, but because acting
+would bake in an answer to a question that is still open. If a task touches sclfenm,
+stop and ask.
 
 ## House conventions
 
