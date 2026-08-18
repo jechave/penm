@@ -11,9 +11,8 @@
 #' @param seed An integer, the seed for set.seed before picking perturbations
 #'
 #' @return A mutated protein object
-
+#'
 #' @export
-#' @noRd
 #'
 #' @examples
 #' \dontrun{
