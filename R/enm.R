@@ -321,6 +321,39 @@ calculate_enm_kmat <- function(graph, eij, nsites, frustrated) {
 }
 
 
+#' Fix the sign convention of a matrix of eigenvectors
+#'
+#' `eigen()` determines each eigenvector only up to a factor of -1, and which
+#' sign comes back depends on the LAPACK build — so the same `kmat` yields
+#' different `umat` on different machines. That makes any stored eigenvector,
+#' or any comparison against one, non-portable.
+#'
+#' The convention adopted here: scale each column so that its largest-magnitude
+#' element is positive. This is deterministic given the eigenvector, and leaves
+#' every derived quantity unchanged, since all of them (`cmat`, msf, the
+#' `delta_*` profiles) are quadratic in `umat`.
+#'
+#' Note this does not disambiguate degenerate eigenvalues, where any rotation
+#' within the degenerate subspace is a valid eigenbasis. ENM spectra of real
+#' proteins are generically non-degenerate, so in practice the sign is the whole
+#' ambiguity — but a rotation, if one occurred, would survive this.
+#'
+#' @param umat a matrix whose columns are eigenvectors
+#' @return `umat` with each column's largest-magnitude element made positive
+#'
+#' @noRd
+#'
+canonical_sign <- function(umat) {
+  umat <- as.matrix(umat)
+  # sign of the largest-magnitude entry of each column
+  pivot <- apply(umat, 2, function(u) u[which.max(abs(u))])
+  s <- sign(pivot)
+  # a genuinely all-zero column has no sign to fix; leave it be
+  s[s == 0] <- 1
+  sweep(umat, 2, s, `*`)
+}
+
+
 #' Perform Normal Mode Analysis
 #'
 #' Given an enm `kmat`, perform NMA
@@ -353,6 +386,7 @@ calculate_enm_nma <- function(kmat, too_small = 1.e-5) {
   umat <- umat[, mode]
   mode <- mode[mode]
 
+  umat <- canonical_sign(umat)
 
   cmat <-  umat %*% ((1 / evalue) * t(umat))
 
