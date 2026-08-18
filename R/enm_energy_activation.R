@@ -1,5 +1,16 @@
 #' Activation free energy, internal energy contribution
 #'
+#' Calculates the energy cost of deforming the active site of \code{prot} into the
+#' conformation it has in \code{ideal}, treating the transition state as rigid.
+#'
+#' @param prot A protein object obtained using \code{set_enm()}
+#' @param ideal A protein object whose conformation defines the ideal (transition) state
+#' @param pdb_site_active A vector of active-site residues, in pdb numbering (\code{resno}).
+#'   If \code{NA} (the default), the function returns \code{NA}.
+#'
+#' @return A scalar, the internal-energy contribution to the activation free energy,
+#'   or \code{NA} if \code{pdb_site_active} is \code{NA}.
+#'
 #' @export
 #' @family enm_energy
 #'
@@ -16,6 +27,19 @@ dgact_dv <- function(prot, ideal, pdb_site_active = NA) {
 
 
 #' Activation free energy, entropic contribution
+#'
+#' Calculates the entropic contribution to the activation free energy, as the
+#' difference between the entropic free energy of the active site of \code{prot} and
+#' that of the transition state, which is assumed rigid (contributing zero).
+#'
+#' @param prot A protein object obtained using \code{set_enm()}
+#' @param ideal A protein object whose conformation defines the ideal (transition) state
+#' @param pdb_site_active A vector of active-site residues, in pdb numbering (\code{resno}).
+#'   If \code{NA} (the default), the function returns \code{NA}.
+#' @param beta Inverse temperature, \code{1/kT}
+#'
+#' @return A scalar, the entropic contribution to the activation free energy,
+#'   or \code{NA} if \code{pdb_site_active} is \code{NA}.
 #'
 #' @export
 #' @family enm_energy

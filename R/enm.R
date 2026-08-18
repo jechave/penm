@@ -121,8 +121,6 @@ set_enm_nma <- function(prot) {
 #'
 #' @returns a list of node properties:  \code{lst(nsites, site, pdb_site, bfactor, xyz)}
 #'
-#' @export
-#'
 #'@family enm builders
 #' @noRd
 #'
@@ -153,8 +151,6 @@ calculate_enm_nodes <- function(pdb, node) {
 #'     \code{gnm, anm, ming_wall, hnm, hnm0, pfgnm, reach}.
 #' @param d_max distance-cutoff to define network contacts
 #' @return a tibble that contains the graph representation of the network
-#'
-#' @export
 #'
 #' @examples
 #' \dontrun{
@@ -236,8 +232,6 @@ sdij_edge <- function(pdb_site, i, j) {
 #' @param xyz vector of xyz coordinates
 #' @return matrix with n_edge rows and 3 columns (x, y, z)
 #'
-#' @export
-#'
 #' @family enm builders
 #' @noRd
 #'
@@ -278,8 +272,6 @@ calculate_enm_eij <- function(xyz, i, j) {
 #' eij <- calculate_enm_eij(nodes$xyz, graph$i, graph$j)
 #' kmat <- calculate_enm_kmat(graph, eij, nsites = nodes$nsites, frustrated = FALSE)
 #' }
-#'
-#' @export
 #'
 #' @family enm builders
 #' @noRd
@@ -325,8 +317,6 @@ calculate_enm_kmat <- function(graph, eij, nsites, frustrated) {
 #' \dontrun{
 #' calculate_enm_anm(kmat, too_small = 1.e-10)
 #' }
-#'
-#' @export
 #'
 #'@family enm builders
 #' @noRd

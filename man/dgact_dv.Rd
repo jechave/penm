@@ -6,8 +6,21 @@
 \usage{
 dgact_dv(prot, ideal, pdb_site_active = NA)
 }
+\arguments{
+\item{prot}{A protein object obtained using \code{set_enm()}}
+
+\item{ideal}{A protein object whose conformation defines the ideal (transition) state}
+
+\item{pdb_site_active}{A vector of active-site residues, in pdb numbering (\code{resno}).
+If \code{NA} (the default), the function returns \code{NA}.}
+}
+\value{
+A scalar, the internal-energy contribution to the activation free energy,
+  or \code{NA} if \code{pdb_site_active} is \code{NA}.
+}
 \description{
-Activation free energy, internal energy contribution
+Calculates the energy cost of deforming the active site of \code{prot} into the
+conformation it has in \code{ideal}, treating the transition state as rigid.
 }
 \seealso{
 Other enm_energy:

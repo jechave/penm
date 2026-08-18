@@ -24,10 +24,10 @@ get_enm_param <- function(prot) prot$param
 
 
 
-#' @rdname get_prot_property
+#' Get ENM node type
 #'
-#'
-#' @return \code{get_enm_node}: ENM node type ("ca" or "sc")
+#' @param prot is a prot object
+#' @return ENM node type ("ca" or "sc")
 #'
 #' @noRd
 #'
@@ -136,60 +136,57 @@ get_graph <- function(prot) prot$graph
 get_eij <- function(prot) prot$eij
 
 
-#' Get the ENM network matrix K
+#' @rdname get_prot_property
 #'
-#' @param prot is a prot object
-#' @return kmat, the 3N x 3N network matrix (N = nsites)
 #'
-#' @noRd
+#' @return \code{get_kmat}: the \code{3N x 3N} ENM network (stiffness) matrix, N = nsites
+#'
+#' @export
 #'
 get_kmat <- function(prot) prot$kmat
 
-#' Get ENM eigenvector indexes
-#'
-#' @param prot is a prot object
-#' @return a vector of eigenvector indexes
+#' @rdname get_prot_property
 #'
 #'
-#' @noRd
+#' @return \code{get_mode}: a vector of normal-mode indexes
+#'
+#' @export
 #'
 get_mode <- function(prot) prot$nma$mode
 
-#' Get ENM eigenvalues
-#'
-#' @param prot is a prot object
-#' @return a vector  of eigenvalues
+#' @rdname get_prot_property
 #'
 #'
-#' @noRd
+#' @return \code{get_evalue}: a vector of normal-mode eigenvalues
+#'
+#' @export
 #'
 get_evalue <- function(prot) prot$nma$evalue
 
-#' Get ENM eigenvectors
+#' @rdname get_prot_property
 #'
-#' @param prot is a prot object
-#' @return a matrix of eigenvectors U of size 3 nsites x nmodes
 #'
-#' @noRd
+#' @return \code{get_umat}: the matrix of eigenvectors U, of size \code{3 nsites x nmodes}
+#'
+#' @export
 #'
 get_umat <- function(prot) prot$nma$umat
 
-#' Get ENM covariance matrix
-#'
-#' @param prot is a prot object
-#' @return cmat, the covariance matrix of the ENM network, of size 3 nsites x 3 nsites
+#' @rdname get_prot_property
 #'
 #'
-#' @noRd
+#' @return \code{get_cmat}: the ENM covariance matrix, of size \code{3 nsites x 3 nsites}
+#'
+#' @export
 #'
 get_cmat <- function(prot) prot$nma$cmat
 
 
-#' Get number of modes
+#' @rdname get_prot_property
 #'
-#' @param prot is a prot object
-#' @return number of normal modes
 #'
-#' @noRd
+#' @return \code{get_nmodes}: the number of normal modes
+#'
+#' @export
 #'
 get_nmodes <- function(prot) max(prot$nma$mode)

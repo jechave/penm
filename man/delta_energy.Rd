@@ -23,6 +23,13 @@ ddgact_tds(wt, mut, ideal = wt, pdb_site_active = NA, beta = beta_boltzmann())
 \item{wt}{A protein object}
 
 \item{mut}{A second protein}
+
+\item{beta}{Inverse temperature, \code{1/kT}}
+
+\item{ideal}{A protein object whose conformation defines the reference (ideal) state.
+Defaults to \code{wt}.}
+
+\item{pdb_site_active}{A vector of active-site residues, in pdb numbering (\code{resno})}
 }
 \value{
 A (scalar) energy difference between mutant and wild type.

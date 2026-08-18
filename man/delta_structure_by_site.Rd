@@ -26,6 +26,9 @@ delta_structure_dvsi_same_topology(wt, mut)
 \item{wt}{A protein object with \code{xyz} defined}
 
 \item{mut}{A second protein object  with \code{xyz} defined}
+
+\item{kmat_sqrt}{The matrix square root of the ENM K matrix, as returned by
+\code{\link{get_kmat_sqrt}}}
 }
 \value{
 A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.

@@ -6,8 +6,24 @@
 \usage{
 dgact_tds(prot, ideal, pdb_site_active = NA, beta = beta_boltzmann())
 }
+\arguments{
+\item{prot}{A protein object obtained using \code{set_enm()}}
+
+\item{ideal}{A protein object whose conformation defines the ideal (transition) state}
+
+\item{pdb_site_active}{A vector of active-site residues, in pdb numbering (\code{resno}).
+If \code{NA} (the default), the function returns \code{NA}.}
+
+\item{beta}{Inverse temperature, \code{1/kT}}
+}
+\value{
+A scalar, the entropic contribution to the activation free energy,
+  or \code{NA} if \code{pdb_site_active} is \code{NA}.
+}
 \description{
-Activation free energy, entropic contribution
+Calculates the entropic contribution to the activation free energy, as the
+difference between the entropic free energy of the active site of \code{prot} and
+that of the transition state, which is assumed rigid (contributing zero).
 }
 \seealso{
 Other enm_energy:

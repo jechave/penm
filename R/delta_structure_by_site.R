@@ -7,6 +7,8 @@
 #'
 #' @param wt A protein object with \code{xyz} defined
 #' @param mut A second protein object  with \code{xyz} defined
+#' @param kmat_sqrt The matrix square root of the ENM K matrix, as returned by
+#'   \code{\link{get_kmat_sqrt}}
 #'
 #' @return A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.
 #'

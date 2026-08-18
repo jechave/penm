@@ -3,6 +3,10 @@
 #'
 #' @param wt A protein object
 #' @param mut A second protein
+#' @param ideal A protein object whose conformation defines the reference (ideal) state.
+#'   Defaults to \code{wt}.
+#' @param pdb_site_active A vector of active-site residues, in pdb numbering (\code{resno})
+#' @param beta Inverse temperature, \code{1/kT}
 #'
 #' @return A (scalar) energy difference between mutant and wild type.
 #'

@@ -8,6 +8,12 @@
 \alias{get_pdb_site}
 \alias{get_bfactor}
 \alias{get_xyz}
+\alias{get_kmat}
+\alias{get_mode}
+\alias{get_evalue}
+\alias{get_umat}
+\alias{get_cmat}
+\alias{get_nmodes}
 \title{Get various properties of a prot object}
 \usage{
 get_enm_param(prot)
@@ -21,6 +27,18 @@ get_pdb_site(prot)
 get_bfactor(prot)
 
 get_xyz(prot)
+
+get_kmat(prot)
+
+get_mode(prot)
+
+get_evalue(prot)
+
+get_umat(prot)
+
+get_cmat(prot)
+
+get_nmodes(prot)
 }
 \arguments{
 \item{prot}{A protein with its associated ENM model, obtained using `set_enm`}
@@ -37,6 +55,18 @@ get_xyz(prot)
 \code{get_bfactor}: B-factors of the X-ray file for the ENM nodes
 
 \code{get_xyz}: A 3*N vector of xyz coordinates of the N ENM nodes
+
+\code{get_kmat}: the \code{3N x 3N} ENM network (stiffness) matrix, N = nsites
+
+\code{get_mode}: a vector of normal-mode indexes
+
+\code{get_evalue}: a vector of normal-mode eigenvalues
+
+\code{get_umat}: the matrix of eigenvectors U, of size \code{3 nsites x nmodes}
+
+\code{get_cmat}: the ENM covariance matrix, of size \code{3 nsites x 3 nsites}
+
+\code{get_nmodes}: the number of normal modes
 }
 \description{
 Get various properties of a prot object
