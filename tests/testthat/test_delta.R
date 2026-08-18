@@ -31,18 +31,59 @@ test_that("delta_structure by mode match frozen values", {
   expect_equal(delta_structure_df2n(wt, mut), delta_expected$df2n)
 })
 
-test_that("delta_motion by site match frozen values", {
-  expect_equal(delta_motion_dmsfi(wt, mut), delta_expected$dmsfi)
-  expect_equal(delta_motion_dbhati(wt, mut), delta_expected$dbhati)
-  expect_equal(delta_motion_rwsipi(wt, mut), delta_expected$rwsipi)
-  expect_equal(delta_motion_dhi(wt, mut), delta_expected$dhi)
+# The delta_motion_* measures cannot be regression-tested against an lfenm
+# mutant. lfenm perturbs edge equilibrium lengths and leaves kmat untouched, so
+# cmat and the normal modes are IDENTICAL between wt and mutant, and every
+# motion measure returns its degenerate value. Freezing those numbers records
+# 0 / 1 / 0 -- values that hold no matter how broken the function is. That is
+# how a NaN in delta_motion_nhn survived a passing suite: it was frozen into
+# the fixture, and expect_equal(NaN, NaN) is TRUE.
+#
+# So assert the invariance itself, in closed form, instead of freezing its
+# numeric shadow. These fail on a NaN, which the frozen version could not.
+# Exercising the measures on genuinely different networks needs a mutant model
+# that rebuilds the contact map -- see dev/ideas.md, to be settled with sclfenm.
+
+test_that("lfenm leaves the network, and so the motion, unchanged", {
+  expect_equal(get_kmat(wt), get_kmat(mut))
+  expect_equal(get_cmat(wt), get_cmat(mut))
+  expect_equal(get_evalue(wt), get_evalue(mut))
 })
 
-test_that("delta_motion by mode match frozen values", {
-  expect_equal(delta_motion_dmsfn(wt, mut), delta_expected$dmsfn)
-  expect_equal(delta_motion_dhn(wt, mut), delta_expected$dhn)
-  expect_equal(delta_motion_rwsipn(wt, mut), delta_expected$rwsipn)
-  expect_equal(delta_motion_nhn(wt, mut), delta_expected$nhn)
+test_that("delta_motion by site is degenerate under lfenm", {
+  nsites <- get_nsites(wt)
+  expect_equal(delta_motion_dmsfi(wt, mut), rep(0, nsites))
+  expect_equal(delta_motion_dbhati(wt, mut), rep(0, nsites))
+  expect_equal(delta_motion_rwsipi(wt, mut), rep(1, nsites))
+  expect_equal(delta_motion_dhi(wt, mut), rep(0, nsites))
+})
+
+test_that("delta_motion by mode is degenerate under lfenm", {
+  nmodes <- get_nmodes(wt)
+  # dmsfn and dhn come out as rounding noise around zero rather than exact 0
+  expect_equal(delta_motion_dmsfn(wt, mut), rep(0, nmodes), tolerance = 1e-12)
+  expect_equal(delta_motion_dhn(wt, mut), rep(0, nmodes), tolerance = 1e-12)
+  # rwsipn is weighted by wmat/tr(wmat), a GLOBAL normaliser, so it is not 1
+  # per mode even for identical inputs. With overlap = I the weight matrix is
+  # diagonal and mode n reduces to msf_n / sqrt(sum(msf^2)) -- so the vector of
+  # rwsipn values is a unit vector.
+  s2 <- get_msf_mode(wt)
+  expect_equal(delta_motion_rwsipn(wt, mut), s2 / sqrt(sum(s2^2)))
+  expect_equal(sum(delta_motion_rwsipn(wt, mut)^2), 1)
+  # nhn = exp(entropy of the mode-overlap distribution); a perfect one-to-one
+  # correspondence is zero entropy, so nhn is 1. This is the assertion the
+  # frozen fixture could not make: it caught 29 NaN here.
+  expect_equal(delta_motion_nhn(wt, mut), rep(1, nmodes))
+})
+
+test_that("motion measures return finite values, never NaN", {
+  for (f in c(delta_motion_dmsfi, delta_motion_dbhati, delta_motion_rwsipi,
+              delta_motion_dhi, delta_motion_dmsfn, delta_motion_dhn,
+              delta_motion_rwsipn, delta_motion_nhn)) {
+    v <- f(wt, mut)
+    expect_false(any(is.nan(v)))
+    expect_true(all(is.finite(v)))
+  }
 })
 
 test_that("delta_energy functions match frozen values", {

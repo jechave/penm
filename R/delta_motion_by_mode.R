@@ -97,7 +97,14 @@ delta_motion_nhn <- function(wt, mut) {
   stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
   overlap <- crossprod(get_umat(wt), get_umat(mut))
   pmat <- overlap^2
-  hn <- -rowSums(pmat * log(pmat))
+  # p log(p) -> 0 as p -> 0, but computes as 0 * -Inf = NaN. Whether an overlap
+  # comes out as exactly 0 rather than ~1e-40 depends on the arithmetic, so
+  # leaving this unguarded made whole modes NaN, and which ones varied by
+  # machine. Sum only the terms that contribute; a zero-probability mode
+  # contributes zero entropy by definition, not an undefined value.
+  plogp <- pmat * log(pmat)
+  plogp[pmat == 0] <- 0
+  hn <- -rowSums(plogp)
   nhn <- exp(hn)
   nhn
 }
