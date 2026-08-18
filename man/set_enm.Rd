@@ -7,27 +7,45 @@
 set_enm(pdb, node, model, d_max, frustrated)
 }
 \arguments{
-\item{pdb}{pdb object obtained using bio3d::read.pdb}
+\item{pdb}{pdb object obtained using [bio3d::read.pdb()]}
 
-\item{node}{parameter specifying how network nodes should be built: "sc" (side chains), "ca" (alpha carbons), or "cb" (beta carbons)}
+\item{node}{how network nodes are built: `"ca"` (alpha carbons), `"sc"` (side
+chains), or `"cb"` (beta carbons). The long forms `"calpha"`, `"side_chain"`
+and `"beta"` are accepted as synonyms.}
 
-\item{model}{parameter specifying model type: "anm", "ming_wall", "hnm", "hnm0", "pfanm", "reach"}
+\item{model}{ENM variant, one of `"anm"`, `"ming_wall"`, `"hnm"`, `"hnm0"`,
+`"pfanm"`, `"reach"`. These select the spring-constant function applied to each
+contact.}
 
-\item{d_max}{distance cutoff used to define enm contacts}
+\item{d_max}{distance cutoff (Å) used to define enm contacts}
 
-\item{frustrated}{logical value indicating whether to include frustrations in calculation of kmat}
+\item{frustrated}{logical value indicating whether to include frustrations in
+calculation of kmat. **Only `FALSE` is currently supported**; `TRUE` errors.}
 }
 \value{
-an object of class `prot`, which is a list `lst(param, node, graph, eij, kmat, nma)`
+an object of class `prot`, which is a list `lst(param, nodes, graph, eij, kmat, nma)`
 }
 \description{
-`set_enm` set's up a `prot` object containing information on ENM structure, parameters, and normal modes
+`set_enm` sets up a `prot` object containing information on ENM structure,
+parameters, and normal modes. It is the entry point of the package: everything
+else takes the `prot` it returns.
+
+All five arguments are required — there are no defaults.
 }
 \examples{
-\dontrun{
-pdb <- bio3d::read.pdb("2acy")
-set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
-set_enm(pdb, node = "sc", model = "anm", d_max = 12.5, frustrated = TRUE)
-set_enm(pdb, node = "cb", model = "anm", d_max = 12.0, frustrated = FALSE)
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+get_nsites(wt)
+get_nmodes(wt)
+
+# side-chain nodes, a different variant and cutoff
+wt_sc <- set_enm(pdb_2acy_A, node = "sc", model = "anm",
+                 d_max = 12.5, frustrated = FALSE)
+get_nsites(wt_sc)
 }
+\seealso{
+[get_mutant_site()] to perturb the result;
+  [get_prot_property] for the accessors that read a `prot`;
+  [delta_structure_by_site], [delta_motion_by_site] and [delta_energy] for the
+  wild-type-vs-mutant comparisons.
 }

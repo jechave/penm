@@ -49,3 +49,22 @@ This version works only for wt and mut with no indels
 
 `delta_structure_dvsi_same_topology` returns the difference of site-dependent stress-energy contributions, assumes no change in topology
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, seed = 1024)
+
+dr2i <- delta_structure_dr2i(wt, mut)
+length(dr2i)                        # one value per site
+which.max(dr2i)                     # site that moved most
+
+# de2i needs the square root of the wild-type K matrix
+delta_structure_de2i(wt, mut, kmat_sqrt = get_kmat_sqrt(wt))[1:5]
+
+}
+\seealso{
+[delta_structure_by_mode] for the same differences resolved by normal
+  mode rather than by site — `dr2i` and `dr2n` are the same displacement in two
+  bases and sum to the same total. [get_mutant_site()] produces the `mut`
+  argument; [set_enm()] the `wt`.
+}

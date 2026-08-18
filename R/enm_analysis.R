@@ -143,10 +143,11 @@ get_stress <- function(prot) {
 #' Calculates the mean-square-fluctuation in the direction of each normal mode
 #'
 #' @param prot is a protein object obtained using set_enm()
-#' @returns a vector of size nsites with msf values for each mode
+#' @returns a vector of size nmodes with the msf contributed by each normal mode
 #'
 #' @export
 #'
+#' @seealso [get_msf_site()] for the same fluctuations resolved by site instead.
 #'
 #' @family mode profiles
 #'

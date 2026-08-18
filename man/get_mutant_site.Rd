@@ -36,11 +36,18 @@ A mutated protein object
 Returns a mutant given a wt and a site to mutate (site_mut)
 }
 \examples{
-\dontrun{
-pdb <- bio3d::read.pdb("2acy")
-wt <- set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
-mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, mut_model = "lfenm", seed = 1024)
-}
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1,
+                       mut_model = "lfenm", seed = 1024)
 
+# mutation = 0 returns wt unchanged
+identical(get_mutant_site(wt, site_mut = 11, mutation = 0), wt)
+
+}
+\seealso{
+[set_enm()] to build the `wt` argument; [delta_structure_by_site],
+  [delta_motion_by_site] and [delta_energy] to measure the resulting
+  wild-type-vs-mutant differences.
 }
 \concept{enm mutating functions}

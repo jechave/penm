@@ -81,7 +81,7 @@ active_site_indexes <- function(prot, pdb_site_active) {
 }
 
 
-#' Caculate effective K matrix of active site
+#' Calculate effective K matrix of active site
 #'
 #' @noRd
 #'

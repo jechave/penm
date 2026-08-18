@@ -3,7 +3,7 @@
 #' Calculate minimum energy of a given prot object
 #' @param prot is a prot object, wit a component graph tibble
 #' where v0ij, kij, lij and the dij for the minimum conformation are found.
-#' @return a scalar: the energy at the minimum-enegy conformation
+#' @return a scalar: the energy at the minimum-energy conformation
 #'
 #' @export
 #' @family enm_energy
@@ -19,8 +19,14 @@ enm_v_min <- function(prot) {
 
 #' Calculate entropic total free energy of prot object
 #'
+#' Sums the entropic free-energy contribution of every normal mode, computed from
+#' the ENM eigenvalue spectrum.
+#'
 #' @param prot is a prot object with known eigenvalues of enm model
-#' @param beta is 1 / kT
+#' @param beta inverse temperature, \code{1 / kT}
+#'
+#' @return a scalar: the entropic free-energy contribution, summed over modes
+#'
 #' @family enm_energy
 #' @export
 #'

@@ -11,7 +11,7 @@ enm_v_min(prot)
 where v0ij, kij, lij and the dij for the minimum conformation are found.}
 }
 \value{
-a scalar: the energy at the minimum-enegy conformation
+a scalar: the energy at the minimum-energy conformation
 }
 \description{
 Calculate minimum energy of a given prot object

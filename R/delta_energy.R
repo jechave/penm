@@ -1,4 +1,4 @@
-## Energy diferences
+## Energy differences
 #' Calculate energy differences between a mutant and wild type
 #'
 #' @param wt A protein object
@@ -9,6 +9,22 @@
 #' @param beta Inverse temperature, \code{1/kT}
 #'
 #' @return A (scalar) energy difference between mutant and wild type.
+#'
+#' @seealso [delta_structure_by_site] and [delta_motion_by_site] for per-site
+#'   profiles rather than scalars. [get_mutant_site()] produces the `mut` argument;
+#'   [set_enm()] the `wt`.
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, seed = 1024)
+#'
+#' ddg_dv(wt, mut)      # minimum-energy difference
+#'
+#' # Under "lfenm" the contact map — and so kmat and its spectrum — is unchanged,
+#' # which makes the entropic term exactly zero. It is informative only for models
+#' # that rebuild the network, such as "sclfenm".
+#' ddg_tds(wt, mut)
 #'
 #' @name delta_energy
 #'

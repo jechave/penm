@@ -9,10 +9,14 @@ enm_g_entropy(prot, beta)
 \arguments{
 \item{prot}{is a prot object with known eigenvalues of enm model}
 
-\item{beta}{is 1 / kT}
+\item{beta}{inverse temperature, \code{1 / kT}}
+}
+\value{
+a scalar: the entropic free-energy contribution, summed over modes
 }
 \description{
-Calculate entropic total free energy of prot object
+Sums the entropic free-energy contribution of every normal mode, computed from
+the ENM eigenvalue spectrum.
 }
 \seealso{
 Other enm_energy:

@@ -12,6 +12,24 @@
 #'
 #' @return A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.
 #'
+#' @seealso [delta_motion_by_mode] for the same comparisons resolved by normal mode
+#'   rather than by site. [delta_structure_by_site] compares structure rather than
+#'   motion. [get_mutant_site()] produces the `mut` argument; [set_enm()] the `wt`.
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, seed = 1024)
+#'
+#' dmsfi <- delta_motion_dmsfi(wt, mut)
+#' length(dmsfi)                       # one value per site
+#'
+#' # Note these are all zero here: "lfenm" perturbs equilibrium edge lengths but
+#' # leaves kmat — and hence cmat and the normal modes — untouched, so the motion
+#' # is unchanged by construction. Use a model that rebuilds the network to see a
+#' # non-zero profile.
+#' range(dmsfi)
+#'
 #' @name delta_motion_by_site
 #'
 NULL

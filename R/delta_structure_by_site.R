@@ -12,6 +12,23 @@
 #'
 #' @return A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.
 #'
+#' @seealso [delta_structure_by_mode] for the same differences resolved by normal
+#'   mode rather than by site — `dr2i` and `dr2n` are the same displacement in two
+#'   bases and sum to the same total. [get_mutant_site()] produces the `mut`
+#'   argument; [set_enm()] the `wt`.
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, seed = 1024)
+#'
+#' dr2i <- delta_structure_dr2i(wt, mut)
+#' length(dr2i)                        # one value per site
+#' which.max(dr2i)                     # site that moved most
+#'
+#' # de2i needs the square root of the wild-type K matrix
+#' delta_structure_de2i(wt, mut, kmat_sqrt = get_kmat_sqrt(wt))[1:5]
+#'
 #' @name delta_structure_by_site
 #'
 NULL

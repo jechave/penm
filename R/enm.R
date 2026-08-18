@@ -5,25 +5,42 @@
 #' Set up 'prot' object
 #'
 #' @description
-#' `set_enm` set's up a `prot` object containing information on ENM structure, parameters, and normal modes
+#' `set_enm` sets up a `prot` object containing information on ENM structure,
+#' parameters, and normal modes. It is the entry point of the package: everything
+#' else takes the `prot` it returns.
 #'
-#' @param pdb   pdb object obtained using bio3d::read.pdb
-#' @param node  parameter specifying how network nodes should be built: "sc" (side chains), "ca" (alpha carbons), or "cb" (beta carbons)
-#' @param model parameter specifying model type: "anm", "ming_wall", "hnm", "hnm0", "pfanm", "reach"
-#' @param d_max distance cutoff used to define enm contacts
-#' @param frustrated logical value indicating whether to include frustrations in calculation of kmat
+#' All five arguments are required — there are no defaults.
 #'
-#' @returns an object of class `prot`, which is a list `lst(param, node, graph, eij, kmat, nma)`
+#' @param pdb   pdb object obtained using [bio3d::read.pdb()]
+#' @param node  how network nodes are built: `"ca"` (alpha carbons), `"sc"` (side
+#'   chains), or `"cb"` (beta carbons). The long forms `"calpha"`, `"side_chain"`
+#'   and `"beta"` are accepted as synonyms.
+#' @param model ENM variant, one of `"anm"`, `"ming_wall"`, `"hnm"`, `"hnm0"`,
+#'   `"pfanm"`, `"reach"`. These select the spring-constant function applied to each
+#'   contact.
+#' @param d_max distance cutoff (Å) used to define enm contacts
+#' @param frustrated logical value indicating whether to include frustrations in
+#'   calculation of kmat. **Only `FALSE` is currently supported**; `TRUE` errors.
+#'
+#' @returns an object of class `prot`, which is a list `lst(param, nodes, graph, eij, kmat, nma)`
 #'
 #' @export
 #'
+#' @seealso [get_mutant_site()] to perturb the result;
+#'   [get_prot_property] for the accessors that read a `prot`;
+#'   [delta_structure_by_site], [delta_motion_by_site] and [delta_energy] for the
+#'   wild-type-vs-mutant comparisons.
+#'
 #' @examples
-#' \dontrun{
-#' pdb <- bio3d::read.pdb("2acy")
-#' set_enm(pdb, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
-#' set_enm(pdb, node = "sc", model = "anm", d_max = 12.5, frustrated = TRUE)
-#' set_enm(pdb, node = "cb", model = "anm", d_max = 12.0, frustrated = FALSE)
-#' }
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#' get_nsites(wt)
+#' get_nmodes(wt)
+#'
+#' # side-chain nodes, a different variant and cutoff
+#' wt_sc <- set_enm(pdb_2acy_A, node = "sc", model = "anm",
+#'                  d_max = 12.5, frustrated = FALSE)
+#' get_nsites(wt_sc)
 set_enm <- function(pdb, node, model, d_max, frustrated) {
 
   stopifnot(!frustrated) # WARNING: need to test frustrated = T option, not sure whether mut_graph is consistent with kmat calculation
@@ -147,8 +164,8 @@ calculate_enm_nodes <- function(pdb, node) {
 #'
 #' @param xyz matrix of size \code{c(3,N)} containing each column the \code{x, y, z} coordinates of each of N nodes
 #' @param pdb_site integer vector of size N containing the number of each node (pdb residue number)
-#' @param model  character variable specifying the ENM model variant, default is \code{"gnm"}, options:
-#'     \code{gnm, anm, ming_wall, hnm, hnm0, pfgnm, reach}.
+#' @param model  character variable specifying the ENM model variant, one of
+#'     \code{anm, ming_wall, hnm, hnm0, pfanm, reach}.
 #' @param d_max distance-cutoff to define network contacts
 #' @return a tibble that contains the graph representation of the network
 #'
@@ -260,7 +277,7 @@ calculate_enm_eij <- function(xyz, i, j) {
 #' @param graph A tibble representing the ENM graph (with edge information, especially \code{kij}
 #' @param eij A matrix of size \code{n_edges x 3} of \code{eij} versors directed along ENM contacts
 #' @param nsites The number of nodes of the ENM network
-#' @param frustrated Logical indicating  wether to add frustration or not before calculating \code{kmat}
+#' @param frustrated Logical indicating whether to add frustration or not before calculating \code{kmat}
 #'
 #' @return The \code{3 nsites x 3 nsites} stiffness matrix of the ENM
 #'

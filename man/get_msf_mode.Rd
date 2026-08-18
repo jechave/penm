@@ -10,9 +10,12 @@ get_msf_mode(prot)
 \item{prot}{is a protein object obtained using set_enm()}
 }
 \value{
-a vector of size nsites with msf values for each mode
+a vector of size nmodes with the msf contributed by each normal mode
 }
 \description{
 Calculates the mean-square-fluctuation in the direction of each normal mode
+}
+\seealso{
+[get_msf_site()] for the same fluctuations resolved by site instead.
 }
 \concept{mode profiles}

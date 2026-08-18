@@ -7,7 +7,6 @@
 #'     (\code{\link{delta_structure_by_site}}, \code{\link{delta_structure_by_mode}}), and
 #'     motion (\code{\link{delta_motion_by_site}}, \code{\link{delta_motion_by_mode}}).
 #'
-#'
+#' @keywords internal
 "_PACKAGE"
-#> [1] "_PACKAGE"
 

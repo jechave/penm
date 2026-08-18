@@ -10,6 +10,22 @@
 #'
 #' @return A vector \code{(x_n)} of size \code{nmodes}, where \code{x_n} is the property compared, for mode n.
 #'
+#' @seealso [delta_motion_by_site] for the same comparisons resolved by site rather
+#'   than by mode. [delta_structure_by_mode] compares structure rather than motion.
+#'   [get_mutant_site()] produces the `mut` argument; [set_enm()] the `wt`.
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, seed = 1024)
+#'
+#' dmsfn <- delta_motion_dmsfn(wt, mut)
+#' length(dmsfn)                       # one value per mode
+#'
+#' # All zero here: "lfenm" leaves kmat, and so the normal modes, unchanged.
+#' # A model that rebuilds the network is needed for a non-zero profile.
+#' range(dmsfn)
+#'
 #' @name delta_motion_by_mode
 #'
 NULL

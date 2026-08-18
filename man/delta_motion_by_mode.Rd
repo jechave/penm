@@ -41,3 +41,21 @@ This version calculates fluctuations along normal modes of wt, it's independent 
 
 `delta_motion_nhn` returns mode-dependent profile of mode conservation  measure \eqn{nH_n}
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, seed = 1024)
+
+dmsfn <- delta_motion_dmsfn(wt, mut)
+length(dmsfn)                       # one value per mode
+
+# All zero here: "lfenm" leaves kmat, and so the normal modes, unchanged.
+# A model that rebuilds the network is needed for a non-zero profile.
+range(dmsfn)
+
+}
+\seealso{
+[delta_motion_by_site] for the same comparisons resolved by site rather
+  than by mode. [delta_structure_by_mode] compares structure rather than motion.
+  [get_mutant_site()] produces the `mut` argument; [set_enm()] the `wt`.
+}
