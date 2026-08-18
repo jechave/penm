@@ -1,0 +1,107 @@
+# Refresh data to use in test_delta.R
+#
+# WHAT THESE FIXTURES ARE: frozen output of the delta_* / ddg_* / dgact_*
+# functions and of the single-prot descriptors, recorded so that a later edit
+# cannot change a number silently. They are a REGRESSION anchor, not a
+# correctness claim -- nothing here was checked against an independent
+# calculation. A mismatch means something changed; the change is what needs
+# explaining, and the fixture is not to be regenerated to make a test pass.
+#
+# lfenm only. sclfenm is deliberately absent: its correctness is unresolved
+# (see CLAUDE.md), and freezing its output would fix that question in place.
+
+## ----------------------------------------------------------------------------------------------------------------------
+# load libraries
+library(tidyverse)
+library(bio3d)
+library(penm)
+library(jefuns)
+library(here)
+
+
+## ----------------------------------------------------------------------------------------------------------------------
+load(here("tests/testthat/fixtures/pdb_2acy_A.rda"))
+
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+
+# seed passed explicitly: the other refresh scripts rely on get_mutant_site()'s
+# default, so their fixtures would move if that default ever changed.
+mut <- get_mutant_site(wt, site_mut = 80, mutation = 1,
+                       mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1,
+                       seed = 241956)
+
+# acylphosphatase catalytic pair, present in this structure at these numbers
+# (index 23 = R, index 41 = N). Without an active site, ddgact_* return NA.
+pdb_site_active <- c(23, 41)
+
+kmat_sqrt <- get_kmat_sqrt(wt)
+
+## ----------------------------------------------------------------------------------------------------------------------
+# wt-vs-mutant responses
+
+delta_expected <- list(
+  # structure, by site
+  dr2i                 = delta_structure_dr2i(wt, mut),
+  de2i                 = delta_structure_de2i(wt, mut, kmat_sqrt = kmat_sqrt),
+  df2i                 = delta_structure_df2i(wt, mut),
+  dvmi                 = delta_structure_dvmi(wt, mut),
+  dvsi                 = delta_structure_dvsi(wt, mut),
+  dvsi_same_topology   = delta_structure_dvsi_same_topology(wt, mut),
+  # structure, by mode
+  dr2n                 = delta_structure_dr2n(wt, mut),
+  de2n                 = delta_structure_de2n(wt, mut),
+  df2n                 = delta_structure_df2n(wt, mut),
+  # motion, by site
+  dmsfi                = delta_motion_dmsfi(wt, mut),
+  dbhati               = delta_motion_dbhati(wt, mut),
+  rwsipi               = delta_motion_rwsipi(wt, mut),
+  dhi                  = delta_motion_dhi(wt, mut),
+  # motion, by mode
+  dmsfn                = delta_motion_dmsfn(wt, mut),
+  dhn                  = delta_motion_dhn(wt, mut),
+  rwsipn               = delta_motion_rwsipn(wt, mut),
+  nhn                  = delta_motion_nhn(wt, mut),
+  # energy
+  ddg_dv               = ddg_dv(wt, mut),
+  ddg_tds              = ddg_tds(wt, mut),
+  delta_energy_dvs     = delta_energy_dvs(wt, mut),
+  ddgact_dv            = ddgact_dv(wt, mut, pdb_site_active = pdb_site_active),
+  ddgact_tds           = ddgact_tds(wt, mut, pdb_site_active = pdb_site_active)
+)
+
+save(delta_expected, file = here("tests/testthat/fixtures/delta_expected.rda"))
+
+## ----------------------------------------------------------------------------------------------------------------------
+# single-prot descriptors of wt
+
+prot_expected <- list(
+  # profiles
+  cn                   = get_cn(wt),
+  wcn                  = get_wcn(wt),
+  msf_site             = get_msf_site(wt),
+  mlms                 = get_mlms(wt),
+  stress               = get_stress(wt),
+  msf_mode             = get_msf_mode(wt),
+  dactive              = get_dactive(wt, pdb_site_active),
+  # matrices
+  umat2                = get_umat2(wt),
+  msf_site_mode        = get_msf_site_mode(wt),
+  rho_matrix           = get_rho_matrix(wt),
+  reduced_cmat         = get_reduced_cmat(wt),
+  reduced_kmat         = get_reduced_kmat(wt),
+  kmat_sqrt            = get_kmat_sqrt(wt),
+  cmat_sqrt            = get_cmat_sqrt(wt),
+  # accessors
+  nsites               = get_nsites(wt),
+  site                 = get_site(wt),
+  pdb_site             = get_pdb_site(wt),
+  xyz                  = get_xyz(wt),
+  bfactor              = get_bfactor(wt),
+  enm_param            = get_enm_param(wt),
+  # single-prot activation energies
+  dgact_dv             = dgact_dv(wt, ideal = wt, pdb_site_active = pdb_site_active),
+  dgact_tds            = dgact_tds(wt, ideal = wt, pdb_site_active = pdb_site_active),
+  enm_v_min            = enm_v_min(wt)
+)
+
+save(prot_expected, file = here("tests/testthat/fixtures/prot_expected.rda"))
