@@ -49,35 +49,6 @@ delta_motion_dhn <- function(wt, mut) {
 }
 
 
-#' @rdname delta_motion_by_mode
-#'
-#' @details `delta_motion_dmsfn.old` returns mode-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_n^2}
-#' This version assumes mode n of mut corresponds to mode n of wt (i.e. no reassignment issues)
-#'
-#' @export
-#'
-delta_motion_dmsfn.old <- function(wt, mut) {
-  stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
-  dmsf = get_msf_mode(mut) - get_msf_mode(wt)
-  dmsf
-}
-
-
-#' @rdname delta_motion_by_mode
-#'
-#' @details `delta_motion_dhn.old` returns mode-dependent profile of entropy differences \eqn{\delta H_n}
-#' This version assumes mode n of mut corresponds to mode n of wt (i.e. no reassignment issues)
-#'
-#' @export
-#'
-delta_motion_dhn.old <- function(wt, mut) {
-  stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
-  ha <- 1/2 * log(2 * pi * exp(1) * get_msf_mode(wt))
-  hb <- 1/2 * log(2 * pi * exp(1) * get_msf_mode(mut))
-  dhn <- hb - ha
-  dhn
-}
-
 
 #' @rdname delta_motion_by_mode
 #'
