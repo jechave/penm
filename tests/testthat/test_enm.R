@@ -1,6 +1,3 @@
-library(here)
-library(tidyverse)
-library(bio3d)
 library(penm)
 
 load(test_path("fixtures", "pdb_2acy_A.rda"))

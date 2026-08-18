@@ -1,8 +1,3 @@
-library(here)
-library(tidyverse)
-library(bio3d)
-
-
 load(test_path("fixtures", "pdb_2acy_A.rda"))
 load(test_path("fixtures", "wt.rda"))
 load(test_path("fixtures", "mut_lf.rda"))

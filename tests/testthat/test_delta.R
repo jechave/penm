@@ -1,7 +1,3 @@
-library(here)
-library(tidyverse)
-library(bio3d)
-
 # Regression tests. The expected values are frozen output (see
 # fixtures/refresh_test_delta_data.R), not independently verified results: they
 # catch a number changing, they do not certify it is right. A failure here means

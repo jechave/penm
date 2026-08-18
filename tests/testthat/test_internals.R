@@ -1,7 +1,3 @@
-library(here)
-library(tidyverse)
-library(bio3d)
-
 # Two kinds of test here, deliberately:
 #
 #   - CLOSED FORM: the expected value is written down from the definition, not
