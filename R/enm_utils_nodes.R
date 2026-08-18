@@ -170,7 +170,8 @@ residue.bfactors = function(pdb) {
         }
         com.bfactor = c(com.bfactor,res.com.bfactor)
     }
-# levitt and micheletti bfactors (they are identical, but keep them named differently for now)
+# levitt and micheletti bfactors: the two models place the beta carbon differently
+# but imply the same bfactor, so these agree by construction, not by duplication
     l.bfactor = bfactor.levitt(ca.bfactor)
     m.bfactor = bfactor.micheletti(ca.bfactor)
 
@@ -288,11 +289,22 @@ qb.micheletti = function(ca.xyz,l=3){
 
 #' B-factor of Levitt's beta carbon
 #'
-#' @param ca.xyz coordinates of alpha carbons
-#' @param l distance between alpha carbon and model beta carbon
-#' @param theta angle
+#' @details
+#' The B-factor of the model beta carbon is estimated as the average of the
+#' alpha-carbon B-factors of site \code{i} and its two sequence neighbours,
+#' \code{i - 1} and \code{i + 1}. The first and last sites have no such pair of
+#' neighbours, so they are returned as \code{NA}.
 #'
-#' @returns the distance
+#' This is identical to \code{bfactor.micheletti}, and deliberately so: Levitt's
+#' and Micheletti's models differ in *where* they place the beta carbon (see
+#' \code{qb.levitt} and \code{qb.micheletti}), but the two placements imply the
+#' same B-factor. The functions are kept separate because they belong to two
+#' distinct models, not because the calculations differ.
+#'
+#' @param ca.bfactor vector of alpha-carbon B-factors, one per site
+#'
+#' @returns a vector of model beta-carbon B-factors, one per site, with
+#'   \code{NA} at the first and last sites
 #'
 #' @noRd
 #'
@@ -311,13 +323,24 @@ bfactor.levitt = function(ca.bfactor){
   qb.bfactor
 }
 
-#' B-factor of Levitt's beta carbon
+#' B-factor of Micheletti's beta carbon
 #'
-#' @param ca.xyz coordinates of alpha carbons
-#' @param l distance between alpha carbon and model beta carbon
-#' @param theta angle
+#' @details
+#' The B-factor of the model beta carbon is estimated as the average of the
+#' alpha-carbon B-factors of site \code{i} and its two sequence neighbours,
+#' \code{i - 1} and \code{i + 1}. The first and last sites have no such pair of
+#' neighbours, so they are returned as \code{NA}.
 #'
-#' @returns the distance
+#' This is identical to \code{bfactor.levitt}, and deliberately so: Levitt's and
+#' Micheletti's models differ in *where* they place the beta carbon (see
+#' \code{qb.levitt} and \code{qb.micheletti}), but the two placements imply the
+#' same B-factor. The functions are kept separate because they belong to two
+#' distinct models, not because the calculations differ.
+#'
+#' @param ca.bfactor vector of alpha-carbon B-factors, one per site
+#'
+#' @returns a vector of model beta-carbon B-factors, one per site, with
+#'   \code{NA} at the first and last sites
 #'
 #' @noRd
 #'
