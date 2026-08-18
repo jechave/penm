@@ -114,26 +114,13 @@ stop and ask.
 - NAMESPACE and everything under `man/` are roxygen-generated — edit the roxygen and
   run `document()`, never hand-edit them.
 
-### Editing and deleting code
+### Test coverage is narrow
 
-**Most of penm is untested.** The suite covers `set_enm`, `get_mutant_site` and
-`mut_seed` — 27 tests. The whole `delta_*` / `ddg_*` / `dgact_*` family, which is
-most of the exports, has no test at all. So a green `test()` does **not** mean an
-edit there was safe: the diff is the only safety net. Size the care accordingly.
-
-- **Never regex across function boundaries.** A pattern like
-  `#'.*\n|\n)*?` matching "roxygen block then function" will happily run
-  through *other complete functions* to reach its target. To excise a named
-  block, print the exact line range first (`sed -n 'A,Bp'`), confirm it, then cut
-  it (`sed 'A,Bd'`). The look step is the safeguard, not the cut.
-- **Say what should survive, before acting.** e.g. "this leaves four functions:
-  dmsfn, dhn, rwsipn, nhn". Verification then compares against a prediction
-  instead of eyeballing the result.
-- **Verify a deletion by inventory, not by absence.** Confirming the target is
-  gone catches nothing; list and count what *remains*. Over-deletion is the
-  failure mode, and only the survivor list exposes it.
-- **Read the full diff before committing, not `--stat`.** The stat line is
-  identical whether the right 29 lines went or the wrong 29 did.
+The suite covers `set_enm`, `get_mutant_site` and `mut_seed` — 27 tests. The whole
+`delta_*` / `ddg_*` / `dgact_*` family, which is most of the exports and includes
+everything `msamodel` depends on, has **no test at all**. A green `devtools::test()`
+therefore says little about an edit in that territory; the diff is the safety net.
+See the deletion discipline in the global CLAUDE.md.
 
 ## Known state, deliberately accepted
 
