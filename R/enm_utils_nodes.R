@@ -110,12 +110,12 @@ residue.coordinates = function(pdb,d=1.5) {
 # CB coordinates (when there's a CB)
         res.cb.inds = combine.select(res.inds,cb.inds,operator="and",verbose=FALSE) # CB of resno
         res.cb.xyz = c(NA,NA,NA)
-        if (length(res.cb.inds$atom != 0))  res.cb.xyz = pdb$xyz[res.cb.inds$xyz]
+        if (length(res.cb.inds$atom) != 0)  res.cb.xyz = pdb$xyz[res.cb.inds$xyz]
         cb.xyz = c(cb.xyz,res.cb.xyz)
 # side chain center of mass coordinates (when there's a side chain)
         res.sc.inds = combine.select(res.inds,backbone.inds,operator = "not",verbose=FALSE) # Side chain of resno
         res.com.xyz = c(NA,NA,NA)
-        if (length(res.sc.inds$atom != 0)) res.com.xyz= com(pdb,inds=res.sc.inds,use.mass=FALSE)
+        if (length(res.sc.inds$atom) != 0) res.com.xyz= com(pdb,inds=res.sc.inds,use.mass=FALSE)
         com.xyz = c(com.xyz,res.com.xyz)
     }
 
@@ -159,12 +159,12 @@ residue.bfactors = function(pdb) {
 # CB bfactor (when there's a CB)
         res.cb.inds = combine.select(res.inds,cb.inds,operator ="and",verbose=FALSE) # CB of resno
         res.cb.bfactor = NA
-        if (length(res.cb.inds$atom != 0))  res.cb.bfactor = pdb$atom$b[res.cb.inds$atom]
+        if (length(res.cb.inds$atom) != 0)  res.cb.bfactor = pdb$atom$b[res.cb.inds$atom]
         cb.bfactor = c(cb.bfactor,res.cb.bfactor)
 # side chain center of mass bfactor (when there's a side chain)
         res.sc.inds = combine.select(res.inds,backbone.inds,operator ="not",verbose=FALSE) # Side chain of resno
         res.com.bfactor = NA
-        if (length(res.sc.inds$atom != 0)) {
+        if (length(res.sc.inds$atom) != 0) {
             # res.com.bfactor = mean(sqrt(pdb$atom$b[res.sc.inds$atom]))^2
             res.com.bfactor = mean(pdb$atom$b[res.sc.inds$atom])
         }
