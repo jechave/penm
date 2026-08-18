@@ -5,7 +5,6 @@
 library(tidyverse)
 library(bio3d)
 library(penm)
-library(jefuns)
 library(here)
 
 

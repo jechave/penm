@@ -27,6 +27,7 @@ that of the transition state, which is assumed rigid (contributing zero).
 }
 \seealso{
 Other enm_energy:
+\code{\link[=beta_boltzmann]{beta_boltzmann()}},
 \code{\link[=dgact_dv]{dgact_dv()}},
 \code{\link[=enm_g_entropy]{enm_g_entropy()}},
 \code{\link[=enm_v_min]{enm_v_min()}}

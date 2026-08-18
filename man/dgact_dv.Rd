@@ -24,6 +24,7 @@ conformation it has in \code{ideal}, treating the transition state as rigid.
 }
 \seealso{
 Other enm_energy:
+\code{\link[=beta_boltzmann]{beta_boltzmann()}},
 \code{\link[=dgact_tds]{dgact_tds()}},
 \code{\link[=enm_g_entropy]{enm_g_entropy()}},
 \code{\link[=enm_v_min]{enm_v_min()}}

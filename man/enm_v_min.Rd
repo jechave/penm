@@ -18,6 +18,7 @@ Calculate minimum energy of a given prot object
 }
 \seealso{
 Other enm_energy:
+\code{\link[=beta_boltzmann]{beta_boltzmann()}},
 \code{\link[=dgact_dv]{dgact_dv()}},
 \code{\link[=dgact_tds]{dgact_tds()}},
 \code{\link[=enm_g_entropy]{enm_g_entropy()}}

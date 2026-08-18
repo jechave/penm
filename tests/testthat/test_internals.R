@@ -1,6 +1,5 @@
 library(here)
 library(tidyverse)
-library(jefuns)
 library(bio3d)
 
 # Two kinds of test here, deliberately:

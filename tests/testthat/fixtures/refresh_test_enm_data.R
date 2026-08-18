@@ -5,7 +5,6 @@
 library(tidyverse)
 library(bio3d)
 library(here)
-library(jefuns)
 library(penm)
 
 load(here("tests/testthat/fixtures/pdb_2acy_A.rda"))

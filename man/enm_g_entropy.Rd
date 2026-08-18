@@ -20,6 +20,7 @@ the ENM eigenvalue spectrum.
 }
 \seealso{
 Other enm_energy:
+\code{\link[=beta_boltzmann]{beta_boltzmann()}},
 \code{\link[=dgact_dv]{dgact_dv()}},
 \code{\link[=dgact_tds]{dgact_tds()}},
 \code{\link[=enm_v_min]{enm_v_min()}}

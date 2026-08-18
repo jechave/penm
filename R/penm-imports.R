@@ -11,9 +11,7 @@
 #'
 #' @import bio3d
 #' @import Matrix
-#' @import jefuns
 #'
 #' @noRd
 #'
 NULL
-#> NULL

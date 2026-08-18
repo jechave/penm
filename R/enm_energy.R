@@ -1,5 +1,25 @@
 ## ENM energies
 
+#' Boltzmann's beta, \eqn{1 / RT}
+#'
+#' The default inverse temperature used by the entropic energy functions
+#' ([ddg_tds()], [ddgact_tds()], [dgact_tds()]).
+#'
+#' @param R Boltzmann's constant per mole, in kcal/(mol K)
+#' @param T absolute temperature, in Kelvin
+#'
+#' @returns a scalar, \eqn{1 / (RT)}, in mol/kcal
+#'
+#' @export
+#' @family enm_energy
+#'
+#' @examples
+#' beta_boltzmann()              # 298 K
+#' beta_boltzmann(T = 310)       # body temperature
+#'
+beta_boltzmann <- function(R = 1.986e-3, T = 298) 1 / (R * T)
+
+
 #' Calculate minimum energy of a given prot object
 #' @param prot is a prot object, wit a component graph tibble
 #' where v0ij, kij, lij and the dij for the minimum conformation are found.

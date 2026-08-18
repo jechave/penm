@@ -1,7 +1,6 @@
 library(here)
 library(tidyverse)
 library(bio3d)
-library(jefuns)
 library(penm)
 
 load(test_path("fixtures", "pdb_2acy_A.rda"))

@@ -1,6 +1,5 @@
 library(here)
 library(tidyverse)
-library(jefuns)
 library(bio3d)
 
 # Regression tests. The expected values are frozen output (see

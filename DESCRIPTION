@@ -21,7 +21,6 @@ Imports:
     bio3d,
     digest,
     dplyr,
-    jefuns,
     magrittr,
     Matrix,
     purrr,
