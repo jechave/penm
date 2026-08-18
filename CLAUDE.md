@@ -2,6 +2,11 @@
 
 Guidance for Claude Code when working in this repository.
 
+This file holds only what the repo cannot tell you: decisions, prohibitions, and
+measurements that are expensive to rediscover. Anything derivable — signatures, export
+lists, test counts, `check()` results — is deliberately absent. Read the code or run
+the command.
+
 ## What this package is
 
 `penm` (Perturbing Elastic Network Models) builds Elastic Network Models (ENMs) of
@@ -9,67 +14,15 @@ proteins, perturbs them, and measures the difference between wild-type and mutan
 energy, structure and motion.
 
 It was extracted in 2026-08 from the package now called `penmscan`, which kept the
-scanning layer — sweeping a perturbation across all sites and tabulating
-(`amrs`/`smrs`/`admrs`/`sdmrs`, the `mrs_*` functions). **Those live in `penmscan`,
-not here.** If a task calls for a site-by-site scan, it belongs in that package.
+scanning layer — sweeping a perturbation across all sites (the `mrs_*` functions).
+**Those live in `penmscan`, not here.** If a task calls for a site-by-site scan, it
+belongs in that package.
 
 The name means "perturb ENM" and is meant to cover perturbation types beyond mutation
 (external forces, single-contact perturbations) as they are added.
 
-## Architecture
-
-### ENM creation — `R/enm.R`
-
-`set_enm(pdb, node, model, d_max, frustrated)` builds a `prot` object with components
-`param`, `nodes`, `graph`, `eij`, `kmat`, `nma`. It has **no defaults — all five
-arguments are required.**
-
-- `model`: `"anm"`, `"ming_wall"`, `"hnm"`, `"hnm0"`, `"pfanm"`, `"reach"`
-- `node`: `"ca"` (alpha carbons) or `"sc"` (side chains)
-- **`frustrated = TRUE` currently errors** — `R/enm.R:29` is `stopifnot(!frustrated)`.
-  The `TRUE` branch is disabled, not merely untested.
-
-The pipeline is `set_enm_*` setters calling `calculate_enm_*` workers. Both are
-internal; the `calculate_*` five carry `@export` *and* `@noRd` together, so they are
-exported without help pages. That contradiction is inherited from penmscan and is
-known, not a discovery.
-
-### Mutation perturbation — `R/penm.R`
-
-`get_mutant_site(wt, site_mut, mutation, mut_model, mut_dl_sigma, mut_sd_min, seed)`
-returns a mutant `prot`. Two models:
-
-- `lfenm` — Linear Force ENM. Perturbs edge equilibrium lengths, keeps the contact map.
-- `sclfenm` — Self-Consistent LFENM. Recalculates the ENM from mutant coordinates.
-  **Something is off about it and it hasn't been looked into** — see below.
-
-`mutation = 0` returns `wt` unmutated. Anything other than those two `mut_model`
-values hits a `stop()`.
-
-### Perturbation response — the `delta_*` families
-
-Measured wild-type vs. mutant, each available **by site** (`i`) and **by mode** (`n`):
-
-- `delta_structure_*` — `dr2` (displacement), `de2` (deformation energy), `df2` (force)
-- `delta_motion_*` — `dmsf`, `dh`, `rwsip`, `bhat`
-- `delta_energy` — `ddg_dv`, `ddg_tds`, `ddgact_dv`, `ddgact_tds`, `delta_energy_dvs`
-
-`dr2i` and `dr2n` are the same displacement in two bases, so for a single mutant they
-sum to the same total.
-
-### Seeding — `R/seed.R`
-
-All RNG seeding goes through `mut_seed(seed, site_mut, mutation, ensemble = 1L)`,
-which hashes that tuple with `digest::digest(..., "xxhash32")`. This
-replaced an earlier `seed + site_mut * mutation` product key that collided across
-sites. `check_seeds_distinct()` errors on collision rather than warning.
-
-### Data flow
-
-1. PDB file → `bio3d::read.pdb()` → pdb object
-2. pdb object → `set_enm()` → `prot`
-3. `prot` → `get_mutant_site()` → mutant `prot`
-4. (wt, mut) → `delta_*` functions → per-site or per-mode profiles
+Start from `set_enm()` (`R/enm.R`) and `get_mutant_site()` (`R/penm.R`); the `delta_*`
+families measure wt-vs-mutant differences, by site (`i`) or by mode (`n`).
 
 ## sclfenm — something smells, unexplored
 
@@ -80,18 +33,16 @@ as an observation, not a conclusion.
 
 What is actually observed:
 
-- Its tests skip, with the message `"Skip sclfenm test until sclefnm is fixed"`
-  (`test_penm.R`, `test_penm_sc.R`).
-- The refresh scripts guard its fixtures behind `skip <- TRUE`, so
-  `tests/testthat/fixtures/mut_qf.rda` predates the 2026-08 seed-key change and
-  `mut_sc_qf.rda` was never created. Both are unused while the tests skip.
-- Two markers left in the source: `R/penm.R:117` (`#TODO revise this: mut parameters
-  are w.r.t. w0, not wt`) on the `lij` update, and `R/penm.R:226` (frustrated handling
-  in `mutate_graph()`).
-- sclfenm changes the *number of graph edges* (e.g. 956 → 962 for 2acy site 80),
-  which follows from recalculating the contact map from mutant coordinates. This one
-  looks like the model working as designed rather than part of the smell — but that
-  reading has not been checked against the science either.
+- Its tests skip, with the message `"Skip sclfenm test until sclefnm is fixed"`.
+- The refresh scripts guard its fixtures behind `skip <- TRUE`, so `mut_qf.rda`
+  predates the 2026-08 seed-key change and `mut_sc_qf.rda` was never created. Both are
+  unused while the tests skip.
+- Two `#TODO` markers in `R/penm.R`: one on the `lij` update ("mut parameters are
+  w.r.t. w0, not wt"), one on frustrated handling in `mutate_graph()`.
+- sclfenm changes the *number of graph edges* (e.g. 956 → 962 for 2acy site 80), which
+  follows from recalculating the contact map from mutant coordinates. This one looks
+  like the model working as designed rather than part of the smell — but that reading
+  has not been checked against the science either.
 
 Whether these are one problem, several, or mostly harmless is unresolved.
 
@@ -100,6 +51,15 @@ effect of other work.** Not because the model is known wrong, but because acting
 would bake in an answer to a question that is still open. If a task touches sclfenm,
 stop and ask.
 
+## Other standing decisions
+
+- **`frustrated = TRUE` is disabled**, not merely untested — `set_enm()` has a
+  `stopifnot(!frustrated)`. Don't enable it as a side effect of other work.
+- **"No caller" is not a defect.** Many exports have no caller outside penm's own
+  tests. penm exists to offer a menu of perturbation measures; one going unused in
+  current work says nothing about whether it belongs in the API. Do not read the call
+  graph as a usage survey or propose un-exporting on that basis.
+
 ## House conventions
 
 - **Naming:** `snake_case`.
@@ -107,36 +67,31 @@ stop and ask.
   maintenance. Making something internal means dropping `@export` and keeping
   `@noRd`; **never delete a roxygen block to make a function internal**. "Has no man
   page" is the intent for an internal function, not a defect.
-- **Preserve `@rdname` grouping.** Ten shared pages organise most exports. Do not
-  flatten them into one page per function.
+- **Three distinct roxygen mechanisms, easily confused:**
+  - `@rdname` — puts several functions on one **shared page**. Preserve this grouping;
+    do not flatten to one page per function. Each group has a `@name` stub holding the
+    shared title and `@param`s, with members adding `@details`.
+  - `@family` — *See also* cross-links only. Not a shared page. Inert under `@noRd`.
+  - `@export` + `@noRd` together — **groups nothing.** Exports to NAMESPACE while
+    suppressing the man page, which is exactly what produces the "Undocumented code
+    objects" WARNING. Don't reintroduce it.
 - **Imports live in one place:** `R/penm-imports.R` and `R/penm-package.R`.
 - **Tibbles** (not data.frames) for tabular returns; tidyverse for data manipulation.
 - NAMESPACE and everything under `man/` are roxygen-generated — edit the roxygen and
   run `document()`, never hand-edit them.
 
-### Test coverage is narrow
+## Test fixtures
 
-The suite covers `set_enm`, `get_mutant_site` and `mut_seed` — 27 tests. The whole
-`delta_*` / `ddg_*` / `dgact_*` family, which is most of the exports and includes
-everything `msamodel` depends on, has **no test at all**. A green `devtools::test()`
-therefore says little about an edit in that territory; the diff is the safety net.
-See the deletion discipline in the global CLAUDE.md.
+Fixtures live in `tests/testthat/fixtures/`, with their refresh scripts beside them.
+All derive from `pdb_2acy_A.rda`.
 
-## Known state, deliberately accepted
+Fixtures are **frozen** — regenerate intentionally, never incidentally, and never to
+make a failing test pass. A fixture mismatch is a finding to investigate first.
 
-Baseline `check()`: **0 errors, 3 warnings, 3 notes** (with `--as-cran`). All are
-pre-existing documentation gaps inherited from penmscan, deferred on purpose:
-
-- Undocumented arguments: `kmat_sqrt` (`delta_structure_by_site`), and
-  `prot`/`ideal`/`pdb_site_active`/`beta` (`dgact_dv`, `dgact_tds`).
-- Undocumented code objects: the `@export` + `@noRd` functions.
-- Unstated test dependencies: `here`, `tidyverse` are called via `library()` in tests
-  but not declared in `Suggests`.
-- Several hundred NSE "no visible binding" notes, not suppressed with
-  `globalVariables()`.
-
-`get_wcn`, `get_dactive`, `delta_structure_dvmi`, `delta_structure_dvsi` are exported
-with zero callers anywhere. Real implementations, kept exported pending a decision.
+Coverage is mostly regression-style comparison against these fixtures: it pins
+behaviour but does not probe edge cases. A green `devtools::test()` says little about
+an edit that changes what the right answer *is* — the diff is the safety net. See the
+deletion discipline in the global CLAUDE.md.
 
 ## Development commands
 
@@ -165,29 +120,31 @@ check takes **39s**. Put `_R_CHECK_SYSTEM_CLOCK_=0` in `~/.Renviron`; save
 records a *different* hang: `check()` stalls at "checking package dependencies" if
 `options("repos")` is the `"@CRAN@"` placeholder.)
 
+Note `cran = FALSE` is the weaker gate — it runs with `_R_CHECK_FORCE_SUGGESTS_:
+FALSE`, so undeclared `Suggests` pass. Use `--as-cran` before an actual release.
+
 **Capture expensive output to a file on the first run** (`> out.txt 2>&1`), then read
 that file. Re-running `check()` to see a different slice of its own output is waste.
 
-## Test fixtures
-
-Fixtures live in `tests/testthat/fixtures/`, with their refresh scripts beside them
-(`refresh_test_enm_data.R`, `refresh_test_penm_data.R`, `refresh_test_penm_sc_data.R`).
-All derive from `pdb_2acy_A.rda`; `test_seed.R` loads no fixtures at all.
-
-Fixtures are **frozen** — regenerate intentionally, never incidentally, and never to
-make a failing test pass. A fixture mismatch is a finding to investigate first.
-
 ## Relationship to penmscan and msamodel
 
-- **`penmscan`** holds the scanning layer and may later be slimmed to `Imports: penm`.
-  It is a **separate package**: read it for reference, never write to it.
-- **`msamodel`** depends on `penm` and calls exactly these ten: `set_enm`,
-  `get_mutant_site`, `delta_structure_dr2i`, `delta_structure_dr2n`, `ddg_dv`,
-  `ddg_tds`, `ddgact_dv`, `ddgact_tds`, `get_site`, `get_pdb_site`. Because it
-  re-exports `set_enm()`, **penm's help pages are what an msamodel user reads** —
-  weigh that when documenting these.
+- **`penmscan`** holds the scanning layer. It is a **separate package**: read it for
+  reference, never write to it. It does **not** currently depend on penm — it carries
+  private copies of penm's functions — so it constrains nothing about penm's exports.
+  (It may later be slimmed to `Imports: penm`; that hasn't happened.)
+- **`msamodel`** does depend on penm, and re-exports `set_enm()`, so **penm's help
+  pages are what an msamodel user reads.** Weigh that when documenting.
 
-Changing any of those ten signatures is a downstream break. Say so before doing it.
+  Changing the signature of anything msamodel calls is a downstream break — say so
+  before doing it. Check what it actually calls rather than trusting a list here:
+
+  ```bash
+  grep -rn "penm::\|penm:::" ../msamodel/R ../msamodel/tests ../msamodel/vignettes
+  grep -n "penm" ../msamodel/NAMESPACE
+  ```
+
+  Note it reaches penm both ways — declared `importFrom(penm, ...)` and bare `penm::`
+  qualification — so the NAMESPACE alone understates the coupling.
 
 ## Working style
 
@@ -195,6 +152,7 @@ Changing any of those ten signatures is a downstream break. Say so before doing 
   "confirmed/verified/fixed" when you actually checked.
 - **The claim may not exceed the check.** Name the scope, and put the output on screen
   in the same message as the claim about it. Anything unverified gets said explicitly.
+- **A subagent's report is a lead, not a finding.** Verify before repeating it as fact.
 - **Outside the plan: say it, do not do it.** Approval of a plan is not approval of
   what the plan reminded you of.
 - **A question is a question.** Answer it and stop — it is not a cue to resume work
@@ -202,6 +160,8 @@ Changing any of those ten signatures is a downstream break. Say so before doing 
 - **An unexplained artifact is evidence.** Report it; never tidy it away.
 - Push back on bad ideas rather than silently implementing them. Own contradictions
   across turns instead of smoothing them over. Terse is good.
+- **Don't write derivable facts into this file.** Counts, export lists, signatures and
+  `check()` results go stale and then mislead. If it can be grepped, grep it instead.
 - **Tool choice:** read files with `Read` (use `offset`/`limit` for big files). Avoid
   `sed`/`head`/`cat`/`tail`/`awk`/`echo` in Bash for reading — they trigger permission
   prompts here.
