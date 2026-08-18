@@ -92,7 +92,6 @@ residue.coordinates = function(pdb,d=1.5) {
     backbone.inds = atom.select(pdb,"backbone",verbose=FALSE)
 
     site = pdb$atom$resno[ca.inds$atom] #resno of all sites (with CA)
-    cb.resno = pdb$atom$resno[cb.inds$atom] #resno of all sites wih CB
 
     aa = aa321(pdb$atom$resid[ca.inds$atom]) #aa of AA with CA
     nsites = length(aa)
@@ -141,7 +140,6 @@ residue.bfactors = function(pdb) {
     backbone.inds = atom.select(pdb,"backbone",verbose=FALSE)
 
     site = pdb$atom$resno[ca.inds$atom] #resno of all sites (with CA)
-    cb.resno = pdb$atom$resno[cb.inds$atom] #resno of all sites wih CB
 
     ca.bfactor = c()
     cb.bfactor = c()

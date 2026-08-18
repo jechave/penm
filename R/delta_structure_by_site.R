@@ -136,7 +136,6 @@ delta_structure_dvsi_same_topology <- function(wt, mut) {
   dvsij <- dvsij[dvsij_non_zero]
   i <- gwt$i[dvsij_non_zero]
   j <- gwt$j[dvsij_non_zero]
-  sites_non_zero <- unique(c(i,j))
 
   dvsi <- rep(0, get_nsites(wt))
 
