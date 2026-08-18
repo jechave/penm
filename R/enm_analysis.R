@@ -255,3 +255,55 @@ get_umat2 <- function(prot) {
 
 
 
+
+
+
+
+# matrix square roots -----------------------------------------------------
+
+
+#' Calculate the matrix square root of the ENM K matrix
+#'
+#' Calculates \eqn{\mathbf{K}^{1/2}} from the eigendecomposition of the network,
+#' as \eqn{\mathbf{U} \sqrt{\lambda} \mathbf{U}^T}. A general matrix-square-root
+#' routine is not usable here: \code{kmat} is singular (the six rigid-body modes
+#' have zero eigenvalue), so building it from the modes is what makes it defined.
+#'
+#' Needed to call \code{\link{delta_structure_de2i}}, which takes
+#' \code{kmat_sqrt} as an argument.
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns a matrix of size 3 nsites x 3 nsites, the matrix square root of \code{kmat}
+#'
+#' @export
+#'
+#'
+#' @family matrix square roots
+#'
+get_kmat_sqrt <- function(prot) {
+  evalue <- get_evalue(prot)
+  umat <- get_umat(prot)
+  kmat_sqrt <- umat %*% (sqrt(evalue) * t(umat))
+  kmat_sqrt
+}
+
+#' Calculate the matrix square root of the ENM covariance matrix
+#'
+#' Calculates \eqn{\mathbf{C}^{1/2}} from the eigendecomposition of the network,
+#' as \eqn{\mathbf{U} \sqrt{1/\lambda} \mathbf{U}^T}. The dual of
+#' \code{\link{get_kmat_sqrt}}, which uses \eqn{\sqrt{\lambda}} instead.
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns a matrix of size 3 nsites x 3 nsites, the matrix square root of \code{cmat}
+#'
+#' @export
+#'
+#'
+#' @family matrix square roots
+#'
+get_cmat_sqrt <- function(prot) {
+  evalue <- get_evalue(prot)
+  umat <- get_umat(prot)
+  cmat_sqrt <- umat %*% (sqrt(1 / evalue) * t(umat))
+  cmat_sqrt
+}
