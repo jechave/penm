@@ -52,4 +52,7 @@ vignettes/*.pdf
 
 # End of https://www.gitignore.io/api/r
 
+# Local scratch, not part of the package
+/dev/
+
 
