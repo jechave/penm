@@ -39,6 +39,46 @@ mut_seed <- function(seed, site_mut, mutation, ensemble = 1L) {
   as.integer(h %% 2147483647)
 }
 
+#' Evaluate an expression under a fixed seed, leaving the caller's RNG alone
+#'
+#' \code{set.seed()} writes \code{.Random.seed} in the global environment, so
+#' seeding a mutant's perturbations also silently reseeds whatever the caller
+#' was doing. A loop that draws a mutant and then draws something of its own
+#' gets its stream reset on every iteration.
+#'
+#' Restoring the previous \code{.Random.seed} on exit changes no drawn value
+#' inside \code{expr} -- the seeding is identical, only the aftermath differs.
+#' Written by hand rather than with \code{withr::with_seed()} to avoid taking a
+#' dependency for one call site.
+#'
+#' \code{expr} is a promise, forced on the last line: inside the function, and
+#' before \code{on.exit} fires. Do not "simplify" this with \code{force()} or
+#' \code{eval()}.
+#'
+#' If \code{.Random.seed} does not exist yet (no RNG use in the session so far)
+#' it is removed again afterwards, so the session is returned to the state it
+#' was actually in. That branch is deliberately not covered by a test:
+#' arranging "no \code{.Random.seed} exists" means deleting it from the global
+#' environment, and testthat would carry that side effect into later test
+#' files.
+#'
+#' @param seed An integer seed, as returned by \code{mut_seed()}.
+#' @param expr An expression to evaluate.
+#'
+#' @return The value of \code{expr}.
+#'
+#' @noRd
+with_mut_seed <- function(seed, expr) {
+  had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+  if (had) old <- get(".Random.seed", envir = globalenv(), inherits = FALSE)
+  on.exit({
+    if (had) assign(".Random.seed", old, envir = globalenv())
+    else rm(".Random.seed", envir = globalenv())
+  }, add = TRUE)
+  set.seed(seed)
+  expr
+}
+
 #' Check that a set of mutant seeds contains no duplicates
 #'
 #' Hash distinctness is probabilistic, not structural: over 32 bits the chance

@@ -71,9 +71,10 @@ get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_m
     return(wt)
   }
 
-  set.seed(mut_seed(seed, site_mut, mutation))
-
-  delta_lij <- generate_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
+  delta_lij <- with_mut_seed(
+    mut_seed(seed, site_mut, mutation),
+    generate_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
+  )
   f <- calculate_force(wt, delta_lij)
   dxyz <- calculate_dxyz(wt, f)
   mut <- wt
@@ -112,9 +113,10 @@ get_mutant_site_sclfenm <- function(wt, site_mut, mutation,  mut_dl_sigma, mut_s
     return(wt)
   }
 
-  set.seed(mut_seed(seed, site_mut, mutation))
-
-  delta_lij <- generate_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
+  delta_lij <- with_mut_seed(
+    mut_seed(seed, site_mut, mutation),
+    generate_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
+  )
   f <- calculate_force(wt, delta_lij)
   dxyz <- calculate_dxyz(wt, f)
   mut <- wt
