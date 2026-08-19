@@ -1,7 +1,7 @@
 Package: penm
 Type: Package
 Title: Build and Perturb Elastic Network Models
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Julian", "Echave",
                   email = "jechave@unsam.edu.ar",
                   role = c("aut", "cre"),

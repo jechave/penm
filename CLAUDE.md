@@ -66,6 +66,14 @@ stop and ask.
   state, no `nmut`), and a *second* axis beside `ensemble` is redundant — a
   separate ensemble-index slot was removed once already, having outlived the
   arithmetic key it worked around. Don't reintroduce one.
+- **A breaking change bumps the minor version.** penm is `0.x`, so breaking
+  changes go in a minor bump (`0.1.0` → `0.2.0`) and the API is not promised
+  stable. **No `.9000` suffix** — that marks "a dev build after release X",
+  which means nothing here because penm has no release event distinct from
+  "what is in git"; a convention nobody maintains produces numbers that look
+  meaningful and are not. Why this matters: msamodel depends on penm and needs
+  a floor it can write. It once could not — a rename shipped without moving the
+  version, so one string named two incompatible APIs.
 - **`frustrated = TRUE` is disabled**, not merely untested — `set_enm()` has a
   `stopifnot(!frustrated)`. Don't enable it as a side effect of other work.
 - **"No caller" is not a defect.** Many exports have no caller outside penm's own
