@@ -7,6 +7,10 @@
 #'     (\code{\link{delta_structure_by_site}}, \code{\link{delta_structure_by_mode}}), and
 #'     motion (\code{\link{delta_motion_by_site}}, \code{\link{delta_motion_by_mode}}).
 #'
+#'  Mutants are identified by \code{(ensemble, site_mut, mutation)}; see
+#'     \code{\link{penm_ensemble}} for what \code{ensemble} means and when it
+#'     may be changed.
+#'
 #' @keywords internal
 "_PACKAGE"
 

@@ -15,9 +15,17 @@
 #'
 #' @return A mutated protein object
 #'
+#' @details
+#' The mutation is a set of random perturbations of the contacts of
+#' \code{site_mut}; there are no amino acids in this model, and no finite set
+#' of mutations to draw from. Which perturbations a given mutant gets is fixed
+#' by \code{(ensemble, site_mut, mutation)} — see \code{?penm_ensemble} for
+#' what that means and when \code{ensemble} may be changed.
+#'
 #' @export
 #'
-#' @seealso [set_enm()] to build the `wt` argument; [delta_structure_by_site],
+#' @seealso [penm_ensemble] for what `ensemble` means and when to change it;
+#'   [set_enm()] to build the `wt` argument; [delta_structure_by_site],
 #'   [delta_motion_by_site] and [delta_energy] to measure the resulting
 #'   wild-type-vs-mutant differences.
 #'

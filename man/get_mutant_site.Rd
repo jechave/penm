@@ -11,7 +11,7 @@ get_mutant_site(
   mut_model = "lfenm",
   mut_dl_sigma = 0.3,
   mut_sd_min = 2,
-  seed = 241956
+  ensemble = 1L
 )
 }
 \arguments{
@@ -27,7 +27,10 @@ get_mutant_site(
 
 \item{mut_sd_min}{An integer, only edges with \code{sdij >= mut_sd_min} are mutated}
 
-\item{seed}{An integer, the seed for set.seed before picking perturbations}
+\item{ensemble}{An integer naming which realization of the mutational process
+the mutant belongs to. With \code{ensemble} fixed, \code{(site_mut, mutation)}
+names one specific, reproducible set of contact perturbations. Hold it
+constant across a scan or a trajectory; see \code{?penm_ensemble}.}
 }
 \value{
 A mutated protein object
@@ -35,18 +38,26 @@ A mutated protein object
 \description{
 Returns a mutant given a wt and a site to mutate (site_mut)
 }
+\details{
+The mutation is a set of random perturbations of the contacts of
+\code{site_mut}; there are no amino acids in this model, and no finite set
+of mutations to draw from. Which perturbations a given mutant gets is fixed
+by \code{(ensemble, site_mut, mutation)} — see \code{?penm_ensemble} for
+what that means and when \code{ensemble} may be changed.
+}
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
               d_max = 10.5, frustrated = FALSE)
 mut <- get_mutant_site(wt, site_mut = 11, mutation = 1,
-                       mut_model = "lfenm", seed = 1024)
+                       mut_model = "lfenm", ensemble = 7)
 
 # mutation = 0 returns wt unchanged
 identical(get_mutant_site(wt, site_mut = 11, mutation = 0), wt)
 
 }
 \seealso{
-[set_enm()] to build the `wt` argument; [delta_structure_by_site],
+[penm_ensemble] for what `ensemble` means and when to change it;
+  [set_enm()] to build the `wt` argument; [delta_structure_by_site],
   [delta_motion_by_site] and [delta_energy] to measure the resulting
   wild-type-vs-mutant differences.
 }

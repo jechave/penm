@@ -17,7 +17,7 @@
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
 #'               d_max = 10.5, frustrated = FALSE)
-#' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, seed = 1024)
+#' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
 #'
 #' dmsfn <- delta_motion_dmsfn(wt, mut)
 #' length(dmsfn)                       # one value per mode

@@ -16,6 +16,10 @@ The \code{penm} package includes functions to calculate various Elastic Network 
     wild type and mutant in energy (\code{\link{delta_energy}}), structure
     (\code{\link{delta_structure_by_site}}, \code{\link{delta_structure_by_mode}}), and
     motion (\code{\link{delta_motion_by_site}}, \code{\link{delta_motion_by_mode}}).
+
+ Mutants are identified by \code{(ensemble, site_mut, mutation)}; see
+    \code{\link{penm_ensemble}} for what \code{ensemble} means and when it
+    may be changed.
 }
 \author{
 \strong{Maintainer}: Julian Echave \email{jechave@unsam.edu.ar} (\href{https://orcid.org/0000-0003-0678-5593}{ORCID})
