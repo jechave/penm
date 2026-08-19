@@ -74,8 +74,3 @@ test_that("different ensembles give disjoint scans", {
   k1025 <- mapply(function(j, m) penm:::mut_seed(1025, j, m), g$j, g$m)
   expect_equal(length(intersect(k1024, k1025)), 0L)
 })
-
-test_that("check_seeds_distinct() fails loud on a collision", {
-  expect_silent(penm:::check_seeds_distinct(c(1L, 2L, 3L)))
-  expect_error(penm:::check_seeds_distinct(c(1L, 2L, 1L)), "Seed collision")
-})

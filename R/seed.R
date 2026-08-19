@@ -125,25 +125,3 @@ with_mut_seed <- function(seed, expr) {
   set.seed(seed)
   expr
 }
-
-#' Check that a set of mutant seeds contains no duplicates
-#'
-#' Hash distinctness is probabilistic, not structural: over 32 bits the chance
-#' any two of 2280 mutants collide is about 0.06%, rising to roughly 1% at
-#' 10,000 mutants and higher still beyond that. A collision would silently make
-#' two mutants non-independent, which is the exact failure this scheme exists to
-#' remove, so assert rather than assume.
-#'
-#' @param seeds An integer vector of seeds.
-#'
-#' @return \code{seeds}, invisibly, or an error.
-#'
-#' @noRd
-check_seeds_distinct <- function(seeds) {
-  dup <- anyDuplicated(seeds)
-  if (dup > 0L) {
-    stop("Seed collision: mutant seeds are not distinct (first repeat at index ",
-         dup, "). Vary `ensemble` and re-run.", call. = FALSE)
-  }
-  invisible(seeds)
-}

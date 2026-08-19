@@ -35,8 +35,10 @@ What is actually observed:
 
 - Its tests skip, with the message `"Skip sclfenm test until sclefnm is fixed"`.
 - The refresh scripts guard its fixtures behind `skip <- TRUE`, so `mut_qf.rda`
-  predates the 2026-08 seed-key change and `mut_sc_qf.rda` was never created. Both are
-  unused while the tests skip.
+  predates *both* key changes (the 2026-08-13 hashing of the mutant key, and the
+  2026-08-19 rename to `ensemble` that dropped a key component) and `mut_sc_qf.rda`
+  was never created. Both are unused while the tests skip. Note `mut_sc_lf.rda` is a
+  different file: it is not guarded, and was regenerated on 2026-08-19 with the rest.
 - Two `#TODO` markers in `R/penm.R`: one on the `lij` update ("mut parameters are
   w.r.t. w0, not wt"), one on frustrated handling in `mutate_graph()`.
 - sclfenm changes the *number of graph edges* (e.g. 956 → 962 for 2acy site 80), which
@@ -53,6 +55,17 @@ stop and ask.
 
 ## Other standing decisions
 
+- **`ensemble` is not a seed, and there is no `seed` argument.** The argument was
+  called `seed` until 2026-08-19; the name was wrong, because the value never
+  reached `set.seed()` — it is hashed with `(site_mut, mutation)`, and *that* hash
+  seeds the RNG. `mutation` is unbounded and the model has no amino acids, so
+  `ensemble` names **which realization of the mutational process** a mutant belongs
+  to. Reasoning and usage guidance live in `?penm_ensemble`; keep that page the
+  canonical home rather than re-explaining it elsewhere. Two consequences worth
+  keeping in mind: the key must stay a pure function of the tuple (no session
+  state, no `nmut`), and a *second* axis beside `ensemble` is redundant — a
+  separate ensemble-index slot was removed once already, having outlived the
+  arithmetic key it worked around. Don't reintroduce one.
 - **`frustrated = TRUE` is disabled**, not merely untested — `set_enm()` has a
   `stopifnot(!frustrated)`. Don't enable it as a side effect of other work.
 - **"No caller" is not a defect.** Many exports have no caller outside penm's own
