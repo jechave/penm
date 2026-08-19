@@ -51,25 +51,28 @@ test_that("a mutant's stream does not depend on nmut", {
   expect_equal(keys10, keys50[seq(10)])
 })
 
-test_that("different seeds give disjoint scans", {
+test_that("different ensembles give disjoint scans", {
   # The regression that killed the positional key seed + site*K + mutation:
-  # shifting the seed by 1 was indistinguishable from shifting mutation by 1,
-  # so scans with seed = 1 and seed = 2 shared 90% of their streams.
+  # shifting the label by 1 was indistinguishable from shifting mutation by 1,
+  # so scans with 1 and 2 shared 90% of their streams.
+  #
+  # This property is also what replaced the separate ensemble-index slot the
+  # key used to carry. sdmrs needs two independent ensembles; it got them from
+  # that slot because, under the old arithmetic key, scaling the label
+  # (1*seed, 2*seed) gave sets that overlapped whenever nsites * nmut > seed.
+  # Under the hash, adjacent labels are already disjoint, so the slot was
+  # redundant and was removed. Adjacent values are the hard case: if any pair
+  # overlaps, it is these.
   g <- expand.grid(j = seq(228), m = seq(10))
   k1 <- mapply(function(j, m) penm:::mut_seed(1, j, m), g$j, g$m)
   k2 <- mapply(function(j, m) penm:::mut_seed(2, j, m), g$j, g$m)
 
   expect_equal(length(intersect(k1, k2)), 0L)
-})
 
-test_that("the two sdmrs ensembles are disjoint", {
-  # Previously separated by scaling the seed (1*seed, 2*seed), which overlapped
-  # whenever nsites * nmut > seed.
-  g <- expand.grid(j = seq(228), m = seq(10))
-  e1 <- mapply(function(j, m) penm:::mut_seed(1024, j, m, 1L), g$j, g$m)
-  e2 <- mapply(function(j, m) penm:::mut_seed(1024, j, m, 2L), g$j, g$m)
-
-  expect_equal(length(intersect(e1, e2)), 0L)
+  # and a widely separated pair, as sdmrs would now use
+  k1024 <- mapply(function(j, m) penm:::mut_seed(1024, j, m), g$j, g$m)
+  k1025 <- mapply(function(j, m) penm:::mut_seed(1025, j, m), g$j, g$m)
+  expect_equal(length(intersect(k1024, k1025)), 0L)
 })
 
 test_that("check_seeds_distinct() fails loud on a collision", {

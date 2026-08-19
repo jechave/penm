@@ -8,7 +8,10 @@
 #' @param mut_model A string specifying mutational model ("lfenm" or "sclfenm")
 #' @param mut_dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
 #' @param mut_sd_min An integer, only edges with \code{sdij >= mut_sd_min} are mutated
-#' @param seed An integer, the seed for set.seed before picking perturbations
+#' @param ensemble An integer naming which realization of the mutational process
+#'   the mutant belongs to. With \code{ensemble} fixed, \code{(site_mut, mutation)}
+#'   names one specific, reproducible set of contact perturbations. Hold it
+#'   constant across a scan or a trajectory; see \code{?penm_ensemble}.
 #'
 #' @return A mutated protein object
 #'
@@ -22,23 +25,29 @@
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
 #'               d_max = 10.5, frustrated = FALSE)
 #' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1,
-#'                        mut_model = "lfenm", seed = 1024)
+#'                        mut_model = "lfenm", ensemble = 7)
 #'
 #' # mutation = 0 returns wt unchanged
 #' identical(get_mutant_site(wt, site_mut = 11, mutation = 0), wt)
 #'
 #' @family enm mutating functions
 #'
-get_mutant_site <- function(wt, site_mut, mutation = 0, mut_model = "lfenm", mut_dl_sigma = .3, mut_sd_min = 2, seed = 241956) {
+get_mutant_site <- function(wt, site_mut, mutation = 0, mut_model = "lfenm", mut_dl_sigma = .3, mut_sd_min = 2, ensemble = 1L) {
+
+  # Checked here as well as inside mut_seed(): this is the user-facing
+  # boundary, so the error should name the argument the user passed and fire
+  # before any work -- including on the mutation = 0 path, which returns early
+  # and never reaches mut_seed().
+  check_ensemble(ensemble)
 
   if (mut_model == "lfenm") {
-    mut <- get_mutant_site_lfenm(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min, seed)
+    mut <- get_mutant_site_lfenm(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min, ensemble)
     return(mut)
   }
 
 
   if (mut_model == "sclfenm") { # recalculate enm
-    mut <- get_mutant_site_sclfenm(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min, seed)
+    mut <- get_mutant_site_sclfenm(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min, ensemble)
     return(mut)
   }
 
@@ -55,7 +64,10 @@ get_mutant_site <- function(wt, site_mut, mutation = 0, mut_model = "lfenm", mut
 #' @param mutation An integer, if 0, return \code{wt} without mutating
 #' @param mut_dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
 #' @param mut_sd_min An integer, only edges with \code{sdij >= mut_sd_min} are mutated
-#' @param seed An integer, the seed for set.seed before picking perturbations
+#' @param ensemble An integer naming which realization of the mutational process
+#'   the mutant belongs to. With \code{ensemble} fixed, \code{(site_mut, mutation)}
+#'   names one specific, reproducible set of contact perturbations. Hold it
+#'   constant across a scan or a trajectory; see \code{?penm_ensemble}.
 #'
 #' @return A mutated protein
 
@@ -64,7 +76,7 @@ get_mutant_site <- function(wt, site_mut, mutation = 0, mut_model = "lfenm", mut
 #'
 #' @family enm mutating functions
 #'
-get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min,  seed) {
+get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min,  ensemble) {
 
   if (mutation == 0) {
     # if mutation is 0, return wt
@@ -72,7 +84,7 @@ get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_m
   }
 
   delta_lij <- with_mut_seed(
-    mut_seed(seed, site_mut, mutation),
+    mut_seed(ensemble, site_mut, mutation),
     generate_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
   )
   f <- calculate_force(wt, delta_lij)
@@ -97,7 +109,10 @@ get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_m
 #' @param mutation An integer, if 0, return \code{wt} without mutating
 #' @param mut_dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
 #' @param mut_sd_min An integer, only edges with \code{sdij >= mut_sd_min} are mutated
-#' @param seed An integer, the seed for set.seed before picking perturbations
+#' @param ensemble An integer naming which realization of the mutational process
+#'   the mutant belongs to. With \code{ensemble} fixed, \code{(site_mut, mutation)}
+#'   names one specific, reproducible set of contact perturbations. Hold it
+#'   constant across a scan or a trajectory; see \code{?penm_ensemble}.
 #'
 #' @return A mutated protein
 
@@ -106,7 +121,7 @@ get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_m
 #'
 #' @family enm mutating functions
 #'
-get_mutant_site_sclfenm <- function(wt, site_mut, mutation,  mut_dl_sigma, mut_sd_min,  seed) {
+get_mutant_site_sclfenm <- function(wt, site_mut, mutation,  mut_dl_sigma, mut_sd_min,  ensemble) {
 
   if (mutation == 0) {
     # if mutation is 0, return wt
@@ -114,7 +129,7 @@ get_mutant_site_sclfenm <- function(wt, site_mut, mutation,  mut_dl_sigma, mut_s
   }
 
   delta_lij <- with_mut_seed(
-    mut_seed(seed, site_mut, mutation),
+    mut_seed(ensemble, site_mut, mutation),
     generate_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
   )
   f <- calculate_force(wt, delta_lij)

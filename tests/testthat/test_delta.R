@@ -10,7 +10,7 @@ load(test_path("fixtures", "prot_expected.rda"))
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
 mut <- get_mutant_site(wt, site_mut = 80, mutation = 1,
                        mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1,
-                       seed = 241956)
+                       ensemble = 1L)
 
 pdb_site_active <- c(23, 41)
 
@@ -139,7 +139,7 @@ test_that("mutation = 0 leaves every response at zero", {
   # wt-vs-mutant difference must vanish.
   mut0 <- get_mutant_site(wt, site_mut = 80, mutation = 0,
                           mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1,
-                          seed = 241956)
+                          ensemble = 1L)
   nsites <- get_nsites(wt)
   nmodes <- length(get_msf_mode(wt))
   expect_equal(delta_structure_dr2i(wt, mut0), rep(0, nsites))
