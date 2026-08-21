@@ -1,0 +1,59 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{listings}
+
+\usepackage{titlesec}
+\newcommand{\sectionbreak}{\clearpage}
+
+
+\newcommand{\todo}[1]{\emph{\textcolor{blue} {#1}}}
+\newcommand{\comment}[1]{\emph{\textcolor{red} {#1}}}
+
+
+% Potential parameters
+\newcommand{\lij}{l_{ij}}
+\newcommand{\kij}{k_{ij}}
+\newcommand{\vijMin}{V^{\mathtt{min}}_{ij}}
+
+
+\newcommand{\dij}{d_{ij}}
+\newcommand{\dijEq}{d_{ij}^{e}}
+\newcommand{\dijZero}{d_{ij}^0}
+
+\newcommand{\rvector}{\mathbf{r}}
+\newcommand{\rvectorEq}{\mathbf{r}^{e}}
+\newcommand{\rvectorZero}{\mathbf{r}^0}
+
+\newcommand{\ri}{\mathbf{r}_i}
+\newcommand{\rj}{\mathbf{r}_j}
+\newcommand{\rij}{\mathbf{r}_{ij}}
+
+\newcommand{\riEq}{\mathbf{r}_i^{e}}
+\newcommand{\rjEq}{\mathbf{r}_j^{e}}
+\newcommand{\rijEq}{\mathbf{r}_{ij}^{e}}
+
+\newcommand{\riZero}{\mathbf{r}_i^{0}}
+\newcommand{\rjZero}{\mathbf{r}_j^{0}}
+\newcommand{\rijZero}{\mathbf{r}_{ij}^{0}}
+
+
+\newcommand{\kmat}{\mathbf{K}}
+\newcommand{\cmat}{\mathbf{\Sigma}}
+\newcommand{\dmatij}{\mathbf{D}_{ij}}
+\newcommand{\eij}{\mathbf{e}_{ij}}
+\newcommand{\eji}{\mathbf{e}_{ji}}
+\newcommand{\eijEq}{\eij^{e}}
+
+
+% Perturbations
+\newcommand{\dlij}{\delta \lij}
+
+
+% Wrapper added to compile the fragment dresden2017-offcut.tex standalone.
+% Preamble copied from dresden2017-penm-theory.tex (lines 1-51).
+% NOTE: \ref{eq:kmatFrustrated} and \ref{eq:vENM} live in the theory
+% document, so they render as "??" here.
+\begin{document}
+\input{dresden2017-offcut.tex}
+\end{document}

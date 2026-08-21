@@ -1,0 +1,609 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{listings}
+
+\usepackage{titlesec}
+\newcommand{\sectionbreak}{\clearpage}
+
+
+\newcommand{\todo}[1]{\emph{\textcolor{blue} {#1}}}
+\newcommand{\comment}[1]{\emph{\textcolor{red} {#1}}}
+
+%%% ---------------------------------------------------------------------
+%%% Annotations added 2026-08-20. The body text below is unmodified.
+%%% Every addition is wrapped in \claude{} (theory) or \claudecode{}
+%%% (implementation), so all of it can be removed with
+%%%     grep -v '\\claude' , or hidden by redefining both to {}:
+%%%     \renewcommand{\claude}[1]{}  \renewcommand{\claudecode}[1]{}
+%%% ---------------------------------------------------------------------
+\usepackage[dvipsnames]{xcolor}
+\newcommand{\claude}[1]{%
+  \par\smallskip\noindent
+  \textcolor{TealBlue}{\sffamily\small\textbf{[T]}~#1}%
+  \par\smallskip}
+\newcommand{\claudecode}[1]{%
+  \par\smallskip\noindent
+  \textcolor{Plum}{\sffamily\small\textbf{[C]}~#1}%
+  \par\smallskip}
+
+
+% Potential parameters
+\newcommand{\lij}{l_{ij}}
+\newcommand{\kij}{k_{ij}}
+\newcommand{\vijMin}{V^{\mathtt{min}}_{ij}}
+
+
+\newcommand{\dij}{d_{ij}}
+\newcommand{\dijEq}{d_{ij}^{e}}
+\newcommand{\dijZero}{d_{ij}^0}
+
+\newcommand{\rvector}{\mathbf{r}}
+\newcommand{\rvectorEq}{\mathbf{r}^{e}}
+\newcommand{\rvectorZero}{\mathbf{r}^0}
+
+\newcommand{\ri}{\mathbf{r}_i}
+\newcommand{\rj}{\mathbf{r}_j}
+\newcommand{\rij}{\mathbf{r}_{ij}}
+
+\newcommand{\riEq}{\mathbf{r}_i^{e}}
+\newcommand{\rjEq}{\mathbf{r}_j^{e}}
+\newcommand{\rijEq}{\mathbf{r}_{ij}^{e}}
+
+\newcommand{\riZero}{\mathbf{r}_i^{0}}
+\newcommand{\rjZero}{\mathbf{r}_j^{0}}
+\newcommand{\rijZero}{\mathbf{r}_{ij}^{0}}
+
+
+\newcommand{\kmat}{\mathbf{K}}
+\newcommand{\cmat}{\mathbf{\Sigma}}
+\newcommand{\dmatij}{\mathbf{D}_{ij}}
+\newcommand{\eij}{\mathbf{e}_{ij}}
+\newcommand{\eji}{\mathbf{e}_{ji}}
+\newcommand{\eijEq}{\eij^{e}}
+
+
+% Perturbations
+\newcommand{\dlij}{\delta \lij}
+
+\begin{document}
+
+\title{Biophysical origin of long-range functional constraints in enzyme evolution}
+\author{Julian Echave}
+\date{}
+
+
+\maketitle
+
+\claude{\textbf{About this copy.} The body text is Julian Echave's 2017
+document, unmodified. Annotations added 2026-08-20 are marked
+\textbf{[T]} (theory: corrections, settled questions, open ones) and
+\textbf{[C]} (correspondence with the \texttt{penm} package). They are
+suggestions for the author to accept or reject, not edits. To remove them all,
+redefine \texttt{\textbackslash claude} and \texttt{\textbackslash claudecode}
+to \texttt{\{\}} in the preamble.}
+
+
+\section{Main goal}
+
+Explain the long-range dependence of site-specific substitution rates with distance from the active site in enzymes.
+
+\subsection{Approach}
+I will use two approaches:
+
+\begin{enumerate}
+
+\item \textbf{Active Site Conformation Constraint (ASCC)}: Fitness depends on the probability that the active site reaches a given active conformation.
+
+\item \textbf{Enzyme-Substrate Interaction Constraint (ESIC)}: Fitness depends on the (free) energy of interaction between the active site and a model ligand.
+
+\end{enumerate}
+
+
+\section{Elastic Network Models}
+
+An Elastic Network Model (ENM)  represents a given protein as a 3D network of nodes connected by harmonic springs. There may be one or more nodes per amino acid. The potential energy function is 
+\begin{equation} \label{eq:vENM}
+\boxed{
+V =   \sum_{i<j} \vijMin +\frac{1}{2}\kij (d_{ij}-\lij)^2,
+}
+\end{equation}
+where $\vijMin$, $\kij$, and $\lij$ are, respectively, the minimum energy, the force constant, and the equilibrium length of the spring $i \leftrightarrow j$. The parameters of the model are set in such a way that the minimum-energy conformation is the protein's known native conformation.
+
+
+
+\subsection{Quadratic expansion}
+
+A specific protein conformation is represented by the column vector of  Cartesian coordinates of the $N$ nodes: $\rvector = (x_1,y_1,z_1,...,x_N,y_N,z_N)^T$. The position vector of node $i$ is $ \ri = (x_i,y_i,z_i)^T $. The distance between nodes $i$ and $j$ is $\dij = || \rj - \ri ||$. 
+
+Let $\rvectorZero$ be an arbitrary conformation. The second-order expansion of the ENM potential (\ref{eq:vENM}) around $\rvectorZero$ is
+\begin{equation} \label{eq:vENM_quadratic_rzero}
+\boxed{
+V \sim 
+	V(\rvectorZero) - 
+    \mathbf{F}(\rvectorZero)  (\rvector - \rvectorZero) +
+	\frac{1}{2} (\rvector - \rvectorZero)^T \kmat(\rvectorZero) (\rvector - \rvectorZero),
+}
+\end{equation}
+where $\mathbf{F}$ is the force (row) vector and $\kmat$ is the Hessian:
+\begin{eqnarray}
+\mathbf{F}(\rvector) & = & 
+    -  \frac{\partial V}{\partial \rvector}, \label{eq:Force} \\ 
+\kmat (\rvector) & = & \frac{\partial^2 V}{\partial^2 \rvector}. \label{eq:Hessian}
+\end{eqnarray}
+
+The derivatives of $\dij$ are given by:
+\begin{eqnarray} 
+\label{eq:ddij}
+	\frac{\partial \dij}{\partial \rj } & = & \eij^T \\
+\label{eq:ddij2}
+	\frac{\partial^2 \dij}{\partial \ri \partial \rj} & = & \frac{\eij \eij^T - \mathbf{I}}{\dij}\\
+\end{eqnarray}
+where 
+\begin{equation}
+\eij  = \frac{\rj - \ri}{\dij}
+\end{equation}
+is a unit vector in the direction of $ \rij$.
+
+From (\ref{eq:Force}) and  (\ref{eq:ddij}), we find:
+\begin{equation} \label{eq:force_i}
+\boxed{
+	\mathbf{F}_i(\rvector) = \sum_{j \neq i} \kij (\dij - \lij) \eij^T.
+}
+\end{equation}
+Note that since $\eij = -\eji$, 
+\begin{equation}
+	\sum_{i} \mathbf{F}_i = 0;
+\end{equation}
+There is no external force acting on the network.
+
+From (\ref{eq:Hessian}), using (\ref{eq:ddij}) and (\ref{eq:ddij2}) we find:
+\begin{equation}
+\kmat = 
+\begin{bmatrix}
+\kmat_{11} & \kmat_{12}  & \ldots & \kmat_{1N} \\
+\kmat_{21} & \kmat_{22}  & \ldots & \kmat_{2N} \\
+\vdots & \vdots & \ldots & \vdots \\
+\kmat_{N1} & \kmat_{N2}  & \ldots & \kmat_{NN} 
+\end{bmatrix},
+\end{equation}
+where the $3 \times 3$ matrices $\kmat_{ij}$ are:
+
+\begin{eqnarray} \label{eq:kmatFrustrated}
+\kmat_{i \neq j} & = & - k_{ij} \left[ 
+					\eij \eij^T + 
+                    \left( 1 - \frac{\lij}{\dij} \right) 
+ 			        \left( \eij \eij^T - \mathbf{I} \right) 
+            \right], \\
+            \kmat_{ii} & = & -\sum_{j \neq i} \kmat_{ij},
+\end{eqnarray}
+
+\comment{
+But beware of the sign... in another derivation I got:
+\begin{eqnarray} \label{eq:kmatFrustrated}
+\kmat_{i \neq j} & = & - k_{ij} \left[ 
+					\eij \eij^T + 
+                    \left( \frac{\lij}{\dij} -1 \right) 
+ 			        \left( \eij \eij^T - \mathbf{I} \right) 
+            \right], \\
+            \kmat_{ii} & = & -\sum_{j \neq i} \kmat_{ij},
+\end{eqnarray} 
+Note also that, if we put $s_{ij} = \lij - \dij$:
+\begin{equation}
+Tr(\kmat_{ij}) = -kij (1 - 2 s_{ij}),
+\end{equation}
+so that for $s_{ij} > 1/2$, $Tr(\kmat_{ij}) > 0$, which means that the spring connecting $i\sim j$ has a negative effective force constant, which feels unphysical \ldots
+}
+
+\claude{\textbf{The sign is settled: the second form is right.} Differentiating
+$V=\frac{1}{2}\kij(\dij-\lij)^2$ twice gives, for a central pair potential,
+$\kmat_{ij} = -[V''\,\eij\eij^T + (V'/\dij)(\mathbf{I}-\eij\eij^T)]$ with
+$V''=\kij$ and $V'=\kij(\dij-\lij)$; written with the bracket
+$(\eij\eij^T-\mathbf{I})$ as above, the coefficient is
+$(\lij/\dij-1)$. Checked numerically against a central-difference Hessian on
+four random \emph{frustrated} 5-node networks ($\lij\neq\dij$): this form agrees
+to $\sim10^{-4}$ (finite-difference noise), the other is off by $O(1)$ (2--7).
+The two boxes above are therefore not two candidate results but one result
+written two ways --- each is correct when paired with its own bracket ordering.}
+
+\claude{\textbf{The trace argument drops a $\dij$.} $s_{ij}=\lij-\dij$ is a
+length, so $1-2s_{ij}$ subtracts a length from a pure number and the threshold
+$s_{ij}>1/2$ has no invariant meaning --- it moves if \AA{} is replaced by nm.
+The coefficient of the transverse term is the dimensionless $\lij/\dij-1$, so
+with $Tr(\eij\eij^T)=1$ and $Tr(\eij\eij^T-\mathbf{I})=-2$,
+$Tr(\kmat_{ij}) = -\kij(3-2\lij/\dij)$, changing sign at $\lij/\dij=3/2$: a
+spring compressed to two-thirds of its rest length. Severe, but not absurd.}
+
+\claude{\textbf{What a negative effective $\kij$ means physically: buckling.}
+A spring with $\lij>\dij$ is compressed. Displacing $j$ transversally at fixed
+$\dij$ lengthens the gap along no direction the spring resists, while relieving
+compression, so the stored energy is \emph{released} by the sideways motion ---
+exactly a strut past its critical axial load. This is not unphysical in itself:
+only the full $\kmat$ need be positive semi-definite at a minimum, and a single
+block with $Tr>0$ can be stabilised by the neighbouring springs.
+\textbf{But it constrains the choice of $\{\lij\}$:} if the frustration is severe enough
+that $\kmat$ acquires a negative eigenvalue, then $\rvectorEq$ satisfies the
+stationarity condition (\ref{eq:VminCondition3}) while being a \emph{saddle},
+not a minimum. So the admissible $\{\lij\}$ are not all solutions of
+(\ref{eq:VminCondition3}), but those intersected with $\kmat$ positive semi-definite --- a
+bounded region, not an affine subspace. Worth stating where the
+underdetermination of $\{\lij\}$ is discussed below.}
+
+\claudecode{\texttt{calculate\_enm\_kmat()} implements
+$\texttt{gij} = \lij/\dij - 1$ with the bracket $(\eij\eij^T-\mathbf{I})$ ---
+i.e.\ the second form, the one verified above. So the implementation is
+consistent with the correct Hessian, and the \texttt{\#WARNING} the package
+carries about this sign can be retired. It is never exercised, however:
+\texttt{set\_enm()} has \texttt{stopifnot(!frustrated)}, so only the
+$\texttt{gij}=0$ branch ever runs.}
+
+
+\subsection{Equilibrium Conformation}
+
+The ENM energy (\ref{eq:vENM}) is minimum at the conformation $\rvectorEq$ that satisfies:
+\begin{equation}\label{eq:VminCondition2}
+	\mathbf{F}_i(\rvectorEq) = \mathbf{0} \textnormal{ for } i = 1 \dots N.
+\end{equation}
+According to this equation, at $\rvectorEq$ the net force acting on each node is zero.
+
+Replacing (\ref{eq:force_i}) in (\ref{eq:VminCondition2}) we find:
+\begin{equation} \label{eq:VminCondition3}
+	\mathbf{F}_i(\rvectorEq)
+    = \sum_{j \neq i} \kij (\dijEq - \lij) {\eijEq}^T 
+    = \mathbf{0}.
+\end{equation}
+This is a system of $3 \times N$ equations. 
+
+Given the parameters $\{\lij\}$ solving equations (\ref{eq:VminCondition3}) we can obtain the equilibrium conformation $\rvectorEq$. 
+These equations are non-linear because $\dijEq = ||\rjEq - \riEq||$. To find the minimum, we can use a steepest descent approach. For example, let $\rvectorZero_{n}$ be a given conformation in iteration step $n$. The minimum of the quadratic approximation (\ref{eq:vENM_quadratic_rzero}) is at:
+\begin{equation}
+\rvectorZero_{n+1} = \rvectorZero_{n} + \kmat^{-1}(\rvectorZero_{n}) \mathbf{F}^T(\rvectorZero_{n})
+\end{equation}
+Under certain conditions, we expect this algorithm to converge to $\rvectorEq$, for which $\mathbf{F}_i(\rvectorEq) = 0$.
+
+
+
+\subsection{Quadratic expansion around the minimum}
+
+From (\ref{eq:vENM_quadratic_rzero}) and (\ref{eq:VminCondition3}) it follows:
+\begin{equation} \label{eq:vENM_quadratic_rEq}
+\boxed{
+V \sim 
+	V(\rvectorEq) +
+	\frac{1}{2} (\rvector - \rvectorEq)^T \kmat(\rvectorEq) (\rvector - \rvectorEq),
+}
+\end{equation}
+where (from   (\ref{eq:vENM}))  the minimum energy is:
+\begin{equation}
+\label{eq:vMin}
+\boxed{
+V(\rvectorEq) =  \sum_{i<j} \vijMin +\frac{1}{2}\kij (\dijEq-\lij)^2.
+}
+\end{equation}
+The second term of eq. (\ref{eq:vMin}) represents frustration. In general one would not expect all springs to be relaxed at the equilibrium conformation. Since the frustration term is zero or positive, the minimum energy is equal or larger than the sum over pairs of minimum energies. 
+
+\subsection{ENM parameters $\lij$}
+
+For a protein of known equilibrium conformation, given $\rvectorEq$ any set of parameters $\{\lij\}$ that satisfies (\ref{eq:VminCondition3}) has the same equilibrium conformation and, therefore, is a valid ENM model.
+
+\claude{\textbf{Two riders on ``valid''.} (i) (\ref{eq:VminCondition3}) is a
+\emph{stationarity} condition, so it makes $\rvectorEq$ a critical point, not
+necessarily a minimum. As noted at the Hessian above, severe frustration can
+drive an eigenvalue of $\kmat$ negative, at which point $\rvectorEq$ is a saddle
+and the model is not a valid ENM of that structure. The admissible set is the
+solutions of (\ref{eq:VminCondition3}) intersected with $\kmat$ positive
+semi-definite --- bounded, and no longer an affine subspace.
+(ii) Two such models share $\rvectorEq$ but \emph{not} their dynamics: $\kmat$
+depends on $\{\lij\}$ through the transverse term, so different admissible
+$\{\lij\}$ give different normal modes and fluctuations. ``Valid ENM model'' is
+therefore a statement about structure only. This is what makes frustration
+observable in principle: it cannot be seen in $\rvectorEq$, only in motion.}
+
+\claude{\textbf{Counting.} Read as equations for $\{\lij\}$ at fixed
+$\rvectorEq$, (\ref{eq:VminCondition3}) is \emph{linear} in $\lij$, of rank
+generically $3N-6$. So the solution set is an affine subspace of dimension
+$M-(3N-6)$, where $M=N\overline{CN}/2$ is the number of springs. Its being
+linear is what makes the fitting strategies of the appendix sensible.}
+
+\subsubsection{Non-frustrated ENMs}
+For the special case $\lij = \dijEq$ equation (\ref{eq:VminCondition3}) is trivially satisfied: all terms are zero by construction; at $\rvectorEq$ all springs are relaxed and the network is non-frustrated. As far as I know, all ENMs developed so far are non-frustrated.
+
+\subsubsection{Frustrated ENMs}
+In general, it is reasonable assume some degree of frustration in proteins.
+Moreover, according to the mutational model (to be discussed below), as we introduce mutations frustrations are introduced. Even if we start an evolutionary trajectory with a non-frustrated network, as we introduce mutations the network will become frustrated.
+Therefore, a non-frustrated model is not general enough for my purposes.
+More on frustrated ENMs in \ref{appendix:frustrated-enm}
+
+\claudecode{\textbf{Status in the package.} This argument --- mutation generates
+frustration, so a non-frustrated model is insufficient --- is the one place the
+theory and the implementation are in open tension. \texttt{penm} builds every
+wild type with $\lij=\dijEq$ and blocks \texttt{frustrated = TRUE} outright
+(\texttt{stopifnot(!frustrated)}). Mutants are frustrated by construction, as
+this paragraph says, but their $\kmat$ is built with the transverse term
+switched off, so the frustration enters the energy and never the dynamics. A
+2022 note in the package log records the same doubt from the other side
+(``\texttt{mut\_graph} assumes frustrated = T?~For now use frustrated = F
+everywhere, until I check it thoroughly'') and no later entry records the check.}
+
+
+\section{Statistical mechanics}
+
+\subsection{Boltzmann distribution}
+
+The Boltzmann conformational probability density function is given by:
+\begin{equation} 
+\label{eq:BoltzmannDistribution}
+\rho(\rvector) = \frac{e^{-\beta V(\rvector)}}{Z},
+\end{equation}
+where the $Z$ is the conformational partition function:
+\begin{equation}
+\label{eq:partitionFunctionDefinition}
+Z = \int e^{-\beta V(\rvector)} d\mathbf{\rvector}
+\end{equation}
+
+Using the second-order expansion of the potential energy around the minimum, Equation (\ref{eq:vENM_quadratic_rEq}), we find a normal distribution:
+\begin{equation} \label{eq:NormalDistribution}
+\rho (\rvector) = \frac{ 
+					e^{
+       -1/2(\rvector - \rvectorEq)^T \cmat^{-1}
+            (\rvector - \rvectorEq)
+            }}{\sqrt{|2 \pi \cmat|}},
+\end{equation}
+where $|\mathbf{M}|$ is the determinant of matrix $\mathbf{M}$. The variance-covariance matrix $\cmat$ is related to the pseudo-inverse of the Hessian matrix:
+\begin{equation}
+\cmat = \beta^{-1}\kmat^+.
+\end{equation}
+In general, the Hessian at equilibrium has 6 eigenvectors with eigenvalue 0. They correspond to 3 translations and 3 rotations. Thus, $\kmat$ is not invertible. However, the pseudo-inverse can be calculated using a spectral decomposition omitting the 6 zero eigenvectors. 
+
+
+
+\subsection{Partition function}
+
+Comparing (\ref{eq:NormalDistribution}) and (\ref{eq:BoltzmannDistribution}) with $V(\rvector)$ given by (\ref{eq:vENM_quadratic_rEq}) we find:
+\begin{equation} \label{eq:partitionFunctionQuadratic}
+Z = e^{-\beta V(\rvectorEq)} |2 \pi \cmat|^{\frac{1}{2}}
+\end{equation}
+In the normal-mode representation, $\cmat$ is diagonal with elements $\sigma_n^2 \delta_{mn} = (\beta \lambda_n)^{-1} \delta_{mn}$, where $\lambda_n$ is the nth eigenvalue of $\kmat$. Then from the previous equation we find:
+\begin{equation} \label{eq:partitionFunctionNormalModes}
+|2 \pi \cmat|^{1/2} = \prod_{n} \sqrt{2\pi \sigma_n^2} = \prod_{n} \sqrt{\frac{2\pi}{\beta \lambda_n}}
+\end{equation}
+Finally, replacing (\ref{eq:partitionFunctionNormalModes}) into  (\ref{eq:partitionFunctionQuadratic}) we find:
+\begin{equation}
+Z = e^{-\beta V(\rvectorEq)} \prod_{n} \sqrt{\frac{2 \pi}{\beta \lambda_n}}
+\end{equation}
+It is convenient to obtain also:
+\begin{equation}
+\ln Z = -\beta V(\rvectorEq) + \sum_{n} 
+          \frac{1}{2} \ln \frac{2\pi}{\beta \lambda_n}
+\end{equation}
+
+
+\subsection{Thermodynamic functions}
+
+\comment{Is the stuff in this section valid without including the kinetic energy terms?}
+
+\subsubsection{Internal energy}
+
+The internal energy $U$ can  be calculated from:
+\begin{equation} \label{eq:Z2U}
+U = - \frac{\partial \ln Z}{\partial \beta}
+\end{equation}
+Replacing (\ref{eq:partitionFunctionNormalModes}) into (\ref{eq:Z2U}) we find:
+\begin{equation} \label{eq:spectrum2U}
+U = V(\rvectorEq) + (3N - 6) \frac{1}{2\beta}
+\end{equation}
+
+\subsubsection{Helmholtz free energy}
+
+The free energy $A$ can be calculated from:
+\begin{equation} \label{eq:Z2A}
+A = - \beta^{-1} \ln Z
+\end{equation}
+Replacing (\ref{eq:partitionFunctionNormalModes}) into (\ref{eq:Z2A}) we get:
+\begin{equation} \label{eq:spectrum2A}
+A = V(\rvectorEq) - \sum_{n} \frac{1}{2\beta} \ln \frac{2\pi}{\beta \lambda_n}
+\end{equation}
+Note that $A$ decreases with decreasing (increasing) $\lambda_n$ ($\sigma_n^2$). 
+
+\comment{
+For a single harmonic oscillator we have:
+\begin{equation} 
+A = V_0 - \frac{1}{2\beta} \ln \frac{2\pi}{\beta \lambda}
+\end{equation}
+If $\frac{2 \pi}{\beta \lambda} > 1$, $A < V_0$. There's something wrong about it (A cannot be less than the minimum of the potential, can it?). }
+
+\subsubsection{Entropy}
+From $A = U - TS$ it follows that $TS = U - A$. Then, using (\ref{eq:spectrum2U}) and (\ref{eq:spectrum2A}) we find:
+\begin{equation}
+T S = \frac{1}{2\beta}\sum_{n}\left(\ln\frac{2\pi}{\beta \lambda_n} +1 \right).
+\end{equation}
+
+\subsection{Include kinetic energy term}
+\todo{Include kinetic energy terms.}
+
+
+
+\section{Mutation models}
+
+We model a at a site mutation by perturbing the parameters of the ENM springs that connect that site to the rest of the network. 
+
+\subsection{Linearly-Forced Elastic Network Model}
+
+According to the LFENM, a mutation is modeled by perturbing only the equilibrium lengths of springs attached to the mutated site: $\lij \to \lij + \dlij$.  The perturbations $\dlij$ are picked independently for each of the contacts of the mutated site, from the same distribution. The distribution is assumed to  satisfy $<\dlij> = 0$ and $Var(\dlij) = \sigma^2$. In principle, the mutation will change also the other two parameters of the $i \leftrightarrow j$ contact, $\vijMin$ and $\kij$. However, the LFENM assumes $\delta \vijMin = 0$ and $\delta  \kij$ is  calculated self-consistently from structure of the mutant.
+
+The mutant's potential is:
+\begin{equation} \label{eq:Vmut}
+V_{mut} =  \sum_{i<j} \left[
+	\vijMin + \frac{1}{2} k_{ij} [d_{ij}-(\lij+\dlij)]^2
+    \right].
+\end{equation}
+
+The LFENM is obtained by expanding Eq. \ref{eq:Vmut} up to second order. The potential is expressed in terms of ``forces'' directed along the contacts of the mutated site. The norm of such forces is:
+\begin{equation} \label{eq:fij}
+f_{ij} = k_{ij} \dlij
+\end{equation}
+
+
+\begin{itemize}
+\item \todo{Quadratic form of LFENM potential \ldots }
+
+\item \todo{Mutant's equilibrium structure \ldots}
+
+
+\item \todo{Self-consistent calculation of $\kmat$ \ldots}
+
+
+\end{itemize}
+
+\claude{\textbf{Why dropping $\delta\kmat$ is consistent, and what it costs.}
+In the Hamiltonian the neglected term enters as
+$(\rvector-\rvectorEq)^T\,\delta\kmat\,(\rvector-\rvectorEq)$. With
+$\delta\rvector = O(\dlij)$ and $\delta\kmat = O(\dlij)$, that is third order in
+small quantities against the second-order terms retained, so LFENM is a
+controlled truncation \emph{of the energy}. Note this does not make
+$\delta\kmat$ itself higher order --- it is $O(\dlij)$, the same order as
+$\delta\rvector$. Consequently LFENM is silent, not wrong, about dynamics: mode
+shapes and $\delta(TS)$ are $O(\dlij)$ quantities that the truncation sets to
+zero. That is the gap SC-LFENM fills, and it is worth stating explicitly when
+the \texttt{todo} items above are written up.}
+
+\claudecode{\textbf{As implemented.} Mutation perturbs $\lij$ only
+($\delta\vijMin=0$, $\delta\kij=0$), draws $\dlij$ i.i.d.\ with
+$\langle\dlij\rangle=0$ and variance $\sigma^2$ over the springs of the mutated
+site, then relaxes by $\delta\rvector=\cmat\mathbf{f}$ using the wild-type
+compliance. \texttt{lfenm} stops there; \texttt{sclfenm} additionally rebuilds
+$\kmat$ and re-diagonalises. Both compute $\delta\rvector$ from the wild type,
+so the two models give \emph{identical} mutant structures and differ only in the
+Hessian --- hence all structure-based comparisons agree between them and all
+motion-based ones vanish identically under \texttt{lfenm}.}
+
+
+
+
+\subsection{Generalized perturbed ENM}
+
+\todo{Model in which a mutation perturbs all parameters of the springs of the mutated site.}
+
+
+\section{Fixation probability}
+\todo{Basics of fixation probability for the Moran and/or Wright-Fisher processes.}
+
+
+\section{Selection models}
+
+
+\subsection{Stress model}
+
+When the mutant adopts the wild-type structure $\mathbf{r^0}_{wt}$, $d_{ij} = d_{ij}^0$, and the mutant's energy is:
+\begin{equation} \label{eq:Vmut0}
+V_{mut}(\mathbf{r^0}_{wt}) = \frac{1}{2} \sum_{i<j} k_{ij} \Delta_{ij}^2
+\end{equation}
+The stress model poses that the probability of accepting such a mutant is:
+\begin{equation} \label{eq:Paccept}
+P_{accept} = e^{-\beta \frac{1}{2} \sum_{i<j} k_{ij} \Delta_{ij}^2}
+\end{equation}
+
+\subsection{New Stress model}
+
+\todo{New version of stress model where a fitness function is posed and Moran/Wright-Fisher fixation probabilities are used.}
+
+\subsection{Active Site Conformation model}
+
+\todo{Selection model by restricting the active site conformation using the Cartesian coordinates of active residues.}
+
+\subsection{Active Site Distance Constraints}
+
+\todo{Constrain the distance between catalytic residues, rather than the actual Cartesian coordinates.}
+
+The problem with constraining the Cartesian coordinates of each of the catalytic residues is that it might be too restrictive. It might be more reasonable to assume that activity depends on the shape of the active site, which might be better described by the distances between catalytic residues. 
+
+Let's assume that $\mathbf{d} = (\dij)$ i.e. a vector of distances between all pairs of catalytic residues. Then, we assume that fitness is proportional to the probability of folded protein in the right conformation, as defined by $\mathbf{d}^*$:
+\begin{equation}
+f = P(F) \times P(\mathbf{d} = \mathbf{d}^*|F)
+\end{equation}
+We could calculate this analytically or numerically. In the latter case we could, for instance, generate several active-site Cartesian conformations using the effective distribution of active-site residues and count how many lye in the cube $\mathbf{d}$ and $\mathbf{d}+\mathbf{\delta d}$.
+
+\comment{Note that it is not clear how to define the cube. For instance, a cube in one coordinate system will map into a solid with different lengths according to the deformation energy in each direction if we normalize coordinates... I need to think about this.}
+
+\subsection{Substrate-Enzyme interaction model}
+
+\todo{Put one or mode nodes to model the substrate. Base the fitness function on the interaction energy of this node with the rest of the protein.}
+
+
+\section{Evolutionary Simulation}
+
+
+\subsection{One evolutionary step}
+
+How would we simulate a single evolutionary time step? Let us define a time-step such that in a time-step there is a single substitution event for the whole protein (a substitution is an accepted mutation). To simulate such an event we do the following:
+\begin{enumerate}
+\item Pick one random site $l$
+\item Introduce a "trial" mutation by obtaining a set of ${f_{lj}}$ for each of the contacts of site $l$
+\item Calculate the probability of accepting this trial mutation: $P_{accept} = e^{-\beta \frac{1}{2} \sum_{j\sim i}  f_{lj}^2}$
+\item Calculate the logical variable $\text{Accept} = P_{accept} \ge \text{runif(1,0,1)}$; Accept will be TRUE with probability $P_{accept}$, this is a way of implementing accepting mutations with this probability.
+\item If Accept is TRUE, accept the mutation (i.e. the new wild-type is the mutant) and the evolutionary step is finished (i.e. we found an accepted mutation: one substitution). Else, reject the trial mutation and try again (i.e. go back to Step 1: pick a random site, etc.).
+\end{enumerate}
+For future reference, let's assume that we implement this single-step using a function oneSubstitution(sites) that returns the mutated site $l$, and the force that simulates the mutation ${f_{lj}}$ (or alternatively the force-vector $\mathbf{f}_l$). 
+
+\subsection{An evolutionary path of N substitution at N different sites}
+We want to simulate a lineage (an evolutionary path) such that it starts at a known ancestor (our reference protein) and it ends when $N$ sites have accepted mutations. ($N \le L$, where $L$ is the sequence length). Briefly, we need to repeat the single evolutionary step of the previous paragraph $N$ times, making sure that the set of sites where we try mutations does not include sites that previously accepted mutations (this corresponds to sampling without replacement). The process would be, using pseudocode:
+
+
+\begin{lstlisting}[language=R]
+NonMutatedSites = seq(L)
+MutatedSites = c()
+for(subs in seq(N)) {
+	step = oneSubstitution(NonMutatedSites)
+    l = step$l
+    f_l = step$f_l
+    Remove l from NonMutatedSites
+    Add l to MutatedSites
+    Add f_l to list of forces (or matrix of forces)
+}
+\end{lstlisting}
+
+\subsection{Star tree}
+
+Our "experimental" data are sets of proteins one of which we consider as the "reference" protein. In principle, we should infer the phylogenetic tree and try to simulate structures with our model following a tree with the same topology. However, we assume that the results are not too sensitive with respect to tree topology so that we can approximate the tree by a "star tree". The common ancestor of all lineages of our star tree is our reference protein. Then, each lineage corresponds to a pair alignment of each protein with the reference. Thus, different lineages have different "branch lengths", were we assume the branch lengh is the number of sites in which the sequence of the (common) ancestor and the tip of the lineage differ. 
+
+%###############################################################################
+\cleardoublepage
+\appendix
+
+\section{Frustrated ENMs} \label{appendix:frustrated-enm}
+\subsection{Determination of ${\lij}$ to model a frustrated ENM}
+How can we determine spring length parameters $\lij$ that account for frustration?
+
+In general, we need $\lij$ that satisfy (\ref{eq:VminCondition3}) and some other conditions (because there are  more $\lij$ than equations).  Some possible extra constraints and/or ways of obtaining $\lij$ are:
+
+\begin{itemize}
+
+\item Let $\lij= \dijEq$ for sequential contacts and for secondary-structure contacts and consider $\lij \neq \dijEq$ for tertiary contacts.
+
+\item Make $\lij$ depend only on the identity of the amino acids at $i$ and $j$ if $i$ and $j$ are in contact. Thus, we have 220 independent $\lij$ to be determined by solving the $3N-6$ independent equations (\ref{eq:VminCondition3}). Since we have more equations than parameters, the system is over-determined. Solve using EM or ML algorithms. Using this approach, we could try to fit several pdb structures at the same time to find the $\lij$ matrix.
+
+\claude{Two notes on this strategy. (i) For unordered pairs with repetition over
+20 amino acids the count is $20\cdot21/2 = 210$, not 220. (ii) It sits in
+tension with the mutational model of \S4, which has no amino-acid alphabet at
+all --- mutations there are random draws of $\dlij$, so a site has no identity
+that $\lij$ could depend on. The two would need reconciling before both are
+used in the same framework.}
+
+\item Add constraints, such as a given average energy, and maximize the entropy w.r.t. $\lij$. This will give a distribution of $\lij$.
+
+\item Make all tertiary $\lij$ identical (i.e. non-sequence dependent), but pick which are different from zero (i.e. build the network so that with the constraint of identical $\lij$ has the required equilibrium conformation).
+
+\item Start with a given protein structure and $\lij = \dijEq$. Then, perturb all parameters by adding random $\delta \lij$ to each $\lij$. In general, this will result in a set of parameters that do not satisfy (\ref{eq:VminCondition3}). Starting with such parameters, minimize $\sum_{i} ||\mathbf{F}_i||$ (e.g. running a Monte Carlo simulation by adding random $\delta \lij$ to the initial $\lij$ values).
+
+\item Run evolutionary simulations accepting mutations according the Stress Model (i.e. $P(\rvectorEq)$). Mutant structures should remain in a neighborhood of the original wild-type structure and yet their $\lij$ parameters will diverge. Selection pressure will determine how close mutant structures are to the wild-type structure.
+
+\item Start with the relaxed ENM for the wild-type protein. Then, run evolutionary simulations with selection with a certain energy cutoff ($> V_{cut}$). Such simulations are obtained by adding $\delta \lij$ to to the springs of mutated sites and recalculating equilibrium structures. The mutants that result from such simulations are frustrated elastic networks.
+
+
+\end{itemize}
+
+
+\end{document}
+
+
+
