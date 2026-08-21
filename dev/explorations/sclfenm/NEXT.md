@@ -74,7 +74,7 @@ before touching sclfenm.
 
 ### 3. Decide whether the catalogue needs the cross-term correction
 
-Background-independence degrades: 9 % → 48 % (energy), 0.7 % → 17 % (structure),
+Background-independence degrades: 9 % $\to$ 48 % (energy), 0.7 % $\to$ 17 % (structure),
 between 5 and 40 substitutions. The energy error is *entirely* the cross term
 (correlation 0.9999), and the cross term is computable from the current state's
 strain. Correcting for it is the cheapest way to extend the catalogue's useful

@@ -1,3 +1,3 @@
-# regenerable artifacts: rebuilt by run_catalog.R, response_influence.R,
-# fig5_scan.R, fig9_frustration.R respectively. Not worth tracking.
-*.rds
+# regenerable: rebuilt by analyses/run_catalog.R, analyses/response_influence.R,
+# figures/fig5_scan.R, figures/fig9_frustration.R, figures/fig4_trajectories.R
+data/

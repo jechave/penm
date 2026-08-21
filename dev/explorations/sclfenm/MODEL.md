@@ -675,7 +675,7 @@ from the current state's strain, it can be corrected for — the cheapest way to
 extend the catalogue's useful range.
 
 **SC-LFENM cannot be catalogued at all.** The rebuild changes the contact set
-(960 → 959 edges after five substitutions), so a $\delta\mathbf l$ vector built on
+(960 $\to$ 959 edges after five substitutions), so a $\delta\mathbf l$ vector built on
 the founder no longer matches the mutant's graph; the operation is not merely
 inaccurate but undefined. This is a stronger reason to use LFENM for the
 catalogue than the error magnitudes.
@@ -705,10 +705,10 @@ $\Delta V$ for a single move against the exact value
 
 | site | move | catalogue | exact | error |
 |---|---|---|---|---|
-| 33 | 10→8 | −0.401 | −0.426 | 0.025 |
-| 14 | 8→9 | −0.040 | −0.155 | 0.116 |
-| **31** | **5→4** | **+0.232** | **−0.048** | **0.280** |
-| 23 | 1→10 | +0.136 | +0.015 | 0.122 |
+| 33 | 10 $\to$ 8 | −0.401 | −0.426 | 0.025 |
+| 14 | 8 $\to$ 9 | −0.040 | −0.155 | 0.116 |
+| **31** | **5 $\to$ 4** | **+0.232** | **−0.048** | **0.280** |
+| 23 | 1 $\to$ 10 | +0.136 | +0.015 | 0.122 |
 
 One move in twelve had the **wrong sign** — the catalogue called it uphill when
 it was in fact downhill. So the chain is making some accept/reject decisions on
@@ -935,6 +935,41 @@ To confirm the live checks *can* fail, `test_can_fail.R` breaks the code
 deliberately: zeroing the stored offset makes the reported energy $0$ instead of
 $0.626$, and flipping the sign of the Hessian's transverse term makes the
 numerical-derivative check miss by $4.96$ instead of $0.00104$.
+
+### The Hessian convention
+
+The transverse term is $g_{ij} = l_{ij}/d_{ij} - 1$ paired with the bracket
+$(\mathbf e\mathbf e^{T} - \mathbf I)$. This looks like the opposite of the
+textbook form, and is not: the two sign flips cancel,
+
+$$\left(\tfrac{l}{d}-1\right)\left(\mathbf e\mathbf e^{T}-\mathbf I\right) \;=\; \left(1-\tfrac{l}{d}\right)\left(\mathbf I - \mathbf e\mathbf e^{T}\right)$$
+
+so it agrees with $\partial^2 V/\partial\mathbf r_i\partial\mathbf r_j = -k[\mathbf e\mathbf e^{T} + (1-l/d)(\mathbf I - \mathbf e\mathbf e^{T})]$.
+Checked against a numerical Hessian on strained networks, where the genuinely
+wrong sign is off by $O(1)$.
+
+It defaults to off. A relaxed network has $g = 0$ either way, so this can only
+matter for `keepnet` — which is where §6's argument lives, so it needed checking
+rather than assuming. Measured on a 30-step `keepnet` state (strain energy 15.5,
+$\max|d-l| = 1.27$): the two Hessians differ by 2.3 %, the ten softest
+eigenvalues by 1.1 %, and $\Delta V$ over 150 mutations is unchanged (means
+0.5688 vs 0.5686, correlation 1.00000). Harmless here, and measured rather than
+asserted (`check_frustrated.R`).
+
+### Files
+
+Organised by role — see `README.md` for the full map.
+
+| folder | contents |
+|---|---|
+| `R/` | the library: `enm_core.R`, `sclfenm.R`, `applications.R` (used by §§1–7); `penm_catalog.R`, `frustration.R` (used by §§8–11); `fig_setup.R` |
+| `figures/` | one script per figure, beside its `.png` |
+| `checks/` | scripts that assert and can fail: `validate.R`, `derivation.R`, `test_identities.R`, `test_can_fail.R`, `proof_projector.R`, `test_stationary.R`, `test_two_impls.R` |
+| `analyses/` | scripts that compute the numbers quoted here: `run_*.R`, `test_background_final.R`, `test_site_additivity.R`, `test_catalog_honest.R`, `test_exact_boltzmann.R`, `test_penm_sclfenm*.R`, and others |
+| `attic/` | superseded diagnostics, kept for provenance |
+| `data/` | regenerable `.rds` artifacts (gitignored) |
+
+All scripts use the `here` package, so they run from any working directory.
 
 ### The Hessian convention
 

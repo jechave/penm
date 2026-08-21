@@ -1,0 +1,15 @@
+library(here)
+source(here("R", "sclfenm.R")); set.seed(1)
+make_prot<-function(N=40){t<-seq(0,6*pi,length.out=N)
+  as.vector(rbind(4*cos(t)+rnorm(N,0,.4),4*sin(t)+rnorm(N,0,.4),1.2*t/2+rnorm(N,0,.4)))}
+r0<-make_prot(40); wt<-new_state(r0)
+set.seed(11); m<-mutate(wt,11,model="keepnet")
+K_wt <- state_K(wt); K_nor <- state_K(m$state)
+cat("norm(K_norebuild - K_wt) =", norm(K_nor-K_wt,"F"), "\n")
+cat("  -> nonzero because e_ij and d_ij moved (structure changed),\n")
+cat("     even though 'no rebuild' keeps the same contact list.\n\n")
+cat("Textbook LFENM freezes K = K_wt entirely. Under that definition\n")
+cat("dTS is identically 0 because the spectrum is literally unchanged.\n\n")
+## demonstrate: frozen-K lfenm
+nm<-nma(K_wt)
+cat("frozen-K spectrum identical to wt by construction => dTS = 0 exactly.\n")
