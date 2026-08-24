@@ -194,7 +194,7 @@ $V_{\text{mut}}(\mathbf r^{e}_{\text{mut}}) = 0$ here. That is wrong: it attache
 the refit Hamiltonian's energy to the mutant Hamiltonian's symbol, and collapses
 the whole distinction.)
 
-![strain erased](figs/fig1_energy_erased.png)
+![strain erased](figures/fig1_energy_erased.png)
 
 **How to read this.** One mutation on 2acy. Bars 1 and 2 are $V_{\text{stress}}$
 and $-V_{\text{relax}}$; bar 3 their sum, the true $\Delta V$. Bar 4 is
@@ -232,7 +232,7 @@ $V_{\text{stress}} - V_{\text{relax}}$ is a quadratic approximation. Comparing i
 against direct evaluation of the perturbed potential at the relaxed mutant
 structure, over a 50-fold range of mutation sizes:
 
-![error order](figs/fig2_order.png)
+![error order](figures/fig2_order.png)
 
 **Left:** the decomposition and the exact energy over a 50-fold range in
 $\sigma$; both scale as $\sigma^{2}$ and the points sit on the line.
@@ -256,7 +256,7 @@ test (`test_path_rebuild.R`) is on a synthetic 40-node helix, and its companion
 of them are easy to confuse. They differ *only* in what happens to the Hessian
 $\mathbf K$.
 
-![three models](figs/fig6_three_models.png)
+![three models](figures/fig6_three_models.png)
 
 | | what happens to the network | what happens to $\mathbf K$ | modes change? |
 |---|---|---|---|
@@ -294,7 +294,7 @@ random mutations from the wild type the smallest $\Delta V$ was $+0.055$; from a
 state already 30 substitutions along, $+0.023$ over 400 draws
 (`fig3_dv_positive.R`). Not one was negative.
 
-![dV always positive](figs/fig3_dv_positive.png)
+![dV always positive](figures/fig3_dv_positive.png)
 
 **Panel (a)** shows the distribution of $\Delta V$ for 400 random mutations,
 starting from two states each 30 substitutions from the founder: a rebuilt
@@ -387,7 +387,7 @@ agrees.
 
 ### What that does to a trajectory
 
-![trajectories](figs/fig4_trajectories.png)
+![trajectories](figures/fig4_trajectories.png)
 
 **Panel (a):** energy accumulated from the founder, for five ways of running the
 same model. Grey is no selection at all. Purple and red are Metropolis on the
@@ -452,7 +452,7 @@ mutant is measured against a *fixed* founder and nothing accumulates. Here the
 rebuild is pure gain: it gives you the changed spectrum that LFENM cannot
 produce at all.
 
-![scanning](figs/fig5_scan.png)
+![scanning](figures/fig5_scan.png)
 
 Run on 2acy chain A (98 residues, 960 contacts at $d_{\max} = 10.5$ Å).
 
@@ -472,7 +472,7 @@ $$R_{ij} \;=\; \big\langle\, \lvert \delta\mathbf r_i \rvert^{2} \,\big\rangle \
 
 — the response *at* site $i$ to mutating site $j$.
 
-![response matrix](figs/fig7_response_matrix.png)
+![response matrix](figures/fig7_response_matrix.png)
 
 Panel (a) is the matrix itself on a log scale: a bright diagonal (a site responds
 most to its own mutation), bands along the contacts, and off-diagonal ridges
@@ -602,7 +602,7 @@ Structure is **exactly additive**, and therefore exactly reversible. Verified on
 
 ### It works
 
-![catalogue](figs/fig8_catalog.png)
+![catalogue](figures/fig8_catalog.png)
 
 **(a)** The distribution of $\Delta V$ between states of a site, over 4400
 ordered pairs at 40 sites. It is symmetric about zero by antisymmetry, so the
@@ -779,7 +779,7 @@ $\log(1/\lambda)$, which diverges as $\lambda \to 0$.
 
 With all spectra taken at the true minimum:
 
-![frustration](figs/fig9_frustration.png)
+![frustration](figures/fig9_frustration.png)
 
 **(a)** The Hessians do differ, and the gap grows with accumulated strain — from
 0.6 % at one substitution to 2.7 % at forty. **(b)** But the soft modes barely
@@ -971,52 +971,31 @@ Organised by role — see `README.md` for the full map.
 
 All scripts use the `here` package, so they run from any working directory.
 
-### The Hessian convention
-
-The transverse term is $g_{ij} = l_{ij}/d_{ij} - 1$ paired with the bracket
-$(\mathbf e\mathbf e^{T} - \mathbf I)$. This looks like the opposite of the
-textbook form, and is not: the two sign flips cancel,
-
-$$\left(\tfrac{l}{d}-1\right)\left(\mathbf e\mathbf e^{T}-\mathbf I\right) \;=\; \left(1-\tfrac{l}{d}\right)\left(\mathbf I - \mathbf e\mathbf e^{T}\right)$$
-
-so it agrees with $\partial^2 V/\partial\mathbf r_i\partial\mathbf r_j = -k[\mathbf e\mathbf e^{T} + (1-l/d)(\mathbf I - \mathbf e\mathbf e^{T})]$.
-Checked against a numerical Hessian on strained networks, where the genuinely
-wrong sign is off by $O(1)$.
-
-It defaults to off. A relaxed network has $g = 0$ either way, so this can only
-matter for `keepnet` — which is where §6's argument lives, so it needed checking
-rather than assuming. Measured on a 30-step `keepnet` state (strain energy 15.5,
-$\max|d-l| = 1.27$): the two Hessians differ by 2.3 %, the ten softest
-eigenvalues by 1.1 %, and $\Delta V$ over 150 mutations is unchanged (means
-0.5688 vs 0.5686, correlation 1.00000). Harmless here, and measured rather than
-asserted (`check_frustrated.R`).
-
-### Files
+Individual scripts, where the folder name is not enough:
 
 | file | what it is |
 |---|---|
-| `enm_core.R` | the ENM itself: potential, force, Hessian, normal modes, relaxed fit |
-| `sclfenm.R` | the model — state, `mutate()`, `state_vmin()`, `state_req()`, structure and motion comparisons |
-| `applications.R` | `scan_sites()` and `run_trajectory()` |
-| `validate.R` | the five checks in the table above |
-| `test_can_fail.R` | deliberate sabotage; confirms the checks detect it |
-| `fig1…fig9_*.R` | the nine figures, each self-contained |
-| `figs/` | the rendered figures |
-| `test_*.R`, `diag_*.R` | the individual numerical experiments behind §4 and §6 |
-| `response_influence.R` | the response matrix, computed analytically, and its marginals |
-| `penm_catalog.R` | the catalogue model, built on penm's own functions |
-| `test_identities.R` | the four exact identities the catalogue rests on |
-| `test_stationary.R` | convergence from both directions, detailed balance, reversibility |
-| `test_site_additivity.R` | how well the catalogue energy sums across sites |
-| `test_catalog_honest.R` | catalogue vs exact $\Delta V$ for single moves on an evolved background |
-| `test_exact_boltzmann.R` | does the chain sample $e^{-\nu V}$ for the *exact* $V$? |
-| `test_background_final.R` | background-independence for both models, one protocol |
-| `test_background2.R`, `test_background3.R` | background-independence, and that its error is the cross term |
-| `frustration.R`, `run_frustration*.R` | with vs without frustration; includes `relax_to_min()` |
-| `run_which_K.R` | $\mathbf K_{wt}$ vs $\mathbf K_{mut}$ for the response |
-| `test_penm_sclfenm*.R` | what this exploration says about penm's own `sclfenm` (§11) |
-| `test_two_impls.R` | that the reimplementation and penm agree to machine precision |
-| `check_req.R`, `check_req2.R` | checks that the stored structure really is $\mathbf r^{e}$, and how much $V$ is off when it is not |
+| `R/enm_core.R` | the ENM itself: potential, force, Hessian, normal modes, relaxed fit |
+| `R/sclfenm.R` | the model — state, `mutate()`, `state_vmin()`, `state_req()`, structure and motion comparisons |
+| `R/applications.R` | `scan_sites()` and `run_trajectory()` |
+| `R/penm_catalog.R` | the catalogue model, built on penm's own functions |
+| `R/frustration.R` | with vs without frustration; includes `relax_to_min()` |
+| `checks/validate.R` | the five checks in the table above |
+| `checks/test_can_fail.R` | deliberate sabotage; confirms the checks detect it |
+| `checks/test_identities.R` | the four exact identities the catalogue rests on |
+| `checks/test_stationary.R` | convergence from both directions, detailed balance, reversibility |
+| `checks/test_two_impls.R` | that the reimplementation and penm agree to machine precision |
+| `figures/fig1…fig9_*.R` | the nine figures, each self-contained, beside the `.png` each produces |
+| `analyses/response_influence.R` | the response matrix, computed analytically, and its marginals |
+| `analyses/test_site_additivity.R` | how well the catalogue energy sums across sites |
+| `analyses/test_catalog_honest.R` | catalogue vs exact $\Delta V$ for single moves on an evolved background |
+| `analyses/test_exact_boltzmann.R` | does the chain sample $e^{-\nu V}$ for the *exact* $V$? |
+| `analyses/test_background_final.R` | background-independence for both models, one protocol |
+| `analyses/test_background2.R`, `test_background3.R` | background-independence, and that its error is the cross term |
+| `analyses/run_frustration*.R` | the frustration numbers of §9 |
+| `analyses/run_which_K.R` | $\mathbf K_{wt}$ vs $\mathbf K_{mut}$ for the response |
+| `analyses/test_penm_sclfenm*.R` | what this exploration says about penm's own `sclfenm` (§11) |
+| `analyses/check_req.R`, `check_req2.R` | checks that the stored structure really is $\mathbf r^{e}$, and how much $V$ is off when it is not |
 
 ---
 

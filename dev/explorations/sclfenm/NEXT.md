@@ -11,8 +11,8 @@ State as of 2026-08-21. Read this first if resuming.
 | **`MODEL.md`** | the report — 14 sections, 9 figures. Also as `MODEL.html`. |
 | **`REVIEW-LOG.md`** | errors found and fixed, who caught each, which checks can fail, why it took as long as it did. Also HTML. |
 | `NEXT.md` | this file |
-| `figs/` | the nine figures |
-| `*.R` | ~60 scripts; the report's §13 table says which produces what |
+| `figures/` | the nine figures, each beside the script that produces it |
+| `*.R` | ~60 scripts under `R/`, `checks/`, `analyses/`; the report's §13 table says which produces what |
 
 Lives in `penm/dev/explorations/sclfenm/`. `dev/` is tracked in git and
 `.Rbuildignore`d, so this is version-controlled but stays out of the package

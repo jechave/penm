@@ -16,6 +16,21 @@ trajectories fail, how to fix them, and what frustration actually changes.
 
 Each also as `.html` (MathJax) and `.pdf` (printable).
 
+## The theory document this builds on
+
+Julian's 2017 Dresden theory notes, with comments added against `MODEL.md` and
+the codebase, live outside this folder:
+
+```
+dev/docs/theory/dresden2017/dresden2017-penm-theory-annotated.tex   (and .pdf)
+```
+
+The body is Julian's; every addition is wrapped in `\claude{}` (theory, teal,
+tagged **[T]**) or `\claudecode{}` (what the package actually does, plum, tagged
+**[C]**). Strip them with `grep -v '\\claude'`, or hide them by redefining both
+macros to `{}`. `dresden2017-penm-theory.tex` beside it is the unannotated
+original.
+
 ## Findings in one paragraph
 
 Refitting the network to the mutant structure erases the strain, so the energy
