@@ -1,4 +1,4 @@
-# Where to pick this up
+# SC-LFENM: where to pick this up
 
 State as of 2026-08-21. Read this first if resuming.
 
@@ -8,7 +8,7 @@ State as of 2026-08-21. Read this first if resuming.
 
 | file | what |
 |---|---|
-| **`MODEL.md`** | the report — 14 sections, 9 figures. Also as `MODEL.html`. |
+| **`MODEL.md`** | the report — 14 sections, 9 figures. Also as `MODEL.html` and `MODEL.pdf`. |
 | **`REVIEW-LOG.md`** | errors found and fixed, who caught each, which checks can fail, why it took as long as it did. Also HTML. |
 | `NEXT.md` | this file |
 | `figures/` | the nine figures, each beside the script that produces it |

@@ -14,7 +14,14 @@ trajectories fail, how to fix them, and what frustration actually changes.
 | `REVIEW-LOG.md` | The 18 errors found while writing it, who caught each, and which checks can actually fail. |
 | `NEXT.md` | Where to pick this up. Read first if resuming. |
 
-Each also as `.html` (MathJax) and `.pdf` (printable).
+Each also as `.html` (MathJax), which is regenerable and untracked;
+`MODEL.pdf` additionally, for printing, and it *is* tracked. Rebuild either
+with
+
+```sh
+pandoc MODEL.md -s --mathjax -o MODEL.html
+pandoc MODEL.md -s --pdf-engine=xelatex -o MODEL.pdf
+```
 
 ## The theory document this builds on
 
