@@ -11,21 +11,21 @@
 \newcommand{\comment}[1]{\emph{\textcolor{red} {#1}}}
 
 %%% ---------------------------------------------------------------------
-%%% Annotations added 2026-08-20. The body text below is unmodified.
-%%% Every addition is wrapped in \claude{} (theory) or \claudecode{}
-%%% (implementation), so all of it can be removed with
-%%%     grep -v '\\claude' , or hidden by redefining both to {}:
-%%%     \renewcommand{\claude}[1]{}  \renewcommand{\claudecode}[1]{}
+%%% Annotations added 2026-08-20, extended 2026-08-24. The body text below
+%%% is unmodified. Every addition is wrapped in \claude{} (theory) or
+%%% \claudecode{} (implementation). To hide all of them, add after the two
+%%% definitions below:
+%%%     \long\def\claude#1{}  \long\def\claudecode#1{}
+%%% (\renewcommand will not work: these are \def, and must stay \long
+%%% because some annotations contain paragraph breaks. For the same reason
+%%% a line-wise `grep -v' no longer strips them cleanly.)
 %%% ---------------------------------------------------------------------
 \usepackage[dvipsnames]{xcolor}
-\newcommand{\claude}[1]{%
-  \par\smallskip\noindent
-  \textcolor{TealBlue}{\sffamily\small\textbf{[T]}~#1}%
-  \par\smallskip}
-\newcommand{\claudecode}[1]{%
-  \par\smallskip\noindent
-  \textcolor{Plum}{\sffamily\small\textbf{[C]}~#1}%
-  \par\smallskip}
+% \long so an annotation may contain paragraph breaks.
+\long\def\claude#1{\par\smallskip\noindent
+  \begingroup\color{TealBlue}\sffamily\small\textbf{[T]}~#1\par\endgroup\smallskip}
+\long\def\claudecode#1{\par\smallskip\noindent
+  \begingroup\color{Plum}\sffamily\small\textbf{[C]}~#1\par\endgroup\smallskip}
 
 
 % Potential parameters
@@ -76,7 +76,9 @@
 \maketitle
 
 \claude{\textbf{About this copy.} The body text is Julian Echave's 2017
-document, unmodified. Annotations added 2026-08-20 are marked
+document, unmodified. Annotations added 2026-08-20, extended 2026-08-24 with
+the results of the SC-LFENM exploration
+(\texttt{dev/explorations/sclfenm/MODEL.md}), are marked
 \textbf{[T]} (theory: corrections, settled questions, open ones) and
 \textbf{[C]} (correspondence with the \texttt{penm} package). They are
 suggestions for the author to accept or reject, not edits. To remove them all,
@@ -231,11 +233,22 @@ underdetermination of $\{\lij\}$ is discussed below.}
 
 \claudecode{\texttt{calculate\_enm\_kmat()} implements
 $\texttt{gij} = \lij/\dij - 1$ with the bracket $(\eij\eij^T-\mathbf{I})$ ---
-i.e.\ the second form, the one verified above. So the implementation is
-consistent with the correct Hessian, and the \texttt{\#WARNING} the package
-carries about this sign can be retired. It is never exercised, however:
-\texttt{set\_enm()} has \texttt{stopifnot(!frustrated)}, so only the
-$\texttt{gij}=0$ branch ever runs.}
+i.e.\ the second form. Checked directly: calling it with
+\texttt{frustrated = TRUE} on a frustrated 6-node network reproduces a
+central-difference Hessian of the same potential to $1.6\times10^{-5}$ against a
+matrix scale of $4.4$. So the implementation agrees with the form verified
+above.
+
+\textbf{This does not clear the package's \texttt{\#WARNING}s, which are about
+something else.} Both (\texttt{set\_enm()} in \texttt{R/enm.R}, and
+\texttt{mutate\_graph()} in \texttt{R/penm.R}) say the doubt is whether
+\texttt{mut\_graph} is \emph{consistent with the $\kmat$ calculation} --- i.e.\
+whether the mutant's $\{\lij\}$ and its Hessian are built from the same network
+--- not whether the sign is right. A third warns that the \texttt{lij} copy is
+``true only if edges are ordered''. Those are open questions about the mutant
+path; the check above says nothing about them. The frustrated branch is in any
+case never exercised: \texttt{set\_enm()} has
+\texttt{stopifnot(!frustrated)}, so only the $\texttt{gij}=0$ branch ever runs.}
 
 
 \subsection{Equilibrium Conformation}
@@ -452,6 +465,18 @@ f_{ij} = k_{ij} \dlij
 
 \item \todo{Self-consistent calculation of $\kmat$ \ldots}
 
+\claude{\textbf{$\kmat_{wt}$ or $\kmat_{mut}$ for $\delta\rvector$? --- settled.}
+A 2020 note (\texttt{NOTES.Rmd}, 2020-05-14) asks which Hessian is rigorously
+the right one for computing the mutant's displacement, and left it open. It is
+cheap to test, and \texttt{MODEL.md} \S10 does: compare the one-step
+$\delta\rvector = \cmat_{wt}\mathbf{f}$ against relaxing all the way to the true
+minimum of the mutant's own potential. Over 8 random sites at $\sigma = 0.3$ the
+\emph{direction} agrees to $\cos \in [0.9946, 0.9999]$ and only the
+\emph{magnitude} differs, by $1.3$--$10.4\,\%$; the error grows linearly with
+mutation size ($1.2\,\%$ at $\sigma=0.1$, $9.4\,\%$ at $\sigma=0.8$), exactly as
+an $O(\dlij^2)$ correction should. So $\kmat_{wt}$ is the right practical
+choice: the self-consistent response points the same way and differs only in
+length, by an amount controlled by $\sigma$.}
 
 \end{itemize}
 
@@ -476,6 +501,39 @@ $\kmat$ and re-diagonalises. Both compute $\delta\rvector$ from the wild type,
 so the two models give \emph{identical} mutant structures and differ only in the
 Hessian --- hence all structure-based comparisons agree between them and all
 motion-based ones vanish identically under \texttt{lfenm}.}
+
+\claudecode{\textbf{A sign convention to state explicitly.} Equation
+(\ref{eq:fij}) gives $f_{ij} = \kij\dlij$; the package
+(\texttt{R/penm.R}) computes \texttt{fij <- -kij * dlij}, commented ``force on
+$i$ in the direction from $i$ to $j$''. The magnitudes agree and the relaxed
+structures agree, so this is a statement about which node the force acts on and
+along which direction $\eij$ points, not a discrepancy in the physics. It is
+worth fixing the convention in the text, because the two differ by a sign in
+every intermediate quantity and the reader of both will otherwise stop to
+re-derive it.}
+
+\claude{\textbf{The three \texttt{todo} items above are answered in
+\texttt{MODEL.md} (2026-08-21).} Briefly, and with the section that carries the
+argument:
+
+\emph{Quadratic form, and the mutant's equilibrium structure} (\S\S2--3): with
+$\mathbf{f}$ the forces of (\ref{eq:fij}), the mutant relaxes to
+$\delta\rvector = \cmat\mathbf{f}$, and the energy of the mutation splits as
+$\Delta V = V_{\mathrm{stress}} - V_{\mathrm{relax}}$, where
+$V_{\mathrm{stress}} = \frac{1}{2}\sum \kij\dlij^2$ is paid at fixed structure
+and $V_{\mathrm{relax}} = \frac{1}{2}\mathbf{f}^T\cmat\mathbf{f}$ is recovered by
+relaxing. Verified exact to $O(\dlij^3)$ over a 50-fold range of mutation sizes.
+
+\emph{Self-consistent $\kmat$} (\S\S3, 11): this is the substantive one. If the
+network is refit to the mutant structure --- $\lij \to \dijEq$ of the mutant, the
+``SC-LFENM'' of that report --- the refit \emph{erases the strain}, so the energy
+must be carried separately in a scalar offset or a mutation genuinely costing
+$0.6$ reports $0$. That works for single-mutant scanning. It fails for
+trajectories, for a structural reason: re-referencing at every step makes the
+current state the zero of energy, so every move is uphill and the walk is
+absorbing (proved --- the relaxation operator is an orthogonal projector). The
+fix is to reference every mutation to the founder rather than to the current
+state.}
 
 
 

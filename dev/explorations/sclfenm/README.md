@@ -27,9 +27,16 @@ dev/docs/theory/dresden2017/dresden2017-penm-theory-annotated.tex   (and .pdf)
 
 The body is Julian's; every addition is wrapped in `\claude{}` (theory, teal,
 tagged **[T]**) or `\claudecode{}` (what the package actually does, plum, tagged
-**[C]**). Strip them with `grep -v '\\claude'`, or hide them by redefining both
-macros to `{}`. `dresden2017-penm-theory.tex` beside it is the unannotated
-original.
+**[C]**). To hide them, add `\long\def\claude#1{} \long\def\claudecode#1{}`
+after the definitions in the preamble — 21 pages with annotations, 17 without.
+`dresden2017-penm-theory.tex` beside it is the unannotated original.
+
+What the annotations cover: the Hessian sign (settled — the second of the two
+boxed forms is right, and it is what `calculate_enm_kmat()` implements), the
+trace argument, frustration and the admissible $\{l_{ij}\}$, the three `todo`
+items of §4 (answered by `MODEL.md` §§2–3 and §11), $\mathbf{K}_{wt}$ vs
+$\mathbf{K}_{mut}$ (settled, `MODEL.md` §10), and the 210-vs-220 count in the
+appendix.
 
 ## Findings in one paragraph
 
