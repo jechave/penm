@@ -57,11 +57,17 @@ ok("mutant IS strained (else nothing is being tested)",
    klfenm_strain(mu)$max_abs > 1e-3,
    sprintf("max|d-l| = %.4f", klfenm_strain(mu)$max_abs))
 
-cat("\n== 3. dV splits exactly, at ANY reference ==\n")
-## dV(ref->mut) = dV_stress(ref->mut) + dV_relax(ref->mut), by construction and
-## with no expansion anywhere. The point of the check is that it holds at a
-## STRAINED reference too, where V_ref(r_ref) != 0 -- the case in which writing
-## these as "V_stress"/"V_relax" silently drops the reference's own energy.
+cat("\n== 3. The reference's own energy is not silently dropped ==\n")
+## NOT "the split is exact": stress + relax = min telescopes --
+##   [Vm(Rref) - Vref(Rref)] + [Vm(Rm) - Vm(Rref)] = Vm(Rm) - Vref(Rref)
+## -- so it holds for any three numbers of that form and verifies nothing. It is
+## computed below only to confirm the implementations match their definitions.
+##
+## The assertion with content is the last one: V_mut(r_ref), which is what the
+## sloppy notation "V_stress" invites you to write, equals dV_stress ONLY at a
+## relaxed reference. At a strained one they differ by exactly V_ref -- measured
+## sevenfold at 15 substitutions. That can fail, and would if the reference's
+## energy were being dropped.
 
 check_split <- function(ref, label) {
   set.seed(7)
@@ -76,7 +82,8 @@ check_split <- function(ref, label) {
 }
 
 a <- check_split(wt, "relaxed reference")
-ok("dV_stress + dV_relax == dV_min", a$gap < 1e-12, sprintf("gap = %.2e", a$gap))
+ok("implementations match their definitions (telescoping, cannot fail)",
+   a$gap < 1e-12, sprintf("gap = %.2e", a$gap))
 ok("dV_relax <= 0 (relaxation returns energy)", a$relax <= 1e-12,
    sprintf("%.4f", a$relax))
 
@@ -84,7 +91,7 @@ ok("dV_relax <= 0 (relaxation returns energy)", a$relax <= 1e-12,
 set.seed(31); ref2 <- wt
 for (s in 1:15) ref2 <- klfenm_mutate_site(ref2, sample(N, 1), sigma = 0.3, k_update = TRUE)
 b <- check_split(ref2, "strained reference")
-ok("dV_stress + dV_relax == dV_min (strained ref)", b$gap < 1e-12,
+ok("same at a strained reference (also cannot fail)", b$gap < 1e-12,
    sprintf("gap = %.2e", b$gap))
 ok("dV_relax <= 0 (strained ref)", b$relax <= 1e-12, sprintf("%.4f", b$relax))
 

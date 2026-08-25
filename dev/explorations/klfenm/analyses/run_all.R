@@ -132,10 +132,12 @@ compare_one <- function(st, beta = BETA, nmodes = 20) {
     k_gap_topo  = max(abs(K_g0 - K_rb)),
     k_gap_full  = max(abs(K_fr - K_rb)),
     k_scale     = max(abs(K_fr)),
-    ## Frobenius norms: on the MATRIX the decomposition is exact
-    ## (K_fr - K_g0) + (K_g0 - K_rb) = (K_fr - K_rb), so these are the
-    ## honest way to weigh the two causes against each other. Whether they
-    ## add in quadrature says whether the causes are independent.
+    ## Frobenius norms of the two steps. That they sum to the total is
+    ## trivial -- A-B plus B-C is A-C for any matrices at all, and checking it
+    ## verifies nothing. What is NOT trivial, and is what licenses comparing
+    ## the two norms, is whether they add in QUADRATURE: that says the two
+    ## perturbations are near-orthogonal rather than one being largely a
+    ## re-description of the other. Measured: within 0.34%.
     fro_cross = norm(K_fr - K_g0, "F"),
     fro_topo  = norm(K_g0 - K_rb, "F"),
     fro_full  = norm(K_fr - K_rb, "F"),

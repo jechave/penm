@@ -44,8 +44,12 @@ for (nm in c("wild type", "strained state")) {
      sprintf("n_zero = %d, lowest = %+.2e", sp$n_zero, min(sp$raw_value)))
 }
 
-cat("\n== 9. The three causes are separable ==\n")
-## full rebuild should be accounted for by cross-term + topology.
+cat("\n== 9. Both causes of the rebuild difference are live ==\n")
+## NOT "the decomposition is exact" -- (A-B)+(B-C) = A-C holds for any matrices
+## and testing it verifies nothing. What must be checked is that each of the two
+## steps is a real, non-empty change: the rebuild really is relaxed (so the
+## transverse step does something) and the active set really does move (so the
+## topology step does).
 rebuild_at <- function(s) { r <- s; r$l <- pair_dist(s$R, s$pr); refresh_k(r) }
 rb <- rebuild_at(st)
 K_rb <- klfenm_kmat(rb, frustrated = TRUE)

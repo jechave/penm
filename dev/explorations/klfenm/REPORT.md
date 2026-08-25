@@ -300,22 +300,34 @@ gains and losses are balanced — it rewires rather than erodes.
 
 ## 6. Refitting a strained structure
 
-**Question.** Take a strained state, refit an ENM to its coordinates the way
-everyone does, and ask how different the resulting dynamics is.
+**Question.** A trajectory leaves you with a structure whose springs are
+strained. If you now do what everyone does — throw away the rest lengths, refit
+$l_{ij} = d_{ij}$ to the coordinates, diagonalise — do you get the same motions?
+
+**The two models.** Both live at the **same coordinates** $\mathbf r^e$; they
+differ only in what they remember about how the structure got there.
+
+- **Frustrated**: the state's real parameters. Its springs are not at their rest
+  lengths, so $g_{ij} \ne 0$ and the transverse term survives in $\mathbf K$.
+  This is the truth, within the model.
+- **Rebuilt**: forget the parameters and fit fresh springs to the coordinates.
+  Then $l_{ij} = d_{ij}$ by construction, so $g_{ij} = 0$ and the transverse term
+  vanishes. Its contact map is also re-derived from the coordinates rather than
+  inherited. This is what an ENM practitioner does with a mutant structure.
+
+The difference between them *is* the frustration the standard construction
+discards. Everything below measures that difference.
 
 **What I did.** Three independent neutral walks of 60 substitutions (seeds
-501–503), saving every 10 — **18 states**. At each, two models built **at the
-same coordinates**:
+501–503), saving the state every 10 — **18 states**. At each state, build both
+models and compare their RMSF profiles, their 20 softest modes, and their
+entropies.
 
-| | rest lengths | active set | transverse term |
-|---|---|---|---|
-| **frustrated** | the state's own $l_{ij}$ | from $k_{ij}(l_{ij})$ | $g_{ij}\ne0$ |
-| **rebuilt** | reset to $d_{ij}$ here | re-derived from the structure | $g_{ij}=0$ |
-
-The rebuilt model uses only the coordinates: it is the standard construction.
-Both were verified at a true minimum with exactly six zero modes before anything
-was measured — off a stationary point the frustrated Hessian acquires spurious
-near-zero and negative eigenvalues, and RMSF $\sim 1/\lambda$ then diverges.
+One precaution matters. Both models must sit at a true minimum before any
+spectrum is taken: off a stationary point the frustrated Hessian grows spurious
+near-zero and negative eigenvalues, and since RMSF $\sim 1/\lambda$ that ruins
+every number. Verified for all 18 states — exactly six zero modes, none
+negative.
 
 ![](figures/fig5_frustration_rebuild.png)
 
@@ -328,7 +340,8 @@ relative RMSF error over the 98 sites. **(b)** Overlap of the least-preserved
 mode among the 20 softest. **(c)** That worst-mode overlap (red) beside RMSIP
 over all 20 (blue), full rebuild only.
 
-**Result.**
+**Result.** The rebuild gets the *shape* of the fluctuations right and the
+*details* wrong.
 
 | | median over 18 states | range |
 |---|---|---|
@@ -355,11 +368,19 @@ of the 20 softest modes with its assigned partner; dashed line is RMSIP $=0.960$
 The panel shows what a subspace score averages over. It is **not** evidence that
 the rebuild destroys modes — see §6.2.
 
-**What it means, provisionally.** Aggregate measures survive well; site-resolved
-ones are perturbed by tens of per cent; the entropy moves by several units. Two
-questions must be answered before any of that can be interpreted: *which*
-difference between the models causes it (§6.1), and whether an error of this
-size is even large (§6.2).
+**What it means so far.** Whole-protein measures survive the refit well — the
+RMSF profile correlates at 0.98, the soft-mode subspace overlaps at 0.97.
+Anything site-by-site does not: the worst site is off by 23 %, and the entropy
+shifts by several units.
+
+That is not yet an answer, for two reasons, and the rest of §6 deals with them
+in turn.
+
+- The rebuild changed *two* things at once — it dropped the transverse term
+  **and** re-derived the contact map. Only the first is frustration. **§6.1**
+  separates them.
+- An error of 23 % means nothing without knowing what a *typical* perturbation
+  of this size would do to this spectrum. **§6.2** measures that.
 
 ---
 
@@ -369,36 +390,51 @@ size is even large (§6.2).
 term *and* re-derives the active set. Only the first is "neglecting frustration".
 Which one does the damage?
 
-**What I did.** Split the difference into the two steps and measure each. On the
-Hessian the split is exact by construction,
+**What I did.** Walk from the frustrated model to the rebuilt one in two steps
+instead of one, and measure how far each step moves the Hessian:
 
-$$(\mathbf K_{\text{frust}} - \mathbf K_{g=0}) + (\mathbf K_{g=0} - \mathbf K_{\text{rebuilt}}) = \mathbf K_{\text{frust}} - \mathbf K_{\text{rebuilt}}$$
+1. **Drop the transverse term**, keeping the contact map fixed. This is
+   neglecting frustration and nothing else.
+2. **Re-derive the contact map** from the coordinates, with the transverse term
+   already gone. This is the bookkeeping change, and has nothing to do with
+   frustration.
 
-verified to $2.2\times10^{-16}$, so Frobenius norms of the two pieces compare
-fairly. Then — suspecting the answer might depend on the ANM's hard cutoff — I
-repeated the whole decomposition with $k_{ij}(l_{ij})$ replaced by a sigmoid of
-width $w$,
+Size is measured as the Frobenius norm of the change in $\mathbf K$.
+
+**Result, first pass.** Step 2 is much the larger:
+
+| | (1) frustration | (2) contact map | both | $\sqrt{(1)^2+(2)^2}$ |
+|---|---|---|---|---|
+| median over 18 states | 2.53 | **15.09** | 15.31 | 15.38 |
+
+The two add in quadrature to within 0.34 %, which is the part that could have
+come out otherwise: it says the two changes push $\mathbf K$ in nearly
+perpendicular directions, so neither is a disguised version of the other and
+comparing their sizes is meaningful. On that basis, **re-deriving the contact map
+does 5.6 times as much as neglecting frustration.**
+
+That was my conclusion, and it is wrong — or rather, it is a fact about the ANM
+and not about the protein. Here is why.
+
+**Every contact the two models disagree about is a borderline contact.** Take
+one state (seed 501, 40 substitutions). The two contact maps differ on 59 pairs.
+Every single one sits within 1 Å of the 10.5 Å cutoff, 90 % within half an
+ångström: the gained ones are just inside, by 0.21 Å typically, and the lost ones
+just outside, by 0.09 Å. Between them they hold 5.9 % of the structure's energy.
+
+These are the weakest springs in the protein, and the ANM step function counts
+each of them at **full strength** $k_{ij} = 1$. A pair at 10.4999 Å enters
+$\mathbf K$ as heavily as a tightly packed core contact. So the size of step 2
+is set by how many marginal springs happen to flip, which is a property of using
+a step function — not a physical statement about contact maps.
+
+**Result, second pass.** If that diagnosis is right, softening the cutoff should
+shrink step 2 and leave step 1 alone. Replace the step by a sigmoid of width $w$,
 
 $$k_{ij}(l_{ij}) = \big[1 + \exp\!\big((l_{ij} - d_{\max})/w\big)\big]^{-1}$$
 
-applied to **both** models, so they still differ only in $l_{ij}$ and what
-follows from it.
-
-**Result.** Under the ANM step, the active-set change is much the larger:
-
-| | transverse | active set | full | $\sqrt{\text{tr.}^2+\text{a.s.}^2}$ |
-|---|---|---|---|---|
-| median | 2.53 | **15.09** | 15.31 | 15.38 |
-
-The two add in quadrature to within 0.34 %, so they are nearly orthogonal
-perturbations, and the ratio is 5.6.
-
-But **every edge on which the two active sets disagree is a marginal contact**.
-At seed 501/40, of 59 differing edges: gained pairs lie inside the cutoff by a
-median of 0.21 Å, lost pairs outside it by 0.09 Å, **100 % lie within 1.0 Å of
-$d_{\max}$**, 90 % within 0.5 Å, and together they hold 5.9 % of the state's
-energy. The step function counts each at full strength $k_{ij}=1$, so a pair at
-10.4999 Å enters the Hessian as heavily as a core contact.
+so a borderline spring enters with a small weight instead of a full one, and
+apply it to **both** models so nothing else changes. It does exactly that.
 
 ![](figures/fig7_cutoff_sweep.png)
 
@@ -430,15 +466,23 @@ claim that one dominates is a claim about the kernel.
 
 ### 6.2 Is the error large? A null control
 
-**Question.** "The worst site is off by 23 %" means nothing without a scale. Is
-that a lot, for a perturbation of this size, in a spectrum this dense?
+**Question.** §6 says the worst site's RMSF is off by 23 %. Is that a lot? The
+number has no meaning on its own: this protein has 288 non-rigid modes packed
+into a narrow range, and *any* change to $\mathbf K$ of comparable size will move
+things around. What is needed is a yardstick — how much would a perturbation of
+the same magnitude, but of no particular kind, disturb the same quantities?
 
-**What I did.** Built a perturbation matched in magnitude and null in kind:
-multiply the state's own spring constants by $1 + s\,z$, with $z$ a fixed vector
-of standard normals and $s$ tuned by bisection until $\max|\Delta\mathbf K|$
-matches the rebuild's to within 5 %. It changes no rest length, adds no
-frustration, and leaves the active set intact (verified for all 27 draws). Three
-null draws per state, 9 states.
+**What I did.** Build that yardstick. Take the state's own network and jitter its
+spring constants at random: multiply each $k_{ij}$ by a random factor, tuning the
+spread until the resulting change in $\mathbf K$ is the same size as the
+rebuild's (matched on $\max|\Delta\mathbf K|$ to within 5 %, by bisection).
+
+The point is what this jitter *does not* do. It changes no rest length, so it
+adds and removes no frustration. It leaves the contact map untouched (checked on
+all 27 draws). It is a perturbation of the same magnitude as the rebuild and of
+no physical significance whatever — so whatever damage it does is the baseline
+that the rebuild's damage has to be judged against. Three jitters per state,
+9 states.
 
 ![](figures/fig8_null_control.png)
 
@@ -456,17 +500,21 @@ block-3 overlap, RMSIP. **(b)** Worst-site RMSF error, log axis.
 | worst-site RMSF error | 22.5 % | **698 %** |
 | max eigenvalue difference | 0.221 | 0.997 |
 
-**What it means.** A perturbation of the same size but arbitrary direction is
-some thirty times more destructive. **The rebuild is a remarkably gentle
-perturbation for its magnitude** — not merely "not too bad", but far better than
-chance.
+**What it means.** The random jitter is worse on every measure, and on the
+worst-site RMSF it is worse by a factor of thirty — 698 % against the rebuild's
+22.5 %. So the honest reading of §6 inverts: **refitting is not a mildly damaging
+approximation, it is a remarkably faithful one.** Of all the ways you could
+disturb $\mathbf K$ by that much, discarding the frustration is among the least
+harmful.
 
-This also disposes of the individual mode overlaps. The rebuild shifts
-eigenvalues by ~15 % while adjacent levels are separated by ~6 %; a perturbation
-larger than the level spacing mixes eigenvectors within near-degenerate groups,
-and which vector is called "mode 10" becomes bookkeeping. The null confirms it:
-*any* perturbation of this size scrambles individual modes, and worse. Nothing
-mode-resolved in §6 is evidence about frustration.
+It also settles what to make of the low single-mode overlaps in figure 6. The
+rebuild shifts eigenvalues by about 15 %, while neighbouring eigenvalues in that
+part of the spectrum are only about 6 % apart. When a perturbation exceeds the
+level spacing, eigenvectors mix within near-degenerate groups and which vector
+gets called "mode 10" stops being physics and starts being bookkeeping. The
+jitter confirms it: it drives the worst overlap to 0.001, essentially total
+scrambling, while barely touching RMSIP. **So nothing mode-by-mode in §6 is
+evidence about frustration**, and I should not have read it that way.
 
 ---
 
