@@ -57,41 +57,45 @@ ok("mutant IS strained (else nothing is being tested)",
    klf_strain(mu)$max_abs > 1e-3,
    sprintf("max|d-l| = %.4f", klf_strain(mu)$max_abs))
 
-cat("\n== 3. Exact V vs the linear-response two-term formula ==\n")
-## They must agree as sigma -> 0 and DIVERGE as sigma grows. If they agree
-## everywhere, the minimiser is not doing anything the LRA could not.
+cat("\n== 3. The minimiser does what an expansion cannot ==\n")
+## This is a DIAGNOSTIC OF THE MINIMISER, not a property of the model. The whole
+## point of this exploration is to avoid expansions, so the only reason an LRA
+## expression appears here is to demonstrate that the exact minimisation is
+## genuinely doing something the expansion cannot -- if the two agreed
+## everywhere, klf_minimise() would be redundant.
 ##
-## k_update = FALSE here ON PURPOSE. With k(l) live, a perturbation that pushes
-## l across d_max deletes a spring and its stored strain, so exact V and the
-## two-term formula differ by a whole contact -- a real effect of the model, but
-## NOT the truncation error this check is about. Measured: at sigma = 0.02 that
-## already happens (a pair at l = 10.4999 -> 10.5113), giving a 26% gap that has
-## nothing to do with linear response. Freezing k isolates the truncation.
+## V_stress is the MUTANT Hamiltonian evaluated at the wild-type structure, so
+## it must use the mutant's spring constants k(l + dl). Using the wild type's k
+## is the LFENM assumption dk = 0, and it is wrong here by construction: when a
+## perturbation pushes l past d_max the spring ceases to exist, k^mut = 0, and
+## its term must vanish. (Getting this wrong produced a spurious 26% gap that
+## looked like truncation error and was not.)
 C_wt <- klf_cmat(klf_hessian(wt, frustrated = FALSE))
-two_term <- function(st0, dl_idx, dl) {
-  ## V_stress - V_relax, with f = -k dl along e, using the WT compliance
+two_term <- function(st0, st_mut, dl_idx, dl) {
   pr <- st0$pr
-  R  <- st0$R
+  R  <- st0$R                       # wild-type structure
+  km <- st_mut$k[dl_idx]            # MUTANT k = k(l + dl), not the wild type's
   D  <- R[, pr$j[dl_idx], drop = FALSE] - R[, pr$i[dl_idx], drop = FALSE]
   d  <- sqrt(colSums(D^2)); E <- sweep(D, 2, d, "/")
   f  <- matrix(0, 3, ncol(R))
-  fij <- -st0$k[dl_idx] * dl
+  fij <- -km * dl
   for (q in seq_along(dl_idx)) {
     f[, pr$i[dl_idx][q]] <- f[, pr$i[dl_idx][q]] + fij[q] * E[, q]
     f[, pr$j[dl_idx][q]] <- f[, pr$j[dl_idx][q]] - fij[q] * E[, q]
   }
-  fv <- as.vector(f)
-  dr <- as.vector(C_wt %*% fv)
-  0.5 * sum(st0$k[dl_idx] * dl^2) - 0.5 * sum(dr * as.vector(klf_hessian(st0, frustrated = FALSE) %*% dr))
+  dr <- as.vector(C_wt %*% as.vector(f))
+  ## curvature also from the mutant's network, evaluated at the wt structure
+  Km <- klf_hessian(st_mut, R = R, frustrated = FALSE)
+  0.5 * sum(km * dl^2) - 0.5 * sum(dr * as.vector(Km %*% dr))
 }
-sel40 <- which((wt$pr$i == 40 | wt$pr$j == 40) & wt$k > 0)
+sel40 <- which((wt$pr$i == 40 | wt$pr$j == 40) & wt$sdij >= 1)
 rel <- sapply(c(0.02, 0.1, 0.4), function(sg) {
   set.seed(7)
   dl <- rnorm(length(sel40), 0, sg)
   s2 <- wt; s2$l[sel40] <- s2$l[sel40] + dl
-  ## k frozen: no contact may break, so the only gap is the LRA truncation
-  s2 <- klf_minimise(s2)
-  100 * abs(klf_v(s2) - two_term(wt, sel40, dl)) / klf_v(s2)
+  s2 <- refresh_k(s2)               # k(l) live, as the model prescribes
+  s2m <- klf_minimise(s2)
+  100 * abs(klf_v(s2m) - two_term(wt, s2, sel40, dl)) / klf_v(s2m)
 })
 cat(sprintf("     sigma 0.02 / 0.10 / 0.40  ->  gap %.3f%% / %.3f%% / %.3f%%\n", rel[1], rel[2], rel[3]))
 ok("exact and LRA agree at small sigma", rel[1] < 0.5, sprintf("%.3f%%", rel[1]))
