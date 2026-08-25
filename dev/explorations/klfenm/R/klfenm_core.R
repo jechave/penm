@@ -230,10 +230,10 @@ klfenm_minimise <- function(st, tol = 1e-8, maxit = 200, frustrated = TRUE,
 ## ever thin, because a switched-off pair would be frozen out of the mutational
 ## process for good. (Measured when it was: 14 broken, 0 formed in 25 mutations.)
 ##
-## `radius` bounds which of the site's pairs are perturbed at all. Perturbing
-## literally all N-1 pairs of a site would let a mutation reach across the whole
-## protein; the default keeps it local, at a distance well beyond the cutoff so
-## that inactive-but-nearby pairs are genuinely in play.
+## `radius` optionally bounds which of the site's pairs are perturbed. The
+## DEFAULT IS Inf -- every pair of the site, so one mutation can reach across the
+## whole protein. A finite radius keeps it local; nothing in the report uses one
+## except one check, which says so.
 klfenm_mutate_site <- function(st, site, sigma = 0.3, k_update = TRUE,
                        sd_min = 1L, radius = Inf, tol = 1e-8, maxit = 200) {
   pr  <- st$pr

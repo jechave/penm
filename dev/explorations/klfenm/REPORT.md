@@ -88,8 +88,9 @@ to 36.3 Å, but 3793 of them are inactive). So if only the 960 active pairs
 carried a rest length, no inactive pair could ever be pulled inside the cutoff,
 and the network could only thin.
 Measured when an early version did exactly that: 25 mutations at random sites
-($\sigma = 0.3$, seed 2024) broke 14 contacts and formed 0. With all pairs
-carrying $l_{ij}$, the same 25 mutations break 14 and form 20.
+($\sigma = 0.3$, seed 2024, $\texttt{radius} = 12$) broke 14 contacts and formed
+0. With all pairs carrying $l_{ij}$, the same 25 mutations break 14 and form 20;
+at the $\texttt{radius} = \infty$ used everywhere else in this report, 12 and 17.
 
 The cost is negligible — on this machine a force evaluation over 4753 pairs takes
 3.9 ms (mean of 20 calls) against 30 ms for one $294\times294$ diagonalisation, and the Hessian stays $3N \times 3N$ because only
@@ -268,8 +269,8 @@ No run stalls. Higher $\nu$ gives a lower final energy and a lower acceptance, a
 the acceptance rule implies. The network ends within 2 % of its starting size
 (960 pairs) in every case: it rewires without collapsing or running away.
 
-Panel (b) plots RMSD from the founder: 0.03 to 0.49 Å at $\nu = 0.5$, 0.04 to
-0.41 Å at $\nu = 4$. Structural drift is only weakly sensitive to selection
+Panel (b) plots RMSD from the founder: 0.028 to a maximum of 0.506 Å at
+$\nu = 0.5$ (ending at 0.494), and 0.039 to 0.414 Å at $\nu = 4$. Structural drift is only weakly sensitive to selection
 strength even though the final energies differ twofold — but 120 substitutions is
 too short to say whether either quantity has reached a stationary level, and
 neither is claimed to have.
@@ -376,36 +377,46 @@ verified to $2.2\times10^{-16}$. In Frobenius norm, over the same 18 states:
 | median | 2.53 | **15.09** | 15.31 | 15.38 |
 | range | 1.36–3.62 | 5.32–18.03 | 5.55–18.40 | — |
 
-The two causes **add in quadrature to within 0.34 %**, so they are very nearly
-orthogonal perturbations of the Hessian, and topology is the larger by a median
-factor of **5.6**. That factor is not an artefact of pooling correlated
-snapshots: taken separately, the three trajectories give median ratios of
-**5.83, 6.35 and 5.06**. The frustration that ENMs neglect does matter,
-but less than the thing nobody thinks of as an approximation at all — that the
-contact map read off a structure is not the contact map the parameters specify.
+The two causes add in quadrature to within 0.30 % (median over the 18 states of
+$|{\text{full}} - \sqrt{\text{transv.}^2+\text{topol.}^2}|/\text{full}$), so they are very nearly orthogonal perturbations of the
+Hessian, and under the ANM step function topology is the larger by a median
+factor of 5.5.
 
-The rebuild changes the active set in **both** directions, and the quoted
-$\Delta$edges is a net figure that hides the traffic. At 60 substitutions:
+### But that factor is a property of the cutoff, not of the protein
 
-| seed | gained | lost | net |
+Every edge on which the two active sets disagree is a **marginal** contact.
+At seed 501 / 40 substitutions, of the 59 differing edges (44 gained, 15 lost):
+
+- gained pairs lie inside the cutoff by a median of 0.21 Å (max 0.65 Å)
+- lost pairs lie outside it by a median of 0.09 Å (max 0.43 Å)
+- **100 % of differing edges are within 1.0 Å of $d_{\max}$**; 90 % within 0.5 Å
+
+The step function counts every one of them at full strength $k_{ij} = 1$, so a
+pair at $d_{ij} = 10.4999$ enters the Hessian exactly as heavily as a core
+contact. Their energetic weight is small by comparison: the springs the rebuild
+discards hold 1.36 of that state's total $V = 23.21$, i.e. 5.9 %.
+
+Softening the cutoff — using the same sigmoid $k_{ij}(l_{ij})$ of §7 on *both*
+sides of the comparison — collapses the effect. Median over the same 18 states:
+
+| cutoff | transverse | topology | ratio |
 |---|---|---|---|
-| 501 | 50 | 23 | +27 |
-| 502 | 51 | 21 | +30 |
-| 503 | 51 | 22 | +29 |
+| step (as above) | 2.86 | 15.80 | **5.52** |
+| sigmoid, $w = 0.25$ | 2.85 | 7.78 | 2.82 |
+| sigmoid, $w = 0.50$ | 2.85 | 5.65 | 2.04 |
+| sigmoid, $w = 1.00$ | 2.86 | 4.08 | **1.45** |
 
-So ~73 pairs change status where the net is +27. Gains outnumber losses about
-2.3 : 1, which is the asymmetry worth explaining: a pair with $l_{ij}$ just above
-the cutoff is inactive, so no spring resists its approach and relaxation can
-carry it to $d_{ij} < d_{\max}$, whereupon the rebuild counts it. Active pairs
-are held nearer their rest lengths — but *not* immovably: the 66 lost pairs are
-active springs stretched past the cutoff by their neighbours ($l_{ij} \in
-[9.97, 10.49]$ but $d_{ij} \in [10.52, 11.12]$ at seed 501). An earlier draft of
-this report said active pairs "cannot drift in the same way"; that is wrong. (An earlier draft quoted a compressed-vs-stretched count of "318 to 228" in
-support of this mechanism. That number is in no script, could not be reproduced,
-and in any case the compressed/stretched imbalance is global rather than a
-cutoff-region effect — it is concentrated in the inactive pairs, while the
-active set is nearly balanced. It has been withdrawn; the gained/lost table
-above is the measurement that stands.)
+The transverse term is untouched (2.86 throughout, as it must be — it does not
+depend on the cutoff). The whole effect is the topology term shrinking as
+marginal springs stop being counted at full weight. The ratio is monotone in $w$
+in all 18 states.
+
+**So the honest conclusion is narrower than "topology dominates".** Under a hard
+cutoff, re-deriving the contact map perturbs the Hessian several times more than
+neglecting frustration does — but that is a statement about the ANM step
+function. Soften the cutoff and the two causes become comparable. Which matters
+more in a real protein depends on a modelling choice that is usually made
+without comment.
 
 Other quantities, across the 18 states:
 
@@ -437,56 +448,75 @@ A subspace can be preserved while individual modes inside it are scrambled, and
 a profile correlation can be excellent while individual sites are badly wrong.
 **Both scalars are averages over exactly the variation being asked about.**
 
-### A caveat on the individual-mode numbers
+### Individual mode overlaps carry no information here
 
-Single-mode overlaps overstate the physical change, and the report should not
-lean on them alone. In a dense spectrum, individual eigenvectors are
-ill-conditioned: where two eigenvalues are close, an arbitrarily small
-perturbation rotates the pair within its own subspace without changing the
-physics. In the state of figure 6 every mode with overlap $< 0.7$ sits at a
-relative eigenvalue gap of 0.025–0.091, while every mode with overlap $> 0.9$
-sits at a gap of 0.13–0.77.
+Single-mode overlaps must not be used as evidence about frustration or topology,
+and an earlier draft of this report used them that way. Two measurements say why.
 
-The test is to compare *blocks* of modes, which is invariant to rotation inside
-a block. Same state, same two models:
+**The spectrum is too dense for individual eigenvectors to be observables.** The
+rebuild shifts eigenvalues by ~15 % while adjacent levels in this window are
+separated by ~6 %. A perturbation larger than the level spacing mixes
+eigenvectors within near-degenerate groups; which vector is called "mode 10" is
+then bookkeeping, not physics.
 
-| block size | median subspace overlap | minimum |
+**A matched null control settles it.** Jitter the spring constants of the
+state's *own* network at random — no topology change, no frustration change,
+active set held fixed, magnitude tuned to the same $\max|\Delta\mathbf K|$ as the
+rebuild. Median over 18 states × 3 null draws (`analyses/run_control.R`):
+
+| | rebuild | matched null |
 |---|---|---|
-| 1 (single modes) | 0.437 | 0.011 |
-| 2 | 0.656 | 0.282 |
-| 3 | 0.841 | 0.648 |
-| 5 | 0.844 | 0.802 |
+| worst single-mode overlap | 0.539 | **0.001** |
+| RMSIP over 20 modes | 0.971 | 0.949 |
+| median block-3 overlap | 0.886 | 0.710 |
+| worst-site RMSF error | 22.5 % | **698 %** |
+| max eigenvalue relative difference | 0.221 | 0.997 |
 
-If the low single-mode overlaps were purely a degeneracy artefact, blocks of 3–5
-would recover overlap $\approx 1$. They reach 0.84, not 1.0 — so roughly 15 % of
-even the coarse-grained soft-mode structure genuinely differs between the two
-models, and the rest of the single-mode discrepancy is bookkeeping about which
-vector inside a near-degenerate subspace is called mode 10.
+A null perturbation of the same Hessian magnitude is **far more destructive**
+than the rebuild on every measure. So the rebuild is a remarkably *gentle*
+perturbation for its size — the opposite of what the raw overlap numbers
+suggested. Any claim of the form "the rebuild destroys mode $n$" is unsupported:
+so does anything else of that magnitude, and worse.
 
-**So the defensible claim is the block one**: the soft-mode subspace is
-preserved at the ~0.84 level in blocks of 3–5, not the ~0.97 that RMSIP over all
-20 reports, and not the ~0.44 that single modes suggest.
+What survives is the comparison *between* the rebuild and the null, and the
+block-averaged figures, which are robust to rotation within a degenerate group:
+
+| block size | median over 18 states | worst state |
+|---|---|---|
+| 1 (single modes) | 0.745 | 0.437 |
+| 3 | 0.882 | 0.791 |
+| 5 | **0.928** | 0.844 |
+
+(An earlier draft quoted 0.84 as "the defensible claim". That is the worst of
+the 18 states, not the typical one; the median is 0.93.)
 
 ### The answer
 
-For this model, on this protein, at the strains a $k(l)$ trajectory reaches:
+For this model, on this protein, at the strains a $k_{ij}(l_{ij})$ trajectory
+reaches:
 
 - **Aggregate dynamics survive the rebuild.** RMSF profiles correlate at 0.98
-  (median over 18 states); RMSIP over the 20 softest modes is 0.97.
-- **Site-resolved quantities do not.** Worst-site RMSF errors of 7.6–32.9 %,
-  eigenvalues off by 20 % typically and 76 % at worst, and $TS$ shifted by ~4.6
-  in ANM units.
-- **Mode-resolved quantities differ, but by less than single-mode overlaps
-  suggest.** Blocks of 3–5 modes overlap at ~0.84, against ~0.44 for single
-  modes and ~0.97 for RMSIP. The single-mode figure is inflated by
-  near-degeneracy; the block figure is the one to quote.
-- **The dominant cause is not frustration but topology** — a distinction that
-  only exists because $k(l)$ makes the contact map a parameter.
+  and RMSIP over the 20 softest modes is 0.97 (medians over 18 states). Block-5
+  mode overlap is 0.93.
+- **Site-resolved quantities are perturbed but not destroyed.** Worst-site RMSF
+  errors of 7.6–32.9 %, eigenvalues off by ~20 % typically, $TS$ shifted by a few
+  units in ANM convention.
+- **Individual mode overlaps say nothing.** A matched null perturbation is far
+  more destructive on every measure, so the low overlaps reflect spectral density
+  rather than the rebuild.
+- **Relative to a null of the same size, the rebuild is gentle.** That is the
+  finding this comparison actually supports, and it is evidence *for* the
+  standard practice rather than against it.
+- **Under a hard cutoff, topology perturbs the Hessian ~5.5× more than
+  frustration does — but that factor falls to ~1.5 as the cutoff softens.** The
+  differing edges are all marginal contacts; a step function weights them at full
+  strength. So the ranking of the two causes is a modelling artefact, not a
+  property of the protein.
 
-So the standard assumption is safe for what it is usually used for (overall
-flexibility patterns, soft-mode subspaces) and unsafe for anything site-specific
-or mode-specific — which is precisely what site-dependent and mode-dependent
-divergence profiles are made of.
+So the standard assumption — fit springs to the structure and ignore the strain —
+is better justified than this exploration set out to test. What it does *not*
+justify is reading individual normal modes of a perturbed ENM, in this or any
+model with a spectrum this dense.
 
 ---
 
@@ -496,10 +526,15 @@ The ANM step makes $V$ discontinuous in the parameters: a spring crossing the
 cutoff takes its stored strain with it. Replacing the step by a sigmoid of width
 $w$ at $d_{\max}$:
 
-| | final $E_{\text{strain}}$ | final $s_{\max}$ (Å) | acceptance |
-|---|---|---|---|
-| smooth, $w = 0.25$ | 20.97 | 1.858 | 0.571 |
-| smooth, $w = 0.50$ | 21.49 | 1.813 | 0.482 |
+| | final $E_{\text{strain}}$ | $s_{\max}$ over all $k>0$ | $s_{\max}$ over $k>0.5$ | acceptance |
+|---|---|---|---|---|
+| smooth, $w = 0.25$ | 20.97 | 1.858 | **0.810** | 0.571 |
+| smooth, $w = 0.50$ | 21.49 | 1.813 | **1.057** | 0.482 |
+
+The $s_{\max}$ column of §5 maximises over $k_{ij} > 0$, which for the sigmoid
+means all 4753 pairs — the maximum is then attained on a spring with
+$k_{ij} \sim 10^{-11}$ that contributes nothing to anything. The $k > 0.5$ column
+is the comparable quantity.
 
 These ran 40 substitutions at $\nu = 1$; §5's step trajectories ran 120, so the
 energies are not comparable across the two tables.
@@ -596,9 +631,19 @@ not, since nothing here is linearly forced.
 | `R/klfenm_core.R` | the model: state, $k(l)$, energy, Hessian, exact minimiser, mutation |
 | `R/klfenm_profiles.R` | per-site and per-mode comparisons, mode matching by overlap |
 | `R/klfenm_trajectory.R` | scans and walks |
-| `analyses/run_all.R` | every number quoted here $\to$ `data/results.rds` |
+| `analyses/run_all.R` | sections 2–7 $\to$ `data/results.rds` (~25 min) |
+| `analyses/run_control.R` | the matched null control of §6 $\to$ `data/control.rds` |
 | `figures/make_figures.R` | the six figures |
 | `checks/` | `test_core.R`, `test_profiles.R`, `test_can_fail.R` |
 
-Reproduce with `Rscript analyses/run_all.R` (18 min) then
-`Rscript figures/make_figures.R`.
+Reproduce with
+
+```sh
+Rscript analyses/run_all.R        # data/results.rds
+Rscript analyses/run_control.R    # data/control.rds  (the null control, §6)
+Rscript figures/make_figures.R
+```
+
+Numbers quoted from the check suites (the $\Delta V$ decomposition of §1, the
+sabotage figures of §8) come from `Rscript checks/test_core.R` and
+`checks/test_can_fail.R`, which print them.

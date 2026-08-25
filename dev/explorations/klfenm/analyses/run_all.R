@@ -194,6 +194,53 @@ for (w in c(0.25, 0.5)) {
       w, klfenm_energy(tr$state), klfenm_strain(tr$state)$max_abs, tr$n_acc / tr$n_try)
 }
 
+## ===================================== G. flat summaries the report quotes
+## These were once produced ad hoc, leaving .rds files with no generating
+## script. Everything the report quotes must come from a script.
+say("\nG. flat summaries\n")
+out$flat <- do.call(rbind, lapply(out$rebuild, function(sl) do.call(rbind, lapply(sl, function(z)
+  data.frame(seed = z$seed, subs = z$subs, strain_e = z$strain_e, d_edges = z$d_edges,
+             cross = max(abs(z$cross$rmsf$rel)), topo = max(abs(z$topo$rmsf$rel)),
+             full = max(abs(z$full$rmsf$rel)), cor_full = z$full$rmsf$cor,
+             ov_full = min(z$full$mode$overlap_best), rmsip = z$full$mode$rmsip,
+             reord = z$full$mode$n_reordered,
+             eig = 100 * max(abs(z$full$mode$eigen_rel_diff)),
+             dts = z$ts_rb - z$ts_fr,
+             fro_cross = z$fro_cross, fro_topo = z$fro_topo, fro_full = z$fro_full,
+             blk1 = median(z$block1), blk3 = median(z$block3), blk5 = median(z$block5))))))
+q <- out$flat
+q$quad <- sqrt(q$fro_cross^2 + q$fro_topo^2)
+say("   Frobenius: cross %.2f topo %.2f full %.2f ; quadrature gap %.2f%% ; ratio %.2f\n",
+    median(q$fro_cross), median(q$fro_topo), median(q$fro_full),
+    100 * median(abs(q$fro_full - q$quad) / q$fro_full), median(q$fro_topo / q$fro_cross))
+say("   blocks: b1 %.3f b3 %.3f b5 %.3f (medians) ; worst-state b5 %.3f\n",
+    median(q$blk1), median(q$blk3), median(q$blk5), min(q$blk5))
+
+## ============================ H. is the topology term a cutoff artefact?
+## Every differing edge is a marginal contact; the step function counts it at
+## full weight. Re-run the SAME decomposition with a smooth k(l) on both sides.
+say("\nH. cutoff-sharpness sweep\n")
+sweep <- list()
+for (sd in seq_along(out$rebuild)) {
+  tr <- klfenm_trajectory(wt, nstep = 60, sigma = 0.3, selection = "neutral",
+                          seed = 500 + sd, observe_every = 20)
+  for (kk in names(tr$snapshots)) {
+    st0 <- tr$snapshots[[kk]]
+    for (m in c("step", "0.25", "0.50", "1.00")) {
+      s2 <- st0
+      if (m != "step") { s2$k_model <- "smooth"; s2$k_par$w <- as.numeric(m); s2 <- refresh_k(s2) }
+      Kf <- klfenm_kmat(s2, frustrated = TRUE); Kg <- klfenm_kmat(s2, frustrated = FALSE)
+      rb2 <- s2; rb2$l <- pair_dist(s2$R, s2$pr); rb2 <- refresh_k(rb2)
+      Kr <- klfenm_kmat(rb2, frustrated = TRUE)
+      sweep[[length(sweep) + 1]] <- data.frame(seed = sd, subs = as.integer(kk), cutoff = m,
+        cross = norm(Kf - Kg, "F"), topo = norm(Kg - Kr, "F"),
+        ratio = norm(Kg - Kr, "F") / norm(Kf - Kg, "F"))
+    }
+  }
+}
+out$cutoff_sweep <- do.call(rbind, sweep)
+print(round(tapply(out$cutoff_sweep$ratio, out$cutoff_sweep$cutoff, median), 2))
+
 out$elapsed <- as.numeric(difftime(Sys.time(), t_start, units = "mins"))
 saveRDS(out, here("data", "results.rds"))
 say("\ndone in %.1f min -> data/results.rds\n", out$elapsed)

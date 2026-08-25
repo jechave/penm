@@ -60,9 +60,14 @@ ok("rebuild changes the contact set (topology cause is live)",
 
 cat("\n== 10. Mode matching is honest ==\n")
 cmp <- klfenm_mode_comparison(klfenm_nma(Kf), klfenm_nma(K_rb), nmodes = 20)
-ok("overlap by best match >= overlap by index",
-   all(cmp$overlap_best >= cmp$overlap_index - 1e-12),
-   sprintf("%d modes reordered", cmp$n_reordered))
+## NOT "best >= index": with a genuine one-to-one assignment a mode may be given
+## a worse partner than its own index so the GLOBAL matching is optimal. That
+## assertion held only for the old greedy row-maxima, where it was true by
+## construction and tested nothing. The meaningful global statement:
+ok("assignment maximises the total overlap",
+   sum(cmp$overlap_best) >= sum(cmp$overlap_index) - 1e-12,
+   sprintf("sum(best) = %.3f vs sum(index) = %.3f; %d modes reordered",
+           sum(cmp$overlap_best), sum(cmp$overlap_index), cmp$n_reordered))
 ok("RMSIP is reported with per-mode overlaps available",
    length(cmp$overlap_best) == cmp$n_modes,
    sprintf("RMSIP = %.4f, worst per-mode overlap = %.4f",
@@ -71,6 +76,14 @@ ok("RMSIP is reported with per-mode overlaps available",
 self <- klfenm_mode_comparison(klfenm_nma(Kf), klfenm_nma(Kf), nmodes = 10)
 ok("self-comparison gives overlap 1 and RMSIP 1",
    all(abs(self$overlap_best - 1) < 1e-9) && abs(self$rmsip - 1) < 1e-9)
+
+## row-wise which.max is NOT a matching: two modes can claim one partner, and
+## each then reports its best available overlap regardless of contention, which
+## inflates every number. Measured when it did: 13 of 18 states had duplicates,
+## and the worst overlap at seed 501/60 read 0.434 instead of 0.288.
+ok("mode matching is one-to-one", !any(duplicated(cmp$matched_to)),
+   sprintf("%d duplicate assignments among %d modes",
+           sum(duplicated(cmp$matched_to)), cmp$n_modes))
 
 cat("\n== 11. Trajectory bookkeeping ==\n")
 tr2 <- klfenm_trajectory(wt, nstep = 15, sigma = 0.3, nu = 1,
