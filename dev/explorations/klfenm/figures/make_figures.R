@@ -174,3 +174,56 @@ p2 <- ggplot(d2, aes(mode, ov)) +
 sv(patchwork::wrap_plots(p1, p2, ncol = 2), "fig6_one_state.png", 10, 3.8)
 
 cat("figures written\n")
+
+## ---- fig 7: the cutoff sweep -- the central caveat of section 6 ------------
+if (!is.null(res$cutoff_sweep)) {
+  d <- res$cutoff_sweep
+  d$cutoff <- factor(d$cutoff, levels = c("step", "0.25", "0.50", "1.00"),
+                     labels = c("step", "w=0.25", "w=0.50", "w=1.00"))
+  p1 <- ggplot(d, aes(cutoff, ratio, group = interaction(seed, subs))) +
+    geom_line(alpha = .35, colour = "grey45") +
+    geom_point(alpha = .6, size = 1.3, colour = "#d1495b") +
+    geom_hline(yintercept = 1, linetype = 2, colour = "grey40") +
+    labs(title = "(a)  Topology / transverse ratio vs cutoff sharpness",
+         subtitle = "One line per state; the ordering of the two causes is a modelling choice",
+         x = "k(l) cutoff", y = "||dK_topology|| / ||dK_transverse||")
+  dl <- d %>% select(cutoff, seed, subs, transverse = cross, topology = topo) %>%
+    pivot_longer(c(transverse, topology))
+  p2 <- ggplot(dl, aes(cutoff, value, colour = name)) +
+    stat_summary(aes(group = name), fun = median, geom = "line") +
+    stat_summary(fun = median, geom = "point", size = 2) +
+    scale_colour_manual(values = c(transverse = "#66a182", topology = "#edae49"), name = NULL) +
+    labs(title = "(b)  Which term moves",
+         subtitle = "The transverse term does not depend on the cutoff; the topology term does",
+         x = "k(l) cutoff", y = "Frobenius norm of the Hessian difference")
+  sv(patchwork::wrap_plots(p1, p2, ncol = 2), "fig7_cutoff_sweep.png", 10, 3.8)
+}
+
+## ---- fig 8: the null control ----------------------------------------------
+ctl <- tryCatch(readRDS(here("data", "control.rds")), error = function(e) NULL)
+if (!is.null(ctl)) {
+  d <- data.frame(
+    quantity = rep(c("worst single-mode\noverlap", "median block-3\noverlap",
+                     "RMSIP"), each = 2),
+    which = rep(c("rebuild", "matched null"), 3),
+    value = c(median(ctl$worst_real), median(ctl$worst_null),
+              median(ctl$blk3_real), median(ctl$blk3_null),
+              median(ctl$rmsip_real), median(ctl$rmsip_null)))
+  p1 <- ggplot(d, aes(quantity, value, fill = which)) +
+    geom_col(position = "dodge", width = .7) +
+    scale_fill_manual(values = c(rebuild = "#1b6ca8", `matched null` = "#d1495b"), name = NULL) +
+    ylim(0, 1) +
+    labs(title = "(a)  Similarity to the frustrated model (higher = more similar)",
+         subtitle = "Null: random k jitter, same active set, matched max|dK|",
+         x = NULL, y = "overlap")
+  p2 <- ggplot(data.frame(which = c("rebuild", "matched null"),
+                          v = c(median(ctl$rmsf_real), median(ctl$rmsf_null))),
+               aes(which, v, fill = which)) +
+    geom_col(width = .6) +
+    scale_fill_manual(values = c(rebuild = "#1b6ca8", `matched null` = "#d1495b"), guide = "none") +
+    scale_y_log10() +
+    labs(title = "(b)  Worst-site RMSF error (log scale)",
+         subtitle = "A null perturbation of the same size is ~30x worse",
+         x = NULL, y = "max |RMSF error| (%)")
+  sv(patchwork::wrap_plots(p1, p2, ncol = 2), "fig8_null_control.png", 10, 3.8)
+}

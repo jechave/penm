@@ -355,8 +355,9 @@ before any observable is computed.
 | min | 0.593 | 0.399 | 0.434 |
 | median | **0.730** | **0.582** | **0.574** |
 
-**The topology change dominates.** Zeroing the transverse term alone costs ~4.5 %
-at the worst site; re-deriving the contact set costs ~20 %.
+Read naively this says topology costs ~20 % at the worst site against the
+transverse term's ~4.5 %. Two things below block that reading: the statistic does
+not decompose, and the ratio it suggests is an artefact of the hard cutoff.
 
 **Worst-site maxima do not decompose, and must not be read as an attribution.**
 The two effects peak at different sites, so their maxima can cancel rather than
@@ -397,19 +398,23 @@ contact. Their energetic weight is small by comparison: the springs the rebuild
 discards hold 1.36 of that state's total $V = 23.21$, i.e. 5.9 %.
 
 Softening the cutoff — using the same sigmoid $k_{ij}(l_{ij})$ of §7 on *both*
-sides of the comparison — collapses the effect. Median over the same 18 states:
+sides of the comparison — collapses the effect. Medians over 9 states (the same
+three trajectories, sampled every 20 substitutions rather than every 10, so the
+"step" row differs slightly from the 18-state table above):
 
 | cutoff | transverse | topology | ratio |
 |---|---|---|---|
-| step (as above) | 2.86 | 15.80 | **5.52** |
+| step | 2.86 | 15.80 | **5.52** |
 | sigmoid, $w = 0.25$ | 2.85 | 7.78 | 2.82 |
 | sigmoid, $w = 0.50$ | 2.85 | 5.65 | 2.04 |
 | sigmoid, $w = 1.00$ | 2.86 | 4.08 | **1.45** |
 
+![cutoff sweep](figures/fig7_cutoff_sweep.png)
+
 The transverse term is untouched (2.86 throughout, as it must be — it does not
 depend on the cutoff). The whole effect is the topology term shrinking as
 marginal springs stop being counted at full weight. The ratio is monotone in $w$
-in all 18 states.
+in all 9 states.
 
 **So the honest conclusion is narrower than "topology dominates".** Under a hard
 cutoff, re-deriving the contact map perturbs the Hessian several times more than
@@ -423,30 +428,29 @@ Other quantities, across the 18 states:
 | quantity | median | range |
 |---|---|---|
 | eigenvalue relative difference (max over 20 modes) | 20.1 % | up to 76.3 % |
-| modes reordered out of 20 (best-match vs index) | 5 | up to 13 |
+| modes reordered (one-to-one assignment vs index), of 20 | 5 | up to 13 |
 | $TS_{\text{rebuilt}} - TS_{\text{frustrated}}$ | −4.57 | [−6.34, −0.44] |
 
-The entropy drop follows from the added edges: the rebuild adds them, stiffening the
-20 softest modes by 15 % on average (that state's mean eigenvalue ratio, rebuilt
-over frustrated), which lowers $TS$. Both models have exactly six
-zero modes, so this is not a mode-counting artefact.
+The entropy drop follows from the added edges: at seed 501 / 60 substitutions the
+rebuild adds 27 net, stiffening the 20 softest modes by 15 % on average (that
+state's mean eigenvalue ratio, rebuilt over frustrated), which lowers $TS$. Both
+models have exactly $3N-6 = 288$ non-rigid modes, so this is not a mode-counting
+artefact. As with every median here, the $-4.57$ is a property of the sampling
+grid — see the sub-table above.
 
-### Why scalar summaries would have missed this
+### Scalar summaries and profiles say different things
 
 ![one state](figures/fig6_one_state.png)
 
-For the same 18 states, the RMSF **correlation** has median 0.982 (minimum
-0.961) and **RMSIP** over the 20 softest modes has median 0.973 (minimum 0.956).
-Read alone, either number says the rebuild is an excellent approximation.
+For the same 18 states, the RMSF **correlation** has median 0.982 (minimum 0.961)
+and **RMSIP** over the 20 softest modes has median 0.973 (minimum 0.956). In the
+state shown above the correlation is 0.983 while site 92 is wrong by −20.2 %, and
+RMSIP is 0.960 while the least-preserved single mode overlaps at 0.43.
 
-Read beside the profiles they summarise, they say something else. In the state
-shown above: correlation 0.983, and site 92 wrong by −20 %. RMSIP 0.960, and
-mode 10 with an overlap of 0.43 — a mode essentially not shared between the two
-models.
-
-A subspace can be preserved while individual modes inside it are scrambled, and
-a profile correlation can be excellent while individual sites are badly wrong.
-**Both scalars are averages over exactly the variation being asked about.**
+A profile correlation can be excellent while individual sites are badly wrong,
+so the site-resolved numbers of the table above are worth reporting separately
+from the correlation. **The same argument does not carry over to the modes**, for
+the reason given next.
 
 ### Individual mode overlaps carry no information here
 
@@ -471,6 +475,8 @@ rebuild. Median over 18 states × 3 null draws (`analyses/run_control.R`):
 | median block-3 overlap | 0.886 | 0.710 |
 | worst-site RMSF error | 22.5 % | **698 %** |
 | max eigenvalue relative difference | 0.221 | 0.997 |
+
+![null control](figures/fig8_null_control.png)
 
 A null perturbation of the same Hessian magnitude is **far more destructive**
 than the rebuild on every measure. So the rebuild is a remarkably *gentle*
@@ -633,7 +639,7 @@ not, since nothing here is linearly forced.
 | `R/klfenm_trajectory.R` | scans and walks |
 | `analyses/run_all.R` | sections 2–7 $\to$ `data/results.rds` (~25 min) |
 | `analyses/run_control.R` | the matched null control of §6 $\to$ `data/control.rds` |
-| `figures/make_figures.R` | the six figures |
+| `figures/make_figures.R` | the eight figures |
 | `checks/` | `test_core.R`, `test_profiles.R`, `test_can_fail.R` |
 
 Reproduce with
