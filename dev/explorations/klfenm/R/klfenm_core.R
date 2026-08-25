@@ -174,18 +174,47 @@ klfenm_nma <- function(K, tol = 1e-8) {
 ## structure is found by minimising V, and only then is anything expanded.
 ## Uses the FRUSTRATED Hessian, because a strained network's curvature is the
 ## frustrated one -- using g = 0 here would be solving a different problem.
-klfenm_minimise <- function(st, tol = 1e-10, maxit = 200, frustrated = TRUE) {
-  R <- st$R
+## NON-CONVERGENCE IS AN ERROR, not a value. This is the part that matters:
+## the first version returned whatever structure the loop happened to reach, so
+## a failed minimisation entered a trajectory as a real energy. Measured: one
+## draw in 200 hit maxit with |F| = 2.4e3 and yielded dV = 1.6e5.
+##
+## `damp` backtracks the Newton step (halve until the energy decreases). It is
+## kept because it is cheap and standard, but measured over 60 hard starts
+## (sigma = 2.0) it changed nothing: 1 failure with damping, 1 without, same
+## median iteration count. So it is not what fixed the bug above -- the error
+## on non-convergence is.
+klfenm_minimise <- function(st, tol = 1e-8, maxit = 200, frustrated = TRUE,
+                            damp = TRUE) {
+  R  <- st$R
   it <- 0L
+  v  <- klfenm_energy(st, R)
   for (it in seq_len(maxit)) {
     f <- energy_gradient(st, R)
     if (sqrt(sum(f^2)) < tol) break
     s  <- klfenm_nma(klfenm_kmat(st, R, frustrated))
     Cm <- s$vector %*% ((1 / s$value) * t(s$vector))
-    R  <- matrix(as.vector(R) + as.vector(Cm %*% f), nrow = 3)
+    step <- as.vector(Cm %*% f)
+    if (damp) {
+      a <- 1
+      repeat {
+        Rn <- matrix(as.vector(R) + a * step, nrow = 3)
+        vn <- klfenm_energy(st, Rn)
+        if (vn <= v || a < 1e-6) break
+        a <- a / 2
+      }
+      R <- Rn; v <- vn
+    } else {
+      R <- matrix(as.vector(R) + step, nrow = 3)
+      v <- klfenm_energy(st, R)
+    }
   }
+  fres <- sqrt(sum(energy_gradient(st, R)^2))
+  if (fres >= tol)
+    stop("klfenm_minimise(): did not converge in ", maxit,
+         " iterations (|F| = ", signif(fres, 4), ", tol = ", tol, ")")
   st$R <- R
-  attr(st, "fres") <- sqrt(sum(energy_gradient(st, R)^2))
+  attr(st, "fres") <- fres
   attr(st, "iter") <- it
   st
 }
@@ -206,7 +235,7 @@ klfenm_minimise <- function(st, tol = 1e-10, maxit = 200, frustrated = TRUE) {
 ## protein; the default keeps it local, at a distance well beyond the cutoff so
 ## that inactive-but-nearby pairs are genuinely in play.
 klfenm_mutate_site <- function(st, site, sigma = 0.3, k_update = TRUE,
-                       sd_min = 1L, radius = Inf, tol = 1e-10, maxit = 200) {
+                       sd_min = 1L, radius = Inf, tol = 1e-8, maxit = 200) {
   pr  <- st$pr
   own <- (pr$i == site | pr$j == site) & st$sdij >= sd_min
   if (is.finite(radius)) {

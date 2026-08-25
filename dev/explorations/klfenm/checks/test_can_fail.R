@@ -121,5 +121,24 @@ sabotage("S5 reversibility catches a genuine internal change", function() {
   rigid_ok && bent_caught
 })
 
+## S6. A minimiser that returns whatever the loop reached puts a meaningless
+## energy into a trajectory. Measured before the fix: one draw in 200 hit maxit
+## with |F| = 2.4e3 and produced dV = 1.6e5, which no check caught because the
+## value looked like a number. Non-convergence must ERROR, damped or not.
+sabotage("S6 non-convergence raises an error instead of returning a value", function() {
+  ## a deliberately awful starting point, and too few iterations to recover
+  st <- wt
+  sel <- which((st$pr$i == 40 | st$pr$j == 40) & st$sdij >= 1)
+  set.seed(21); st$l[sel] <- st$l[sel] + rnorm(length(sel), 0, 6)
+  st <- refresh_k(st)
+  undamped <- tryCatch({ klfenm_minimise(st, maxit = 5, damp = FALSE); "returned" },
+                       error = function(e) "errored")
+  damped   <- tryCatch({ klfenm_minimise(st, maxit = 5, damp = TRUE);  "returned" },
+                       error = function(e) "errored")
+  cat(sprintf("       maxit = 5, undamped: %s ; damped: %s (both must error, not return)\n",
+              undamped, damped))
+  undamped == "errored" && damped == "errored"
+})
+
 cat(sprintf("\n%d of %d sabotages detected\n", detected, total))
 if (detected < total) quit(status = 1)

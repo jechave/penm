@@ -80,9 +80,12 @@ ok("records one row per accepted step", nrow(tr2$record) == tr2$n_acc,
 ok("energy from the founder is cumulative and consistent",
    abs(tail(tr2$record$v_from_founder, 1) -
        (klfenm_energy(tr2$state) - klfenm_energy(wt))) < 1e-10)
+## Tested against the minimiser's OWN tolerance, not a hardcoded number that
+## silently goes stale when the tolerance changes (it did: 1e-9 vs tol 1e-8).
+MIN_TOL <- formals(klfenm_minimise)$tol
 ok("every accepted state is at its own minimum",
-   sqrt(sum(energy_gradient(tr2$state)^2)) < 1e-9,
-   sprintf("|F| = %.2e", sqrt(sum(energy_gradient(tr2$state)^2))))
+   sqrt(sum(energy_gradient(tr2$state)^2)) < MIN_TOL,
+   sprintf("|F| = %.2e (tol = %.0e)", sqrt(sum(energy_gradient(tr2$state)^2)), MIN_TOL))
 
 cat("\n== 12. Downhill moves: absent when relaxed, present when strained ==\n")
 ## Not a tautology: it is MODEL.md's theorem (dV >= 0 from a relaxed network)
