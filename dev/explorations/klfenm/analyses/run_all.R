@@ -151,7 +151,13 @@ compare_one <- function(st, beta = BETA, nmodes = 20) {
     full  = list(rmsf = rel_profile(r_fr, r_rb),
                  mode = klfenm_mode_comparison(nma_fr, nma_rb, nmodes),
                  rwsip = klfenm_rwsip(nma_fr, nma_rb, nmodes)),
-    ts_fr = klfenm_entropy(K_fr, beta), ts_rb = klfenm_entropy(K_rb, beta)
+    ts_fr = klfenm_entropy(K_fr, beta), ts_rb = klfenm_entropy(K_rb, beta),
+    ## single-mode overlaps are ill-conditioned where eigenvalues are close;
+    ## blocks are invariant to rotation within a block. Both are reported.
+    block1 = klfenm_block_overlap(nma_fr, nma_rb, nmodes, 1),
+    block3 = klfenm_block_overlap(nma_fr, nma_rb, nmodes, 3),
+    block5 = klfenm_block_overlap(nma_fr, nma_rb, nmodes, 5),
+    eigen_gaps = klfenm_eigen_gaps(nma_fr, nmodes)
   )
 }
 

@@ -47,7 +47,17 @@ klfenm_mode_comparison <- function(nma_a, nma_b, nmodes = 20) {
   Ub <- nma_b$vector[, seq_len(n), drop = FALSE]
   ov <- abs(crossprod(Ua, Ub))                    # |<u_a, u_b>|
 
-  best  <- apply(ov, 1, which.max)                # greedy match by overlap
+  ## A one-to-one assignment, NOT row-wise which.max. Greedy row maxima are not
+  ## a matching: two modes may claim the same partner, and each row then reports
+  ## its best available overlap regardless of contention, which INFLATES the
+  ## numbers. Measured: 13 of 18 states had duplicate greedy matches.
+  best <- if (requireNamespace("clue", quietly = TRUE)) {
+    as.integer(clue::solve_LSAP(ov, maximum = TRUE))
+  } else {
+    warning("package 'clue' not available; falling back to greedy row maxima, ",
+            "which is not a one-to-one matching and inflates overlaps")
+    apply(ov, 1, which.max)
+  }
   ov_by_index   <- diag(ov)
   ov_by_overlap <- ov[cbind(seq_len(n), best)]
 
@@ -101,4 +111,31 @@ rel_profile <- function(a, b, top = 5) {
        min = min(rel), max = max(rel),
        cor = stats::cor(a, b),
        worst_idx = o, worst_val = rel[o])
+}
+
+## Subspace overlap for consecutive BLOCKS of modes.
+##
+## Single-mode overlaps are ill-conditioned in a dense spectrum: where two
+## eigenvalues are close, an arbitrarily small perturbation rotates the pair
+## within its own subspace without changing any physics, and the individual
+## overlaps collapse while nothing physical has happened. Comparing blocks is
+## invariant to rotation inside a block, so it separates real change from that
+## bookkeeping. Measured on a strained state: single modes give median 0.44,
+## blocks of 5 give 0.84 -- neither 1.0 (so some change is real) nor 0.44.
+klfenm_block_overlap <- function(nma_a, nma_b, nmodes = 20, width = 3) {
+  n  <- min(nmodes, ncol(nma_a$vector), ncol(nma_b$vector))
+  st <- seq(1, n - width + 1, by = width)
+  vapply(st, function(a) {
+    idx <- a:(a + width - 1)
+    ov  <- crossprod(nma_a$vector[, idx, drop = FALSE],
+                     nma_b$vector[, idx, drop = FALSE])
+    sqrt(sum(ov^2) / width)
+  }, numeric(1))
+}
+
+## Relative gap to the next eigenvalue, per mode. Small gaps are where
+## single-mode overlaps stop meaning anything.
+klfenm_eigen_gaps <- function(nma, nmodes = 20) {
+  v <- nma$value[seq_len(nmodes + 1)]
+  diff(v) / v[seq_len(nmodes)]
 }

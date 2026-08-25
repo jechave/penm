@@ -82,9 +82,11 @@ proposals are rejected; no run reported here stalled.
 
 A state carries $l_{ij}$ for **every** one of the $N(N-1)/2 = 4753$ pairs, not
 just the 960 currently in contact. This is forced by the model rather than
-chosen for convenience: every wild-type $l_{ij} \le d_{\max}$ by construction
-(the largest over the 4753 pairs is 10.499 Å), so if only current contacts carried a rest length,
-contacts could only ever be destroyed and the network would thin monotonically.
+chosen for convenience. Every *active* wild-type pair has $l_{ij} \le d_{\max}$ by
+construction (the largest is 10.499 Å; over all 4753 pairs the rest lengths run
+to 36.3 Å, but 3793 of them are inactive). So if only the 960 active pairs
+carried a rest length, no inactive pair could ever be pulled inside the cutoff,
+and the network could only thin.
 Measured when an early version did exactly that: 25 mutations at random sites
 ($\sigma = 0.3$, seed 2024) broke 14 contacts and formed 0. With all pairs
 carrying $l_{ij}$, the same 25 mutations break 14 and form 20.
@@ -170,10 +172,10 @@ Evaluating the Hamiltonians costs the same and cannot drop a term.
 
 | $\sigma$ | mutations changing the active set | broken | formed |
 |---|---|---|---|
-| 0.01 | 3.5 % | 0.03 | 0.01 |
+| 0.01 | 3.5 % | 0.030 | 0.005 |
 | 0.02 | 6.5 % | 0.04 | 0.04 |
 | 0.05 | 16 % | 0.09 | 0.09 |
-| 0.10 | 36 % | 0.18 | 0.28 |
+| 0.10 | 35.5 % | 0.175 | 0.275 |
 | 0.20 | 61 % | 0.49 | 0.54 |
 | **0.30** | **74 %** | **0.71** | **0.67** |
 | 0.60 | 93 % | 1.21 | 1.28 |
@@ -240,7 +242,7 @@ of the per-site 8-mutation means, mean relative difference −0.3 %), and both r
 more to mutate, and move less when mutated.
 
 The two models differ most in entropy: letting $k$ follow $l$ widens the
-$\Delta(TS)$ range by a factor of 6.3. That is the contact-map change of §2
+$\Delta(TS)$ range by a factor of 6.25. That is the contact-map change of §2
 showing up in the dynamics: adding or removing a spring changes the spectrum by
 far more than moving a rest length does.
 
@@ -318,6 +320,20 @@ trajectories separately** — where the effective sample size is 3, not 18.
 Note these are different runs from §5's: neutral (no selection) and 60
 substitutions, versus §5's three $\nu$ values and 120 substitutions.
 
+**The medians below are properties of the sampling grid, not of the model.**
+Every headline quantity is monotone in substitution number —
+$\operatorname{cor}(\text{subs}, \Delta TS) = -0.87$,
+$\operatorname{cor}(\text{subs}, \Delta\text{edges}) = +0.87$ — so a median over
+snapshots at 10…60 is simply the value near substitution 35:
+
+| | all 18 | subs 10–30 | subs 40–60 |
+|---|---|---|---|
+| median $\Delta TS$ | −4.57 | −2.09 | −5.53 |
+| median $\Delta$edges | +25 | +11 | +28 |
+
+Running to 120 substitutions would move every median. They are quoted below for
+compactness; the trend with strain, shown in figure 5, is what carries meaning.
+
 All spectra are taken at a true minimum, with exactly 6 zero modes asserted
 before any observable is computed.
 
@@ -341,10 +357,15 @@ before any observable is computed.
 **The topology change dominates.** Zeroing the transverse term alone costs ~4.5 %
 at the worst site; re-deriving the contact set costs ~20 %.
 
-Worst-site errors cannot be added — the two effects peak at different sites, so
-their maxima partly cancel (measured: transverse + topology overshoots the full
-rebuild by ~40 %). The clean statement is on the Hessian itself, where the
-decomposition is exact by construction:
+**Worst-site maxima do not decompose, and must not be read as an attribution.**
+The two effects peak at different sites, so their maxima can cancel rather than
+add: in **8 of the 18 states the full rebuild is *smaller* than topology alone**
+(e.g. transverse 9.1 %, topology 35.8 %, full 23.4 %). The ratio is also strongly
+state-dependent — at seed 501 / 60 substitutions the two are nearly equal
+(transverse 17.6 %, topology 19.7 %), not the 4.5 : 20.5 the medians suggest.
+
+The statement that does decompose is on the Hessian itself, where it is exact by
+construction:
 
 $$(\mathbf K_{\text{frust}} - \mathbf K_{g=0}) + (\mathbf K_{g=0} - \mathbf K_{\text{rebuilt}}) = \mathbf K_{\text{frust}} - \mathbf K_{\text{rebuilt}}$$
 
@@ -363,13 +384,28 @@ snapshots: taken separately, the three trajectories give median ratios of
 but less than the thing nobody thinks of as an approximation at all — that the
 contact map read off a structure is not the contact map the parameters specify.
 
-The rebuild **gains** edges systematically: +1 to +30, median +25. The mechanism
-is asymmetric by construction. A pair with $l_{ij}$ just above the cutoff is
-inactive, so no spring resists its approach and the structure is free to relax
-until $d_{ij} < d_{\max}$; the rebuild then counts it as a contact. Active pairs
-are held near their rest length and cannot drift in the same way. Measured on one state (seed 501, 40 substitutions), counting pairs within 1 Å of
-the cutoff in either $l_{ij}$ or $d_{ij}$: compressed pairs ($l_{ij} > d_{ij}$)
-outnumber stretched ones 318 to 228.
+The rebuild changes the active set in **both** directions, and the quoted
+$\Delta$edges is a net figure that hides the traffic. At 60 substitutions:
+
+| seed | gained | lost | net |
+|---|---|---|---|
+| 501 | 50 | 23 | +27 |
+| 502 | 51 | 21 | +30 |
+| 503 | 51 | 22 | +29 |
+
+So ~73 pairs change status where the net is +27. Gains outnumber losses about
+2.3 : 1, which is the asymmetry worth explaining: a pair with $l_{ij}$ just above
+the cutoff is inactive, so no spring resists its approach and relaxation can
+carry it to $d_{ij} < d_{\max}$, whereupon the rebuild counts it. Active pairs
+are held nearer their rest lengths — but *not* immovably: the 66 lost pairs are
+active springs stretched past the cutoff by their neighbours ($l_{ij} \in
+[9.97, 10.49]$ but $d_{ij} \in [10.52, 11.12]$ at seed 501). An earlier draft of
+this report said active pairs "cannot drift in the same way"; that is wrong. (An earlier draft quoted a compressed-vs-stretched count of "318 to 228" in
+support of this mechanism. That number is in no script, could not be reproduced,
+and in any case the compressed/stretched imbalance is global rather than a
+cutoff-region effect — it is concentrated in the inactive pairs, while the
+active set is nearly balanced. It has been withdrawn; the gained/lost table
+above is the measurement that stands.)
 
 Other quantities, across the 18 states:
 
@@ -401,15 +437,49 @@ A subspace can be preserved while individual modes inside it are scrambled, and
 a profile correlation can be excellent while individual sites are badly wrong.
 **Both scalars are averages over exactly the variation being asked about.**
 
+### A caveat on the individual-mode numbers
+
+Single-mode overlaps overstate the physical change, and the report should not
+lean on them alone. In a dense spectrum, individual eigenvectors are
+ill-conditioned: where two eigenvalues are close, an arbitrarily small
+perturbation rotates the pair within its own subspace without changing the
+physics. In the state of figure 6 every mode with overlap $< 0.7$ sits at a
+relative eigenvalue gap of 0.025–0.091, while every mode with overlap $> 0.9$
+sits at a gap of 0.13–0.77.
+
+The test is to compare *blocks* of modes, which is invariant to rotation inside
+a block. Same state, same two models:
+
+| block size | median subspace overlap | minimum |
+|---|---|---|
+| 1 (single modes) | 0.437 | 0.011 |
+| 2 | 0.656 | 0.282 |
+| 3 | 0.841 | 0.648 |
+| 5 | 0.844 | 0.802 |
+
+If the low single-mode overlaps were purely a degeneracy artefact, blocks of 3–5
+would recover overlap $\approx 1$. They reach 0.84, not 1.0 — so roughly 15 % of
+even the coarse-grained soft-mode structure genuinely differs between the two
+models, and the rest of the single-mode discrepancy is bookkeeping about which
+vector inside a near-degenerate subspace is called mode 10.
+
+**So the defensible claim is the block one**: the soft-mode subspace is
+preserved at the ~0.84 level in blocks of 3–5, not the ~0.97 that RMSIP over all
+20 reports, and not the ~0.44 that single modes suggest.
+
 ### The answer
 
 For this model, on this protein, at the strains a $k(l)$ trajectory reaches:
 
-- **Aggregate dynamics survive the rebuild.** RMSF profiles correlate at 0.98,
-  soft-mode subspaces overlap at 0.97.
-- **Individual observables do not.** Worst-site RMSF errors of 7.6–32.9 %, worst
-  per-mode overlaps of 0.43–0.67, eigenvalues off by 20 % typically and 76 % at
-  worst, and $TS$ shifted by ~4.6.
+- **Aggregate dynamics survive the rebuild.** RMSF profiles correlate at 0.98
+  (median over 18 states); RMSIP over the 20 softest modes is 0.97.
+- **Site-resolved quantities do not.** Worst-site RMSF errors of 7.6–32.9 %,
+  eigenvalues off by 20 % typically and 76 % at worst, and $TS$ shifted by ~4.6
+  in ANM units.
+- **Mode-resolved quantities differ, but by less than single-mode overlaps
+  suggest.** Blocks of 3–5 modes overlap at ~0.84, against ~0.44 for single
+  modes and ~0.97 for RMSIP. The single-mode figure is inflated by
+  near-degeneracy; the block figure is the one to quote.
 - **The dominant cause is not frustration but topology** — a distinction that
   only exists because $k(l)$ makes the contact map a parameter.
 
@@ -434,11 +504,22 @@ $w$ at $d_{\max}$:
 These ran 40 substitutions at $\nu = 1$; §5's step trajectories ran 120, so the
 energies are not comparable across the two tables.
 
-The smooth wild type is identical to the step one where it matters: the same 960
-pairs have $k > 0.5$, and $\lvert\mathbf F\rvert = 0$ exactly, so the founder is
-unchanged. This section is a demonstration that the machinery works with a
-continuous $k(l)$, not yet a comparison — the step and smooth trajectories were
-run to different lengths and are not matched. §2 gives the reason such a comparison
+**This is not yet a comparison, and the two rows are not comparable with §5.**
+Two reasons, the second of which invalidates any naive reading:
+
+1. These ran 40 substitutions at $\nu = 1$; §5's step trajectories ran 120.
+2. **The sigmoid gives every pair $k_{ij} > 0$** (the smallest is $4\times10^{-23}$,
+   but nonzero), so the smooth model runs a *fully connected* network — 4753
+   active pairs against the step model's 960. It is not a softened version of the
+   same network; it is a different, much denser one. §1's remark that "the
+   Hessian stays $3N\times3N$ because only active pairs contribute" is true of the
+   step model and misleading here.
+
+A check that the smooth founder has $\lvert\mathbf F\rvert = 0$ proves nothing:
+at the founder $l_{ij} = d_{ij}$ for every pair, so $V = 0$ and $\mathbf F = 0$
+for *any* $k_{ij}$ whatever. A real comparison needs the sigmoid thresholded
+(or $k$ below some floor set to zero) so that the two models have comparable
+network densities. §2 gives the reason such a comparison
 would be informative: at $\sigma = 0.3$, three-quarters of mutations cross the
 cutoff somewhere, so the step is active most of the time.
 
@@ -460,7 +541,7 @@ Three suites, all passing, in `checks/`:
   index overlap; every accepted trajectory state is at its own minimum.
 - **`test_can_fail.R`** — six deliberate sabotages, all detected. Including a
   numerical-Hessian arbitration of the transverse sign on a *strained* network
-  (correct form off by $4.3\times10^{-6}$, flipped form by 0.73), and a
+  (correct form off by $3.65\times10^{-6}$, flipped form by $0.245$), and a
   demonstration that off a stationary point the spectrum shows 4 zero modes and
   a negative eigenvalue of $-4.8\times10^{-4}$.
 
