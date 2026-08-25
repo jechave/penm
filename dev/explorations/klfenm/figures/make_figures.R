@@ -122,7 +122,7 @@ p1 <- ggplot(d, aes(strain_e, rmsf_err, colour = cause)) +
   scale_colour_manual(values = c(cross = "#66a182", topology = "#edae49", full = "#d1495b"),
                       name = NULL) +
   labs(title = "(a)  Worst-site RMSF error of the rebuilt model",
-       subtitle = "Rebuild = set l_ij to d_ij at the same coordinates, as every ENM does",
+       subtitle = "Rebuild: set l_ij to d_ij at the same coordinates",
        x = "strain energy of the state", y = "max |RMSF error| over sites (%)")
 
 d2 <- flat %>%

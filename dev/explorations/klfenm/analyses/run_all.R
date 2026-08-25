@@ -129,8 +129,16 @@ compare_one <- function(st, beta = BETA, nmodes = 20) {
     lowest_fr = min(nma_fr$raw_value), lowest_rb = min(nma_rb$raw_value),
     ## the frustrated Hessian must actually BE frustrated
     k_gap_cross = max(abs(K_fr - K_g0)),
+    k_gap_topo  = max(abs(K_g0 - K_rb)),
     k_gap_full  = max(abs(K_fr - K_rb)),
     k_scale     = max(abs(K_fr)),
+    ## Frobenius norms: on the MATRIX the decomposition is exact
+    ## (K_fr - K_g0) + (K_g0 - K_rb) = (K_fr - K_rb), so these are the
+    ## honest way to weigh the two causes against each other. Whether they
+    ## add in quadrature says whether the causes are independent.
+    fro_cross = norm(K_fr - K_g0, "F"),
+    fro_topo  = norm(K_g0 - K_rb, "F"),
+    fro_full  = norm(K_fr - K_rb, "F"),
     ## (i) cross term only
     cross = list(rmsf = rel_profile(r_fr, r_g0),
                  mode = klfenm_mode_comparison(nma_fr, nma_g0, nmodes),
