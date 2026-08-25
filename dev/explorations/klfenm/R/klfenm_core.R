@@ -189,19 +189,29 @@ klf_minimise <- function(st, tol = 1e-10, maxit = 200, frustrated = TRUE) {
 
 ## ---------------------------------------------------------------- mutation --
 
-## Perturb the rest lengths of one site's ACTIVE contacts, then (optionally)
-## recompute k(l), then minimise exactly.
+## Perturb the rest lengths of ALL of one site's pairs -- active or not -- then
+## (optionally) recompute k(l), then minimise exactly.
 ##
-## Asymmetry worth stating plainly: we perturb the site's currently-active
-## contacts, because an inactive pair is not "a contact of the site". But the
-## perturbed l is kept for every pair, so a pair pushed below the cutoff
-## activates. Contacts therefore break AND form, but only pairs that are
-## already active can be selected for perturbation.
+## Every pair carries an l_ij and k(l) alone decides which are "on", so breaking
+## and forming happen by the same rule. Restricting the perturbation to
+## currently-active pairs would break that symmetry: the network could then only
+## ever thin, because a switched-off pair would be frozen out of the mutational
+## process for good. (Measured when it was: 14 broken, 0 formed in 25 mutations.)
+##
+## `radius` bounds which of the site's pairs are perturbed at all. Perturbing
+## literally all N-1 pairs of a site would let a mutation reach across the whole
+## protein; the default keeps it local, at a distance well beyond the cutoff so
+## that inactive-but-nearby pairs are genuinely in play.
 klf_mutate <- function(st, site, sigma = 0.3, k_update = TRUE,
-                       sd_min = 1L, tol = 1e-10, maxit = 200) {
+                       sd_min = 1L, radius = Inf, tol = 1e-10, maxit = 200) {
   pr  <- st$pr
-  sel <- which((pr$i == site | pr$j == site) & st$k > 0 & st$sdij >= sd_min)
-  if (!length(sel)) stop("site ", site, " has no active contacts to mutate")
+  own <- (pr$i == site | pr$j == site) & st$sdij >= sd_min
+  if (is.finite(radius)) {
+    d   <- pair_dist(st$R, pr)
+    own <- own & (d <= radius | st$k > 0)   # keep every active pair in play
+  }
+  sel <- which(own)
+  if (!length(sel)) stop("site ", site, " has no pairs to mutate")
 
   before_active <- st$k > 0
   st$l[sel] <- st$l[sel] + stats::rnorm(length(sel), 0, sigma)

@@ -112,16 +112,26 @@ ok("k_update=FALSE freezes k (active set unchanged)",
    n_active(mu0) == n_active(wt),
    sprintf("%d active, vs %d if k had followed l", n_active(mu0), sum(k_would > 0)))
 
-cat("\n== 5. Contact events actually occur ==\n")
+cat("\n== 5. Contact events occur, in BOTH directions ==\n")
+## Both directions matters: if only breaking happens, the network monotonically
+## thins and the k(l) mechanism is half-dead. That is what an earlier version
+## did, by perturbing only a site's ACTIVE pairs -- 14 broken, 0 formed.
 set.seed(2024)
 st <- wt; nb <- nf <- 0L
 for (s in 1:25) {
-  st <- klf_mutate(st, sample(N, 1), sigma = 0.3, k_update = TRUE)
+  st <- klf_mutate(st, sample(N, 1), sigma = 0.3, k_update = TRUE, radius = 12)
   nb <- nb + attr(st, "n_broken"); nf <- nf + attr(st, "n_formed")
 }
-ok("contacts break and/or form along a walk", (nb + nf) > 0,
-   sprintf("%d broken, %d formed over 25 mutations; active %d -> %d",
-           nb, nf, n_active(wt), n_active(st)))
+ok("contacts break along a walk", nb > 0, sprintf("%d broken", nb))
+ok("contacts also FORM along a walk", nf > 0, sprintf("%d formed", nf))
+cat(sprintf("     active %d -> %d over 25 mutations\n", n_active(wt), n_active(st)))
+
+## and the perturbation really does reach inactive pairs
+sel_all <- which((wt$pr$i == 40 | wt$pr$j == 40) & wt$sdij >= 1 &
+                 (pair_dist(wt$R, wt$pr) <= 12 | wt$k > 0))
+ok("mutation reaches inactive pairs", sum(wt$k[sel_all] == 0) > 0,
+   sprintf("%d of %d perturbed pairs at site 40 are inactive",
+           sum(wt$k[sel_all] == 0), length(sel_all)))
 
 cat("\n== 6. Reversibility of the parameters ==\n")
 set.seed(55)
