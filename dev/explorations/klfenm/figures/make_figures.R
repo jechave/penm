@@ -26,7 +26,7 @@ p1 <- ggplot(d, aes(sigma, frac_any)) +
            size = 3, colour = "grey40") +
   scale_x_log10() + scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
   labs(title = "(a)  How often a mutation rewires the network",
-       subtitle = "2acy chain A, 200 random single-site mutations per sigma, from the wild type",
+       subtitle = "2acy chain A, 200 mutations per sigma, from the wild type",
        x = "mutation size sigma (log scale)", y = "mutations changing the active set")
 
 d2 <- d %>% select(sigma, broken = mean_broken, formed = mean_formed) %>%
@@ -55,7 +55,7 @@ p2 <- ggplot(d, aes(strain_e)) +
   geom_hline(yintercept = 0, linetype = 2, colour = "grey50") +
   scale_colour_manual(values = c(mean = "#1b6ca8", minimum = "#d1495b"), name = NULL) +
   labs(title = "(b)  The mean stays uphill; the tail crosses zero",
-       subtitle = "So the walk is not absorbing, but it is not drifting downhill either",
+       subtitle = "The mean is flat in strain; the minimum falls below zero",
        x = "strain energy of the reference state", y = "dV_min")
 sv(patchwork::wrap_plots(p1, p2, ncol = 2), "fig2_downhill.png", 10, 3.8)
 
@@ -77,7 +77,7 @@ p3 <- ggplot(d, aes(site, dts, colour = model)) +
   geom_line(alpha = .85) + geom_hline(yintercept = 0, linetype = 2, colour = "grey60") +
   scale_colour_manual(values = c("k(l) live" = "#1b6ca8", "k frozen" = "#d1495b"), name = NULL) +
   labs(title = "(c)  Change in conformational entropy",
-       subtitle = "beta = 1 in ANM units -- a convention, not a physical temperature",
+       subtitle = "Per site; beta = 1 in ANM units, a convention not a temperature",
        x = "site", y = "dTS")
 sv(patchwork::wrap_plots(p1, p2, p3, ncol = 3), "fig3_scan.png", 12, 3.6)
 
@@ -121,8 +121,8 @@ p1 <- ggplot(d, aes(strain_e, rmsf_err, colour = cause)) +
                                                     formula = y ~ x, linewidth = .6) +
   scale_colour_manual(values = c(cross = "#66a182", topology = "#edae49", full = "#d1495b"),
                       name = NULL) +
-  labs(title = "(a)  Worst-site RMSF error of the rebuilt model",
-       subtitle = "Rebuild: set l_ij to d_ij at the same coordinates",
+  labs(title = "(a)  Worst-site RMSF error, decomposed",
+       subtitle = "cross = transverse term only; topology = active set only; full = both",
        x = "strain energy of the state", y = "max |RMSF error| over sites (%)")
 
 d2 <- flat %>%
