@@ -121,10 +121,33 @@ $$\Delta V_{\text{relax}} = V_{\text{mut}}(\mathbf r^{e}_{\text{mut}}) - V_{\tex
 $$\Delta V_{\min} = V_{\text{mut}}(\mathbf r^{e}_{\text{mut}}) - V_{\text{ref}}(\mathbf r^{e}_{\text{ref}}) = \Delta V_{\text{stress}} + \Delta V_{\text{relax}}$$
 
 Two Hamiltonians at one structure; one Hamiltonian at two structures; the
-difference of minima, which is what a trajectory accepts on. All computed by
-evaluating Hamiltonians, never a closed form — at a strained reference a closed
-form needs a cross term, and here further terms because
-$k^{\text{mut}}_{ij} \ne k^{\text{ref}}_{ij}$.
+difference of minima, which is what a trajectory accepts on.
+
+All three are computed by **evaluating Hamiltonians**, never by a closed form.
+Here is why that matters. Write $l^{\text{mut}}_{ij} = l^{\text{ref}}_{ij} + \delta l_{ij}$,
+$k^{\text{mut}}_{ij} = k^{\text{ref}}_{ij} + \delta k_{ij}$, and let
+$r_{ij} \equiv d_{ij}(\mathbf r_{\text{ref}}) - l^{\text{ref}}_{ij}$ be the
+reference's own residual. Then
+
+$$\Delta V_{\text{stress}} = \underbrace{\tfrac12\sum_{ij} k^{\text{ref}}_{ij}\,\delta l_{ij}^{2}}_{\text{(a) always present}} \;\underbrace{-\;\sum_{ij} k^{\text{ref}}_{ij}\, r_{ij}\,\delta l_{ij}}_{\text{(b) zero only if the reference is relaxed}} \;+\; \underbrace{\tfrac12\sum_{ij} \delta k_{ij}\big(r_{ij} - \delta l_{ij}\big)^{2}}_{\text{(c) zero only if }\delta k_{ij} = 0}$$
+
+Term (b) is the **energy cross term** — a different object from the Hessian's
+transverse term $g_{ij}$ below, though both vanish at a relaxed reference. It is
+proportional to the reference's existing strain, it is the only term that can be
+negative, and it disappears at the founder. That is why a formula derived at the
+wild type appears to work and then fails along a trajectory.
+
+Term (c) exists only in this model. The LFENM (Linearly Forced ENM, the model
+`penm` implements) assumes $\delta k_{ij} = 0$; here $k$ follows $l$, so a
+spring crossing the cutoff contributes its whole stored energy discontinuously.
+
+Verified numerically (`checks/test_core.R`), one mutation at site 40,
+$\sigma = 0.3$: at the relaxed founder $(a) = +0.8516$, $(b) = 0$ exactly,
+$(c) = -0.0322$; at a reference 15 substitutions along, $(a) = +0.8516$,
+$(b) = -0.0314$, $(c) = +0.0555$. Both reproduce the directly evaluated
+$\Delta V_{\text{stress}}$ to $10^{-15}$.
+
+Evaluating the Hamiltonians costs the same and cannot drop a term.
 
 Dropping the $\Delta$ is not a notational nicety. Fifteen substitutions along,
 $V_{\text{mut}}(\mathbf r_{\text{ref}}) = 7.90$ while
