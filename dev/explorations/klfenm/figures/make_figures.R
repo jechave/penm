@@ -8,12 +8,12 @@ suppressMessages(library(dplyr))
 
 res <- readRDS(here("data", "results.rds"))
 sv <- function(p, f, w = 9, h = 4.2) {
-  ggsave(here("figures", f), p, width = w, height = h, dpi = 150)
+  ggsave(here("figures", f), p, width = w, height = h, dpi = 200)
   cat("  ", f, "\n")
 }
-th <- theme_bw(base_size = 10) +
+th <- theme_bw(base_size = 13) +
   theme(panel.grid.minor = element_blank(),
-        plot.subtitle = element_text(size = 8.5, colour = "grey30"),
+        plot.subtitle = element_text(size = 10, colour = "grey30"),
         strip.background = element_rect(fill = "grey93", colour = NA))
 theme_set(th)
 
@@ -79,7 +79,7 @@ p3 <- ggplot(d, aes(site, dts, colour = model)) +
   labs(title = "(c)  Change in conformational entropy",
        subtitle = "Per site; beta = 1 in ANM units, a convention not a temperature",
        x = "site", y = "dTS")
-sv(patchwork::wrap_plots(p1, p2, p3, ncol = 3), "fig3_scan.png", 12, 3.6)
+sv(patchwork::wrap_plots(p1, p2, p3, ncol = 3), "fig3_scan.png", 11, 4.2)
 
 ## ---- fig 4: trajectories ---------------------------------------------------
 d <- bind_rows(lapply(names(res$traj), function(n)
@@ -94,7 +94,7 @@ p2 <- ggplot(d, aes(step, rmsd, colour = nu)) + geom_line() +
 p3 <- ggplot(d, aes(step, n_active, colour = nu)) + geom_line() +
   labs(title = "(c)  Size of the contact network",
        subtitle = "The network rewires without collapsing", x = "substitutions", y = "active contacts")
-sv(patchwork::wrap_plots(p1, p2, p3, ncol = 3), "fig4_trajectories.png", 12, 3.6)
+sv(patchwork::wrap_plots(p1, p2, p3, ncol = 3), "fig4_trajectories.png", 11, 4.2)
 
 ## ---- fig 5: frustration vs rebuild, THE headline ---------------------------
 flat <- bind_rows(lapply(res$rebuild, function(seedlist)
@@ -148,7 +148,7 @@ p3 <- ggplot(d3, aes(strain_e, value, colour = name)) +
   labs(title = "(c)  Why a subspace score is not enough",
        subtitle = "RMSIP stays high while individual modes are lost",
        x = "strain energy of the state", y = "similarity")
-sv(patchwork::wrap_plots(p1, p2, p3, ncol = 3), "fig5_frustration_rebuild.png", 12, 3.8)
+sv(patchwork::wrap_plots(p1, p2, p3, ncol = 3), "fig5_frustration_rebuild.png", 11, 4.2)
 
 ## ---- fig 6: one state in detail --------------------------------------------
 z <- res$rebuild[[1]][[length(res$rebuild[[1]])]]
@@ -156,7 +156,7 @@ d <- data.frame(site = seq_along(z$full$rmsf$rel), rel = z$full$rmsf$rel)
 p1 <- ggplot(d, aes(site, rel)) +
   geom_hline(yintercept = 0, colour = "grey60") +
   geom_col(fill = "#d1495b", width = .8) +
-  labs(title = sprintf("(a)  Per-site RMSF error, one state (%d substitutions)", z$subs),
+  labs(title = "(a)  Per-site RMSF error, one state",
        subtitle = sprintf("cor = %.3f, yet the worst site is off by %+.1f%%",
                           z$full$rmsf$cor, z$full$rmsf$rel[which.max(abs(z$full$rmsf$rel))]),
        x = "site", y = "RMSF error of the rebuild (%)")
