@@ -85,7 +85,7 @@ n_active <- function(st) sum(st$k > 0)
 ## The active set is then exactly the standard ANM contact set, and every
 ## non-contact carries a latent rest length that a mutation can pull inside the
 ## cutoff -- which is what makes contact FORMATION possible at all.
-state_from_prot <- function(prot, d_max = 10.5, k_model = "step", k = 1) {
+klfenm_set_state <- function(prot, d_max = 10.5, k_model = "step", k = 1) {
   R  <- matrix(as.vector(penm::get_xyz(prot)), nrow = 3)
   N  <- ncol(R)
   pr <- all_pairs(N)
@@ -101,14 +101,17 @@ state_from_prot <- function(prot, d_max = 10.5, k_model = "step", k = 1) {
 ## V at an ARBITRARY structure R, for the state's parameters. Note this takes R
 ## as an argument: the whole discipline of this exploration is that we minimise
 ## V rather than estimate its minimum, so V must be evaluable off-minimum.
-klf_v <- function(st, R = st$R) {
+klfenm_energy <- function(st, R = st$R) {
   d <- pair_dist(R, st$pr)
   a <- st$k > 0
   sum(st$v0) + 0.5 * sum(st$k[a] * (d[a] - st$l[a])^2)
 }
 
-## Exact nonlinear force, -dV/dr. Only active pairs contribute.
-klf_force <- function(st, R = st$R) {
+## -dV/dr at a given structure: the Newton residual, zero at a minimum.
+## NOT the LFENM perturbing force f_ij = -k_ij dl_ij -- a different quantity,
+## the one penm's calculate_force() computes. This model never forms it,
+## because no linear-response step is ever taken.
+energy_gradient <- function(st, R = st$R) {
   pr <- st$pr; N <- ncol(R)
   a  <- which(st$k > 0)
   D  <- R[, pr$j[a], drop = FALSE] - R[, pr$i[a], drop = FALSE]
@@ -127,7 +130,7 @@ klf_force <- function(st, R = st$R) {
 ## Hessian. frustrated = TRUE keeps the transverse term g = l/d - 1, which is
 ## nonzero exactly when a spring is strained. penm's set_enm() blocks this
 ## branch, so it is reimplemented here rather than by touching the package.
-klf_hessian <- function(st, R = st$R, frustrated = TRUE) {
+klfenm_kmat <- function(st, R = st$R, frustrated = TRUE) {
   pr <- st$pr; N <- ncol(R)
   a  <- which(st$k > 0)
   D  <- R[, pr$j[a], drop = FALSE] - R[, pr$i[a], drop = FALSE]
@@ -153,8 +156,8 @@ klf_hessian <- function(st, R = st$R, frustrated = TRUE) {
 
 ## Spectrum with the 6 rigid-body modes dropped by TOLERANCE on the eigenvalue.
 ## Returns the raw sorted spectrum too, so a caller can check for the negative
-## eigenvalues that appear off a stationary point (see klf_minimise).
-klf_spectrum <- function(K, tol = 1e-8) {
+## eigenvalues that appear off a stationary point (see klfenm_minimise).
+klfenm_nma <- function(K, tol = 1e-8) {
   e   <- eigen(K, symmetric = TRUE)
   o   <- order(e$values)
   val <- e$values[o]; vec <- e$vectors[, o, drop = FALSE]
@@ -171,18 +174,18 @@ klf_spectrum <- function(K, tol = 1e-8) {
 ## structure is found by minimising V, and only then is anything expanded.
 ## Uses the FRUSTRATED Hessian, because a strained network's curvature is the
 ## frustrated one -- using g = 0 here would be solving a different problem.
-klf_minimise <- function(st, tol = 1e-10, maxit = 200, frustrated = TRUE) {
+klfenm_minimise <- function(st, tol = 1e-10, maxit = 200, frustrated = TRUE) {
   R <- st$R
   it <- 0L
   for (it in seq_len(maxit)) {
-    f <- klf_force(st, R)
+    f <- energy_gradient(st, R)
     if (sqrt(sum(f^2)) < tol) break
-    s  <- klf_spectrum(klf_hessian(st, R, frustrated))
+    s  <- klfenm_nma(klfenm_kmat(st, R, frustrated))
     Cm <- s$vector %*% ((1 / s$value) * t(s$vector))
     R  <- matrix(as.vector(R) + as.vector(Cm %*% f), nrow = 3)
   }
   st$R <- R
-  attr(st, "fres") <- sqrt(sum(klf_force(st, R)^2))
+  attr(st, "fres") <- sqrt(sum(energy_gradient(st, R)^2))
   attr(st, "iter") <- it
   st
 }
@@ -202,7 +205,7 @@ klf_minimise <- function(st, tol = 1e-10, maxit = 200, frustrated = TRUE) {
 ## literally all N-1 pairs of a site would let a mutation reach across the whole
 ## protein; the default keeps it local, at a distance well beyond the cutoff so
 ## that inactive-but-nearby pairs are genuinely in play.
-klf_mutate <- function(st, site, sigma = 0.3, k_update = TRUE,
+klfenm_mutate_site <- function(st, site, sigma = 0.3, k_update = TRUE,
                        sd_min = 1L, radius = Inf, tol = 1e-10, maxit = 200) {
   pr  <- st$pr
   own <- (pr$i == site | pr$j == site) & st$sdij >= sd_min
@@ -218,7 +221,7 @@ klf_mutate <- function(st, site, sigma = 0.3, k_update = TRUE,
   if (k_update) st <- refresh_k(st)
   after_active <- st$k > 0
 
-  st <- klf_minimise(st, tol = tol, maxit = maxit)
+  st <- klfenm_minimise(st, tol = tol, maxit = maxit)
   attr(st, "n_broken") <- sum(before_active & !after_active)
   attr(st, "n_formed") <- sum(!before_active & after_active)
   attr(st, "mut_site") <- site
@@ -228,13 +231,13 @@ klf_mutate <- function(st, site, sigma = 0.3, k_update = TRUE,
 ## ------------------------------------------------------------- observables --
 
 ## Covariance = pseudo-inverse of K, at kT = 1/beta. C = (1/beta) K^+.
-klf_cmat <- function(K, beta = 1, tol = 1e-8) {
-  s <- klf_spectrum(K, tol)
+klfenm_cmat <- function(K, beta = 1, tol = 1e-8) {
+  s <- klfenm_nma(K, tol)
   (1 / beta) * (s$vector %*% ((1 / s$value) * t(s$vector)))
 }
 
 ## Mean-square fluctuation per site: the 3x3 diagonal blocks of C.
-klf_msf_site <- function(C) {
+klfenm_msf_site <- function(C) {
   N <- nrow(C) / 3
   vapply(seq_len(N), function(i) {
     b <- (3 * (i - 1) + 1):(3 * i)
@@ -245,8 +248,8 @@ klf_msf_site <- function(C) {
 ## TS from the spectrum. beta = 1 in ANM units is a CONVENTION, not a physical
 ## temperature -- k_ij = 1 is dimensionless here. State it wherever TS is
 ## reported; do not mix this with beta_boltzmann() in the same comparison.
-klf_ts <- function(K, beta = 1, tol = 1e-8) {
-  v <- klf_spectrum(K, tol)$value
+klfenm_entropy <- function(K, beta = 1, tol = 1e-8) {
+  v <- klfenm_nma(K, tol)$value
   sum(0.5 / beta * (log(2 * pi / (beta * v)) + 1))
 }
 
@@ -263,28 +266,39 @@ klf_ts <- function(K, beta = 1, tol = 1e-8) {
 ## the difference is the reference's own strain energy, which grows as the walk
 ## proceeds. That is exactly the V-vs-dV confusion this notation exists to stop.
 ##
-## Both are computed by EVALUATING HAMILTONIANS -- no expansion, no closed form.
+## All are computed by EVALUATING HAMILTONIANS -- no expansion, no closed form.
 ## A closed form would need the cross term (nonzero at a strained reference) and
 ## extra terms from k^mut != k^ref, and would be wrong the moment either is
 ## forgotten. Evaluating is exact at any reference and is simpler.
+##
+##     dV_min(ref->mut) = dV_stress(ref->mut) + dV_relax(ref->mut)
+##
+## dV_min is the difference of MINIMA.
 
 ## dV_stress(ref -> mut) = V_mut(r_ref) - V_ref(r_ref)
 ## Two Hamiltonians, ONE structure: the cost of changing the parameters before
 ## the structure is allowed to respond. Exact, whatever state `ref` is in.
-dv_stress <- function(ref, mut) klf_v(mut, R = ref$R) - klf_v(ref, R = ref$R)
+klfenm_delta_v_stress <- function(ref, mut) klfenm_energy(mut, R = ref$R) - klfenm_energy(ref, R = ref$R)
 
 ## dV_relax(ref -> mut) = V_mut(r^e_mut) - V_mut(r_ref)
-## ONE Hamiltonian, two structures: what relaxation gives back. <= 0 by
-## construction, since r^e_mut minimises V_mut. `mut` must already be minimised.
-dv_relax <- function(ref, mut) klf_v(mut, R = mut$R) - klf_v(mut, R = ref$R)
+## ONE Hamiltonian, two structures: what relaxation gives back. <= 0 because
+## r^e_mut minimises V_mut.
+klfenm_delta_v_relax <- function(ref, mut)
+  klfenm_energy(mut, R = mut$R) - klfenm_energy(mut, R = ref$R)
 
-## dV(ref -> mut) = V_mut(r^e_mut) - V_ref(r^e_ref), the physical energy change.
-## Identically dv_stress + dv_relax; both are returned so the split can be
-## reported, and their sum is asserted against the direct difference in checks.
-dv_total <- function(ref, mut) klf_v(mut, R = mut$R) - klf_v(ref, R = ref$R)
+## dV_min(ref -> mut) = V_mut(r^e_mut) - V_ref(r^e_ref)
+##
+## THE difference of minima -- the physical energy change of the substitution,
+## and the quantity a trajectory accepts or rejects on. Identically
+## klfenm_delta_v_stress + klfenm_delta_v_relax, which the checks assert.
+##
+## Every state comes from klfenm_mutate_site(), which minimises before it
+## returns, so both are at their own minimum by construction.
+klfenm_delta_v_min <- function(ref, mut)
+  klfenm_energy(mut, R = mut$R) - klfenm_energy(ref, R = ref$R)
 
 ## Strain per active pair, and its energy. The measure of "how frustrated".
-klf_strain <- function(st, R = st$R) {
+klfenm_strain <- function(st, R = st$R) {
   a <- which(st$k > 0)
   d <- pair_dist(R, st$pr)[a]
   s <- d - st$l[a]

@@ -9,7 +9,7 @@ source(here("R", "klfenm_core.R"))
 
 data(pdb_2acy_A, package = "penm")
 wtp <- set_enm(pdb_2acy_A, node = "ca", model = "anm", d_max = 10.5, frustrated = FALSE)
-wt  <- state_from_prot(wtp)
+wt  <- klfenm_set_state(wtp)
 N   <- ncol(wt$R)
 
 detected <- 0L; total <- 0L
@@ -42,10 +42,10 @@ sabotage("S1 flipped transverse sign detected on a strained state", function() {
     }
     K
   }
-  set.seed(3); mu <- klf_mutate(wt, 40, 0.5, k_update = FALSE)
-  Kok <- klf_hessian(mu, frustrated = TRUE); Kbad <- hess_wrong(mu)
+  set.seed(3); mu <- klfenm_mutate_site(wt, 40, 0.5, k_update = FALSE)
+  Kok <- klfenm_kmat(mu, frustrated = TRUE); Kbad <- hess_wrong(mu)
   ## a numerical Hessian arbitrates
-  vf <- function(v) klf_v(mu, matrix(v, nrow = 3))
+  vf <- function(v) klfenm_energy(mu, matrix(v, nrow = 3))
   v0 <- as.vector(mu$R); h <- 1e-5
   idx <- c(1, 2, 3, 40 * 3 - 2, 40 * 3 - 1, 40 * 3)
   num <- outer(idx, idx, Vectorize(function(a, b) {
@@ -60,16 +60,16 @@ sabotage("S1 flipped transverse sign detected on a strained state", function() {
 
 ## S2. Minimiser that stops after ONE step (the linear-response shortcut).
 ## Check 2 asserts |F| < 1e-10; a single step must leave a much larger residual.
-sabotage("S2 one-step 'minimiser' leaves a detectable residual force", function() {
+sabotage("S2 one-step 'minimiser' leaves a detectable residual gradient", function() {
   st <- wt
   sel <- which((st$pr$i == 40 | st$pr$j == 40) & st$k > 0)
   set.seed(9); st$l[sel] <- st$l[sel] + rnorm(length(sel), 0, 0.3)
-  s <- klf_spectrum(klf_hessian(st, frustrated = TRUE))
+  s <- klfenm_nma(klfenm_kmat(st, frustrated = TRUE))
   Cm <- s$vector %*% ((1 / s$value) * t(s$vector))
-  R1 <- matrix(as.vector(st$R) + as.vector(Cm %*% klf_force(st)), nrow = 3)
+  R1 <- matrix(as.vector(st$R) + as.vector(Cm %*% energy_gradient(st)), nrow = 3)
   st1 <- st; st1$R <- R1
-  f1 <- sqrt(sum(klf_force(st1)^2))
-  full <- klf_minimise(st)
+  f1 <- sqrt(sum(energy_gradient(st1)^2))
+  full <- klfenm_minimise(st)
   cat(sprintf("       one step |F| = %.2e ; converged |F| = %.2e\n", f1, attr(full, "fres")))
   f1 > 1e-10 && attr(full, "fres") < 1e-10
 })
@@ -80,8 +80,8 @@ sabotage("S3 off-minimum spectrum shows spurious/negative modes", function() {
   st <- wt
   sel <- which((st$pr$i == 40 | st$pr$j == 40) & st$k > 0)
   set.seed(9); st$l[sel] <- st$l[sel] + rnorm(length(sel), 0, 0.3)
-  sp_off <- klf_spectrum(klf_hessian(st, frustrated = TRUE))   # NOT minimised
-  sp_on  <- klf_spectrum(klf_hessian(klf_minimise(st), frustrated = TRUE))
+  sp_off <- klfenm_nma(klfenm_kmat(st, frustrated = TRUE))   # NOT minimised
+  sp_on  <- klfenm_nma(klfenm_kmat(klfenm_minimise(st), frustrated = TRUE))
   cat(sprintf("       off-minimum: n_zero = %d, lowest = %+.3e | at minimum: n_zero = %d, lowest = %+.3e\n",
               sp_off$n_zero, min(sp_off$raw_value), sp_on$n_zero, min(sp_on$raw_value)))
   (sp_off$n_zero != 6 || min(sp_off$raw_value) < -1e-8) &&

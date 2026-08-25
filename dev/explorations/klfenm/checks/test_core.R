@@ -16,7 +16,7 @@ FAILED <- FALSE
 data(pdb_2acy_A, package = "penm")
 wt_prot <- set_enm(pdb_2acy_A, node = "ca", model = "anm",
                    d_max = 10.5, frustrated = FALSE)
-wt <- state_from_prot(wt_prot, d_max = 10.5)
+wt <- klfenm_set_state(wt_prot, d_max = 10.5)
 N  <- ncol(wt$R)
 
 cat("\n== 1. Wild-type identity: the all-pairs state IS the standard ANM ==\n")
@@ -30,32 +30,32 @@ ok("active set == penm's contact set",
    sprintf("%d vs %d edges", length(key_klf), length(key_pkg)))
 
 Kp <- matrix(as.vector(penm::get_kmat(wt_prot)), nrow = 3 * N)
-Kk <- klf_hessian(wt, frustrated = TRUE)   # at wt, l == d so g == 0 anyway
+Kk <- klfenm_kmat(wt, frustrated = TRUE)   # at wt, l == d so g == 0 anyway
 ok("Hessian == penm's kmat", max(abs(Kk - Kp)) < 1e-9,
    sprintf("max|dK| = %.2e (scale %.1f)", max(abs(Kk - Kp)), max(abs(Kp))))
 
-ok("wild type carries no strain", klf_strain(wt)$max_abs < 1e-12,
-   sprintf("max|d-l| = %.2e", klf_strain(wt)$max_abs))
-ok("wild type is stationary", sqrt(sum(klf_force(wt)^2)) < 1e-12,
-   sprintf("|F| = %.2e", sqrt(sum(klf_force(wt)^2))))
-ok("V(wt) == 0", abs(klf_v(wt)) < 1e-20, sprintf("V = %.2e", klf_v(wt)))
+ok("wild type carries no strain", klfenm_strain(wt)$max_abs < 1e-12,
+   sprintf("max|d-l| = %.2e", klfenm_strain(wt)$max_abs))
+ok("wild type is stationary", sqrt(sum(energy_gradient(wt)^2)) < 1e-12,
+   sprintf("|F| = %.2e", sqrt(sum(energy_gradient(wt)^2))))
+ok("V(wt) == 0", abs(klfenm_energy(wt)) < 1e-20, sprintf("V = %.2e", klfenm_energy(wt)))
 
 cat("\n== 2. The minimiser reaches a TRUE minimum ==\n")
 
 set.seed(101)
-mu <- klf_mutate(wt, site = 40, sigma = 0.3, k_update = TRUE)
+mu <- klfenm_mutate_site(wt, site = 40, sigma = 0.3, k_update = TRUE)
 fres <- attr(mu, "fres")
 ok("residual force < 1e-10", fres < 1e-10,
    sprintf("|F| = %.2e in %d iters", fres, attr(mu, "iter")))
 
-sp <- klf_spectrum(klf_hessian(mu, frustrated = TRUE))
+sp <- klfenm_nma(klfenm_kmat(mu, frustrated = TRUE))
 ok("exactly 6 zero modes", sp$n_zero == 6, sprintf("n_zero = %d", sp$n_zero))
 ok("no negative eigenvalues (a minimum, not a saddle)",
    min(sp$raw_value) > -1e-8,
    sprintf("lowest raw eigenvalue = %+.3e", min(sp$raw_value)))
 ok("mutant IS strained (else nothing is being tested)",
-   klf_strain(mu)$max_abs > 1e-3,
-   sprintf("max|d-l| = %.4f", klf_strain(mu)$max_abs))
+   klfenm_strain(mu)$max_abs > 1e-3,
+   sprintf("max|d-l| = %.4f", klfenm_strain(mu)$max_abs))
 
 cat("\n== 3. dV splits exactly, at ANY reference ==\n")
 ## dV(ref->mut) = dV_stress(ref->mut) + dV_relax(ref->mut), by construction and
@@ -67,24 +67,24 @@ check_split <- function(ref, label) {
   set.seed(7)
   sel <- which((ref$pr$i == 40 | ref$pr$j == 40) & ref$sdij >= 1)
   m <- ref; m$l[sel] <- m$l[sel] + rnorm(length(sel), 0, 0.3)
-  m <- refresh_k(m); m <- klf_minimise(m)
-  s <- dv_stress(ref, m); r <- dv_relax(ref, m); tot <- dv_total(ref, m)
+  m <- refresh_k(m); m <- klfenm_minimise(m)
+  s <- klfenm_delta_v_stress(ref, m); r <- klfenm_delta_v_relax(ref, m); tot <- klfenm_delta_v_min(ref, m)
   cat(sprintf("     %-22s V_ref(r_ref) = %8.4f | dV_stress %+8.4f  dV_relax %+8.4f  dV %+8.4f\n",
-              label, klf_v(ref), s, r, tot))
+              label, klfenm_energy(ref), s, r, tot))
   list(gap = abs((s + r) - tot), relax = r, stress = s,
-       vref = klf_v(ref), naive = klf_v(m, R = ref$R))
+       vref = klfenm_energy(ref), naive = klfenm_energy(m, R = ref$R))
 }
 
 a <- check_split(wt, "relaxed reference")
-ok("dV_stress + dV_relax == dV", a$gap < 1e-12, sprintf("gap = %.2e", a$gap))
+ok("dV_stress + dV_relax == dV_min", a$gap < 1e-12, sprintf("gap = %.2e", a$gap))
 ok("dV_relax <= 0 (relaxation returns energy)", a$relax <= 1e-12,
    sprintf("%.4f", a$relax))
 
 ## now a strained reference, 15 substitutions along
 set.seed(31); ref2 <- wt
-for (s in 1:15) ref2 <- klf_mutate(ref2, sample(N, 1), sigma = 0.3, k_update = TRUE)
+for (s in 1:15) ref2 <- klfenm_mutate_site(ref2, sample(N, 1), sigma = 0.3, k_update = TRUE)
 b <- check_split(ref2, "strained reference")
-ok("dV_stress + dV_relax == dV (strained ref)", b$gap < 1e-12,
+ok("dV_stress + dV_relax == dV_min (strained ref)", b$gap < 1e-12,
    sprintf("gap = %.2e", b$gap))
 ok("dV_relax <= 0 (strained ref)", b$relax <= 1e-12, sprintf("%.4f", b$relax))
 
@@ -102,7 +102,7 @@ ok("k_ij == k(l_ij) for every pair", identical(as.numeric(mu$k), as.numeric(k_ex
 
 ## and with k_update = FALSE, k must NOT follow l
 set.seed(101)
-mu0 <- klf_mutate(wt, site = 40, sigma = 0.3, k_update = FALSE)
+mu0 <- klfenm_mutate_site(wt, site = 40, sigma = 0.3, k_update = FALSE)
 k_would <- do.call(kf, c(list(lij = mu0$l, sdij = mu0$sdij), mu0$k_par))
 ok("k_update=FALSE freezes k (active set unchanged)",
    n_active(mu0) == n_active(wt),
@@ -115,7 +115,7 @@ cat("\n== 5. Contact events occur, in BOTH directions ==\n")
 set.seed(2024)
 st <- wt; nb <- nf <- 0L
 for (s in 1:25) {
-  st <- klf_mutate(st, sample(N, 1), sigma = 0.3, k_update = TRUE, radius = 12)
+  st <- klfenm_mutate_site(st, sample(N, 1), sigma = 0.3, k_update = TRUE, radius = 12)
   nb <- nb + attr(st, "n_broken"); nf <- nf + attr(st, "n_formed")
 }
 ok("contacts break along a walk", nb > 0, sprintf("%d broken", nb))
@@ -133,8 +133,8 @@ cat("\n== 6. Reversibility of the parameters ==\n")
 set.seed(55)
 sel <- which((wt$pr$i == 11 | wt$pr$j == 11) & wt$k > 0)
 dl  <- rnorm(length(sel), 0, 0.3)
-f1 <- wt; f1$l[sel] <- f1$l[sel] + dl; f1 <- refresh_k(f1); f1 <- klf_minimise(f1)
-b1 <- f1; b1$l[sel] <- b1$l[sel] - dl; b1 <- refresh_k(b1); b1 <- klf_minimise(b1)
+f1 <- wt; f1$l[sel] <- f1$l[sel] + dl; f1 <- refresh_k(f1); f1 <- klfenm_minimise(f1)
+b1 <- f1; b1$l[sel] <- b1$l[sel] - dl; b1 <- refresh_k(b1); b1 <- klfenm_minimise(b1)
 ok("l returns exactly", max(abs(b1$l - wt$l)) < 1e-12,
    sprintf("max|dl| = %.2e", max(abs(b1$l - wt$l))))
 ok("k returns exactly", identical(as.numeric(b1$k), as.numeric(wt$k)))
@@ -152,8 +152,8 @@ kb <- kabsch_rmsd(wt$R, b1$R)
 ok("internal structure returns (after superposition)", kb$max < 1e-9,
    sprintf("max|dR| = %.2e, RMSD = %.2e (raw, unsuperposed: %.3f)",
            kb$max, kb$rmsd, max(abs(b1$R - wt$R))))
-ok("and V returns to zero", abs(klf_v(b1)) < 1e-20,
-   sprintf("V = %.2e", klf_v(b1)))
+ok("and V returns to zero", abs(klfenm_energy(b1)) < 1e-20,
+   sprintf("V = %.2e", klfenm_energy(b1)))
 
 cat("\n")
 if (FAILED) { cat("SOME CHECKS FAILED\n"); quit(status = 1) } else cat("all checks passed\n")
