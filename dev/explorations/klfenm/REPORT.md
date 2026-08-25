@@ -1,4 +1,4 @@
-# Does frustration change the dynamics of an elastic network model?
+# An elastic network model with k(l): building it, and what it does
 
 2026-08-25. Acylphosphatase, 2acy chain A: 98 residues, 960 contacts at
 $d_{\max} = 10.5$ Å, uniform $k_{ij} = 1$ (ANM). Everything seeded and
@@ -6,24 +6,55 @@ reproducible from `analyses/`.
 
 ---
 
-## 1. The question
+## 1. What this is
 
-Every elastic network model in use fits its springs to a structure:
-$l_{ij} = d^{e}_{ij}$, so at the native conformation every spring sits exactly at
-its rest length. The model is *unfrustrated* by construction.
+An elastic network model in which the spring constants depend on the rest
+lengths, $k_{ij}(l_{ij})$, rather than on the equilibrium distances. The rest
+lengths are then the only parameters, and the contact map follows from them
+rather than from the structure.
 
-Real proteins are presumably not, and a mutant certainly is not: perturb the rest
-lengths, let the structure relax, and the springs no longer all reach their rest
-lengths at once — the network carries **strain**. Standard practice handles a
-mutant structure by refitting: take the coordinates, set $l_{ij} = d^{e}_{ij}$
-again, diagonalise. That throws the strain away.
+Mutants are made by perturbing rest lengths and **minimising the energy
+numerically**. No linear response and no expansion of any kind enters the
+dynamics; the quadratic expansion is used only to look at states already
+accepted.
 
-**The assumption under test is that throwing it away does not matter for the
-motions.** It is made constantly and, as far as I can tell, never checked — for
-the practical reason that an ordinary ENM cannot produce a genuinely strained
-state to check it on.
+What follows is the model and five things measured with it:
 
-§2 builds a model that can. §§3–6 do the test.
+| | |
+|---|---|
+| §2 | the model: potential, state, mutation, energy differences |
+| §3 | **trajectories** — do they run, and what do they do |
+| §4 | **scans** — site profiles of energy, structure and entropy, with $k(l)$ live and frozen |
+| §5 | **contact-map statistics** — how often, and in which direction, mutation rewires the network |
+| §6 | **refitting a strained structure** — does discarding frustration change the motions |
+| §7 | what these say together |
+
+§6 is the longest section because it needed two controls before its answer could
+be trusted, not because it is the most important.
+
+### Results in brief
+
+1. **Trajectories run.** No stalling at any selection strength tried, and they
+   keep producing strained structures indefinitely (§3). The reason they do not
+   stall is that strain *widens* the distribution of $\Delta V$ without shifting
+   its mean: a strained network survives on its left tail, not by drifting
+   downhill.
+2. **Energy profiles barely notice $k(l)$; entropy profiles do.** Site profiles
+   of the energy cost of mutation are almost unchanged when $k$ is allowed to
+   follow $l$ (correlation 0.974), and reproduce the standard results — buried
+   sites cost more to mutate and move less. The range of $\Delta(TS)$ across
+   sites widens 6.25-fold (§4). Adding or removing a spring changes the spectrum
+   far more than moving a rest length does.
+3. **The contact map moves constantly.** At the working mutation size,
+   three-quarters of mutations change it, with gains and losses balanced, so the
+   network rewires rather than erodes (§5).
+4. **Frustration can be neglected.** Refitting an ENM to a strained structure —
+   standard practice — preserves the RMSF profile and the soft-mode subspace,
+   and does so far better than a random perturbation of the same size would (§6).
+5. **But most of what refitting changes is not frustration.** It is the contact
+   map being re-derived. Under a hard cutoff that term is 5.5× the frustration
+   term; under a soft one the two are comparable. Which dominates is a modelling
+   choice, usually made without comment (§6).
 
 ---
 
@@ -134,10 +165,11 @@ not a physical temperature.
 
 ---
 
-## 3. Generating strained states
+## 3. Trajectories
 
-**Purpose.** The test needs states whose springs are genuinely strained. This
-section produces them; it is method, not result.
+
+**Question.** Does a walk in this model run at all — and if it does, what keeps
+it running when every mutation is uphill from a relaxed network?
 
 **What I did.** From the wild type, repeatedly: draw a site uniformly, mutate it
 (§2.3), minimise exactly, accept with probability
@@ -165,14 +197,85 @@ No run stalled. Selection sets the energy level; the network ends within 2 % of
 its starting size in every case.
 
 **What it means.** The walks produce genuinely strained states — $s_{\max}$ of
-1–1.5 Å against a 10.5 Å cutoff — and keep producing them. That is all this
-section is for. Two properties that had to hold for it to work at all (the
-contact map really moves; the walk does not run out of acceptable moves) are
-measured in Appendices A and B.
+1–1.5 Å against a 10.5 Å cutoff — and keep producing them indefinitely.
+
+An earlier exploration (`sclfenm/MODEL.md` §6) proves that from a *relaxed*
+network, $\Delta V_{\min} \ge 0$ always. Its hypothesis fails here after the first
+mutation, so the question is empirical.
+
+**What I did.** One neutral walk, 40 substitutions, seed 2, saving every 10. From
+each saved state (and from the wild type), 200 fresh trial mutations, each
+minimised exactly, $\Delta V_{\min}$ recorded and the trial discarded.
+
+![](figures/fig2_downhill.png)
+
+**Figure 2.** $x$ is $E_{\text{strain}}$ of the reference state. **(a)** Percent
+of the 200 trials with $\Delta V_{\min} < 0$. **(b)** Mean (blue) and minimum
+(red) of the same 200 values.
+
+| substitutions | $E_{\text{strain}}$ | mean $\Delta V_{\min}$ | min | fraction $<0$ |
+|---|---|---|---|---|
+| 0 (founder) | 0.00 | +0.609 | **+0.131** | **0.000** |
+| 20 | 11.23 | +0.615 | −0.124 | 0.015 |
+| 40 | 24.28 | +0.614 | −0.604 | 0.045 |
+
+From the relaxed founder not one of 200 mutations is downhill; from a strained
+state a few per cent are. The mean is unmoved at ~0.61 throughout: **strain
+widens the distribution rather than shifting it**, so the walk keeps finding
+acceptable moves without drifting downhill.
 
 ---
 
-## 4. The test: rebuild a strained state and compare
+## 4. Scans: site profiles under a single mutation
+
+**What I did.** Mutate each of the 98 sites 8 times from the fixed wild type
+($\sigma = 0.3$, seed 11), minimise each exactly, discard, average per site.
+Repeat with $k_{ij}$ frozen at wild-type values — same seed, hence the same
+perturbations — so the two differ only through $k(l)$.
+
+![](figures/fig3_scan.png)
+
+**Figure 3.** Blue = $k_{ij}(l_{ij})$ live, red = frozen. **(a)**
+$\Delta V_{\min}$ per site. **(b)** The same against the mutated site's contact
+number. **(c)** $\Delta(TS)$ per site, $\beta = 1$.
+
+| (over the 98 sites) | $k_{ij}(l_{ij})$ live | $k_{ij}$ frozen |
+|---|---|---|
+| $\operatorname{cor}(\Delta V_{\min}, cn_j)$ | +0.928 | +0.946 |
+| $\operatorname{cor}(\lvert\delta\mathbf r_j\rvert^2, cn_j)$ | −0.657 | −0.712 |
+| range of $\Delta(TS)$ | **0.765** | **0.122** |
+
+Both reproduce the standard results — buried sites cost more to mutate and move
+less. The energy profiles agree closely (correlation 0.974). The entropy range
+differs 6.25-fold: this is where the contact map shows up.
+
+## 5. How the contact map moves
+
+**Question.** If $k_{ij}(l_{ij})$ never changed the active set, the model would
+be an ordinary ENM with extra bookkeeping. How often does it change it, and does
+the network rewire or simply erode?
+
+**What I did.** From the wild type, mutate one uniformly chosen site (§2.3),
+recompute $k_{ij}$, compare active sets. No minimisation — this is a property of
+the parameters alone. 200 draws at each $\sigma$, seed 1.
+
+![](figures/fig1_contact_flips.png)
+
+**Figure 4. (a)** Fraction of the 200 draws changing the active set, log $x$;
+dashed line at the working $\sigma = 0.3$. **(b)** Mean pairs gained (green) and
+lost (red) per mutation.
+
+| $\sigma$ | changing the active set | broken | formed |
+|---|---|---|---|
+| 0.01 | 3.5 % | 0.030 | 0.005 |
+| 0.10 | 35.5 % | 0.175 | 0.275 |
+| **0.30** | **74 %** | **0.71** | **0.67** |
+| 0.60 | 93 % | 1.21 | 1.28 |
+
+At the working $\sigma$, three-quarters of mutations rewire the network, and
+gains and losses are balanced — it rewires rather than erodes.
+
+## 6. Refitting a strained structure
 
 **Question.** Take a strained state, refit an ENM to its coordinates the way
 everyone does, and ask how different the resulting dynamics is.
@@ -193,7 +296,7 @@ near-zero and negative eigenvalues, and RMSF $\sim 1/\lambda$ then diverges.
 
 ![](figures/fig5_frustration_rebuild.png)
 
-**Figure 2.** Rebuild error against accumulated strain, 18 states pooled from
+**Figure 5.** Rebuild error against accumulated strain, 18 states pooled from
 three walks (not 18 independent draws). $x$ is $E_{\text{strain}}$. Colours
 decompose the difference: **green** = transverse term alone (same active set,
 $g_{ij}\ne0$ vs $g_{ij}=0$); **yellow** = active set alone (both $g_{ij}=0$);
@@ -216,28 +319,28 @@ over all 20 (blue), full rebuild only.
 
 Every one is monotone in substitution number ($|\mathrm{cor}| \approx 0.87$), so
 these medians are properties of the sampling grid: sampled at 10–30 the median
-$\Delta TS$ is −2.09, at 40–60 it is −5.53. The trend against strain in figure 2
+$\Delta TS$ is −2.09, at 40–60 it is −5.53. The trend against strain in figure 5
 is what carries meaning.
 
 ![](figures/fig6_one_state.png)
 
-**Figure 3.** One state in detail — seed 501 at 60 substitutions,
+**Figure 6.** One state in detail — seed 501 at 60 substitutions,
 $E_{\text{strain}} = 36.1$, the *most strained* of the 18 and deliberately not
 typical. **(a)** Signed relative RMSF error at each of the 98 sites: the profile
 correlation is 0.983 and site 92 is still off by −20.2 %. **(b)** Overlap of each
 of the 20 softest modes with its assigned partner; dashed line is RMSIP $=0.960$.
 The panel shows what a subspace score averages over. It is **not** evidence that
-the rebuild destroys modes — see §6.
+the rebuild destroys modes — see §6.2.
 
 **What it means, provisionally.** Aggregate measures survive well; site-resolved
 ones are perturbed by tens of per cent; the entropy moves by several units. Two
 questions must be answered before any of that can be interpreted: *which*
-difference between the models causes it (§5), and whether an error of this size
-is even large (§6).
+difference between the models causes it (§6.1), and whether an error of this
+size is even large (§6.2).
 
 ---
 
-## 5. Is it the frustration, or the contact map?
+### 6.1 Is it the frustration, or the contact map?
 
 **Question.** The rebuild changes two things at once: it zeroes the transverse
 term *and* re-derives the active set. Only the first is "neglecting frustration".
@@ -276,7 +379,7 @@ energy. The step function counts each at full strength $k_{ij}=1$, so a pair at
 
 ![](figures/fig7_cutoff_sweep.png)
 
-**Figure 4.** The same three walks sampled every 20 (9 states), re-expressed
+**Figure 7.** The same three walks sampled every 20 (9 states), re-expressed
 under four kernels. **(a)** One grey line per state across the four cutoffs; $y$
 is $\lVert\Delta\mathbf K_{\text{active set}}\rVert_F/\lVert\Delta\mathbf K_{\text{transverse}}\rVert_F$,
 dashed line at 1. **(b)** The two norms separately: transverse (green) flat by
@@ -302,7 +405,7 @@ claim that one dominates is a claim about the kernel.
 
 ---
 
-## 6. Is the error large? A null control
+### 6.2 Is the error large? A null control
 
 **Question.** "The worst site is off by 23 %" means nothing without a scale. Is
 that a lot, for a perturbation of this size, in a spectrum this dense?
@@ -316,7 +419,7 @@ null draws per state, 9 states.
 
 ![](figures/fig8_null_control.png)
 
-**Figure 5.** Rebuild (blue) against matched null (red). **(a)** Similarity to
+**Figure 8.** Rebuild (blue) against matched null (red). **(a)** Similarity to
 the frustrated model, higher = more similar: worst single-mode overlap, median
 block-3 overlap, RMSIP. **(b)** Worst-site RMSF error, log axis.
 
@@ -340,7 +443,7 @@ eigenvalues by ~15 % while adjacent levels are separated by ~6 %; a perturbation
 larger than the level spacing mixes eigenvectors within near-degenerate groups,
 and which vector is called "mode 10" becomes bookkeeping. The null confirms it:
 *any* perturbation of this size scrambles individual modes, and worse. Nothing
-mode-resolved in §4 is evidence about frustration.
+mode-resolved in §6 is evidence about frustration.
 
 ---
 
@@ -351,7 +454,7 @@ this exploration set out to test.**
 
 Refitting an ENM to a strained structure preserves the RMSF profile (correlation
 0.98), preserves the soft-mode subspace (RMSIP 0.97, block-5 overlap 0.93), and
-does so far better than a random perturbation of the same magnitude would (§6).
+does so far better than a random perturbation of the same magnitude would (§6.2).
 What it costs is site-resolved accuracy — tens of per cent at the worst sites —
 and a few units of $TS$.
 
@@ -359,106 +462,28 @@ Two qualifications matter more than the headline:
 
 1. **Most of the difference is not frustration at all**, but the contact map
    being re-derived. Under a hard cutoff that term is 5.5× the frustration term;
-   under a soft one they are comparable (§5). Which dominates is a modelling
+   under a soft one they are comparable (§6.1). Which dominates is a modelling
    choice, usually made without comment.
 2. **Individual normal modes of a perturbed ENM should not be read** — in this or
    any model with a spectrum this dense. The null control shows the low overlaps
-   carry no information (§6).
+   carry no information (§6.2).
 
 The one place the contact map clearly does matter is entropy: letting $k_{ij}$
 follow $l_{ij}$ widens the range of $\Delta(TS)$ across sites 6.25-fold while
 leaving the $\Delta V$ profile essentially unchanged (correlation 0.974,
-Appendix C). Adding or removing a spring changes the spectrum far more than
+§4). Adding or removing a spring changes the spectrum far more than
 moving a rest length does.
 
 **What would settle it.** One protein, one cutoff, one $k$ model. The obvious
-next step is §5's decomposition under a smooth kernel throughout, where the
+next step is §6.1's decomposition under a smooth kernel throughout, where the
 frustration term may well become the interesting one.
 
 ---
 
-## Appendix A. The contact map moves, routinely
-
-Needed for §3: if $k_{ij}(l_{ij})$ never changed the active set, the model would
-be an ordinary ENM with extra bookkeeping.
-
-**What I did.** From the wild type, mutate one uniformly chosen site (§2.3),
-recompute $k_{ij}$, compare active sets. No minimisation — this is a property of
-the parameters alone. 200 draws at each $\sigma$, seed 1.
-
-![](figures/fig1_contact_flips.png)
-
-**Figure A1. (a)** Fraction of the 200 draws changing the active set, log $x$;
-dashed line at the working $\sigma = 0.3$. **(b)** Mean pairs gained (green) and
-lost (red) per mutation.
-
-| $\sigma$ | changing the active set | broken | formed |
-|---|---|---|---|
-| 0.01 | 3.5 % | 0.030 | 0.005 |
-| 0.10 | 35.5 % | 0.175 | 0.275 |
-| **0.30** | **74 %** | **0.71** | **0.67** |
-| 0.60 | 93 % | 1.21 | 1.28 |
-
-At the working $\sigma$, three-quarters of mutations rewire the network, and
-gains and losses are balanced — it rewires rather than erodes.
-
-## Appendix B. Strain opens a downhill channel
-
-Needed for §3: if every mutation were uphill the walk would stall and there would
-be no strained states to test.
-
-An earlier exploration (`sclfenm/MODEL.md` §6) proves that from a *relaxed*
-network, $\Delta V_{\min} \ge 0$ always. Its hypothesis fails here after the first
-mutation, so the question is empirical.
-
-**What I did.** One neutral walk, 40 substitutions, seed 2, saving every 10. From
-each saved state (and from the wild type), 200 fresh trial mutations, each
-minimised exactly, $\Delta V_{\min}$ recorded and the trial discarded.
-
-![](figures/fig2_downhill.png)
-
-**Figure B1.** $x$ is $E_{\text{strain}}$ of the reference state. **(a)** Percent
-of the 200 trials with $\Delta V_{\min} < 0$. **(b)** Mean (blue) and minimum
-(red) of the same 200 values.
-
-| substitutions | $E_{\text{strain}}$ | mean $\Delta V_{\min}$ | min | fraction $<0$ |
-|---|---|---|---|---|
-| 0 (founder) | 0.00 | +0.609 | **+0.131** | **0.000** |
-| 20 | 11.23 | +0.615 | −0.124 | 0.015 |
-| 40 | 24.28 | +0.614 | −0.604 | 0.045 |
-
-From the relaxed founder not one of 200 mutations is downhill; from a strained
-state a few per cent are. The mean is unmoved at ~0.61 throughout: **strain
-widens the distribution rather than shifting it**, so the walk keeps finding
-acceptable moves without drifting downhill.
-
-## Appendix C. What $k(l)$ does to a single-mutation scan
-
-**What I did.** Mutate each of the 98 sites 8 times from the fixed wild type
-($\sigma = 0.3$, seed 11), minimise each exactly, discard, average per site.
-Repeat with $k_{ij}$ frozen at wild-type values — same seed, hence the same
-perturbations — so the two differ only through $k(l)$.
-
-![](figures/fig3_scan.png)
-
-**Figure C1.** Blue = $k_{ij}(l_{ij})$ live, red = frozen. **(a)**
-$\Delta V_{\min}$ per site. **(b)** The same against the mutated site's contact
-number. **(c)** $\Delta(TS)$ per site, $\beta = 1$.
-
-| (over the 98 sites) | $k_{ij}(l_{ij})$ live | $k_{ij}$ frozen |
-|---|---|---|
-| $\operatorname{cor}(\Delta V_{\min}, cn_j)$ | +0.928 | +0.946 |
-| $\operatorname{cor}(\lvert\delta\mathbf r_j\rvert^2, cn_j)$ | −0.657 | −0.712 |
-| range of $\Delta(TS)$ | **0.765** | **0.122** |
-
-Both reproduce the standard results — buried sites cost more to mutate and move
-less. The energy profiles agree closely (correlation 0.974). The entropy range
-differs 6.25-fold: this is where the contact map shows up.
-
-## Appendix D. A smooth kernel
+## Appendix A. A smooth kernel
 
 The step makes $V$ discontinuous in the parameters. Replacing it with the sigmoid
-of §5 and running 40 substitutions at $\nu = 1$:
+of §6.1 and running 40 substitutions at $\nu = 1$:
 
 | | $E_{\text{strain}}$ | $s_{\max}$ over $k>0.5$ (Å) | acceptance |
 |---|---|---|---|
@@ -469,9 +494,9 @@ of §5 and running 40 substitutions at $\nu = 1$:
 the sigmoid gives *every* pair $k_{ij} > 0$, so the network is fully connected
 (4753 pairs against 960). A proper comparison needs the sigmoid thresholded so
 the densities match. The kernel's effect where it does change a conclusion is
-reported in §5.
+reported in §6.1.
 
-## Appendix E. Verification
+## Appendix B. Verification
 
 Three suites in `checks/`, all passing.
 
@@ -493,7 +518,7 @@ numerical-Hessian arbitration of the transverse sign on a *strained* network
 demonstration that off a stationary point the spectrum shows 4 zero modes and a
 negative eigenvalue of $-4.8\times10^{-4}$.
 
-## Appendix F. What I got wrong
+## Appendix C. What I got wrong
 
 Recorded because the corrections changed conclusions, not only numbers.
 
@@ -509,10 +534,10 @@ look like truncation error; with $k^{\text{mut}}_{ij}$ the gap is 0.009 %. I the
 expansion this study exists to avoid.
 
 **I concluded "topology dominates frustration by 5.6×"** without testing whether
-the ratio depended on the kernel. It does, completely (§5).
+the ratio depended on the kernel. It does, completely (§6.1).
 
 **I read low mode overlaps as physical.** They are not; a null control shows any
-perturbation of that size does worse (§6).
+perturbation of that size does worse (§6.2).
 
 **Mode matching used row-wise maxima**, not a matching: 31 of 54 comparisons had
 two modes claiming one partner, inflating every overlap.
@@ -525,7 +550,7 @@ pairs — over all 4753 they reach 36.3 Å); a mechanism asserting active pairs
 "cannot drift" (falsified by 66 lost edges); an unsourced count "318 to 228" that
 no script produces; a transcription error in the sabotage figures.
 
-## Appendix G. Limitations
+## Appendix D. Limitations
 
 - One protein, one cutoff, one $k$ model, one mutation size for the main result.
 - $\beta = 1$ in ANM units is a convention; absolute $TS$ values are not physical.
@@ -537,15 +562,15 @@ no script produces; a transcription error in the sabotage figures.
 - The penm package is not modified. The frustrated Hessian is reimplemented here
   because `set_enm()` blocks `frustrated = TRUE`.
 
-## Appendix H. Files
+## Appendix E. Files
 
 | | |
 |---|---|
 | `R/klfenm_core.R` | state, $k(l)$, energy, Hessian, exact minimiser, mutation |
 | `R/klfenm_profiles.R` | per-site and per-mode comparisons |
 | `R/klfenm_trajectory.R` | scans and walks |
-| `analyses/run_all.R` | §§3–5 and Appendices A–D $\to$ `data/results.rds` (~45 min) |
-| `analyses/run_control.R` | §6 $\to$ `data/control.rds` |
+| `analyses/run_all.R` | §§3–6.1 and Appendix A $\to$ `data/results.rds` (~45 min) |
+| `analyses/run_control.R` | §6.2 $\to$ `data/control.rds` |
 | `figures/make_figures.R` | the eight figures |
 | `checks/` | `test_core.R`, `test_profiles.R`, `test_can_fail.R` |
 
