@@ -250,6 +250,39 @@ klf_ts <- function(K, beta = 1, tol = 1e-8) {
   sum(0.5 / beta * (log(2 * pi / (beta * v)) + 1))
 }
 
+## ------------------------------------------------- energy differences (dV) --
+##
+## NOTATION. Both pieces below are DIFFERENCES, and the reference is always
+## named. Writing them as "V_stress" and "V_relax" hides that they are deltas,
+## and hides it in the one place it matters: along a trajectory the reference
+## is an evolved, STRAINED state, so V_ref(r_ref) != 0 and
+##
+##     dV_stress(ref -> mut)  !=  V_mut(r_ref)
+##
+## They coincide only when the reference is relaxed (the founder). Anywhere else
+## the difference is the reference's own strain energy, which grows as the walk
+## proceeds. That is exactly the V-vs-dV confusion this notation exists to stop.
+##
+## Both are computed by EVALUATING HAMILTONIANS -- no expansion, no closed form.
+## A closed form would need the cross term (nonzero at a strained reference) and
+## extra terms from k^mut != k^ref, and would be wrong the moment either is
+## forgotten. Evaluating is exact at any reference and is simpler.
+
+## dV_stress(ref -> mut) = V_mut(r_ref) - V_ref(r_ref)
+## Two Hamiltonians, ONE structure: the cost of changing the parameters before
+## the structure is allowed to respond. Exact, whatever state `ref` is in.
+dv_stress <- function(ref, mut) klf_v(mut, R = ref$R) - klf_v(ref, R = ref$R)
+
+## dV_relax(ref -> mut) = V_mut(r^e_mut) - V_mut(r_ref)
+## ONE Hamiltonian, two structures: what relaxation gives back. <= 0 by
+## construction, since r^e_mut minimises V_mut. `mut` must already be minimised.
+dv_relax <- function(ref, mut) klf_v(mut, R = mut$R) - klf_v(mut, R = ref$R)
+
+## dV(ref -> mut) = V_mut(r^e_mut) - V_ref(r^e_ref), the physical energy change.
+## Identically dv_stress + dv_relax; both are returned so the split can be
+## reported, and their sum is asserted against the direct difference in checks.
+dv_total <- function(ref, mut) klf_v(mut, R = mut$R) - klf_v(ref, R = ref$R)
+
 ## Strain per active pair, and its energy. The measure of "how frustrated".
 klf_strain <- function(st, R = st$R) {
   a <- which(st$k > 0)

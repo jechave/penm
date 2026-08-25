@@ -57,50 +57,42 @@ ok("mutant IS strained (else nothing is being tested)",
    klf_strain(mu)$max_abs > 1e-3,
    sprintf("max|d-l| = %.4f", klf_strain(mu)$max_abs))
 
-cat("\n== 3. The minimiser does what an expansion cannot ==\n")
-## This is a DIAGNOSTIC OF THE MINIMISER, not a property of the model. The whole
-## point of this exploration is to avoid expansions, so the only reason an LRA
-## expression appears here is to demonstrate that the exact minimisation is
-## genuinely doing something the expansion cannot -- if the two agreed
-## everywhere, klf_minimise() would be redundant.
-##
-## V_stress is the MUTANT Hamiltonian evaluated at the wild-type structure, so
-## it must use the mutant's spring constants k(l + dl). Using the wild type's k
-## is the LFENM assumption dk = 0, and it is wrong here by construction: when a
-## perturbation pushes l past d_max the spring ceases to exist, k^mut = 0, and
-## its term must vanish. (Getting this wrong produced a spurious 26% gap that
-## looked like truncation error and was not.)
-C_wt <- klf_cmat(klf_hessian(wt, frustrated = FALSE))
-two_term <- function(st0, st_mut, dl_idx, dl) {
-  pr <- st0$pr
-  R  <- st0$R                       # wild-type structure
-  km <- st_mut$k[dl_idx]            # MUTANT k = k(l + dl), not the wild type's
-  D  <- R[, pr$j[dl_idx], drop = FALSE] - R[, pr$i[dl_idx], drop = FALSE]
-  d  <- sqrt(colSums(D^2)); E <- sweep(D, 2, d, "/")
-  f  <- matrix(0, 3, ncol(R))
-  fij <- -km * dl
-  for (q in seq_along(dl_idx)) {
-    f[, pr$i[dl_idx][q]] <- f[, pr$i[dl_idx][q]] + fij[q] * E[, q]
-    f[, pr$j[dl_idx][q]] <- f[, pr$j[dl_idx][q]] - fij[q] * E[, q]
-  }
-  dr <- as.vector(C_wt %*% as.vector(f))
-  ## curvature also from the mutant's network, evaluated at the wt structure
-  Km <- klf_hessian(st_mut, R = R, frustrated = FALSE)
-  0.5 * sum(km * dl^2) - 0.5 * sum(dr * as.vector(Km %*% dr))
-}
-sel40 <- which((wt$pr$i == 40 | wt$pr$j == 40) & wt$sdij >= 1)
-rel <- sapply(c(0.02, 0.1, 0.4), function(sg) {
+cat("\n== 3. dV splits exactly, at ANY reference ==\n")
+## dV(ref->mut) = dV_stress(ref->mut) + dV_relax(ref->mut), by construction and
+## with no expansion anywhere. The point of the check is that it holds at a
+## STRAINED reference too, where V_ref(r_ref) != 0 -- the case in which writing
+## these as "V_stress"/"V_relax" silently drops the reference's own energy.
+
+check_split <- function(ref, label) {
   set.seed(7)
-  dl <- rnorm(length(sel40), 0, sg)
-  s2 <- wt; s2$l[sel40] <- s2$l[sel40] + dl
-  s2 <- refresh_k(s2)               # k(l) live, as the model prescribes
-  s2m <- klf_minimise(s2)
-  100 * abs(klf_v(s2m) - two_term(wt, s2, sel40, dl)) / klf_v(s2m)
-})
-cat(sprintf("     sigma 0.02 / 0.10 / 0.40  ->  gap %.3f%% / %.3f%% / %.3f%%\n", rel[1], rel[2], rel[3]))
-ok("exact and LRA agree at small sigma", rel[1] < 0.5, sprintf("%.3f%%", rel[1]))
-ok("and diverge at large sigma", rel[3] > 3 * rel[1],
-   sprintf("%.2f%% vs %.3f%%", rel[3], rel[1]))
+  sel <- which((ref$pr$i == 40 | ref$pr$j == 40) & ref$sdij >= 1)
+  m <- ref; m$l[sel] <- m$l[sel] + rnorm(length(sel), 0, 0.3)
+  m <- refresh_k(m); m <- klf_minimise(m)
+  s <- dv_stress(ref, m); r <- dv_relax(ref, m); tot <- dv_total(ref, m)
+  cat(sprintf("     %-22s V_ref(r_ref) = %8.4f | dV_stress %+8.4f  dV_relax %+8.4f  dV %+8.4f\n",
+              label, klf_v(ref), s, r, tot))
+  list(gap = abs((s + r) - tot), relax = r, stress = s,
+       vref = klf_v(ref), naive = klf_v(m, R = ref$R))
+}
+
+a <- check_split(wt, "relaxed reference")
+ok("dV_stress + dV_relax == dV", a$gap < 1e-12, sprintf("gap = %.2e", a$gap))
+ok("dV_relax <= 0 (relaxation returns energy)", a$relax <= 1e-12,
+   sprintf("%.4f", a$relax))
+
+## now a strained reference, 15 substitutions along
+set.seed(31); ref2 <- wt
+for (s in 1:15) ref2 <- klf_mutate(ref2, sample(N, 1), sigma = 0.3, k_update = TRUE)
+b <- check_split(ref2, "strained reference")
+ok("dV_stress + dV_relax == dV (strained ref)", b$gap < 1e-12,
+   sprintf("gap = %.2e", b$gap))
+ok("dV_relax <= 0 (strained ref)", b$relax <= 1e-12, sprintf("%.4f", b$relax))
+
+## the trap itself: V_mut(r_ref) is NOT dV_stress once the reference is strained
+ok("V_mut(r_ref) == dV_stress ONLY at a relaxed reference",
+   abs(a$naive - a$stress) < 1e-12 && abs(b$naive - b$stress) > 1,
+   sprintf("relaxed: identical | strained: %.4f vs %.4f, off by %.4f (= V_ref)",
+           b$naive, b$stress, b$naive - b$stress))
 
 cat("\n== 4. k = k(l) consistency after mutation ==\n")
 kf <- k_fun_of(mu$k_model)
