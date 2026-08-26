@@ -2,3 +2,7 @@ data/
 
 /.quarto/
 **/*.quarto_ipynb
+
+*.aux
+*.log
+*.out

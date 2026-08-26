@@ -1,0 +1,460 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{dsfont}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+% --- review annotations -------------------------------------------------
+% Comment out the next line (and uncomment the one after) for a clean build
+% with all notes hidden.
+\usepackage[textwidth=3.2cm]{todonotes}
+%\usepackage[disable]{todonotes}
+\newcommand{\jc}[1]{\todo[inline,color=yellow!40]{#1}}   % a comment in the flow
+\newcommand{\jm}[1]{\todo[color=orange!40]{#1}}          % a margin note
+% ------------------------------------------------------------------------
+
+\newcommand{\rr}{\mathbf{r}}
+\newcommand{\Vstress}{\Delta V_{\text{stress}}}
+\newcommand{\Vrelax}{\Delta V_{\text{relax}}}
+\newcommand{\Vmin}{\Delta V_{\min}}
+\newcommand{\req}[1]{\rr^{e}_{#1}}
+
+\title{An elastic network model whose parameters are rest lengths}
+\author{Julian Echave \\ \small (prompting Claude Opus 5)}
+\date{2026-08-26}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\noindent
+In a standard elastic network model the spring constants are set by the
+equilibrium distances of a given structure, which makes the contact map a
+property of that structure. This is harmless for a single native state but
+awkward for mutation, where the object that changes is the sequence, not the
+coordinates. We formulate an ENM in which the rest lengths $l_{ij}$ are the only
+parameters and the spring constants follow them, $k_{ij} = k(l_{ij})$. The
+contact map then becomes a property of the parameters, contacts form and break
+through mutation rather than through relaxation, and the mutant structure is
+defined as the minimiser of the mutant potential rather than by a linear
+response. We derive the resulting theory for a single mutation from an arbitrary
+reference: the exact decomposition of the mutation energy into three terms, two
+of which vanish when the reference is the relaxed wild type and neither of which
+vanishes in general; and the Hessian, whose transverse term is the sole channel
+through which frustration reaches the dynamics. The two vanishing terms are
+exactly what a treatment calibrated at the wild type discards.
+\end{abstract}
+
+\section{Introduction}
+
+An elastic network model (ENM) represents a protein as beads joined by harmonic
+springs, and reproduces the slow collective motions of the native state
+remarkably well for so crude a description. In the standard construction one is
+handed an experimental structure $\req{}$, declares two residues in contact when
+their separation falls below a cutoff, and assigns each contact a spring whose
+rest length is the distance observed in that structure. The equilibrium
+conformation is then the input structure by construction, and the model is
+strain-free: every spring sits at its rest length simultaneously.
+
+This construction ties the model to a structure. That is exactly right when the
+question is the dynamics of one native state, and it becomes awkward as soon as
+the question is mutation. A mutation changes the sequence; the structure is a
+\emph{consequence}. But in the standard formulation the contact map --- which
+springs exist at all --- is read off the coordinates, so there is no way to state
+what a mutation does to the model without first knowing what it does to the
+structure. The usual resort is to hold the contact map fixed and perturb within
+it, which forbids contacts from forming or breaking, or to rebuild the model from
+a new structure, which presupposes the answer.
+
+There is a second difficulty, less often noticed. Once mutations accumulate, the
+reference state is no longer the relaxed wild type. It is a structure that has
+been pushed away from every spring's preference and settled at a compromise: a
+\emph{frustrated} state, in which no conformation relaxes all springs at once and
+the residual strain is nonzero at the minimum. Expressions derived at the wild
+type routinely assume a relaxed reference --- often silently, through a term that
+happens to vanish there. Applied to a strained reference they are no longer
+exact, and the error is not a small correction of fixed sign but a term
+proportional to the accumulated strain.
+
+This note develops an ENM designed around both points. The move is small: make
+the rest lengths the parameters, and let the spring constants be a function of
+the rest lengths,
+\begin{equation}
+k_{ij} = k(l_{ij}) \qquad \text{rather than} \qquad k_{ij} = k(d^{e}_{ij}),
+\label{eq:kl}
+\end{equation}
+where $d^{e}_{ij}$ is the distance in the equilibrium structure. At the wild type
+the two agree, because the standard fit sets $l_{ij} = d^{e}_{ij}$; they part
+company for a mutant, and the consequence is the point of the model:
+
+\begin{quote}
+\textbf{the contact map becomes a property of the parameters, not of the
+structure.}
+\end{quote}
+
+Contacts are made and broken by \emph{mutation}, when a rest length crosses the
+cutoff --- not by relaxation. A mutation is then a well-defined operation on the
+model alone, and the mutant structure follows from it rather than being required
+in advance.
+
+We treat a single mutation from an arbitrary reference, which may itself be
+strained. Section~\ref{sec:model} sets out the potential and the state,
+Section~\ref{sec:mutation} defines a mutation and the mutant structure,
+Section~\ref{sec:energy} derives the energy differences and the exact
+decomposition that is the main formal result, and Section~\ref{sec:hessian}
+derives the Hessian and isolates the transverse term. Throughout, $k(l)$ is an
+arbitrary non-negative function; the hard cutoff of the anisotropic network model
+(ANM) appears in Section~\ref{sec:step} as a special case, and is the one choice
+that makes the energy discontinuous in the parameters.
+
+\subsection*{Notation}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+$N$ & number of beads (residues), one per site \\
+$\rr$ & a conformation, the $3N$ coordinates $(\rr_1,\dots,\rr_N)$ \\
+$d_{ij}(\rr)$ & $= \lVert \rr_i - \rr_j \rVert$, the distance between beads $i$ and $j$ \\
+$l_{ij}$ & rest length of the spring on pair $ij$; the model's parameters \\
+$k(l)$ & spring constant as a function of rest length, $k \ge 0$ \\
+$d_{\max}$ & contact cutoff, the scale at which $k(l)$ falls to zero \\
+$\req{}$ & an equilibrium (relaxed) conformation, a minimiser of $V$ \\
+$V(\rr;l)$ & the potential, eq.~\eqref{eq:V} \\
+$\hat{\mathbf{e}}_{ij}$ & $= (\rr_i-\rr_j)/d_{ij}$, the unit vector along pair $ij$ \\
+$\mathbf{I}$ & the $3\times3$ identity \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+Subscripts \emph{ref} and \emph{mut} label the reference and the mutant; $\req{}$
+with such a subscript is that model's own relaxed structure. We write $l$ for the
+whole parameter set $\{l_{ij}\}$ when no ambiguity arises.
+
+\section{The model}
+\label{sec:model}
+
+\subsection{The potential}
+
+The potential energy of a conformation $\rr$ under parameters $l$ is
+\begin{equation}
+V(\rr; l) \;=\; \tfrac12 \sum_{i<j} k(l_{ij})\,\big(d_{ij}(\rr) - l_{ij}\big)^{2}.
+\label{eq:V}
+\end{equation}
+Each pair contributes a harmonic term penalising departure of its current
+distance from its rest length, with a stiffness fixed by that same rest length.
+We take the zero of energy at the fully relaxed configuration, so that $V$
+evaluated at any conformation is exactly the strain energy stored in the
+springs.
+
+The sum runs over all $\tfrac12 N(N-1)$ distinct pairs. Pairs with $k(l_{ij}) =
+0$ contribute nothing and are \emph{inactive}; those with $k(l_{ij}) > 0$ are
+\emph{active}, and the set of active pairs is the contact map. Because $k$ is
+evaluated at $l_{ij}$ and not at $d_{ij}(\rr)$, membership of the contact map is
+determined by the parameters alone, independently of the conformation at which
+$V$ is being evaluated. This is the defining property of the model and every
+result below traces back to it.
+
+\subsection{States}
+
+A state of the model is a complete assignment of rest lengths, one for every pair
+of sites --- not merely for the active ones. The wild-type state is obtained from
+an experimental structure $\req{\text{wt}}$ by
+\begin{equation}
+l^{\text{wt}}_{ij} \;=\; d_{ij}(\req{\text{wt}}),
+\label{eq:fit}
+\end{equation}
+which is the standard ENM fit, and reproduces the standard model exactly: every
+spring sits at its rest length at $\req{\text{wt}}$, so the wild-type structure is
+a minimum of $V$ with zero strain energy, and $k(l^{\text{wt}}_{ij}) =
+k(d^{e}_{ij})$ recovers the usual assignment.
+
+Carrying rest lengths for inactive pairs is forced by the requirement that
+contacts be able to form. By eq.~\eqref{eq:fit} every active wild-type pair has a
+rest length inside the cutoff; if inactive pairs carried no parameter, no pair
+outside the cutoff could ever be brought inside one, and mutation could only
+remove contacts. Assigning every pair a rest length makes formation and breaking
+symmetric operations. The enlargement is one of parameters only: inactive pairs
+have $k = 0$ and contribute neither energy nor curvature, so the Hessian retains
+its $3N \times 3N$ form and the active pairs alone determine the dynamics.
+
+\subsection{Strain and frustration}
+
+For a state $l$ with equilibrium structure $\req{}$, define the residual of a
+pair as the amount by which its spring is stretched or compressed at equilibrium,
+\begin{equation}
+r_{ij} \;\equiv\; d_{ij}(\req{}) - l_{ij},
+\label{eq:residual}
+\end{equation}
+and the strain energy as $E_{\text{strain}} = V(\req{}; l)$, which by
+eq.~\eqref{eq:V} is $\tfrac12\sum_{i<j} k(l_{ij}) r_{ij}^2$.
+
+A state is \textbf{frustrated} when no conformation relaxes every active spring
+at once, equivalently when $E_{\text{strain}} > 0$ at the minimum. The wild-type
+state is unfrustrated by construction: eq.~\eqref{eq:fit} makes every residual
+vanish at $\req{\text{wt}}$. A mutant is frustrated in general, because there is
+no reason a perturbed set of rest lengths should be simultaneously realisable by
+any embedding of $N$ points in three dimensions. Frustration is thus the generic
+condition of the model and the unfrustrated wild type is the special case ---
+the reverse of the usual situation, and the reason the terms identified in
+Section~\ref{sec:energy} cannot be dismissed.
+
+\section{Mutation}
+\label{sec:mutation}
+
+A mutation at site $s$ perturbs the rest lengths of all pairs involving that
+site,
+\begin{equation}
+l^{\text{mut}}_{ij} \;=\; l^{\text{ref}}_{ij} + \delta l_{ij},
+\qquad
+\delta l_{ij} \sim \mathcal{N}(0, \sigma^2) \ \text{ for } i = s \text{ or } j = s,
+\label{eq:mutation}
+\end{equation}
+and leaves all other rest lengths unchanged. The parameter $\sigma$ sets the
+mutation size. The spring constants are not free: they follow the rest lengths
+through eq.~\eqref{eq:kl}, so the mutation induces
+\begin{equation}
+\delta k_{ij} \;=\; k(l^{\text{ref}}_{ij} + \delta l_{ij}) - k(l^{\text{ref}}_{ij}),
+\label{eq:dk}
+\end{equation}
+which is nonzero precisely for those pairs whose rest length has moved into a
+region of different stiffness --- in particular, across the cutoff. Contacts
+form and break here, in the parameters, and nowhere else.
+
+The mutant structure is defined as a minimiser of the mutant potential,
+\begin{equation}
+\req{\text{mut}} \;=\; \arg\min_{\rr} V(\rr; l^{\text{mut}}),
+\label{eq:minimiser}
+\end{equation}
+and the mutant's energy is $V(\req{\text{mut}}; l^{\text{mut}})$, read at that
+minimum. Two features of this definition are worth making explicit, because they
+are what distinguish the model from the usual perturbative treatments.
+
+First, \textbf{no expansion conditions the structure}. Eq.~\eqref{eq:minimiser}
+is a statement about the exact potential, not about a quadratic approximation to
+it; the mutant structure is not $\req{\text{ref}}$ displaced by a linear response
+$\mathbf{C}_{\text{ref}}\mathbf{f}$, and it is not obtained by truncating
+anything. Normal modes, when computed, describe a state that has already been
+determined; they never determine it.
+
+Second, \textbf{the contact map may differ between reference and mutant}, by
+eq.~\eqref{eq:dk}. The comparison in Section~\ref{sec:energy} is therefore
+between two genuinely different Hamiltonians --- not merely between two parameter
+values of one Hamiltonian --- and the bookkeeping must accommodate springs that
+exist on one side and not the other.
+
+\section{Energy differences}
+\label{sec:energy}
+
+\subsection{Three differences}
+
+Comparing a mutant to its reference involves two potentials and two structures,
+so a difference in energy is ambiguous until both are named. Three combinations
+are meaningful. The \emph{stress} energy is the cost of changing the Hamiltonian
+while holding the structure fixed at the reference:
+\begin{equation}
+\Vstress \;=\; V(\req{\text{ref}}; l^{\text{mut}}) - V(\req{\text{ref}}; l^{\text{ref}}).
+\label{eq:dvstress}
+\end{equation}
+The \emph{relaxation} energy is the energy released when the mutant Hamiltonian
+is allowed to find its own minimum:
+\begin{equation}
+\Vrelax \;=\; V(\req{\text{mut}}; l^{\text{mut}}) - V(\req{\text{ref}}; l^{\text{mut}}) \;\le\; 0.
+\label{eq:dvrelax}
+\end{equation}
+It is non-positive because $\req{\text{mut}}$ minimises $V(\cdot; l^{\text{mut}})$
+by eq.~\eqref{eq:minimiser}. Their sum is the difference of minima,
+\begin{equation}
+\Vmin \;=\; V(\req{\text{mut}}; l^{\text{mut}}) - V(\req{\text{ref}}; l^{\text{ref}})
+\;=\; \Vstress + \Vrelax,
+\label{eq:dvmin}
+\end{equation}
+which compares each state at its own equilibrium and is the quantity a selective
+criterion would act on. In words: two Hamiltonians at one structure; one
+Hamiltonian at two structures; and the difference of minima.
+
+\subsection{The exact decomposition}
+\label{sec:decomposition}
+
+The stress energy can be written out exactly. Substituting
+$l^{\text{mut}}_{ij} = l^{\text{ref}}_{ij} + \delta l_{ij}$ and $k^{\text{mut}}_{ij}
+= k^{\text{ref}}_{ij} + \delta k_{ij}$ into eq.~\eqref{eq:dvstress}, with
+$r_{ij}$ the reference's own residual from eq.~\eqref{eq:residual}, gives
+\begin{equation}
+\Vstress \;=\;
+\underbrace{\tfrac12\sum_{i<j} k^{\text{ref}}_{ij}\,\delta l_{ij}^{2}}_{\text{(a)}}
+\;\underbrace{-\;\sum_{i<j} k^{\text{ref}}_{ij}\, r_{ij}\,\delta l_{ij}}_{\text{(b)}}
+\;+\; \underbrace{\tfrac12\sum_{i<j} \delta k_{ij}\big(r_{ij} - \delta l_{ij}\big)^{2}}_{\text{(c)}}.
+\label{eq:decomposition}
+\end{equation}
+This is an identity, not an expansion: no term has been truncated, and it holds
+for arbitrary $k(l)$, arbitrary mutation size, and an arbitrarily strained
+reference. The three terms have distinct characters.
+
+\paragraph{(a) The direct cost.} Always present and always positive, this is the
+work done stretching the springs that already exist, and it is the only term that
+survives when the reference is relaxed and the contact map is unchanged. It is
+quadratic in the mutation size and independent of the reference's strain.
+
+\paragraph{(b) The cross term.} This term couples the mutation to the strain the
+reference already carries. It vanishes if and only if the reference is relaxed,
+$r_{ij} = 0$ --- in particular it vanishes at the wild type, by
+eq.~\eqref{eq:fit}. It is the only term of the three that can be negative: a
+mutation that happens to move rest lengths toward the distances the structure
+already exhibits releases energy. Its magnitude is proportional to the reference's
+accumulated strain, so it is negligible near the wild type and grows as the
+reference becomes more frustrated. A formula calibrated at the wild type
+therefore appears correct, and degrades in exactly the regime where mutations
+have accumulated.
+
+\paragraph{(c) The contact term.} This term exists only because $k$ follows $l$.
+It vanishes if and only if $\delta k_{ij} = 0$ for all pairs, which is the
+assumption made by models that perturb within a fixed contact map --- the
+linearly forced ENM (LFENM) among them. Here a pair whose stiffness changes
+contributes its whole stored energy, and if $k(l)$ is a step then that
+contribution arrives discontinuously (Section~\ref{sec:step}). Note that (c) is
+governed by $r_{ij} - \delta l_{ij}$, the residual the pair \emph{would} have
+under the mutant rest length, so a contact forming far from its new rest length
+is expensive.
+
+Terms (b) and (c) are precisely what is discarded by a treatment calibrated at
+the relaxed wild type with a frozen contact map. Neither is a higher-order
+correction that could be recovered by expanding further; both are exact
+contributions that happen to vanish in that special case.
+
+\subsection{Differences, not energies}
+
+One consequence deserves emphasis because it is a standing source of error.
+$\Vstress$ is a \emph{difference}, and it is not interchangeable with the
+absolute energy $V(\req{\text{ref}}; l^{\text{mut}})$ of the mutant Hamiltonian at
+the reference structure. The two differ by $V(\req{\text{ref}}; l^{\text{ref}})$,
+the reference's own strain energy, which is zero at the wild type and grows as
+the reference becomes frustrated. At the wild type the distinction is invisible;
+away from it, it is the whole of the reference's accumulated strain.
+
+\section{Dynamics}
+\label{sec:hessian}
+
+\subsection{The Hessian}
+
+The motions of a state are governed by the second derivatives of $V$ at its
+equilibrium structure. Differentiating eq.~\eqref{eq:V} twice with respect to the
+coordinates gives, for the off-diagonal $3\times3$ block coupling two active
+sites $i$ and $j$,
+\begin{equation}
+\mathbf{K}_{ij} \;=\; -k(l_{ij})\Big[
+\hat{\mathbf{e}}_{ij}\hat{\mathbf{e}}_{ij}^{\mathsf{T}}
++ g_{ij}\big(\hat{\mathbf{e}}_{ij}\hat{\mathbf{e}}_{ij}^{\mathsf{T}} - \mathbf{I}\big)\Big],
+\qquad
+g_{ij} \;=\; \frac{l_{ij}}{d_{ij}(\rr)} - 1,
+\label{eq:hessian}
+\end{equation}
+with the diagonal blocks fixed by translational invariance,
+$\mathbf{K}_{ii} = -\sum_{j \ne i}\mathbf{K}_{ij}$. Inactive pairs have
+$k(l_{ij}) = 0$ and drop out, so the matrix is $3N \times 3N$ regardless of how
+many pairs carry parameters. It has six zero eigenvalues, corresponding to the
+three translations and three rotations under which $V$ is invariant.
+
+\subsection{The transverse term}
+
+Eq.~\eqref{eq:hessian} contains two pieces. The first,
+$\hat{\mathbf{e}}\hat{\mathbf{e}}^{\mathsf{T}}$, is the longitudinal projector:
+it resists stretching along the line joining the two sites and is the whole of
+the standard ENM Hessian. The second, weighted by $g_{ij}$, acts in the plane
+\emph{perpendicular} to that line, and is the \textbf{transverse term}. Its
+coefficient
+\begin{equation}
+g_{ij} \;=\; \frac{l_{ij}}{d_{ij}(\rr)} - 1
+\end{equation}
+measures the fractional mismatch between the spring's rest length and its actual
+extension. A stretched spring ($d_{ij} > l_{ij}$) has $g_{ij} < 0$ and resists
+transverse displacement, like a taut string; a compressed one has $g_{ij} > 0$
+and assists it.
+
+The transverse term vanishes identically when every spring sits at its rest
+length. This gives the model's sharpest structural statement:
+
+\begin{quote}
+\textbf{frustration reaches the dynamics only through $g_{ij}$.}
+\end{quote}
+
+A state's residuals enter the energy through the strain $E_{\text{strain}}$ and
+enter the motions through $g_{ij}$, and through nothing else. Standard ENMs omit
+the transverse term, and are entitled to: their fit, eq.~\eqref{eq:fit}, forces
+$l_{ij} = d_{ij}(\req{})$, hence $g_{ij} = 0$ at the structure where the Hessian
+is evaluated. The omission is exact for an unfrustrated state and is an
+approximation of uncontrolled sign for any other --- including every mutant of
+the present model.
+
+It is worth distinguishing the transverse term from the cross term (b) of
+Section~\ref{sec:decomposition}, since both vanish at a relaxed reference and
+both are proportional to residuals. They are different objects: (b) is a
+contribution to an energy difference, linear in the mutation; $g_{ij}$ is a
+contribution to the curvature at a single state, independent of any mutation.
+A state can have no mutation applied to it and still have $g_{ij} \ne 0$.
+
+\section{The step-function case}
+\label{sec:step}
+
+The theory above holds for arbitrary $k(l)$. The ANM corresponds to the hard
+cutoff
+\begin{equation}
+k(l) \;=\; k_0\,\mathds{1}[\,l \le d_{\max}\,],
+\label{eq:step}
+\end{equation}
+in which a pair is either a full-strength spring or absent. This choice is the
+common one and it has a specific consequence: $V$ is \emph{discontinuous} in the
+parameters. A rest length crossing $d_{\max}$ adds or removes a spring outright,
+and by term (c) of eq.~\eqref{eq:decomposition} the energy jumps by
+$\tfrac12 k_0 (r_{ij} - \delta l_{ij})^2$, an amount that does not go to zero as
+the crossing becomes marginal. Two states with almost identical parameters can
+have appreciably different energies.
+
+Nothing in Sections~\ref{sec:model}--\ref{sec:hessian} requires this. A smooth
+$k(l)$ --- a sigmoid of width $w$ centred on $d_{\max}$, say --- makes $V$
+continuous and differentiable in the parameters, makes $\delta k_{ij}$ small
+whenever $\delta l_{ij}$ is small, and reduces term (c) to a smooth
+contribution rather than a jump. The price is that the contact map ceases to be a
+crisp binary object: every pair carries some stiffness, and "the contact map"
+becomes a thresholded description of a continuum rather than a property of the
+state. The step and the sigmoid are thus two ends of a modelling choice about
+how sharply stiffness should fall with rest length, and the theory is written to
+accommodate either.
+
+\section{Discussion}
+
+The model is a small departure from the standard ENM --- one argument changed,
+from $k(d^{e}_{ij})$ to $k(l_{ij})$ --- and the consequences follow from that
+single change. Making the rest lengths the parameters makes the contact map a
+property of the parameters; that in turn makes mutation a well-defined operation
+on the model that can create and destroy contacts, and makes the mutant structure
+a derived quantity rather than an input.
+
+The formal content is eq.~\eqref{eq:decomposition} and eq.~\eqref{eq:hessian}.
+Both exhibit the same pattern: a term that is present in general, plus terms that
+vanish precisely when the reference is the relaxed wild type with a fixed contact
+map. In the energy these are the cross term (b), proportional to accumulated
+strain, and the contact term (c), proportional to changes in stiffness. In the
+dynamics it is the transverse term $g_{ij}$. A treatment calibrated at the wild
+type sets all three to zero and is exactly right in doing so --- at the wild
+type. The model's purpose is to describe states reached by mutation, where none
+of the three is zero, and where the discarded terms grow with the very quantity
+that accumulates.
+
+Two limitations of scope should be stated. We have treated a single mutation from
+a given reference; the reference may be arbitrarily strained, so the results
+apply at any point of a substitution process, but the process itself --- how
+mutations are proposed, accepted, and accumulated --- is not developed here, and
+neither are the statistics of strain along such a process. And the theory is
+formal throughout: it establishes what the terms are and when they vanish, not
+how large they are in any particular protein, which is an empirical question the
+decomposition is designed to make answerable.
+
+\end{document}
