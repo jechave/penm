@@ -1,4 +1,7 @@
 \documentclass[11pt]{article}
+%DIF LATEXDIFF DIFFERENCE FILE
+%DIF DEL /private/tmp/claude-501/-Users-julianechave-Library-Mobile-Documents-com-apple-CloudDocs-lab-Rpackages-penm/debdfe27-3440-407c-bad0-b834e58bbcc3/scratchpad/old.tex   Thu Aug 27 19:18:14 2026
+%DIF ADD klfenm_report.tex                                                                                                                                                     Thu Aug 27 19:26:37 2026
 
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath}
@@ -27,6 +30,46 @@
 potential, conformational distribution, and the effect of mutation}
 \author{Julian Echave \\ \small (prompting Claude Opus 5)}
 \date{2026-08-26}
+%DIF PREAMBLE EXTENSION ADDED BY LATEXDIFF
+%DIF UNDERLINE PREAMBLE %DIF PREAMBLE
+\RequirePackage[normalem]{ulem} %DIF PREAMBLE
+\RequirePackage{color}\definecolor{RED}{rgb}{1,0,0}\definecolor{BLUE}{rgb}{0,0,1} %DIF PREAMBLE
+\providecommand{\DIFaddtex}[1]{{\protect\color{blue}\uwave{#1}}} %DIF PREAMBLE
+\providecommand{\DIFdeltex}[1]{{\protect\color{red}\sout{#1}}}                      %DIF PREAMBLE
+%DIF SAFE PREAMBLE %DIF PREAMBLE
+\providecommand{\DIFaddbegin}{} %DIF PREAMBLE
+\providecommand{\DIFaddend}{} %DIF PREAMBLE
+\providecommand{\DIFdelbegin}{} %DIF PREAMBLE
+\providecommand{\DIFdelend}{} %DIF PREAMBLE
+\providecommand{\DIFmodbegin}{} %DIF PREAMBLE
+\providecommand{\DIFmodend}{} %DIF PREAMBLE
+%DIF FLOATSAFE PREAMBLE %DIF PREAMBLE
+\providecommand{\DIFaddFL}[1]{\DIFadd{#1}} %DIF PREAMBLE
+\providecommand{\DIFdelFL}[1]{\DIFdel{#1}} %DIF PREAMBLE
+\providecommand{\DIFaddbeginFL}{} %DIF PREAMBLE
+\providecommand{\DIFaddendFL}{} %DIF PREAMBLE
+\providecommand{\DIFdelbeginFL}{} %DIF PREAMBLE
+\providecommand{\DIFdelendFL}{} %DIF PREAMBLE
+%DIF HYPERREF PREAMBLE %DIF PREAMBLE
+\providecommand{\DIFadd}[1]{\texorpdfstring{\DIFaddtex{#1}}{#1}} %DIF PREAMBLE
+\providecommand{\DIFdel}[1]{\texorpdfstring{\DIFdeltex{#1}}{}} %DIF PREAMBLE
+%DIF COLORLISTINGS PREAMBLE %DIF PREAMBLE
+\RequirePackage{listings} %DIF PREAMBLE
+\RequirePackage{color} %DIF PREAMBLE
+\lstdefinelanguage{DIFcode}{ %DIF PREAMBLE
+%DIF DIFCODE_UNDERLINE %DIF PREAMBLE
+  moredelim=[il][\color{red}\sout]{\%DIF\ <\ }, %DIF PREAMBLE
+  moredelim=[il][\color{blue}\uwave]{\%DIF\ >\ } %DIF PREAMBLE
+} %DIF PREAMBLE
+\lstdefinestyle{DIFverbatimstyle}{ %DIF PREAMBLE
+	language=DIFcode, %DIF PREAMBLE
+	basicstyle=\ttfamily, %DIF PREAMBLE
+	columns=fullflexible, %DIF PREAMBLE
+	keepspaces=true %DIF PREAMBLE
+} %DIF PREAMBLE
+\lstnewenvironment{DIFverbatim}{\lstset{style=DIFverbatimstyle}}{} %DIF PREAMBLE
+\lstnewenvironment{DIFverbatim*}{\lstset{style=DIFverbatimstyle,showspaces=true}}{} %DIF PREAMBLE
+%DIF END PREAMBLE EXTENSION ADDED BY LATEXDIFF
 
 \begin{document}
 
@@ -47,207 +90,275 @@ then for a reference and its mutant, ending with the mutational changes.
 
 \subsection{Conformations and distances}
 
-A protein is represented by $N$ nodes, one per residue, joined in pairs by springs.
-A conformation is the set of the node positions,
+\DIFdelbegin \DIFdel{The }\DIFdelend \DIFaddbegin \DIFadd{A }\DIFaddend protein is represented by $N$ nodes\DIFaddbegin \DIFadd{, one per residue, joined in pairs by springs}\DIFaddend .
+A conformation is the set of \DIFdelbegin \DIFdel{their
+positions,
+}\DIFdelend \DIFaddbegin \DIFadd{the node positions,
+}\DIFaddend \begin{equation}
+\rr = (\rr_1, \rr_2, \ldots, \rr_N) \in \mathbb{R}^{3N}\DIFdelbegin \DIFdel{,
+}\DIFdelend \DIFaddbegin \DIFadd{.
+}\DIFaddend \end{equation}
+\DIFaddbegin \DIFadd{We write
+}\begin{equation}
+\DIFadd{\rr_{ij} \;\equiv\; \rr_j - \rr_i
+}\end{equation}
+\DIFadd{for the vector from node $i$ to node $j$, so that $\rr_{ij} = -\rr_{ji}$, }\DIFaddend and the
+distance between \DIFdelbegin \DIFdel{nodes $i$ and $j$ }\DIFdelend \DIFaddbegin \DIFadd{the two nodes }\DIFaddend in conformation $\rr$ is
 \begin{equation}
-\rr = (\rr_1, \rr_2, \ldots, \rr_N) \in \mathbb{R}^{3N}.
+d_{ij}(\rr) \;=\; \lVert \rr\DIFdelbegin \DIFdel{_i - \rr_j }\DIFdelend \DIFaddbegin \DIFadd{_{ij} }\DIFaddend \rVert\DIFdelbegin \DIFdel{\;=\; }%DIFDELCMD < \big[%%%
+\DIFdel{(\rr_i - \rr_j)\cdot(\rr_i - \rr_j)}%DIFDELCMD < \big]%%%
+\DIFdel{^{1/2}.
+}\DIFdelend \DIFaddbegin \DIFadd{,
+}\DIFaddend \label{eq:dij}
 \end{equation}
-We write
-\begin{equation}
-\rr_{ij} \;\equiv\; \rr_j - \rr_i
-\end{equation}
-for the vector from node $i$ to node $j$, so that $\rr_{ij} = -\rr_{ji}$, and the
-distance between the two nodes in conformation $\rr$ is
-\begin{equation}
-d_{ij}(\rr) \;=\; \lVert \rr_{ij} \rVert,
-\label{eq:dij}
-\end{equation}
-which is symmetric, $d_{ij} = d_{ji}$.
+\DIFdelbegin \DIFdel{We write $\rr_{ij} = \rr_i - \rr_j$ throughout, so that $\rr_{ij} = -\rr_{ji}$ and
+}\DIFdelend \DIFaddbegin \DIFadd{which is symmetric, }\DIFaddend $d_{ij} = d_{ji}$.
 
 \subsection{Parameters}
 
-Every pair of nodes is joined by a spring, and each spring carries an equilibrium
-length $l_{ij}$, the length at which it is neither stretched nor compressed. There
-is one such length for every spring, and together they form
-\begin{equation}
+\DIFdelbegin \DIFdel{Each }\DIFdelend \DIFaddbegin \DIFadd{Every }\DIFaddend pair of nodes \DIFaddbegin \DIFadd{is joined by a spring, and each spring }\DIFaddend carries an equilibrium
+length $l_{ij}$, the length at which \DIFdelbegin \DIFdel{the
+spring joining the pair is unstretched}\DIFdelend \DIFaddbegin \DIFadd{it is neither stretched nor compressed}\DIFaddend . There
+is one \DIFdelbegin \DIFdel{for every pair, }\DIFdelend \DIFaddbegin \DIFadd{such length for every spring, and together they form
+}\DIFaddend \begin{equation}
 \LL \;=\; \{\, l_{ij} \,:\, 1 \le i < j \le N \,\},
 \qquad
 |\LL| = \tfrac12 N(N-1),
 \end{equation}
-the complete set of free parameters of the model. The force constant of a spring is
-fixed by its own equilibrium length through a function $k$,
+\DIFdelbegin \DIFdel{and $\LL$ is }\DIFdelend the complete set of free parameters of the model. The force constant of a \DIFdelbegin \DIFdel{pair }\DIFdelend \DIFaddbegin \DIFadd{spring }\DIFaddend is
+fixed by its \DIFaddbegin \DIFadd{own }\DIFaddend equilibrium length through a function $k$,
 \begin{equation}
 k_{ij} \;=\; k(l_{ij}),
 \qquad k : [0,\infty) \to [0,\infty).
 \label{eq:kl}
 \end{equation}
 
-This is the one departure from standard practice, and it is worth stating
-carefully, because in the standard case the departure is invisible. A standard
-elastic network model is built on a given structure, which it takes as the
-equilibrium conformation $\re$, and assigns each spring the equilibrium length
+This is the one departure from standard practice\DIFaddbegin \DIFadd{, and it is worth stating
+carefully, because in the standard case the departure is invisible}\DIFaddend . A standard
+elastic network model is built on a given structure\DIFaddbegin \DIFadd{, which it takes as the
+equilibrium conformation }\DIFaddend $\re$\DIFaddbegin \DIFadd{, and assigns each spring the equilibrium length
 $l_{ij} = d_{ij}(\re)$ it already has in that structure. Its force constants are
-then written as a function of $d_{ij}(\re)$ --- but since $l_{ij}$ and
-$d_{ij}(\re)$ are equal there, a function of one is a function of the other, and
+then written as a function of $d_{ij}(\re)$ --- but since $l_{ij}$ }\DIFaddend and
+\DIFdelbegin \DIFdel{takes $k_{ij} = f(d_{ij}(\re))$}\DIFdelend \DIFaddbegin \DIFadd{$d_{ij}(\re)$ are equal there}\DIFaddend , a function of \DIFdelbegin \DIFdel{a distance in that structure; here }\DIFdelend \DIFaddbegin \DIFadd{one is a function of the other, and
 nothing distinguishes $k(l_{ij})$ from $k(d_{ij}(\re))$. Here the $l_{ij}$ are left
 free rather than read off a structure, the two cease to coincide, and
-\eqref{eq:kl} states which of them $k$ is a function of: the parameter $l_{ij}$.
+\eqref{eq:kl} states which of them }\DIFaddend $k$ is a function of\DIFdelbegin \DIFdel{a free parameter of the model.
+The function }\DIFdelend \DIFaddbegin \DIFadd{: the parameter $l_{ij}$.
+}
 
-We assume of $k$ only that it is non-increasing, so that long springs are weakly
-coupled or uncoupled, and that $k(l) = 0$ for $l$ beyond some range, so that
-springs long enough to represent no contact do not interact. Nothing below requires
+\DIFadd{We assume of }\DIFaddend $k$ \DIFdelbegin \DIFdel{is otherwise arbitrary. We take it }\DIFdelend \DIFaddbegin \DIFadd{only that it is }\DIFaddend non-increasing, so that \DIFdelbegin \DIFdel{pairs with long equilibrium lengths }\DIFdelend \DIFaddbegin \DIFadd{long springs }\DIFaddend are weakly
+coupled or uncoupled, and \DIFdelbegin \DIFdel{we assume
+}\DIFdelend \DIFaddbegin \DIFadd{that }\DIFaddend $k(l) = 0$ for $l$ \DIFdelbegin \DIFdel{large enough that
+distant pairs }\DIFdelend \DIFaddbegin \DIFadd{beyond some range, so that
+springs long enough to represent no contact }\DIFaddend do not interact. \DIFaddbegin \DIFadd{Nothing below requires
 $k$ to be continuous or differentiable.
+}\DIFaddend 
 
 \subsection{The potential}
 
 The potential energy of a conformation $\rr$ for a network with parameters $\LL$
-is a sum of harmonic terms, one per spring,
+is a sum of harmonic terms, one per \DIFdelbegin \DIFdel{pair}\DIFdelend \DIFaddbegin \DIFadd{spring}\DIFaddend ,
 \begin{equation}
 \boxed{\;
 V(\rr; \LL) \;=\; \tfrac12 \sum_{i<j} k(l_{ij})\,\big(d_{ij}(\rr) - l_{ij}\big)^{2}.
 \;}
 \label{eq:V}
 \end{equation}
-The sum runs over all $\tfrac12 N(N-1)$ springs, and $V$ evaluated at any
-conformation is the elastic energy stored in them. Every term is non-negative, so
+The sum runs over all $\tfrac12 N(N-1)$ \DIFdelbegin \DIFdel{pairs. Since $V \ge 0$ }\DIFdelend \DIFaddbegin \DIFadd{springs, }\DIFaddend and \DIFdelbegin \DIFdel{$V = 0$ only if
+every term vanishes, the zero of energy is the fully relaxed configuration, and }\DIFdelend $V$ evaluated at any
+conformation is the elastic energy stored in \DIFdelbegin \DIFdel{the springs. }\DIFdelend \DIFaddbegin \DIFadd{them. Every term is non-negative, so
 $V \ge 0$, and $V(\rr;\LL) = 0$ requires every spring to sit at its own equilibrium
 length, $d_{ij}(\rr) = l_{ij}$ for every active spring at once. Whether any
 conformation achieves this is a question about $\LL$, not a property of the model:
 for some parameter sets no conformation does, and then $V > 0$ everywhere. Section
 \ref{sec:frustration} takes this up.
+}\DIFaddend 
 
-A spring with $k(l_{ij}) > 0$ contributes to $V$ and is said to be \emph{active}; a
-spring with $k(l_{ij}) = 0$ contributes nothing. The set of active springs is the
-network's contact map. Since $k$ is a function of $l_{ij}$, which springs are
-active is fixed by $\LL$ alone: the contact map is a property of the parameters,
-and does not change as the network moves. In a standard model, where
-$l_{ij} = d_{ij}(\re)$, this same set would be read off the structure instead.
+A \DIFdelbegin \DIFdel{pair }\DIFdelend \DIFaddbegin \DIFadd{spring }\DIFaddend with $k(l_{ij}) > 0$ contributes to $V$ and is said to be \emph{active}; a
+\DIFdelbegin \DIFdel{pair }\DIFdelend \DIFaddbegin \DIFadd{spring }\DIFaddend with $k(l_{ij}) = 0$ contributes nothing. The set of active \DIFdelbegin \DIFdel{pairs }\DIFdelend \DIFaddbegin \DIFadd{springs }\DIFaddend is the
+network's contact map. \DIFdelbegin \DIFdel{Because }\DIFdelend \DIFaddbegin \DIFadd{Since }\DIFaddend $k$ is \DIFdelbegin \DIFdel{evaluated at }\DIFdelend \DIFaddbegin \DIFadd{a function of }\DIFaddend $l_{ij}$\DIFdelbegin \DIFdel{and not at
+$d_{ij}(\rr)$, which pairs }\DIFdelend \DIFaddbegin \DIFadd{, which springs }\DIFaddend are
+active is fixed by $\LL$ alone\DIFaddbegin \DIFadd{: the contact map is a property of the parameters}\DIFaddend ,
+and does not \DIFdelbegin \DIFdel{depend
+on the conformation at which $V$ is evaluated. }%DIFDELCMD < 
+
+%DIFDELCMD < %%%
+\DIFdel{Every pair carries a parameter, including the inactive ones. This is necessary if
+a mutation is to be able to create a contact: an inactive pair with no $l_{ij}$
+could never acquire one inside the range where
+$k > 0$, so mutation could only
+destroy contacts and never form them}\DIFdelend \DIFaddbegin \DIFadd{change as the network moves. In a standard model, where
+$l_{ij} = d_{ij}(\re)$, this same set would be read off the structure instead}\DIFaddend .
 
 \section{The minimum of the potential}
 
 \subsection{The equilibrium condition}
 
 To find the conformations that minimise \eqref{eq:V} we need the gradient of $V$,
-and hence the gradient of the distances. Let
-\begin{equation}
-\ee_{ij} \;\equiv\; \frac{\rr_{ij}}{d_{ij}}
+and hence the gradient of the distances. \DIFaddbegin \DIFadd{Let
+}\begin{equation}
+\DIFadd{\ee_{ij} \;\equiv\; \frac{\rr_{ij}}{d_{ij}}
 \label{eq:eij}
-\end{equation}
-be the unit vector along the spring, pointing from $i$ to $j$; it satisfies
-$\ee_{ij} = -\ee_{ji}$. Differentiating $d_{ij}^2 = \rr_{ij}\cdot\rr_{ij}$ with
-respect to $\rr_i$, and using $\partial \rr_{ij}/\partial\rr_i = -\mathbf{I}$,
-\begin{equation}
-2\, d_{ij} \frac{\partial d_{ij}}{\partial \rr_i} \;=\; -\,2\,\rr_{ij},
+}\end{equation}
+\DIFadd{be the unit vector along the spring, pointing from $i$ to $j$; it satisfies
+$\ee_{ij} = -\ee_{ji}$. }\DIFaddend Differentiating $d_{ij}^2 = \rr_{ij}\cdot\rr_{ij}$ with
+respect to $\rr_i$, \DIFaddbegin \DIFadd{and using $\partial \rr_{ij}/\partial\rr_i = -\mathbf{I}$,
+}\DIFaddend \begin{equation}
+2\, d_{ij} \frac{\partial d_{ij}}{\partial \rr_i} \;=\; \DIFaddbegin \DIFadd{-\,}\DIFaddend 2\,\rr_{ij},
 \qquad\text{so}\qquad
-\frac{\partial d_{ij}}{\partial \rr_i} \;=\; -\frac{\rr_{ij}}{d_{ij}}
-\;=\; -\,\ee_{ij}.
-\label{eq:ddij}
-\end{equation}
-The derivative with respect to $\rr_j$ follows the same way, now with
+\frac{\partial d_{ij}}{\partial \rr_i} \;=\; \DIFaddbegin \DIFadd{-}\DIFaddend \frac{\rr_{ij}}{d_{ij}}
+\;\DIFdelbegin \DIFdel{\equiv}\DIFdelend \DIFaddbegin \DIFadd{=}\DIFaddend \; \DIFaddbegin \DIFadd{-\,}\DIFaddend \ee_{ij}\DIFdelbegin \DIFdel{,
+}%DIFDELCMD < \label{eq:eij}
+%DIFDELCMD < %%%
+\DIFdelend \DIFaddbegin \DIFadd{.
+}\label{eq:ddij}
+\DIFaddend \end{equation}
+\DIFdelbegin \DIFdel{which defines the unit vector $\ee_{ij}$ along the pair, pointing }\DIFdelend \DIFaddbegin \DIFadd{The derivative with respect to $\rr_j$ follows the same way, now with
 $\partial \rr_{ij}/\partial\rr_j = +\mathbf{I}$, giving
 $\partial d_{ij}/\partial \rr_j = +\ee_{ij}$. Moving node $i$ away from node $j$
 lengthens the spring, and \eqref{eq:ddij} records that: the distance decreases
-fastest along $-\ee_{ij}$, which points from $j$ back towards $i$.
+fastest along $-\ee_{ij}$, which points }\DIFaddend from $j$ \DIFdelbegin \DIFdel{to }\DIFdelend \DIFaddbegin \DIFadd{back towards }\DIFaddend $i$.
+\DIFdelbegin \DIFdel{Since $d_{ij}$ depends on $\rr_j$ only through $\rr_{ij} = -\rr_{ji}$, we also have
+$\partial d_{ij}/\partial \rr_j = -\ee_{ij}$.
+}\DIFdelend 
 
 Differentiating \eqref{eq:V} by the chain rule, and noting that $k(l_{ij})$ is a
 constant with respect to $\rr$,
 \begin{equation}
 \frac{\partial V}{\partial \rr_i}
-\;=\; -\sum_{j \ne i} k(l_{ij})\,\big(d_{ij}(\rr) - l_{ij}\big)\,\ee_{ij}.
+\;=\; \DIFaddbegin \DIFadd{-}\DIFaddend \sum_{j \ne i} k(l_{ij})\,\big(d_{ij}(\rr) - l_{ij}\big)\,\ee_{ij}.
 \label{eq:grad}
 \end{equation}
-Each term lies along the line joining the two nodes, so the force it exerts is
-central: it has no component transverse to the spring. That $k$ carries no
-derivative is a consequence of \eqref{eq:kl}. Had the force constants been written
+Each term \DIFdelbegin \DIFdel{is a central force }\DIFdelend \DIFaddbegin \DIFadd{lies }\DIFaddend along the line joining the \DIFdelbegin \DIFdel{pair}\DIFdelend \DIFaddbegin \DIFadd{two nodes, so the force it exerts is
+central: it has no component transverse to the spring}\DIFaddend . That $k$ \DIFdelbegin \DIFdel{does not
+differentiate }\DIFdelend \DIFaddbegin \DIFadd{carries no
+derivative }\DIFaddend is a consequence of \eqref{eq:kl}\DIFdelbegin \DIFdel{: had we taken $k_{ij} =
+f(d_{ij}(\rr))$, a term in $f'(d_{ij})$ would
+appear here and again in
+every
+derivative below}\DIFdelend \DIFaddbegin \DIFadd{. Had the force constants been written
 as a function of the equilibrium distance, $k_{ij} = f(d_{ij}(\re))$, they would
 still be constants with respect to $\rr$ and this gradient would be unchanged; what
 \eqref{eq:kl} buys is not simplicity here but the freedom, used in
-Section~\ref{sec:mutation}, to vary $l_{ij}$ and have $k_{ij}$ follow.
+Section~\ref{sec:mutation}, to vary $l_{ij}$ and have $k_{ij}$ follow}\DIFaddend .
 
-Given the parameters $\LL$, an equilibrium conformation $\re$ is one at which the
+\DIFdelbegin \DIFdel{An }\DIFdelend \DIFaddbegin \DIFadd{Given the parameters $\LL$, an }\DIFaddend equilibrium conformation $\re$ is one at which the
 gradient vanishes,
 \begin{equation}
-\boxed{\;
+\DIFdelbegin %DIFDELCMD < \boxed{\;
+%DIFDELCMD < \sum_{j \ne i} k(l_{ij})\,\big(d_{ij}(\re) - l_{ij}\big)\,\ee^{\,e}_{ij} \;=\; \mathbf{0},
+%DIFDELCMD < \qquad i = 1,\ldots,N.
+%DIFDELCMD < \;}
+%DIFDELCMD < %%%
+\DIFdelend \DIFaddbegin \boxed{\;
 \sum_{j \ne i} k(l_{ij})\,\big(d_{ij}(\re) - l_{ij}\big)\,\ee^{\,e}_{ij} \;=\; \mathbf{0},
 \qquad i = 1,\ldots,N,
 \;}
-\label{eq:equilibrium}
+\DIFaddend \label{eq:equilibrium}
 \end{equation}
-where the overall sign of \eqref{eq:grad} has been dropped, the right-hand side
-being zero. These are $3N$ scalar equations for the $3N$ unknown coordinates, of
+\DIFaddbegin \DIFadd{where the overall sign of \eqref{eq:grad} has been dropped, the right-hand side
+being zero. }\DIFaddend These are $3N$ scalar equations \DIFaddbegin \DIFadd{for the $3N$ unknown coordinates}\DIFaddend , of
 which $3N-6$ are independent: $V$ depends on the conformation only through the
 distances \eqref{eq:dij}, so it is invariant under the three translations and three
 rotations, and along those six directions the gradient vanishes identically.
 
-One consequence of that invariance should be recorded now, because it matters
-later: $\re$ is determined only up to a rigid motion.
+\DIFdelbegin \DIFdel{Two consequences }\DIFdelend \DIFaddbegin \DIFadd{One consequence }\DIFaddend of that invariance should be recorded now, because \DIFdelbegin \DIFdel{both matter
+later. First, }\DIFdelend \DIFaddbegin \DIFadd{it matters
+later: }\DIFaddend $\re$ is determined only up to a rigid motion.
+\DIFdelbegin \DIFdel{Second, }\DIFdelend \DIFaddbegin 
 
-Separately, and for a different reason, $V$ is also invariant under reflection.
+\DIFadd{Separately, and for a different reason, }\DIFaddend $V$ is \DIFaddbegin \DIFadd{also }\DIFaddend invariant under reflection\DIFdelbegin \DIFdel{as well, since }\DIFdelend \DIFaddbegin \DIFadd{.
 This does not follow from invariance under rigid motions --- a reflection is not
 one --- but from the same fact as before, that $V$ sees the conformation only
-through the distances \eqref{eq:dij}, and reflecting a conformation leaves every
-$d_{ij}$ unchanged. A chiral $\re$ therefore has a mirror image of equal energy,
-and the minimum of $V$ is not unique. Below, $\re$ denotes one chosen minimum, and
+through the distances \eqref{eq:dij}, and }\DIFaddend reflecting a conformation leaves every
+$d_{ij}$ unchanged\DIFdelbegin \DIFdel{; a }\DIFdelend \DIFaddbegin \DIFadd{. A }\DIFaddend chiral $\re$ therefore has a mirror image \DIFdelbegin \DIFdel{with the same
+}\DIFdelend \DIFaddbegin \DIFadd{of equal }\DIFaddend energy,
+and the minimum of $V$ is not unique. Below, $\re$ denotes one chosen \DIFdelbegin \DIFdel{minimiser}\DIFdelend \DIFaddbegin \DIFadd{minimum}\DIFaddend , and
 every quantity derived from it is understood relative to that choice.
 
 \subsection{Strain}
 
-The combination $d_{ij}(\re) - l_{ij}$ appearing in \eqref{eq:equilibrium} is the
+\DIFaddbegin \DIFadd{The combination $d_{ij}(\re) - l_{ij}$ appearing in \eqref{eq:equilibrium} is the
 amount by which a spring departs from its equilibrium length at the equilibrium
-conformation. It is convenient to name it. Let $\re$ be an equilibrium
-conformation and define, for every spring,
-\begin{equation}
-s_{ij} \;\equiv\; d_{ij}(\re) - l_{ij},
+conformation. It is convenient to name it. }\DIFaddend Let $\re$ be an equilibrium
+conformation and define, for every \DIFdelbegin \DIFdel{pair,
+}\DIFdelend \DIFaddbegin \DIFadd{spring,
+}\DIFaddend \begin{equation}
+s_{ij} \;\equiv\; \DIFdelbegin \DIFdel{l_{ij} - }\DIFdelend d_{ij}(\re) \DIFaddbegin \DIFadd{- l_{ij}}\DIFaddend ,
 \label{eq:sij}
 \end{equation}
-its \emph{strain}. A spring with $s_{ij} > 0$ is longer than its equilibrium length
-and so is stretched, one with $s_{ij} < 0$ is compressed, and one with $s_{ij} = 0$
+\DIFdelbegin \DIFdel{the amount by which the spring departs from its equilibrium length there}\DIFdelend \DIFaddbegin \DIFadd{its }\emph{\DIFadd{strain}}\DIFaddend . A spring with $s_{ij} > 0$ is \DIFdelbegin \DIFdel{compressed}\DIFdelend \DIFaddbegin \DIFadd{longer than its equilibrium length
+and so is stretched}\DIFaddend , one with $s_{ij} < 0$ is \DIFdelbegin \DIFdel{stretched}\DIFdelend \DIFaddbegin \DIFadd{compressed}\DIFaddend , and one with $s_{ij} = 0$
 is relaxed.
 
-In these terms the equilibrium condition \eqref{eq:equilibrium} reads
-\begin{equation}
-\sum_{j\ne i} k(l_{ij})\, s_{ij}\, \ee^{\,e}_{ij} \;=\; \mathbf{0},
+\DIFdelbegin \DIFdel{Substituting \eqref{eq:sij} into \eqref{eq:V} evaluated at $\re$, and using
+$d_{ij}(\re) - l_{ij} = -s_{ij}$, gives the minimum energy
+}\begin{displaymath}
+\DIFdel{\boxed{\;
+V(\re; \LL) \;=\; \tfrac12 \sum_{i<j} k(l_{ij})\, s_{ij}^{2}.
+\;}
+%DIFDELCMD < \label{eq:Vmin}%%%
+}\end{displaymath}%DIFAUXCMD
+\DIFdel{The }\DIFdelend \DIFaddbegin \DIFadd{In these terms the }\DIFaddend equilibrium condition \eqref{eq:equilibrium} \DIFdelbegin \DIFdel{may be written in the same terms,
+$\sum_{j\ne i} k(l_{ij}) s_{ij} \ee^{\,e}_{ij} = \mathbf{0}$: the }\DIFdelend \DIFaddbegin \DIFadd{reads
+}\begin{equation}
+\DIFadd{\sum_{j\ne i} k(l_{ij})\, s_{ij}\, \ee^{\,e}_{ij} \;=\; \mathbf{0},
 \qquad i = 1,\ldots,N,
 \label{eq:equilibrium-s}
-\end{equation}
-so the forces on each node cancel, which does not require the individual $s_{ij}$
-to vanish. Substituting \eqref{eq:sij} into \eqref{eq:V} evaluated at $\re$ gives
+}\end{equation}
+\DIFadd{so the }\DIFaddend forces on each node cancel, which does not require the individual $s_{ij}$
+to vanish. \DIFaddbegin \DIFadd{Substituting \eqref{eq:sij} into \eqref{eq:V} evaluated at $\re$ gives
 the minimum energy
-\begin{equation}
-\boxed{\;
+}\begin{equation}
+\DIFadd{\boxed{\;
 V(\re; \LL) \;=\; \tfrac12 \sum_{i<j} k(l_{ij})\, s_{ij}^{2},
 \;}
 \label{eq:Vmin}
-\end{equation}
-which depends on the strains only through their squares, and so is unchanged by the
+}\end{equation}
+\DIFadd{which depends on the strains only through their squares, and so is unchanged by the
 sign convention adopted in \eqref{eq:sij}.
+}\DIFaddend 
 
 \subsection{Frustration}
-\label{sec:frustration}
+\DIFaddbegin \label{sec:frustration}
+\DIFaddend 
 
-We call a network \textbf{frustrated} when $V(\re;\LL) > 0$: no conformation
-relaxes all of its active springs at once, and the network sits at a compromise in
-which the forces cancel node by node while individual springs remain strained. By
-\eqref{eq:Vmin} this is the case whenever $s_{ij} \ne 0$ for at least one active
-spring. A network that is not frustrated has $s_{ij} = 0$ for every active spring,
+\DIFdelbegin \DIFdel{A network is }\DIFdelend \DIFaddbegin \DIFadd{We call a network }\DIFaddend \textbf{frustrated} when $V(\re;\LL) > 0$\DIFdelbegin \DIFdel{, that is, when }\DIFdelend \DIFaddbegin \DIFadd{: }\DIFaddend no conformation
+relaxes all \DIFaddbegin \DIFadd{of }\DIFaddend its active springs at once\DIFaddbegin \DIFadd{, and the network sits at a compromise in
+which the forces cancel node by node while individual springs remain strained}\DIFaddend . By
+\eqref{eq:Vmin} this \DIFdelbegin \DIFdel{holds
+}\DIFdelend \DIFaddbegin \DIFadd{is the case }\DIFaddend whenever $s_{ij} \ne 0$ for at least one active
+\DIFdelbegin \DIFdel{pair. }%DIFDELCMD < 
+
+%DIFDELCMD < %%%
+\DIFdel{The unfrustrated case is the special solution of \eqref{eq:equilibrium} in which
+every term vanishes separately, }\DIFdelend \DIFaddbegin \DIFadd{spring. A network that is not frustrated has }\DIFaddend $s_{ij} = 0$ for \DIFdelbegin \DIFdel{all active pairs.
+It is
+attainable: given any structure , setting $l_{ij} = d_{ij}$ for every pair makes
+that structure }\DIFdelend \DIFaddbegin \DIFadd{every active spring,
 and then $V(\re;\LL) = 0$.
+}
 
-Whether a given $\LL$ is frustrated is settled by solving \eqref{eq:equilibrium}
+\DIFadd{Whether a given $\LL$ is frustrated is settled by solving \eqref{eq:equilibrium}
 for $\re$ and evaluating \eqref{eq:Vmin}. One case can be read off without
 solving anything. Choose a structure $\rr^{\ast}$ and set
 $l_{ij} = d_{ij}(\rr^{\ast})$ for every spring. Then every strain vanishes at
 $\rr^{\ast}$, so \eqref{eq:equilibrium-s} is satisfied term by term,
-$\rr^{\ast}$ is an equilibrium conformation, and $V(\rr^{\ast};\LL) = 0$: the
-network is unfrustrated by construction. This is what a standard elastic network
-model does, and it is a statement about how $\LL$ was chosen, not about
+$\rr^{\ast}$ is }\DIFaddend an equilibrium conformation\DIFdelbegin \DIFdel{with $V = 0$, and this is }\DIFdelend \DIFaddbegin \DIFadd{, and $V(\rr^{\ast};\LL) = 0$: the
+network is unfrustrated by construction. This is }\DIFaddend what a standard elastic network
+model does\DIFdelbegin \DIFdel{. But it is not the general solution.
+Equation~\eqref{eq:equilibrium}imposes $3N-6$ independent conditions on
+$\tfrac12 N(N-1)$ parameters, and for $N$ of any size the system is underdetermined, so sets }\DIFdelend \DIFaddbegin \DIFadd{, and it is a statement about how }\DIFaddend $\LL$ \DIFdelbegin \DIFdel{with cancelling but individually nonzero $s_{ij}$
+are the generic case}\DIFdelend \DIFaddbegin \DIFadd{was chosen, not about
 \eqref{eq:equilibrium}, which takes $\LL$ as given.
+}
 
-Nothing obliges $\LL$ to have been chosen that way, and parameter sets not of this
+\DIFadd{Nothing obliges $\LL$ to have been chosen that way, and parameter sets not of this
 form will in general be frustrated. How the $l_{ij}$ ought to be chosen is a
 separate question from the one \eqref{eq:equilibrium} answers, and is not taken up
 here; Section~\ref{sec:open} returns to it. What matters below is that both cases
 are allowed: nothing in Sections \ref{sec:distribution} to \ref{sec:changes}
-assumes an unfrustrated network. As will be seen in Section~\ref{sec:mutation}, a
+assumes an unfrustrated network}\DIFaddend . As will be seen in Section~\ref{sec:mutation}, a
 mutation applied to an unfrustrated network produces a frustrated one.
 
 \section{The conformational distribution}
@@ -287,12 +398,16 @@ The linear term vanishes by \eqref{eq:equilibrium}.
 
 To obtain $\KK$ we need the second derivatives of the distances. Differentiating
 $\ee_{ij} = \rr_{ij}/d_{ij}$ with respect to $\rr_j$, using the product rule with
-$\partial \rr_{ij}/\partial\rr_j = \mathbf{I}$ and
+\DIFdelbegin \DIFdel{$\partial \rr_{ij}/\partial\rr_j = -\mathbf{I}$ and
+$\partial d_{ij}^{-1}/\partial \rr_j = -d_{ij}^{-2}(-\ee_{ij}^{\mathsf T}) =
+d_{ij}^{-2}\ee_{ij}^{\mathsf T}$,
+}\DIFdelend \DIFaddbegin \DIFadd{$\partial \rr_{ij}/\partial\rr_j = \mathbf{I}$ and
 $\partial d_{ij}^{-1}/\partial \rr_j = -d_{ij}^{-2}\,\ee_{ij}^{\mathsf T}$,
-\begin{equation}
-\frac{\partial \ee_{ij}}{\partial \rr_j}
-\;=\; \frac{\mathbf{I}}{d_{ij}} - \frac{\rr_{ij}\ee_{ij}^{\mathsf T}}{d_{ij}^{2}}
-\;=\; \frac{\mathbf{I} - \ee_{ij}\ee_{ij}^{\mathsf T}}{d_{ij}}.
+}\DIFaddend \begin{equation}
+\DIFdelbegin \DIFdel{\frac{\partial^2 d_{ij}}{\partial \rr_i \partial \rr_j}
+\;=\; }\DIFdelend \frac{\partial \ee_{ij}}{\partial \rr_j}
+\;=\; \DIFdelbegin \DIFdel{-}\DIFdelend \frac{\mathbf{I}}{d_{ij}} \DIFdelbegin \DIFdel{+ }\DIFdelend \DIFaddbegin \DIFadd{- }\DIFaddend \frac{\rr_{ij}\ee_{ij}^{\mathsf T}}{d_{ij}^{2}}
+\;=\; \DIFdelbegin \DIFdel{\frac{\ee_{ij}\ee_{ij}^{\mathsf T} - \mathbf{I}}{d_{ij}}}\DIFdelend \DIFaddbegin \DIFadd{\frac{\mathbf{I} - \ee_{ij}\ee_{ij}^{\mathsf T}}{d_{ij}}}\DIFaddend .
 \label{eq:d2d}
 \end{equation}
 Now differentiate the gradient \eqref{eq:grad} with respect to $\rr_j$ for $j \ne i$.
@@ -300,26 +415,32 @@ Only the single term of the sum with that index depends on $\rr_j$, and it is a
 product of $(d_{ij} - l_{ij})$ and $\ee_{ij}$, so
 \begin{equation}
 \KK_{ij}
-\;=\; -\,k(l_{ij})\left[
+\;=\; \DIFaddbegin \DIFadd{-\,}\DIFaddend k(l_{ij})\left[
 \frac{\partial\, (d_{ij} - l_{ij})}{\partial \rr_j}\,\ee_{ij}^{\mathsf T}
 \;+\; (d_{ij} - l_{ij})\, \frac{\partial \ee_{ij}}{\partial \rr_j}
 \right].
 \end{equation}
-Substituting $\partial d_{ij}/\partial\rr_j = \ee_{ij}$ and \eqref{eq:d2d}, and
-then $d_{ij} - l_{ij} = s_{ij}$ from \eqref{eq:sij},
+Substituting \DIFdelbegin \DIFdel{$\partial d_{ij}/\partial\rr_j = -\ee_{ij}$ }\DIFdelend \DIFaddbegin \DIFadd{$\partial d_{ij}/\partial\rr_j = \ee_{ij}$ }\DIFaddend and \eqref{eq:d2d}, and
+then \DIFdelbegin \DIFdel{$d_{ij} - l_{ij} = -s_{ij}$ }\DIFdelend \DIFaddbegin \DIFadd{$d_{ij} - l_{ij} = s_{ij}$ }\DIFaddend from \eqref{eq:sij},
 \begin{equation}
 \KK_{ij}
-\;=\; -\,k(l_{ij})\left[ \ee_{ij}\ee_{ij}^{\mathsf T}
-+ s_{ij}\,\frac{\mathbf{I} - \ee_{ij}\ee_{ij}^{\mathsf T}}{d_{ij}} \right],
+\;=\; \DIFaddbegin \DIFadd{-\,}\DIFaddend k(l_{ij})\left[ \DIFdelbegin \DIFdel{-}\DIFdelend \ee_{ij}\ee_{ij}^{\mathsf T}
+\DIFdelbegin \DIFdel{- }\DIFdelend \DIFaddbegin \DIFadd{+ }\DIFaddend s_{ij}\,\DIFdelbegin \DIFdel{\frac{\ee_{ij}\ee_{ij}^{\mathsf T} - \mathbf{I}}{d_{ij}} }\DIFdelend \DIFaddbegin \DIFadd{\frac{\mathbf{I} - \ee_{ij}\ee_{ij}^{\mathsf T}}{d_{ij}} }\DIFaddend \right],
 \end{equation}
 that is, defining $g_{ij} \equiv s_{ij}/d_{ij}(\re)$,
 \begin{equation}
-\boxed{\;
+\DIFdelbegin %DIFDELCMD < \boxed{\;
+%DIFDELCMD < \KK_{ij} \;=\; -\,k(l_{ij})\Big[\,\ee_{ij}\ee_{ij}^{\mathsf T}
+%DIFDELCMD < + g_{ij}\big(\ee_{ij}\ee_{ij}^{\mathsf T} - \mathbf{I}\big)\Big],
+%DIFDELCMD < \qquad i \ne j.
+%DIFDELCMD < \;}
+%DIFDELCMD < %%%
+\DIFdelend \DIFaddbegin \boxed{\;
 \KK_{ij} \;=\; -\,k(l_{ij})\Big[\,\ee_{ij}\ee_{ij}^{\mathsf T}
 - g_{ij}\big(\ee_{ij}\ee_{ij}^{\mathsf T} - \mathbf{I}\big)\Big],
 \qquad i \ne j.
 \;}
-\label{eq:hessian}
+\DIFaddend \label{eq:hessian}
 \end{equation}
 The diagonal blocks follow from translational invariance. Displacing every node by
 the same vector $\mathbf{a}$ leaves $V$ unchanged, so $\KK$ annihilates that
@@ -329,32 +450,32 @@ $\sum_{j} \KK_{ij}\mathbf{a} = \mathbf{0}$ for every $\mathbf{a}$, whence
 \KK_{ii} \;=\; -\sum_{j \ne i} \KK_{ij}.
 \label{eq:Kii}
 \end{equation}
-Inactive springs have $k(l_{ij}) = 0$ and contribute nothing, so $\KK$ is
-$3N \times 3N$ however many springs carry parameters.
+Inactive \DIFdelbegin \DIFdel{pairs }\DIFdelend \DIFaddbegin \DIFadd{springs }\DIFaddend have $k(l_{ij}) = 0$ and contribute nothing, so $\KK$ is
+$3N \times 3N$ however many \DIFdelbegin \DIFdel{pairs }\DIFdelend \DIFaddbegin \DIFadd{springs }\DIFaddend carry parameters.
 
 \subsection{Longitudinal and transverse stiffness}
 
 Equation \eqref{eq:hessian} contains two projectors. Writing
 $\mathbf{P}_\perp = \mathbf{I} - \ee_{ij}\ee_{ij}^{\mathsf T}$ for the projector
-onto the plane perpendicular to the spring, it may be rearranged as
+onto the plane perpendicular to the \DIFdelbegin \DIFdel{pair}\DIFdelend \DIFaddbegin \DIFadd{spring}\DIFaddend , it may be rearranged as
 \begin{equation}
 \KK_{ij} \;=\; -\,k(l_{ij})\Big[\ee_{ij}\ee_{ij}^{\mathsf T}
-+ g_{ij}\,\mathbf{P}_\perp\Big],
+\DIFdelbegin \DIFdel{- }\DIFdelend \DIFaddbegin \DIFadd{+ }\DIFaddend g_{ij}\,\mathbf{P}_\perp\Big],
 \label{eq:split}
 \end{equation}
-so a spring carries two stiffnesses rather than one: a longitudinal $k(l_{ij})$
-resisting change of the distance, and a transverse $k(l_{ij})g_{ij}$, doubly
-degenerate, resisting rotation of the spring at fixed distance.
+so a \DIFdelbegin \DIFdel{pair }\DIFdelend \DIFaddbegin \DIFadd{spring }\DIFaddend carries two stiffnesses rather than one: a longitudinal $k(l_{ij})$
+resisting change of the distance, and a transverse \DIFdelbegin \DIFdel{$-k(l_{ij})g_{ij}$}\DIFdelend \DIFaddbegin \DIFadd{$k(l_{ij})g_{ij}$}\DIFaddend , doubly
+degenerate, resisting rotation of the \DIFdelbegin \DIFdel{pair }\DIFdelend \DIFaddbegin \DIFadd{spring }\DIFaddend at fixed distance.
 
-The transverse stiffness is proportional to $g_{ij} = s_{ij}/d_{ij}(\re)$, and so
+The transverse stiffness is proportional to \DIFdelbegin \DIFdel{$g_{ij} = s_{ij}/d_{ij}$}\DIFdelend \DIFaddbegin \DIFadd{$g_{ij} = s_{ij}/d_{ij}(\re)$}\DIFaddend , and so
 vanishes for a relaxed spring and changes sign with the strain. A stretched spring
-($s_{ij}>0$) resists transverse displacement, as a taut string does. A compressed
-one ($s_{ij}<0$) has negative transverse stiffness: displacing the two nodes
+(\DIFdelbegin \DIFdel{$s_{ij}<0$}\DIFdelend \DIFaddbegin \DIFadd{$s_{ij}>0$}\DIFaddend ) resists transverse displacement, as a taut string does. A compressed
+one (\DIFdelbegin \DIFdel{$s_{ij}>0$}\DIFdelend \DIFaddbegin \DIFadd{$s_{ij}<0$}\DIFaddend ) has negative transverse stiffness: displacing the two nodes
 sideways increases their separation, which a compressed spring favours. Note that
 it is the transverse stiffness that is negative, not $k(l_{ij})$, which is
 non-negative by \eqref{eq:kl}.
 
-Since $g_{ij} = 0$ for every spring of an unfrustrated network, the transverse term
+Since $g_{ij} = 0$ for every \DIFdelbegin \DIFdel{pair }\DIFdelend \DIFaddbegin \DIFadd{spring }\DIFaddend of an unfrustrated network, the transverse term
 is absent there, and \eqref{eq:hessian} reduces to the rank-one form of a standard
 elastic network model. Frustration enters the conformational distribution through
 $g_{ij}$ and through nothing else.
@@ -382,7 +503,7 @@ along which $V$ does not vary.
 Whether there are exactly six is a property of the network, not a given. A
 displacement $\mathbf{u}$ is a null direction of $\KK$ when it changes no active
 distance to first order, that is when $\ee_{ij}\cdot(\mathbf{u}_i - \mathbf{u}_j) = 0$
-for every active spring. A network for which the only such displacements are the six
+for every active \DIFdelbegin \DIFdel{pair}\DIFdelend \DIFaddbegin \DIFadd{spring}\DIFaddend . A network for which the only such displacements are the six
 rigid motions is \emph{infinitesimally rigid}, and then $\mathrm{rank}\,\KK = 3N-6$.
 Connectivity does not suffice: a node joined to the rest by a single active spring
 can swing about it, and one joined by two can rotate about the axis through them,
@@ -483,8 +604,8 @@ Write $k^{\text{ref}}_{ij} = k(l^{\text{ref}}_{ij})$ for its force constants,
 $\re_{\text{ref}}$ for an equilibrium conformation obtained from
 \eqref{eq:equilibrium}, and
 \begin{equation}
-s_{ij} \;=\; d_{ij}(\re_{\text{ref}}) - l^{\text{ref}}_{ij}
-\label{eq:sref}
+s_{ij} \;=\; \DIFdelbegin \DIFdel{l^{\text{ref}}_{ij} - }\DIFdelend d_{ij}(\re_{\text{ref}}) \DIFaddbegin \DIFadd{- l^{\text{ref}}_{ij}
+}\DIFaddend \label{eq:sref}
 \end{equation}
 for its strains. Its Hessian $\KK^{\text{ref}}$, spectrum
 $\{\lambda^{\text{ref}}_n\}$, and thermodynamic properties $A_{\text{ref}}$,
@@ -503,7 +624,7 @@ l^{\text{mut}}_{ij} \;=\; l^{\text{ref}}_{ij} + \delta l_{ij},
 \label{eq:mutation}
 \end{equation}
 The perturbations $\delta l_{ij}$ are drawn from a distribution with zero mean and
-variance $\sigma^2$, independently for each affected spring; $\sigma$ sets the size
+variance $\sigma^2$, independently for each affected \DIFdelbegin \DIFdel{pair}\DIFdelend \DIFaddbegin \DIFadd{spring}\DIFaddend ; $\sigma$ sets the size
 of the mutation.
 
 The mutant potential is \eqref{eq:V} evaluated with these parameters,
@@ -524,20 +645,21 @@ k^{\text{mut}}_{ij} = k^{\text{ref}}_{ij} + \delta k_{ij}.
 \end{equation}
 This is an exact difference of two values of $k$, not a differential: no
 assumption is made that $\delta l_{ij}$ is small or that $k$ is differentiable.
-A spring whose equilibrium length crosses from a region where $k>0$ to one where
+A \DIFdelbegin \DIFdel{pair }\DIFdelend \DIFaddbegin \DIFadd{spring }\DIFaddend whose equilibrium length crosses from a region where $k>0$ to one where
 $k=0$, or the reverse, has $\delta k_{ij}$ of the size of $k$ itself. Contacts are
 created and destroyed here, in the parameters, and not by any change in
 conformation.
 
-This is why every spring carries an equilibrium length, the inactive ones
+\DIFaddbegin \DIFadd{This is why every spring carries an equilibrium length, the inactive ones
 included. An inactive spring with no $l_{ij}$ could never acquire one inside the
 range where $k > 0$, so a mutation could only destroy contacts and never form
 them; carrying the parameter regardless lets \eqref{eq:mutation} move a spring in
 either direction across that range.
+}
 
-The mutant has its own equilibrium conformation $\re_{\text{mut}}$, obtained from
+\DIFaddend The mutant has its own equilibrium conformation $\re_{\text{mut}}$, obtained from
 \eqref{eq:equilibrium} with the mutant parameters, its own strains
-$s^{\text{mut}}_{ij} = d_{ij}(\re_{\text{mut}}) - l^{\text{mut}}_{ij}$, its own
+\DIFdelbegin \DIFdel{$s^{\text{mut}}_{ij} = l^{\text{mut}}_{ij} - d_{ij}(\re_{\text{mut}})$}\DIFdelend \DIFaddbegin \DIFadd{$s^{\text{mut}}_{ij} = d_{ij}(\re_{\text{mut}}) - l^{\text{mut}}_{ij}$}\DIFaddend , its own
 Hessian $\KK^{\text{mut}}$ and spectrum $\{\lambda^{\text{mut}}_n\}$, and its own
 $A_{\text{mut}}$, $U_{\text{mut}}$, $S_{\text{mut}}$. Note that $\re_{\text{mut}}$
 is obtained by minimising \eqref{eq:Vmut} itself, not by displacing
@@ -585,9 +707,9 @@ particular for $\rr = \re_{\text{ref}}$, so
 
 $\Delta V_{\text{stress}}$ can be written out in closed form. We do so in steps.
 
-\paragraph{Step 1: separate the springs.}
+\paragraph{Step 1: separate the \DIFdelbegin \DIFdel{pairs}\DIFdelend \DIFaddbegin \DIFadd{springs}\DIFaddend .}
 Both \eqref{eq:Vref} and \eqref{eq:Vmut} are sums over the same index set, all
-$\tfrac12 N(N-1)$ springs, so their difference is a sum of one term per spring,
+$\tfrac12 N(N-1)$ \DIFdelbegin \DIFdel{pairs}\DIFdelend \DIFaddbegin \DIFadd{springs}\DIFaddend , so their difference is a sum of \DIFdelbegin \DIFdel{pair terms}\DIFdelend \DIFaddbegin \DIFadd{one term per spring}\DIFaddend ,
 \begin{equation}
 \Delta V_{\text{stress}} \;=\; \sum_{i<j} \left[
 \tfrac12 k^{\text{mut}}_{ij}\big(d^e_{ij} - l^{\text{mut}}_{ij}\big)^2
@@ -595,27 +717,30 @@ $\tfrac12 N(N-1)$ springs, so their difference is a sum of one term per spring,
 \right],
 \qquad d^e_{ij} \equiv d_{ij}(\re_{\text{ref}}).
 \end{equation}
-This is where carrying a parameter for every spring, active or not, does its work:
-no spring appears in one sum and not the other, and a contact created or destroyed
+This is where carrying a parameter for every \DIFdelbegin \DIFdel{pair}\DIFdelend \DIFaddbegin \DIFadd{spring}\DIFaddend , active or not, does its work:
+no \DIFdelbegin \DIFdel{pair }\DIFdelend \DIFaddbegin \DIFadd{spring }\DIFaddend appears in one sum and not the other, and a contact created or destroyed
 by the mutation is carried by $\delta k_{ij}$ rather than by a change in the range
 of summation.
 
 \paragraph{Step 2: eliminate the distance.}
 By the definition of the reference strain \eqref{eq:sref},
-$d^e_{ij} = l^{\text{ref}}_{ij} + s_{ij}$, so the two brackets become
+\DIFdelbegin \DIFdel{$d^e_{ij} = l^{\text{ref}}_{ij} - s_{ij}$}\DIFdelend \DIFaddbegin \DIFadd{$d^e_{ij} = l^{\text{ref}}_{ij} + s_{ij}$}\DIFaddend , so the two brackets become
 \begin{equation}
-d^e_{ij} - l^{\text{ref}}_{ij} \;=\; s_{ij},
+d^e_{ij} - l^{\text{ref}}_{ij} \;=\; \DIFdelbegin \DIFdel{-\,}\DIFdelend s_{ij},
 \qquad
-d^e_{ij} - l^{\text{mut}}_{ij} \;=\; s_{ij} - \delta l_{ij}.
+d^e_{ij} - l^{\text{mut}}_{ij} \;=\; \DIFdelbegin \DIFdel{-\,}\DIFdelend s_{ij} - \delta l_{ij}\DIFdelbegin \DIFdel{\;=\; -}%DIFDELCMD < \big(%%%
+\DIFdel{s_{ij} + \delta l_{ij}}%DIFDELCMD < \big)%%%
+\DIFdelend .
 \end{equation}
 The conformation has now disappeared from the problem: what remains is expressed
 entirely in the reference strains and the perturbation.
 
 \paragraph{Step 3: substitute the force constants.}
-Using \eqref{eq:dk}, the term for one spring is
-\begin{equation}
+Using \eqref{eq:dk}, the \DIFdelbegin \DIFdel{pair term is
+}\DIFdelend \DIFaddbegin \DIFadd{term for one spring is
+}\DIFaddend \begin{equation}
 \tfrac12 \big(k^{\text{ref}}_{ij} + \delta k_{ij}\big)
-\big(s_{ij} - \delta l_{ij}\big)^2
+\big(s_{ij} \DIFdelbegin \DIFdel{+ }\DIFdelend \DIFaddbegin \DIFadd{- }\DIFaddend \delta l_{ij}\big)^2
 - \tfrac12 k^{\text{ref}}_{ij}\, s_{ij}^2 .
 \end{equation}
 
@@ -623,8 +748,8 @@ Using \eqref{eq:dk}, the term for one spring is
 Grouping the two terms in $k^{\text{ref}}_{ij}$ and keeping the $\delta k_{ij}$
 term apart,
 \begin{equation}
-\;=\; \tfrac12 k^{\text{ref}}_{ij}\Big[\big(s_{ij} - \delta l_{ij}\big)^2 - s_{ij}^2\Big]
-\;+\; \tfrac12\, \delta k_{ij} \big(s_{ij} - \delta l_{ij}\big)^2 .
+\;=\; \tfrac12 k^{\text{ref}}_{ij}\Big[\big(s_{ij} \DIFdelbegin \DIFdel{+ }\DIFdelend \DIFaddbegin \DIFadd{- }\DIFaddend \delta l_{ij}\big)^2 - s_{ij}^2\Big]
+\;+\; \tfrac12\, \delta k_{ij} \big(s_{ij} \DIFdelbegin \DIFdel{+ }\DIFdelend \DIFaddbegin \DIFadd{- }\DIFaddend \delta l_{ij}\big)^2 .
 \end{equation}
 The second piece is already in final form. No expansion has been made in obtaining
 it, and none is possible: $\delta k_{ij}$ is not assumed small.
@@ -632,23 +757,32 @@ it, and none is possible: $\delta k_{ij}$ is not assumed small.
 \paragraph{Step 5: expand the square.}
 The bracket is a difference of two squares,
 \begin{equation}
-\big(s_{ij} - \delta l_{ij}\big)^2 - s_{ij}^2
-\;=\; -\,2\, s_{ij}\, \delta l_{ij} + \delta l_{ij}^2 ,
+\big(s_{ij} \DIFdelbegin \DIFdel{+ }\DIFdelend \DIFaddbegin \DIFadd{- }\DIFaddend \delta l_{ij}\big)^2 - s_{ij}^2
+\;=\; \DIFaddbegin \DIFadd{-\,}\DIFaddend 2\, s_{ij}\, \delta l_{ij} + \delta l_{ij}^2 ,
 \end{equation}
 which is a finite algebraic identity, not a truncated expansion: it is exact for
 any $\delta l_{ij}$.
 
 \paragraph{Step 6: collect.}
-Summing over springs,
-\begin{equation}
-\boxed{\;
+Summing over \DIFdelbegin \DIFdel{pairs,
+}\DIFdelend \DIFaddbegin \DIFadd{springs,
+}\DIFaddend \begin{equation}
+\DIFdelbegin %DIFDELCMD < \boxed{\;
+%DIFDELCMD < \Delta V_{\text{stress}} \;=\;
+%DIFDELCMD < \underbrace{\tfrac12 \sum_{i<j} k^{\text{ref}}_{ij}\, \delta l_{ij}^{2}}_{\text{(a)}}
+%DIFDELCMD < \;+\; \underbrace{\sum_{i<j} k^{\text{ref}}_{ij}\, s_{ij}\, \delta l_{ij}}_{\text{(b)}}
+%DIFDELCMD < \;+\; \underbrace{\tfrac12 \sum_{i<j} \delta k_{ij}
+%DIFDELCMD < \big(s_{ij} + \delta l_{ij}\big)^{2}}_{\text{(c)}} .
+%DIFDELCMD < \;}
+%DIFDELCMD < %%%
+\DIFdelend \DIFaddbegin \boxed{\;
 \Delta V_{\text{stress}} \;=\;
 \underbrace{\tfrac12 \sum_{i<j} k^{\text{ref}}_{ij}\, \delta l_{ij}^{2}}_{\text{(a)}}
 \;-\; \underbrace{\sum_{i<j} k^{\text{ref}}_{ij}\, s_{ij}\, \delta l_{ij}}_{\text{(b)}}
 \;+\; \underbrace{\tfrac12 \sum_{i<j} \delta k_{ij}
 \big(s_{ij} - \delta l_{ij}\big)^{2}}_{\text{(c)}} .
 \;}
-\label{eq:decomposition}
+\DIFaddend \label{eq:decomposition}
 \end{equation}
 This holds for any $k$, any mutation size, and any reference network, frustrated or
 not.
@@ -659,20 +793,20 @@ Term (a) comes from the $\delta l_{ij}^2$ of the expanded square. It is
 non-negative, quadratic in the size of the mutation, and independent of the state
 of the reference.
 
-Term (b) is the cross term $-2 s_{ij}\delta l_{ij}$ of the same square. It is
+Term (b) is the cross term \DIFdelbegin \DIFdel{$2 s_{ij}\delta l_{ij}$ }\DIFdelend \DIFaddbegin \DIFadd{$-2 s_{ij}\delta l_{ij}$ }\DIFaddend of the same square. It is
 proportional to the reference strain and is the only term of the three that can be
-negative. It contributes $-k^{\text{ref}}_{ij} s_{ij}\,\delta l_{ij}$ per spring,
+negative\DIFdelbegin \DIFdel{: }\DIFdelend \DIFaddbegin \DIFadd{. It contributes $-k^{\text{ref}}_{ij} s_{ij}\,\delta l_{ij}$ per spring,
 which is negative when $s_{ij}$ and $\delta l_{ij}$ share a sign: lengthening the
 equilibrium length of a stretched spring ($s_{ij} > 0$, $\delta l_{ij} > 0$), or
-shortening that of a compressed one, moves the equilibrium length towards the
-distance the spring actually spans and so releases energy. The opposite pairing
-costs energy. Term (b) vanishes when $s_{ij}\,\delta l_{ij} = 0$ for every spring,
-which is to say when the reference is unstrained on the springs the mutation
+shortening that of }\DIFaddend a \DIFdelbegin \DIFdel{mutation that shortens a stretched spring , or lengthens a }\DIFdelend compressed one, \DIFaddbegin \DIFadd{moves the equilibrium length towards the
+distance the spring actually spans and so }\DIFaddend releases energy. \DIFdelbegin \DIFdel{It }\DIFdelend \DIFaddbegin \DIFadd{The opposite pairing
+costs energy. Term (b) }\DIFaddend vanishes when $s_{ij}\,\delta l_{ij} = 0$ for every \DIFdelbegin \DIFdel{pair}\DIFdelend \DIFaddbegin \DIFadd{spring}\DIFaddend ,
+which is to say when the reference is unstrained on the \DIFdelbegin \DIFdel{pairs }\DIFdelend \DIFaddbegin \DIFadd{springs }\DIFaddend the mutation
 touches. In particular it vanishes for any mutation of an unfrustrated reference,
 and it does not vanish in general.
 
 Term (c) is the whole of the contribution from the change in force constants. It
-vanishes when $\delta k_{ij}(s_{ij} - \delta l_{ij})^2 = 0$ for every spring, in
+vanishes when \DIFdelbegin \DIFdel{$\delta k_{ij}(s_{ij} + \delta l_{ij})^2 = 0$ pairwise}\DIFdelend \DIFaddbegin \DIFadd{$\delta k_{ij}(s_{ij} - \delta l_{ij})^2 = 0$ for every spring}\DIFaddend , in
 particular when $k$ is constant over the range the mutation explores. It is the
 term that a model with a fixed contact map does not have.
 
@@ -756,13 +890,13 @@ distance,
 k(l) \;=\; k_0\, \mathds{1}\big[\, l \le d_{\max} \,\big],
 \label{eq:step}
 \end{equation}
-under which a spring is either active with strength $k_0$ or inactive. Two
+under which a \DIFdelbegin \DIFdel{pair is either a spring of }\DIFdelend \DIFaddbegin \DIFadd{spring is either active with }\DIFaddend strength $k_0$ or \DIFdelbegin \DIFdel{nothing at all}\DIFdelend \DIFaddbegin \DIFadd{inactive}\DIFaddend . Two
 consequences follow from the results above.
 
 First, $V$ is discontinuous in the parameters. If a mutation carries
 $l^{\text{ref}}_{ij}$ across $d_{\max}$ then $\delta k_{ij} = \pm k_0$, and by term
 (c) of \eqref{eq:decomposition} the energy changes by
-$\pm\tfrac12 k_0 (s_{ij} - \delta l_{ij})^2$ however small $\delta l_{ij}$ is.
+\DIFdelbegin \DIFdel{$\pm\tfrac12 k_0 (s_{ij} + \delta l_{ij})^2$ }\DIFdelend \DIFaddbegin \DIFadd{$\pm\tfrac12 k_0 (s_{ij} - \delta l_{ij})^2$ }\DIFaddend however small $\delta l_{ij}$ is.
 
 Second, and for the same reason, term (c) cannot be treated as small when
 $\delta l_{ij}$ is small. This is the sense in which the contact map resists a
@@ -770,11 +904,12 @@ perturbative treatment: $\delta k_{ij}$ is not controlled by $\delta l_{ij}$.
 
 A continuous $k$, for instance a sigmoid of width $w$ centred on $d_{\max}$, makes
 $V$ continuous in $\LL$ and $\delta k_{ij}$ small whenever $\delta l_{ij}$ is
-small. The cost is that no spring is exactly inactive, so the contact map becomes a
+small. The cost is that no \DIFdelbegin \DIFdel{pair }\DIFdelend \DIFaddbegin \DIFadd{spring }\DIFaddend is exactly inactive, so the contact map becomes a
 threshold imposed on a continuum rather than a property of the network.
 
 \section{Open questions and work to come}
-\label{sec:open}
+\DIFaddbegin \label{sec:open}
+\DIFaddend 
 
 The following are not settled here.
 
@@ -784,7 +919,7 @@ the document. Its accuracy for a frustrated network has not been examined.
 \item The magnitudes of (a), (b) and (c) in \eqref{eq:decomposition} for a real
 protein are not known. The decomposition says when each vanishes, not how large
 each is.
-\item How large $|s_{ij}|$ may become before a compressed spring ($s_{ij} < 0$),
+\item How large \DIFdelbegin \DIFdel{$s_{ij}$ }\DIFdelend \DIFaddbegin \DIFadd{$|s_{ij}|$ }\DIFaddend may become before a compressed spring \DIFaddbegin \DIFadd{($s_{ij} < 0$)}\DIFaddend ,
 with its negative transverse stiffness \eqref{eq:split}, ceases to represent a
 residue contact.
 \item A mutation can cost the network its infinitesimal rigidity. The perturbation
@@ -798,13 +933,16 @@ $\ln(2\pi/\beta)$ survives, so $\Delta A$ is no longer independent of the units 
 length. How often this happens at a given mutation size and cutoff is an empirical
 question, and what the free energy difference should mean when it does is not
 settled here.
-\item How the parameters $\LL$ should be chosen. Section~\ref{sec:frustration}
+\item \DIFdelbegin \DIFdel{Whether a }\DIFdelend \DIFaddbegin \DIFadd{How the parameters $\LL$ should be chosen. Section~\ref{sec:frustration}
 gives one recipe, $l_{ij} = d_{ij}(\rr^{\ast})$ for a chosen structure, which
 yields an unfrustrated network; but nothing selects it, and the question of
-whether a frustrated network is the better model of a native structure --- and if
-so, which one --- is open. This is a question about the parameters, and is not
+whether a }\DIFaddend frustrated network is \DIFdelbegin \DIFdel{a }\DIFdelend \DIFaddbegin \DIFadd{the }\DIFaddend better model of a native structure \DIFdelbegin \DIFdel{than an
+unfrustrated one, }\DIFdelend \DIFaddbegin \DIFadd{--- }\DIFaddend and if
+so\DIFdelbegin \DIFdel{how the $l_{ij}$ should be chosen, given that
+\eqref{eq:equilibrium} does not
+determine them}\DIFdelend \DIFaddbegin \DIFadd{, which one --- is open. This is a question about the parameters, and is not
 one \eqref{eq:equilibrium} addresses: that equation takes $\LL$ as given and
-solves for the conformation.
+solves for the conformation}\DIFaddend .
 \end{itemize}
 
 To be added: the distribution of structures generated by repeated mutation, and
