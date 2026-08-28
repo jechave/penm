@@ -11,8 +11,8 @@
 
 % --- review annotations -------------------------------------------------
 % Comment out the next line (and uncomment the one after) for a clean build.
-%\usepackage[textwidth=3.2cm]{todonotes}
-\usepackage[disable]{todonotes}
+\usepackage[textwidth=3.2cm]{todonotes}
+%\usepackage[disable]{todonotes}
 \newcommand{\jc}[1]{\todo[inline,color=yellow!40]{#1}}
 \newcommand{\jm}[1]{\todo[color=orange!40]{#1}}
 % ------------------------------------------------------------------------
@@ -23,29 +23,54 @@
 \newcommand{\LL}{\Lambda}
 \newcommand{\re}{\rr^{e}}
 
-\title{An elastic network model with $k_{ij}=k(l_{ij})$:\\
-potential, conformational distribution, and the effect of mutation}
-\author{Julian Echave \\ \small (prompting Claude Opus 5)}
+\title{An elastic network model with $k_{ij}=k(l_{ij})$}
+\author{Julian Echave}
 \date{2026-08-26}
 
 \begin{document}
 
 \maketitle
 
-An elastic network model is specified by the force constants $k_{ij}$ and the
-equilibrium lengths $l_{ij}$ of its springs. Here the force constants are taken to
-be a function of the equilibrium lengths, $k_{ij} = k(l_{ij})$, which leaves the
-$l_{ij}$ as the only free parameters. A mutation perturbs the $l_{ij}$ of one
-site, and its consequences are obtained without expanding or linearising the
-model. This note derives the potential, its minimum, the conformational
-distribution, and the thermodynamic properties, first for a general network and
-then for a reference and its mutant, ending with the mutational changes.
+% \tableofcontents
 
-\tableofcontents
+\section{Introduction}
+\label{sec:intro}
+
+A protein can be modelled as an elastic network of nodes, representing amino
+acids, connected by springs, representing interactions.
+Such an elastic network model (ENM) is completely specified by the spring force
+constants $k_{ij}$ and the spring equilibrium lengths $l_{ij}$.
+Typically, given a native conformation $\re$, the ENM is set up so that
+$l_{ij} = d_{ij}(\re)$ and $k_{ij} = k(d_{ij}(\re))$.
+The structure thus enters twice: it fixes the parameters, and it is the
+conformation at which the model is relaxed.
+
+We would like to use such a model to predict how a mutation changes a protein:
+its structure, its motions, its stability.
+But a mutation changes the parameters, and here the parameters are the structure.
+To mutate the model one must hand it the mutant structure, which is what we
+wanted it to predict.
+The same identification has a second consequence: every spring is relaxed at
+$\re$, so the network carries no strain, and frustration, which proteins are
+known to display, cannot be represented at all.
+
+Both problems come from tying the parameters to a structure, so we untie them.
+We take the force constants to be a function of the equilibrium lengths of the
+springs, $k_{ij} = k(l_{ij})$, rather than of the distances between nodes in a
+given structure.
+The model is then determined by the $l_{ij}$ alone.
+The springs need not be relaxed at the equilibrium conformation, but may be
+strained, so the network may be frustrated; and a mutation of a site is modelled
+by perturbing the equilibrium lengths of the springs connected to it, with the
+mutant structure following from the model rather than being supplied to it.
+
+This note derives the potential energy function, its minimum, the conformational
+distribution, and thermodynamic properties, first for a general network and
+then for a reference and its mutant, ending with the mutational changes.
 
 \section{The model}
 
-\subsection{Conformations and distances}
+\subsection{Nodes}
 
 A protein is represented by $N$ nodes, one per residue, joined in pairs by springs.
 A conformation is the set of the node positions,
@@ -56,31 +81,32 @@ We write
 \begin{equation}
 \rr_{ij} \;\equiv\; \rr_j - \rr_i
 \end{equation}
-for the vector from node $i$ to node $j$, so that $\rr_{ij} = -\rr_{ji}$, and the
-distance between the two nodes in conformation $\rr$ is
+for the vector that goes from node $i$ to node $j$.
+The distance between the two nodes in conformation $\rr$ is the norm of this vector:
 \begin{equation}
-d_{ij}(\rr) \;=\; \lVert \rr_{ij} \rVert,
+d_{ij}(\rr) \;=\; \lVert \rr_{ij} \rVert.
 \label{eq:dij}
 \end{equation}
-which is symmetric, $d_{ij} = d_{ji}$.
 
-\subsection{Parameters}
+\subsection{Springs}
 
-Every pair of nodes is joined by a spring, and each spring carries an equilibrium
-length $l_{ij}$, the length at which it is neither stretched nor compressed. There
-is one such length for every spring, and together they form
-\begin{equation}
-\LL \;=\; \{\, l_{ij} \,:\, 1 \le i < j \le N \,\},
-\qquad
-|\LL| = \tfrac12 N(N-1),
-\end{equation}
-the complete set of free parameters of the model. The force constant of a spring is
-fixed by its own equilibrium length through a function $k$,
+Every pair of nodes is joined by a spring.
+A spring properties are its force constant $k_{ij}$ and its equilibrium length $l_{ij}$.
+We assume the force constant of a spring to be determined by its own equilibrium length through a function $k$,
 \begin{equation}
 k_{ij} \;=\; k(l_{ij}),
 \qquad k : [0,\infty) \to [0,\infty).
 \label{eq:kl}
 \end{equation}
+We assume of $k$ only that it is non-increasing, so that long springs are weakly coupled or uncoupled, and that $k(l) = 0$ for $l$ beyond some range, so that springs long enough to represent no contact do not interact. \jm{Do we really assume this?}
+
+Since the $k_{ij}$ are not independent parameters, the model is determined by the set of length parameters:
+\begin{equation}
+\LL \;=\; \{\, l_{ij} \,:\, 1 \le i < j \le N \,\},
+\qquad
+|\LL| = \tfrac12 N(N-1).
+\end{equation}
+
 
 This is the one departure from standard practice, and it is worth stating
 carefully, because in the standard case the departure is invisible. A standard
@@ -93,10 +119,6 @@ nothing distinguishes $k(l_{ij})$ from $k(d_{ij}(\re))$. Here the $l_{ij}$ are l
 free rather than read off a structure, the two cease to coincide, and
 \eqref{eq:kl} states which of them $k$ is a function of: the parameter $l_{ij}$.
 
-We assume of $k$ only that it is non-increasing, so that long springs are weakly
-coupled or uncoupled, and that $k(l) = 0$ for $l$ beyond some range, so that
-springs long enough to represent no contact do not interact. Nothing below requires
-$k$ to be continuous or differentiable.
 
 \subsection{The potential}
 
