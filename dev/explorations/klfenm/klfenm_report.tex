@@ -31,6 +31,22 @@
 
 \maketitle
 
+\begin{abstract}
+This note sets up an elastic network model of proteins whose goal is to
+predict how mutations change structure, motions, and stability. In standard
+ENMs the parameters are fixed by a known structure: each spring's rest length
+is the distance between its residues in that structure, so modeling a mutant
+requires supplying the mutant structure, which is itself one of the things to
+be predicted. Here, instead, we tie spring stiffnesses to rest lengths,
+$k(l_{ij})$, so the rest lengths alone define the model and the structure
+follows by minimization. A mutation is then just a perturbation of the rest
+lengths at a site, and the mutant's structure, motions, and thermodynamic
+changes (energy, entropy, and free energy) are derived, not assumed. A side
+effect is that networks can now carry strain and frustration, which real
+proteins are known to display but standard ENMs exclude by construction. We
+work out the full formalism and end with a list of open questions.
+\end{abstract}
+
 % \tableofcontents
 
 \section{Introduction}
