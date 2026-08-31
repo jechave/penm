@@ -13,11 +13,6 @@ the command.
 proteins, perturbs them, and measures the difference between wild-type and mutant in
 energy, structure and motion.
 
-It was extracted in 2026-08 from the package now called `penmscan`, which kept the
-scanning layer — sweeping a perturbation across all sites (the `mrs_*` functions).
-**Those live in `penmscan`, not here.** If a task calls for a site-by-site scan, it
-belongs in that package.
-
 The name means "perturb ENM" and is meant to cover perturbation types beyond mutation
 (external forces, single-contact perturbations) as they are added.
 
@@ -71,9 +66,9 @@ stop and ask.
   stable. **No `.9000` suffix** — that marks "a dev build after release X",
   which means nothing here because penm has no release event distinct from
   "what is in git"; a convention nobody maintains produces numbers that look
-  meaningful and are not. Why this matters: msamodel depends on penm and needs
-  a floor it can write. It once could not — a rename shipped without moving the
-  version, so one string named two incompatible APIs.
+  meaningful and are not. Why this matters: a dependent needs a version floor it
+  can write. It once could not — a rename shipped without moving the version, so
+  one string named two incompatible APIs.
 - **`frustrated = TRUE` is disabled**, not merely untested — `set_enm()` has a
   `stopifnot(!frustrated)`. Don't enable it as a side effect of other work.
 - **"No caller" is not a defect.** Many exports have no caller outside penm's own
@@ -137,9 +132,8 @@ machine cannot reach; each blocks until it times out. Measured 2026-08-13: **413
 wall-clock for 47s of CPU** — ~87% pure waiting, of which the world-clock call is a
 60s timeout on its own. With `cran = FALSE` and `_R_CHECK_SYSTEM_CLOCK_=0` the same
 check takes **39s**. Put `_R_CHECK_SYSTEM_CLOCK_=0` in `~/.Renviron`; save
-`--as-cran` for actual CRAN submission. (Separately, `ideas.md` §6 in penmscan
-records a *different* hang: `check()` stalls at "checking package dependencies" if
-`options("repos")` is the `"@CRAN@"` placeholder.)
+`--as-cran` for actual CRAN submission. (Separately: `check()` stalls at "checking
+package dependencies" if `options("repos")` is the `"@CRAN@"` placeholder.)
 
 Note `cran = FALSE` is the weaker gate — it runs with `_R_CHECK_FORCE_SUGGESTS_:
 FALSE`, so undeclared `Suggests` pass. Use `--as-cran` before an actual release.
@@ -147,25 +141,24 @@ FALSE`, so undeclared `Suggests` pass. Use `--as-cran` before an actual release.
 **Capture expensive output to a file on the first run** (`> out.txt 2>&1`), then read
 that file. Re-running `check()` to see a different slice of its own output is waste.
 
-## Relationship to penmscan and msamodel
+## Downstream
 
-- **`penmscan`** holds the scanning layer. It is a **separate package**: read it for
-  reference, never write to it. It does **not** currently depend on penm — it carries
-  private copies of penm's functions — so it constrains nothing about penm's exports.
-  (It may later be slimmed to `Imports: penm`; that hasn't happened.)
-- **`msamodel`** does depend on penm, and re-exports `set_enm()`, so **penm's help
-  pages are what an msamodel user reads.** Weigh that when documenting.
+**This repo is the whole world.** penm is a general-purpose library with users you
+cannot see. Do not read, grep, or reason about sibling packages in `../` — they were
+useful while penm was being extracted and are now noise. A question about penm is
+answered from penm.
 
-  Changing the signature of anything msamodel calls is a downstream break — say so
-  before doing it. Check what it actually calls rather than trusting a list here:
+Two consequences of having downstream users. Both hold without looking at any of them:
 
-  ```bash
-  grep -rn "penm::\|penm:::" ../msamodel/R ../msamodel/tests ../msamodel/vignettes
-  grep -n "penm" ../msamodel/NAMESPACE
-  ```
+- **Exported signatures are a contract.** Changing one is a breaking change: say so
+  before doing it, and bump the minor version. Never scope an API decision by counting
+  callers — you cannot see them, and the ones you could see would not be the set.
+  (See "No caller is not a defect" above.)
+- **penm's help pages are read by people who never open penm.** Write the
+  documentation for a stranger.
 
-  Note it reaches penm both ways — declared `importFrom(penm, ...)` and bare `penm::`
-  qualification — so the NAMESPACE alone understates the coupling.
+Cost of this rule, accepted deliberately: a signature change comes with no report of
+what it breaks elsewhere. If you want that, ask Julian — do not go and look.
 
 ## Working style
 

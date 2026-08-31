@@ -71,8 +71,8 @@ check_ensemble <- function(ensemble) {
 #'
 #' @noRd
 mut_seed <- function(ensemble, site_mut, mutation) {
-  # Checked here as well as at the get_mutant_site() boundary: penmscan and any
-  # direct penm::: caller reach this function without passing through it.
+  # Checked here as well as at the get_mutant_site() boundary: a direct penm:::
+  # caller reaches this function without passing through it.
   check_ensemble(ensemble)
   key <- paste(ensemble, site_mut, mutation, sep = "-")
   # Use all 32 hash bits, then fold into the signed range set.seed() accepts

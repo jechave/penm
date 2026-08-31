@@ -84,8 +84,8 @@ test_that("a malformed ensemble is rejected, not turned into a realization", {
 })
 
 test_that("mut_seed rejects a malformed ensemble when called directly", {
-  # Not redundant with the boundary check: penmscan and any direct penm:::
-  # caller reach mut_seed() without passing through get_mutant_site().
+  # Not redundant with the boundary check: a direct penm::: caller reaches
+  # mut_seed() without passing through get_mutant_site().
   expect_error(penm:::mut_seed(NULL, 80, 3), "single non-missing integer")
   expect_error(penm:::mut_seed(NA,   80, 3), "single non-missing integer")
 })
