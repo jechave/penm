@@ -189,4 +189,4 @@ get_cmat <- function(prot) prot$nma$cmat
 #'
 #' @export
 #'
-get_nmodes <- function(prot) max(prot$nma$mode)
+get_nmodes <- function(prot) length(prot$nma$mode)
