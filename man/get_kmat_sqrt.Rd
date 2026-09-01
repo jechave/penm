@@ -22,6 +22,17 @@ have zero eigenvalue), so building it from the modes is what makes it defined.
 Needed to call \code{\link{delta_structure_de2i}}, which takes
 \code{kmat_sqrt} as an argument.
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+ks <- get_kmat_sqrt(wt)
+dim(ks)                         # 3 nsites x 3 nsites
+
+# squaring it returns the network matrix
+all.equal(ks \%*\% ks, as.matrix(get_kmat(wt)), check.attributes = FALSE)
+
+}
 \seealso{
 Other matrix square roots:
 \code{\link[=get_cmat_sqrt]{get_cmat_sqrt()}}

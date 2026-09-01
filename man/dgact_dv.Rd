@@ -22,6 +22,21 @@ A scalar, the internal-energy contribution to the activation free energy,
 Calculates the energy cost of deforming the active site of \code{prot} into the
 conformation it has in \code{ideal}, treating the transition state as rigid.
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
+
+# active-site residues are given in pdb numbering (resno)
+active <- get_pdb_site(wt)[c(10, 11, 12)]
+
+# the cost of deforming the mutant's active site back to the wild-type shape
+dgact_dv(mut, wt, active)
+
+# zero when the two conformations agree, since there is nothing to deform
+dgact_dv(wt, wt, active)
+
+}
 \seealso{
 Other enm_energy:
 \code{\link[=beta_boltzmann]{beta_boltzmann()}},

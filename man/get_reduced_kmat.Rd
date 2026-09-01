@@ -15,6 +15,17 @@ a matrix of size nsites x nsites \eqn{K_{ij} = Tr(\mathbf{K}_{ij})}
 \description{
 Calculates the reduced K matrix (size nsites x nsites)
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+kmat_r <- get_reduced_kmat(wt)
+dim(kmat_r)                     # nsites x nsites, from the 3N x 3N kmat
+
+# off-diagonal entries are non-zero only for sites in contact
+sum(kmat_r[upper.tri(kmat_r)] != 0)
+
+}
 \seealso{
 Other site-by-site matrices:
 \code{\link[=get_reduced_cmat]{get_reduced_cmat()}},

@@ -18,6 +18,20 @@ a scalar: the entropic free-energy contribution, summed over modes
 Sums the entropic free-energy contribution of every normal mode, computed from
 the ENM eigenvalue spectrum.
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+# beta has no default; beta_boltzmann() is the usual choice
+enm_g_entropy(wt, beta_boltzmann())
+
+# the term depends on the whole eigenvalue spectrum, so it moves when the
+# network does: a shorter cutoff keeps fewer contacts
+wt2 <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+               d_max = 9, frustrated = FALSE)
+enm_g_entropy(wt2, beta_boltzmann())
+
+}
 \seealso{
 Other enm_energy:
 \code{\link[=beta_boltzmann]{beta_boltzmann()}},

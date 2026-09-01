@@ -69,5 +69,38 @@ get_nmodes(prot)
 \code{get_nmodes}: the number of normal modes
 }
 \description{
-Get various properties of a prot object
+These accessors are the supported way to read a `prot` object built by
+[set_enm()]. They fall into three groups: the model parameters (`get_enm_param`),
+the nodes and their geometry (`get_nsites`, `get_site`, `get_pdb_site`,
+`get_bfactor`, `get_xyz`), and the network and its normal modes (`get_kmat`,
+`get_cmat`, `get_mode`, `get_evalue`, `get_umat`, `get_nmodes`).
+}
+\details{
+Prefer them over reaching into the list directly: a `prot` also carries
+derived components that `penm` maintains for speed, whose internal consistency
+is the package's business, and whose layout may change. The accessors are the
+interface; the list structure is not.
+}
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+get_nsites(wt)                  # number of ENM nodes
+get_nmodes(wt)                  # 3 * nsites - 6 for a generic structure
+get_enm_param(wt)               # the arguments set_enm() was called with
+
+# site indexes are sequential; pdb_site is the numbering in the PDB file
+head(get_site(wt))
+head(get_pdb_site(wt))
+
+# xyz is a flat vector of length 3 * nsites, not a matrix
+length(get_xyz(wt)) == 3 * get_nsites(wt)
+
+# kmat is 3N x 3N; umat is 3N x nmodes
+dim(get_kmat(wt))
+dim(get_umat(wt))
+
+}
+\seealso{
+[set_enm()], which builds the `prot` these read.
 }

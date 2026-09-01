@@ -40,7 +40,7 @@ Calculate energy differences between a mutant and wild type
 \details{
 `ddg_dv` calculates the minimum-energy difference between \code{mut} and \code{wt}
 
-`ddg_tds` calculates the entropic free energ difference between \code{mut} and \code{wt}
+`ddg_tds` calculates the entropic free energy difference between \code{mut} and \code{wt}
 
 `delta_energy_dvs` calculates the ideal-conformation stress-energy difference between \code{mut} and \code{wt}
 

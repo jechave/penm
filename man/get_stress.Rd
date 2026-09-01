@@ -15,6 +15,23 @@ a vector of site-dependent stress-energy values
 \description{
 Calculates the sum for each site of the stress energy of each of it's springs at equilibrium
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
+
+# A prot fresh from set_enm() is unfrustrated: every spring sits at its rest
+# length, so the stress is identically zero.
+all(get_stress(wt) == 0)
+
+# After a mutation the strain is concentrated near the mutated site
+which.max(get_stress(mut))      # site_mut was 11
+
+# Each edge is counted at both of its endpoints, so the profile sums to
+# twice the total minimum energy
+all.equal(sum(get_stress(mut)) / 2, enm_v_min(mut))
+
+}
 \seealso{
 Other site profiles:
 \code{\link[=get_cn]{get_cn()}},

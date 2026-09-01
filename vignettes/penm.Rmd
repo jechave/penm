@@ -1,0 +1,408 @@
+---
+title: "Getting started with penm"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with penm}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+has_ggplot <- requireNamespace("ggplot2", quietly = TRUE)
+```
+
+```{r setup}
+library(penm)
+```
+
+## The model
+
+An Elastic Network Model (ENM) represents a protein as nodes joined by springs:
+one node per residue, and a spring between every pair of nodes closer than a
+cutoff $d_{max}$ in the native structure. For a conformation $\mathbf{r}$, the
+potential energy is
+
+$$V(\mathbf{r}) = \sum_{ij} \tfrac{1}{2} k_{ij}\,(r_{ij} - l_{ij})^2 ,$$
+
+with $r_{ij}$ the distance between nodes $i$ and $j$ in $\mathbf{r}$, $l_{ij}$
+the spring's rest length, and $k_{ij}$ its force constant.
+
+Expanding $V$ to second order about the equilibrium structure gives the
+stiffness matrix $\mathbf{K}$, the Hessian of $V$. Its eigenvectors are the
+**normal modes** and its eigenvalues $\lambda_n$ their force constants: mode $n$
+has mean-square amplitude $\propto 1/\lambda_n$, so the smallest eigenvalues
+carry the largest fluctuations. Six eigenvalues vanish, corresponding to the
+rigid-body translations and rotations, leaving $3N - 6$ internal modes.
+
+`penm` — "perturbed ENM" — perturbs such a network and measures the result. The
+perturbation implemented here models mutation, following the linearly forced ENM
+(LFENM) of Echave (2008) and Echave & Fernández (2010): mutating a site shifts
+the rest lengths $l_{ij}$ of the springs connected to it, and the structure
+relaxes to a new equilibrium.
+
+## Building a network
+
+`set_enm()` builds the network from a `pdb` object, as returned by
+`bio3d::read.pdb()`, and returns a `prot`. Every other function takes that
+`prot`.
+
+The examples below use `pdb_2acy_A`, a copy of acylphosphatase (98 residues,
+chain A) bundled with the package.
+
+```{r build}
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+get_nsites(wt)
+get_nmodes(wt)
+```
+
+### Using your own structure
+
+Any structure `bio3d` can read will do. Select a single chain unless you intend
+a multi-chain network, since chains that make no contacts give disconnected
+components:
+
+```r
+library(bio3d)
+
+pdb <- read.pdb("path/to/your/structure.pdb")   # or read.pdb("2acy") to fetch
+pdb_A <- trim.pdb(pdb, chain = "A")
+
+wt <- set_enm(pdb_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+```
+
+All five arguments are required, so that the network is recorded in the call:
+
+- **`node`** — which atom represents a residue: `"ca"` (alpha carbons), `"sc"`
+  (side-chain centroids) or `"cb"` (beta carbons).
+- **`model`** — the spring-constant function. `"anm"` gives every contact the
+  same constant; `"ming_wall"` (used here), `"hnm"`, `"hnm0"`, `"pfanm"` and
+  `"reach"` make $k_{ij}$ depend on distance or on separation along the sequence.
+- **`d_max`** — the contact cutoff in ångström. For Cα networks, 10–12 Å is the
+  usual range. Shorter cutoffs give sparser, softer networks.
+- **`frustrated`** — `FALSE`. `TRUE` is not currently supported and errors.
+
+These choices define the network, so hold them fixed across any comparison.
+
+## What a `prot` holds
+
+Accessors read the network: `get_xyz()` the coordinates, `get_kmat()` the
+stiffness matrix, `get_evalue()` and `get_umat()` the modes, `get_msf_site()`
+the fluctuation of each site. `?get_prot_property` lists them all; use them
+rather than the object's internals, which are free to change.
+
+Two views of the same network. The eigenvalue spectrum, spanning nearly three
+orders of magnitude from the softest mode to the stiffest:
+
+```{r spectrum, eval = has_ggplot, fig.width = 7, fig.height = 3}
+library(ggplot2)
+
+ggplot(tibble::tibble(mode = get_mode(wt), evalue = get_evalue(wt)),
+       aes(mode, evalue)) +
+  geom_line() +
+  scale_y_log10() +
+  labs(x = "mode", y = "eigenvalue") +
+  theme_minimal()
+```
+
+And the fluctuations those modes imply, site by site — the exposed loops move,
+the buried core does not:
+
+```{r msf, eval = has_ggplot, fig.width = 7, fig.height = 3}
+ggplot(tibble::tibble(site = get_site(wt), msf = get_msf_site(wt)),
+       aes(site, msf)) +
+  geom_line() +
+  labs(x = "site", y = "mean-square fluctuation") +
+  theme_minimal()
+```
+
+A network from `set_enm()` sits at its own minimum: every spring is at its rest
+length, so there is no strain.
+
+```{r unstrained}
+enm_v_min(wt)
+```
+
+## Mutating
+
+`get_mutant_site()` perturbs the springs of one site and returns the relaxed
+structure as a new `prot`.
+
+```{r mutate}
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 1)
+```
+
+`site_mut` is a sequential index from 1 to `get_nsites()`, not a PDB residue
+number. The two differ whenever the file's numbering has an offset or gaps, so
+convert:
+
+```{r site-lookup}
+which(get_pdb_site(wt) == 11)
+```
+
+The model has no amino acids, so a mutation is not a substitution of one residue
+type for another: it is a random shift of the rest lengths $l_{ij}$ at the
+mutated site, drawn with standard deviation `mut_dl_sigma` (default 0.3 Å).
+`mut_sd_min` (default 2) excludes springs between residues close in sequence.
+
+The mutant is no longer at its rest lengths, so it carries strain:
+
+```{r strained}
+enm_v_min(mut)
+```
+
+### Identifying a mutant
+
+Three integers name a mutant. `site_mut` is the site. `mutation` indexes
+independent draws at that site — `1`, `2`, `3` are three different mutations of
+the same residue, and `0` returns the wild type unchanged. `ensemble` indexes
+realizations of the whole mutational process.
+
+The triple is hashed to seed the draw, so the same triple always yields the same
+mutant: these calls are reproducible, not random from call to call.
+
+`mutation` and `ensemble` differ in scope. Vary `mutation` for replicates within
+one study; change `ensemble` to repeat an entire study — every site, every
+replicate — as an independent realization. Hold `ensemble` fixed across a scan or
+a trajectory. `?penm_ensemble` is the full account.
+
+Replicates at one site show how wide the distribution of mutational effects is:
+
+```{r replicates}
+ddg <- numeric(5)
+for (m in 1:5) {
+  mut_m <- get_mutant_site(wt, site_mut = 11, mutation = m, ensemble = 1)
+  ddg[m] <- ddg_dv(wt, mut_m)
+}
+ddg
+```
+
+## Measuring mutational changes
+
+Three families measure wild-type-vs-mutant differences, all taking the pair.
+Within the structure and motion families, the suffix `i` gives a profile over
+sites and `n` a profile over modes.
+
+**Energy.** Scalars. `ddg_dv` is the change in minimum energy,
+$V_{min}(\text{mut}) - V_{min}(\text{wt})$; `ddg_tds` the entropic term. `penm`
+reports the components separately rather than a single free energy.
+
+```{r energy}
+ddg_dv(wt, mut)
+```
+
+Since the wild type here is unstrained, this equals the mutant's strain energy.
+
+**Structure.** Squared displacements, in Å², resolved over sites or over modes.
+The two are the same deformation in different bases, and sum to the same total:
+
+```{r structure}
+dr2i <- delta_structure_dr2i(wt, mut)   # per site
+dr2n <- delta_structure_dr2n(wt, mut)   # per mode
+
+all.equal(sum(dr2i), sum(dr2n))
+```
+
+By site, the deformation is sharply localised: the mutated site moves most, and
+the response falls by three orders of magnitude across the protein.
+
+```{r dr2i-plot, eval = has_ggplot, fig.width = 7, fig.height = 3}
+ggplot(tibble::tibble(site = get_site(wt), dr2 = dr2i), aes(site, dr2)) +
+  geom_line() +
+  geom_vline(xintercept = 11, linetype = "dashed", colour = "grey50") +
+  scale_y_log10() +
+  labs(x = "site", y = expression(dr^2),
+       subtitle = "dashed line: the mutated site") +
+  theme_minimal()
+```
+
+By mode, it is concentrated at the soft end of the spectrum. Mutations push the
+structure along the motions it was already most willing to make:
+
+```{r dr2n-plot, eval = has_ggplot, fig.width = 7, fig.height = 3}
+ggplot(tibble::tibble(mode = get_mode(wt), dr2 = dr2n), aes(mode, dr2)) +
+  geom_line() +
+  scale_y_log10() +
+  labs(x = "mode (softest first)", y = expression(dr^2)) +
+  theme_minimal()
+```
+
+```{r soft-modes}
+sum(sort(dr2n, decreasing = TRUE)[1:10]) / sum(dr2n)   # share taken by 10 modes
+cor(log(dr2n), log(get_evalue(wt)))
+```
+
+The two views answer different questions — where the protein moved, and which of
+its motions were excited.
+
+**Motion.** Changes in the fluctuations themselves — `delta_motion_dmsfi` over
+sites, `delta_motion_dmsfn` over modes:
+
+```{r motion}
+sum(delta_motion_dmsfi(wt, mut))
+```
+
+The zero is a consequence of the perturbation model, explained next.
+
+Each family has further members, weighting the same comparisons differently; see
+`?delta_structure_by_site`, `?delta_motion_by_site` and their by-mode
+counterparts.
+
+## What the perturbation touches
+
+Under the LFENM — `get_mutant_site()`'s default `mut_model = "lfenm"` — the
+perturbation is linear: it shifts rest lengths and moves the equilibrium
+coordinates, but leaves $\mathbf{K}$ unchanged. The mutant therefore has the same
+normal modes and the same eigenvalues as the wild type:
+
+```{r invariant}
+all.equal(get_evalue(wt), get_evalue(mut))
+all.equal(as.matrix(get_kmat(wt)), as.matrix(get_kmat(mut)))
+```
+
+Any quantity derived from the spectrum alone is consequently identical for the
+two, and its difference vanishes:
+
+```{r entropic}
+ddg_tds(wt, mut)
+```
+
+This is why `delta_motion_dmsfi` returned zero above. Under this model the
+informative measures are those built on coordinates.
+
+## Influential and sensitive sites
+
+`delta_structure_dr2i(wt, mut)` gives the response *at every site* to mutating
+one site. Collecting those profiles over every mutated site in turn gives a
+site-by-site matrix, whose two margins answer different questions: how much
+mutating a site perturbs the rest of the protein (its **influence**), and how
+much a site is perturbed by mutations elsewhere (its **sensitivity**).
+
+A single mutant is one random draw, and draws at the same site scatter widely,
+as the replicates above showed. Average over several mutants per site, or the
+profiles are mostly noise:
+
+```{r profiles}
+sites <- get_site(wt)
+n_mut <- 10
+dr2 <- matrix(0, length(sites), length(sites))   # [responding site, mutated site]
+
+for (s in sites) {
+  acc <- numeric(length(sites))
+  for (m in 1:n_mut) {
+    mut_s <- get_mutant_site(wt, site_mut = s, mutation = m, ensemble = 1)
+    acc <- acc + delta_structure_dr2i(wt, mut_s)
+  }
+  dr2[, s] <- acc / n_mut
+}
+
+influence   <- colSums(dr2)
+sensitivity <- rowMeans(dr2)
+```
+
+```{r profiles-plot, eval = has_ggplot, fig.width = 7, fig.height = 3.5}
+profiles <- tibble::tibble(
+  site    = rep(sites, 2),
+  value   = c(influence, sensitivity),
+  profile = rep(c("influence", "sensitivity"), each = length(sites))
+)
+
+ggplot(profiles, aes(site, value)) +
+  geom_line() +
+  facet_wrap(~ profile, ncol = 1, scales = "free_y") +
+  scale_y_log10() +
+  labs(x = "site", y = NULL) +
+  theme_minimal()
+```
+
+The two behave quite differently. Sensitivity falls off sharply with burial,
+while influence is only weakly related to it:
+
+```{r profiles-cn}
+cn <- get_cn(wt)
+
+cor(log(sensitivity), cn)
+cor(log(influence), cn)
+```
+
+Sensitivity largely reflects how much a site moves to begin with, which the
+unperturbed network already predicts through its mean-square fluctuation:
+
+```{r sensitivity-msf}
+cor(log(sensitivity), log(get_msf_site(wt)))
+```
+
+`get_cn()` and `get_msf_site()` are two of several single-structure profiles —
+see also `get_wcn()` and `get_stress()`.
+
+Both profiles are comparative. Responses scale as $dr^2 \propto \sigma^2$ with
+`mut_dl_sigma`, and with the spring constants, so their absolute size is
+arbitrary; only the ranking of sites carries meaning.
+
+## Evolutionary trajectories
+
+A mutant is itself a `prot`, so it can be mutated in turn. Iterating — mutating
+a random site each generation, and keeping the result — gives an evolutionary
+trajectory. Measuring each generation against the *original* structure tracks
+how far the lineage has drifted:
+
+```{r trajectory}
+set.seed(1)
+n_gen <- 30
+
+p <- wt
+traj <- tibble::tibble(gen = 1:n_gen, v_min = NA_real_, dr2 = NA_real_)
+
+for (g in 1:n_gen) {
+  site_g <- sample(get_site(wt), 1)
+  p <- get_mutant_site(p, site_mut = site_g, mutation = g, ensemble = 1)
+
+  traj$v_min[g] <- enm_v_min(p)                      # strain carried by this generation
+  traj$dr2[g]   <- sum(delta_structure_dr2i(wt, p))  # divergence from the original
+}
+
+head(traj, 3)
+```
+
+```{r trajectory-plot, eval = has_ggplot, fig.width = 7, fig.height = 3.5}
+ggplot(tidyr::pivot_longer(traj, c(v_min, dr2)),
+       aes(gen, value)) +
+  geom_line() +
+  facet_wrap(~ name, ncol = 1, scales = "free_y") +
+  labs(x = "generation", y = NULL) +
+  theme_minimal()
+```
+
+Both grow, for different reasons. Strain accumulates because each generation
+inherits the previous one's perturbed rest lengths and adds to them. Structural
+divergence grows because the mutations do not undo one another — the lineage
+random-walks away from its starting structure, so the drift is not monotonic
+generation to generation.
+
+Only the starting network is unstrained. Every later generation acts as the wild
+type of the next comparison while itself carrying strain.
+
+Keep `ensemble` fixed along a trajectory so the generations belong to one
+realization.
+
+## Where to go next
+
+- `?penm` — the map of what the package offers.
+- `?penm_ensemble` — the `(ensemble, site_mut, mutation)` key in depth.
+- `?get_prot_property` — every accessor.
+- The `delta_*` help pages — the full menu of measures.
+
+## References
+
+Echave J (2008). Evolutionary divergence of protein structure: the linearly
+forced elastic network model. *Chemical Physics Letters* **457**(4–6), 413–416.
+doi:10.1016/j.cplett.2008.04.042
+
+Echave J, Fernández FM (2010). A perturbative view of protein structural
+variation. *Proteins* **78**(1), 173–180. doi:10.1002/prot.22553

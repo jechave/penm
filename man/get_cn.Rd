@@ -15,6 +15,15 @@ a vector of size nsites with cn values for each site
 \description{
 Calculates the Contact Number (CN) of each site
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+cn <- get_cn(wt)
+length(cn)                      # one value per site
+which.max(cn)                   # most buried site by contact number
+
+}
 \seealso{
 Other site profiles:
 \code{\link[=get_dactive]{get_dactive()}},

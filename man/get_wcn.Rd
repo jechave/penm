@@ -15,6 +15,17 @@ a vector of size nsites with wcn values for each site
 \description{
 Calculates the Weighted Contact Number (WCN) of each site
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+wcn <- get_wcn(wt)
+length(wcn)                     # one value per site
+
+# WCN needs no cutoff, so unlike CN it does not depend on d_max
+cor(wcn, get_cn(wt))
+
+}
 \seealso{
 Other site profiles:
 \code{\link[=get_cn]{get_cn()}},

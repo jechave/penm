@@ -41,7 +41,7 @@ ddg_dv <- function(wt, mut)
 
 #' @rdname delta_energy
 #'
-#' @details `ddg_tds` calculates the entropic free energ difference between \code{mut} and \code{wt}
+#' @details `ddg_tds` calculates the entropic free energy difference between \code{mut} and \code{wt}
 #'
 #' @export
 #'

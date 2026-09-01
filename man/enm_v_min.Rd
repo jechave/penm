@@ -7,14 +7,37 @@
 enm_v_min(prot)
 }
 \arguments{
-\item{prot}{is a prot object, wit a component graph tibble
+\item{prot}{is a prot object, with a component graph tibble
 where v0ij, kij, lij and the dij for the minimum conformation are found.}
 }
 \value{
 a scalar: the energy at the minimum-energy conformation
 }
 \description{
-Calculate minimum energy of a given prot object
+Sums the elastic energy stored in every spring of the network at its current
+conformation, \eqn{\sum_{ij} v0_{ij} + \frac{1}{2} k_{ij} (d_{ij} - l_{ij})^2}.
+It is zero for a \code{prot} fresh from [set_enm()], where each spring's rest
+length \code{lij} is set to its actual length \code{dij}, and positive for any
+perturbed structure — including a wild type that is a previous generation's
+mutant.
+}
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
+
+enm_v_min(wt)                   # 0: a network fresh from set_enm() is unstrained
+enm_v_min(mut)                  # positive: the mutation has strained it
+
+# Strain accumulates along a trajectory, where each mutant becomes the wild
+# type of the next generation. So a zero minimum energy is a property of a
+# freshly built prot, not of "wild types".
+p <- wt
+for (gen in 1:3) {
+  p <- get_mutant_site(p, site_mut = 10 * gen, mutation = 1, ensemble = 7)
+  print(enm_v_min(p))
+}
+
 }
 \seealso{
 Other enm_energy:

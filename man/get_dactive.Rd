@@ -17,6 +17,18 @@ a vector of size nsites with dactive values for each site
 \description{
 Calculates the distance from each site to the closest active residue
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+# pdb_site_active is in PDB numbering (resno), not sequential site index;
+# take the values from get_pdb_site() to be sure they match
+active <- get_pdb_site(wt)[c(10, 11, 12)]
+
+dact <- get_dactive(wt, active)
+range(dact)                     # 0 at the active residues themselves
+
+}
 \seealso{
 Other site profiles:
 \code{\link[=get_cn]{get_cn()}},

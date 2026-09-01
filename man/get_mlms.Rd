@@ -17,6 +17,17 @@ the profile of mean-local-mutational-stress (mlms) values
 \description{
 Calculates the Mean Local Mutational Stress (MLMS) profile using graph of prot object
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+mlms <- get_mlms(wt)
+length(mlms)                    # one value per site
+
+# sdij_cut drops near-in-sequence contacts; raising it keeps fewer springs
+sum(get_mlms(wt, sdij_cut = 5)) < sum(mlms)
+
+}
 \seealso{
 Other site profiles:
 \code{\link[=get_cn]{get_cn()}},

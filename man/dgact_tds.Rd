@@ -25,6 +25,22 @@ Calculates the entropic contribution to the activation free energy, as the
 difference between the entropic free energy of the active site of \code{prot} and
 that of the transition state, which is assumed rigid (contributing zero).
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
+
+active <- get_pdb_site(wt)[c(10, 11, 12)]
+
+dgact_tds(mut, wt, active)
+
+# This term is built from the eigenvalue spectrum, not from the conformations.
+# Under "lfenm" a mutation leaves the spectrum untouched, so the two calls
+# agree exactly and the value is the same for any ideal. It is informative
+# only for models that rebuild the network, such as "sclfenm".
+dgact_tds(wt, wt, active)
+
+}
 \seealso{
 Other enm_energy:
 \code{\link[=beta_boltzmann]{beta_boltzmann()}},

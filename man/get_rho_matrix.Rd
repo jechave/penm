@@ -15,6 +15,18 @@ a matrix of size nsites x nsites with rho(i,j) = cmat(i,j)/sqrt(cmat(i,i) * cmat
 \description{
 Calculates the reduced correlation matrix (size nsites x nsites, diag(rho) = 1)
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+rho <- get_rho_matrix(wt)
+dim(rho)                        # nsites x nsites
+
+# it is the reduced covariance matrix normalised by its diagonal,
+# so every site is perfectly correlated with itself
+all.equal(unname(diag(rho)), rep(1, get_nsites(wt)))
+
+}
 \seealso{
 Other site-by-site matrices:
 \code{\link[=get_reduced_cmat]{get_reduced_cmat()}},

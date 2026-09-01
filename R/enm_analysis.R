@@ -14,6 +14,13 @@
 #'
 #' @family site profiles
 #'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' cn <- get_cn(wt)
+#' length(cn)                      # one value per site
+#' which.max(cn)                   # most buried site by contact number
 #'
 get_cn <- function(prot) cn_xyz(get_xyz(prot), get_d_max(prot))
 
@@ -27,6 +34,16 @@ get_cn <- function(prot) cn_xyz(get_xyz(prot), get_d_max(prot))
 #' @export
 #'
 #' @family site profiles
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' wcn <- get_wcn(wt)
+#' length(wcn)                     # one value per site
+#'
+#' # WCN needs no cutoff, so unlike CN it does not depend on d_max
+#' cor(wcn, get_cn(wt))
 #'
 get_wcn <- function(prot) wcn_xyz(get_xyz(prot))
 
@@ -43,6 +60,17 @@ get_wcn <- function(prot) wcn_xyz(get_xyz(prot))
 #' @export
 #'
 #' @family site profiles
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' # pdb_site_active is in PDB numbering (resno), not sequential site index;
+#' # take the values from get_pdb_site() to be sure they match
+#' active <- get_pdb_site(wt)[c(10, 11, 12)]
+#'
+#' dact <- get_dactive(wt, active)
+#' range(dact)                     # 0 at the active residues themselves
 #'
 get_dactive <- function(prot, pdb_site_active) {
   xyz <- get_xyz(prot)
@@ -65,8 +93,19 @@ get_dactive <- function(prot, pdb_site_active) {
 #'
 #' @export
 #'
+#' @seealso [get_msf_mode()] for the same fluctuations resolved by mode instead.
 #'
 #' @family site profiles
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' msf <- get_msf_site(wt)
+#' which.max(msf)                  # most mobile site
+#'
+#' # the site profile is the diagonal of the reduced covariance matrix
+#' all.equal(msf, diag(get_reduced_cmat(wt)))
 #'
 get_msf_site <- function(prot) {
   diag(get_reduced_cmat(prot))
@@ -84,8 +123,17 @@ get_msf_site <- function(prot) {
 #'
 #' @export
 #'
-#'
 #' @family site profiles
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' mlms <- get_mlms(wt)
+#' length(mlms)                    # one value per site
+#'
+#' # sdij_cut drops near-in-sequence contacts; raising it keeps fewer springs
+#' sum(get_mlms(wt, sdij_cut = 5)) < sum(mlms)
 #'
 get_mlms <- function(prot, sdij_cut = 2) {
   g1 <- get_graph(prot)
@@ -113,9 +161,23 @@ get_mlms <- function(prot, sdij_cut = 2) {
 #'
 #' @export
 #'
-#'
-#'
 #' @family site profiles
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
+#'
+#' # A prot fresh from set_enm() is unfrustrated: every spring sits at its rest
+#' # length, so the stress is identically zero.
+#' all(get_stress(wt) == 0)
+#'
+#' # After a mutation the strain is concentrated near the mutated site
+#' which.max(get_stress(mut))      # site_mut was 11
+#'
+#' # Each edge is counted at both of its endpoints, so the profile sums to
+#' # twice the total minimum energy
+#' all.equal(sum(get_stress(mut)) / 2, enm_v_min(mut))
 #'
 get_stress <- function(prot) {
   g1 <- get_graph(prot)
@@ -151,6 +213,16 @@ get_stress <- function(prot) {
 #'
 #' @family mode profiles
 #'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' msf_n <- get_msf_mode(wt)
+#' length(msf_n) == get_nmodes(wt)
+#'
+#' # softest modes fluctuate most: msf is 1 / eigenvalue
+#' head(sort(msf_n, decreasing = TRUE))
+#'
 get_msf_mode <-  function(prot) 1 / get_evalue(prot)
 
 
@@ -168,8 +240,18 @@ get_msf_mode <-  function(prot) 1 / get_evalue(prot)
 #'
 #' @export
 #'
-#'
 #' @family site-by-site matrices
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' rho <- get_rho_matrix(wt)
+#' dim(rho)                        # nsites x nsites
+#'
+#' # it is the reduced covariance matrix normalised by its diagonal,
+#' # so every site is perfectly correlated with itself
+#' all.equal(unname(diag(rho)), rep(1, get_nsites(wt)))
 #'
 get_rho_matrix <- function(prot) {
   cmat <- get_reduced_cmat(prot)
@@ -185,8 +267,17 @@ get_rho_matrix <- function(prot) {
 #'
 #' @export
 #'
-#'
 #' @family site-by-site matrices
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' cmat_r <- get_reduced_cmat(wt)
+#' dim(cmat_r)                     # nsites x nsites, from the 3N x 3N cmat
+#'
+#' # its diagonal is the site-by-site mean-square fluctuation profile
+#' all.equal(diag(cmat_r), get_msf_site(wt))
 #'
 get_reduced_cmat <- function(prot) {
   get_cmat(prot) %>%
@@ -202,8 +293,17 @@ get_reduced_cmat <- function(prot) {
 #'
 #' @export
 #'
-#'
 #' @family site-by-site matrices
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' kmat_r <- get_reduced_kmat(wt)
+#' dim(kmat_r)                     # nsites x nsites, from the 3N x 3N kmat
+#'
+#' # off-diagonal entries are non-zero only for sites in contact
+#' sum(kmat_r[upper.tri(kmat_r)] != 0)
 #'
 get_reduced_kmat <- function(prot) {
   get_kmat(prot) %>%
@@ -219,13 +319,27 @@ get_reduced_kmat <- function(prot) {
 
 #' Calculate MSF site-dependent profile for each mode
 #'
+#' Splits the mean-square fluctuation of each site into the contribution of each
+#' normal mode. Summing over modes recovers [get_msf_site()]; summing over sites
+#' recovers [get_msf_mode()].
+#'
 #' @param prot is a protein object obtained using set_enm()
 #' @returns a matrix of size nsites x nmodes with the msf of each site contributed by each mode
 #'
 #' @export
 #'
-#'
 #' @family site-by-mode matrices
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' m <- get_msf_site_mode(wt)
+#' dim(m)                          # nsites x nmodes
+#'
+#' # the two marginals are the site and mode profiles
+#' all.equal(unname(rowSums(m)), unname(get_msf_site(wt)))
+#' all.equal(unname(colSums(m)), unname(get_msf_mode(wt)))
 #'
 get_msf_site_mode <- function(prot) {
   umat2 <- get_umat2(prot)
@@ -237,15 +351,24 @@ get_msf_site_mode <- function(prot) {
 
 #' Calculate Reduced \code{umat^2}
 #'
-#'Calculates a matrix of size nsites x nmodes. Element umat2(i,n) is the contribution of site i to mode n (amplitude squared, added over x,y,z)
+#' Calculates a matrix of size nsites x nmodes. Element umat2(i,n) is the contribution of site i to mode n (amplitude squared, added over x,y,z)
 #'
 #' @param prot is a protein object obtained using set_enm()
 #' @returns a matrix of size nsites x nmodes with contribution of each site to each mode.
 #'
 #' @export
 #'
-#'
 #' @family site-by-mode matrices
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' u2 <- get_umat2(wt)
+#' dim(u2)                         # nsites x nmodes
+#'
+#' # each mode is a unit vector, so its site contributions sum to 1
+#' all.equal(unname(colSums(u2)), rep(1, get_nmodes(wt)))
 #'
 get_umat2 <- function(prot) {
   umat2 <- get_umat(prot)^2
@@ -278,8 +401,17 @@ get_umat2 <- function(prot) {
 #'
 #' @export
 #'
-#'
 #' @family matrix square roots
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' ks <- get_kmat_sqrt(wt)
+#' dim(ks)                         # 3 nsites x 3 nsites
+#'
+#' # squaring it returns the network matrix
+#' all.equal(ks %*% ks, as.matrix(get_kmat(wt)), check.attributes = FALSE)
 #'
 get_kmat_sqrt <- function(prot) {
   evalue <- get_evalue(prot)
@@ -299,8 +431,19 @@ get_kmat_sqrt <- function(prot) {
 #'
 #' @export
 #'
-#'
 #' @family matrix square roots
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#'
+#' cs <- get_cmat_sqrt(wt)
+#' all.equal(cs %*% cs, as.matrix(get_cmat(wt)), check.attributes = FALSE)
+#'
+#' # cmat is the pseudo-inverse of kmat, taken over the non-rigid modes only, so
+#' # this product is not the identity but the projector onto that subspace: its
+#' # trace counts the 3 nsites - 6 modes that are kept.
+#' sum(diag(get_kmat_sqrt(wt) %*% cs))
 #'
 get_cmat_sqrt <- function(prot) {
   evalue <- get_evalue(prot)

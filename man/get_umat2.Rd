@@ -15,6 +15,17 @@ a matrix of size nsites x nmodes with contribution of each site to each mode.
 \description{
 Calculates a matrix of size nsites x nmodes. Element umat2(i,n) is the contribution of site i to mode n (amplitude squared, added over x,y,z)
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+u2 <- get_umat2(wt)
+dim(u2)                         # nsites x nmodes
+
+# each mode is a unit vector, so its site contributions sum to 1
+all.equal(unname(colSums(u2)), rep(1, get_nmodes(wt)))
+
+}
 \seealso{
 Other site-by-mode matrices:
 \code{\link[=get_msf_site_mode]{get_msf_site_mode()}}

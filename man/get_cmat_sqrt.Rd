@@ -17,6 +17,19 @@ Calculates \eqn{\mathbf{C}^{1/2}} from the eigendecomposition of the network,
 as \eqn{\mathbf{U} \sqrt{1/\lambda} \mathbf{U}^T}. The dual of
 \code{\link{get_kmat_sqrt}}, which uses \eqn{\sqrt{\lambda}} instead.
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+cs <- get_cmat_sqrt(wt)
+all.equal(cs \%*\% cs, as.matrix(get_cmat(wt)), check.attributes = FALSE)
+
+# cmat is the pseudo-inverse of kmat, taken over the non-rigid modes only, so
+# this product is not the identity but the projector onto that subspace: its
+# trace counts the 3 nsites - 6 modes that are kept.
+sum(diag(get_kmat_sqrt(wt) \%*\% cs))
+
+}
 \seealso{
 Other matrix square roots:
 \code{\link[=get_kmat_sqrt]{get_kmat_sqrt()}}

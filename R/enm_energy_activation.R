@@ -14,6 +14,20 @@
 #' @export
 #' @family enm_energy
 #'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
+#'
+#' # active-site residues are given in pdb numbering (resno)
+#' active <- get_pdb_site(wt)[c(10, 11, 12)]
+#'
+#' # the cost of deforming the mutant's active site back to the wild-type shape
+#' dgact_dv(mut, wt, active)
+#'
+#' # zero when the two conformations agree, since there is nothing to deform
+#' dgact_dv(wt, wt, active)
+#'
 dgact_dv <- function(prot, ideal, pdb_site_active = NA) {
   if (anyNA(pdb_site_active)) {
     result <- NA
@@ -43,6 +57,21 @@ dgact_dv <- function(prot, ideal, pdb_site_active = NA) {
 #'
 #' @export
 #' @family enm_energy
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5, frustrated = FALSE)
+#' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
+#'
+#' active <- get_pdb_site(wt)[c(10, 11, 12)]
+#'
+#' dgact_tds(mut, wt, active)
+#'
+#' # This term is built from the eigenvalue spectrum, not from the conformations.
+#' # Under "lfenm" a mutation leaves the spectrum untouched, so the two calls
+#' # agree exactly and the value is the same for any ideal. It is informative
+#' # only for models that rebuild the network, such as "sclfenm".
+#' dgact_tds(wt, wt, active)
 #'
 dgact_tds <- function(prot, ideal, pdb_site_active = NA, beta = beta_boltzmann()) {
   # Calculate entropic contribution to dg_activation

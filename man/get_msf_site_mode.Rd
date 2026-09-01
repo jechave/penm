@@ -13,7 +13,21 @@ get_msf_site_mode(prot)
 a matrix of size nsites x nmodes with the msf of each site contributed by each mode
 }
 \description{
-Calculate MSF site-dependent profile for each mode
+Splits the mean-square fluctuation of each site into the contribution of each
+normal mode. Summing over modes recovers [get_msf_site()]; summing over sites
+recovers [get_msf_mode()].
+}
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+m <- get_msf_site_mode(wt)
+dim(m)                          # nsites x nmodes
+
+# the two marginals are the site and mode profiles
+all.equal(unname(rowSums(m)), unname(get_msf_site(wt)))
+all.equal(unname(colSums(m)), unname(get_msf_mode(wt)))
+
 }
 \seealso{
 Other site-by-mode matrices:

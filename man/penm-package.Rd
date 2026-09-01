@@ -4,9 +4,12 @@
 \name{penm-package}
 \alias{penm}
 \alias{penm-package}
-\title{penm: Build and Perturb Elastic Network Models}
+\title{penm: build and perturb elastic network models of proteins}
 \description{
-Functions to calculate ENM models, mutate ENMs by perturbing them, and measure the resulting differences between wild-type and mutant in energy, structure, and motion.
+Builds Elastic Network Models (ENMs) of proteins, perturbs them, and measures
+how far the perturbed protein has moved from the original in energy, structure
+and motion. The name means "perturb ENM": mutation is the perturbation
+implemented here, but the design allows for others.
 }
 \details{
 The \code{penm} package includes functions to calculate various Elastic Network Models
@@ -20,6 +23,29 @@ The \code{penm} package includes functions to calculate various Elastic Network 
  Mutants are identified by \code{(ensemble, site_mut, mutation)}; see
     \code{\link{penm_ensemble}} for what \code{ensemble} means and when it
     may be changed.
+
+ \code{wt} and \code{mut} are roles in a comparison, not two kinds of object: both
+    are \code{prot} objects, and any \code{prot} may play either part. This is why
+    the \code{delta_*} functions take both. An evolutionary trajectory exploits
+    it, feeding each mutant back as the wild type of the next generation.
+
+ Start with \code{vignette("penm")}.
+}
+\references{
+Echave J (2008). Evolutionary divergence of protein structure: the linearly
+ forced elastic network model. \emph{Chemical Physics Letters} \strong{457}(4--6),
+ 413--416. \doi{10.1016/j.cplett.2008.04.042}
+
+ Echave J, Fernandez FM (2010). A perturbative view of protein structural
+ variation. \emph{Proteins} \strong{78}(1), 173--180. \doi{10.1002/prot.22553}
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/jechave/penm}
+  \item Report bugs at \url{https://github.com/jechave/penm/issues}
+}
+
 }
 \author{
 \strong{Maintainer}: Julian Echave \email{jechave@unsam.edu.ar} (\href{https://orcid.org/0000-0003-0678-5593}{ORCID})
@@ -30,4 +56,3 @@ Authors:
 }
 
 }
-\keyword{internal}

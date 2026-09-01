@@ -15,6 +15,17 @@ a vector of size nmodes with the msf contributed by each normal mode
 \description{
 Calculates the mean-square-fluctuation in the direction of each normal mode
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+msf_n <- get_msf_mode(wt)
+length(msf_n) == get_nmodes(wt)
+
+# softest modes fluctuate most: msf is 1 / eigenvalue
+head(sort(msf_n, decreasing = TRUE))
+
+}
 \seealso{
 [get_msf_site()] for the same fluctuations resolved by site instead.
 }

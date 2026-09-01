@@ -1,0 +1,26 @@
+citHeader("To cite penm in publications, please cite the papers that introduce and develop the model:")
+
+bibentry(
+  bibtype = "Article",
+  title   = "Evolutionary divergence of protein structure: the linearly forced elastic network model",
+  author  = person("Julian", "Echave"),
+  journal = "Chemical Physics Letters",
+  year    = "2008",
+  volume  = "457",
+  number  = "4-6",
+  pages   = "413--416",
+  doi     = "10.1016/j.cplett.2008.04.042"
+)
+
+bibentry(
+  bibtype = "Article",
+  title   = "A perturbative view of protein structural variation",
+  author  = c(person("Julian", "Echave"),
+              person(c("Francisco", "M."), "Fernandez")),
+  journal = "Proteins",
+  year    = "2010",
+  volume  = "78",
+  number  = "1",
+  pages   = "173--180",
+  doi     = "10.1002/prot.22553"
+)

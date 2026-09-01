@@ -15,7 +15,20 @@ a vector of size nsites with msf values for each site
 \description{
 Calculates the mean-square-fluctuation of each site
 }
+\examples{
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+              d_max = 10.5, frustrated = FALSE)
+
+msf <- get_msf_site(wt)
+which.max(msf)                  # most mobile site
+
+# the site profile is the diagonal of the reduced covariance matrix
+all.equal(msf, diag(get_reduced_cmat(wt)))
+
+}
 \seealso{
+[get_msf_mode()] for the same fluctuations resolved by mode instead.
+
 Other site profiles:
 \code{\link[=get_cn]{get_cn()}},
 \code{\link[=get_dactive]{get_dactive()}},
