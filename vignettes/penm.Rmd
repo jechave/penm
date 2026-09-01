@@ -38,11 +38,15 @@ has mean-square amplitude $\propto 1/\lambda_n$, so the smallest eigenvalues
 carry the largest fluctuations. Six eigenvalues vanish, corresponding to the
 rigid-body translations and rotations, leaving $3N - 6$ internal modes.
 
-`penm` — "perturbed ENM" — perturbs such a network and measures the result. The
-perturbation implemented here models mutation, following the linearly forced ENM
-(LFENM) of Echave (2008) and Echave & Fernández (2010): mutating a site shifts
-the rest lengths $l_{ij}$ of the springs connected to it, and the structure
-relaxes to a new equilibrium.
+Given such a network, `penm` — "perturbed ENM" — builds the network of a mutant.
+Mutations follow the linearly forced ENM (LFENM) of Echave (2008) and Echave &
+Fernández (2010): mutating a site shifts the rest lengths $l_{ij}$ of the springs
+connected to it, and the structure relaxes to a new equilibrium.
+
+The mutant is a protein like any other in this package. Its structure, energy and
+modes are computed by the same functions as the wild type's, the two can be
+compared, and it can be mutated in turn — which is what the last two sections
+build on.
 
 ## Building a network
 
@@ -131,12 +135,18 @@ enm_v_min(wt)
 
 ## Mutating
 
-`get_mutant_site()` perturbs the springs of one site and returns the relaxed
-structure as a new `prot`.
+`get_mutant_site()` perturbs the springs of one site and relaxes the structure,
+returning a network of the same kind as its input:
 
 ```{r mutate}
 mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 1)
+
+c(wt = get_nsites(wt),  mut = get_nsites(mut))
+c(wt = enm_v_min(wt),   mut = enm_v_min(mut))
 ```
+
+Every accessor and profile above applies to `mut` as it does to `wt`. Only the
+values differ — here the mutant carries strain the wild type does not.
 
 `site_mut` is a sequential index from 1 to `get_nsites()`, not a PDB residue
 number. The two differ whenever the file's numbering has an offset or gaps, so
@@ -150,12 +160,7 @@ The model has no amino acids, so a mutation is not a substitution of one residue
 type for another: it is a random shift of the rest lengths $l_{ij}$ at the
 mutated site, drawn with standard deviation `mut_dl_sigma` (default 0.3 Å).
 `mut_sd_min` (default 2) excludes springs between residues close in sequence.
-
-The mutant is no longer at its rest lengths, so it carries strain:
-
-```{r strained}
-enm_v_min(mut)
-```
+Shifting the rest lengths is what leaves the relaxed structure strained.
 
 ### Identifying a mutant
 
@@ -347,10 +352,10 @@ arbitrary; only the ranking of sites carries meaning.
 
 ## Evolutionary trajectories
 
-A mutant is itself a `prot`, so it can be mutated in turn. Iterating — mutating
-a random site each generation, and keeping the result — gives an evolutionary
-trajectory. Measuring each generation against the *original* structure tracks
-how far the lineage has drifted:
+Mutating the mutant, and so on, traces an evolutionary trajectory: a random site
+each generation, the result kept as the starting point of the next. Measuring
+each generation against the *original* structure tracks how far the lineage has
+drifted:
 
 ```{r trajectory}
 set.seed(1)
