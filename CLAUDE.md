@@ -9,15 +9,16 @@ the command.
 
 ## What this package is
 
-`penm` (Perturbing Elastic Network Models) builds Elastic Network Models (ENMs) of
-proteins, perturbs them, and measures the difference between wild-type and mutant in
-energy, structure and motion.
+`penm` ("perturbed ENM") builds Elastic Network Models of proteins and, given one,
+builds the ENM of a mutant.
 
-The name means "perturb ENM" and is meant to cover perturbation types beyond mutation
-(external forces, single-contact perturbations) as they are added.
+The mutant is itself a `prot`: its structure, energy and modes are computed exactly
+as the wild type's, the two can be compared, and it can be mutated in turn — which is
+what makes evolutionary trajectories possible, not just mutation scans. The `delta_*`
+families are arithmetic on two `prot`s, by site (`i`) or by mode (`n`); they are a
+convenience on top of the primitive, not the primitive itself.
 
-Start from `set_enm()` (`R/enm.R`) and `get_mutant_site()` (`R/penm.R`); the `delta_*`
-families measure wt-vs-mutant differences, by site (`i`) or by mode (`n`).
+Start from `set_enm()` (`R/enm.R`) and `get_mutant_site()` (`R/penm.R`).
 
 ## sclfenm — something smells, unexplored
 
@@ -50,31 +51,17 @@ stop and ask.
 
 ## Other standing decisions
 
-- **`ensemble` is not a seed, and there is no `seed` argument.** The argument was
-  called `seed` until 2026-08-19; the name was wrong, because the value never
-  reached `set.seed()` — it is hashed with `(site_mut, mutation)`, and *that* hash
-  seeds the RNG. `mutation` is unbounded and the model has no amino acids, so
-  `ensemble` names **which realization of the mutational process** a mutant belongs
-  to. Reasoning and usage guidance live in `?penm_ensemble`; keep that page the
-  canonical home rather than re-explaining it elsewhere. Two consequences worth
-  keeping in mind: the key must stay a pure function of the tuple (no session
-  state, no `nmut`), and a *second* axis beside `ensemble` is redundant — a
-  separate ensemble-index slot was removed once already, having outlived the
-  arithmetic key it worked around. Don't reintroduce one.
+- **The mutant key is `(ensemble, site_mut, mutation)`, hashed to seed the draw.**
+  Keep it a pure function of that tuple — no session state — and don't add a
+  second axis beside `ensemble`. `?penm_ensemble` is the canonical explanation;
+  don't re-explain it elsewhere.
 - **A breaking change bumps the minor version.** penm is `0.x`, so breaking
   changes go in a minor bump (`0.1.0` → `0.2.0`) and the API is not promised
   stable. **No `.9000` suffix** — that marks "a dev build after release X",
   which means nothing here because penm has no release event distinct from
-  "what is in git"; a convention nobody maintains produces numbers that look
-  meaningful and are not. Why this matters: a dependent needs a version floor it
-  can write. It once could not — a rename shipped without moving the version, so
-  one string named two incompatible APIs.
+  "what is in git". A dependent needs a version floor it can write.
 - **`frustrated = TRUE` is disabled**, not merely untested — `set_enm()` has a
   `stopifnot(!frustrated)`. Don't enable it as a side effect of other work.
-- **"No caller" is not a defect.** Many exports have no caller outside penm's own
-  tests. penm exists to offer a menu of perturbation measures; one going unused in
-  current work says nothing about whether it belongs in the API. Do not read the call
-  graph as a usage survey or propose un-exporting on that basis.
 
 ## House conventions
 
@@ -83,14 +70,11 @@ stop and ask.
   maintenance. Making something internal means dropping `@export` and keeping
   `@noRd`; **never delete a roxygen block to make a function internal**. "Has no man
   page" is the intent for an internal function, not a defect.
-- **Three distinct roxygen mechanisms, easily confused:**
+- **`@rdname` vs `@family`, easily confused:**
   - `@rdname` — puts several functions on one **shared page**. Preserve this grouping;
     do not flatten to one page per function. Each group has a `@name` stub holding the
     shared title and `@param`s, with members adding `@details`.
   - `@family` — *See also* cross-links only. Not a shared page. Inert under `@noRd`.
-  - `@export` + `@noRd` together — **groups nothing.** Exports to NAMESPACE while
-    suppressing the man page, which is exactly what produces the "Undocumented code
-    objects" WARNING. Don't reintroduce it.
 - **Imports live in one place:** `R/penm-imports.R` and `R/penm-package.R`.
 - **Tibbles** (not data.frames) for tabular returns; tidyverse for data manipulation.
 - NAMESPACE and everything under `man/` are roxygen-generated — edit the roxygen and
@@ -144,21 +128,21 @@ that file. Re-running `check()` to see a different slice of its own output is wa
 ## Downstream
 
 **This repo is the whole world.** penm is a general-purpose library with users you
-cannot see. Do not read, grep, or reason about sibling packages in `../` — they were
-useful while penm was being extracted and are now noise. A question about penm is
-answered from penm.
-
-Two consequences of having downstream users. Both hold without looking at any of them:
+cannot see. Do not read, grep, or reason about sibling packages in `../`. A question
+about penm is answered from penm.
 
 - **Exported signatures are a contract.** Changing one is a breaking change: say so
-  before doing it, and bump the minor version. Never scope an API decision by counting
-  callers — you cannot see them, and the ones you could see would not be the set.
-  (See "No caller is not a defect" above.)
+  before doing it, and bump the minor version.
+- **Never scope an API decision by counting callers.** You cannot see them, and the
+  ones you could see would not be the set. Many exports have no caller outside penm's
+  own tests; penm offers a menu of perturbation measures, and one going unused says
+  nothing about whether it belongs in the API. Argue an export's fate from what it
+  should mean, never from the call graph.
 - **penm's help pages are read by people who never open penm.** Write the
   documentation for a stranger.
 
-Cost of this rule, accepted deliberately: a signature change comes with no report of
-what it breaks elsewhere. If you want that, ask Julian — do not go and look.
+Accepted cost: a signature change comes with no report of what it breaks elsewhere.
+If you want that, ask Julian — do not go and look.
 
 ## Working style
 

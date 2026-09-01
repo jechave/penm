@@ -78,7 +78,6 @@ Mutating the mutant, and so on, traces an evolutionary trajectory;
 
 - `vignette("penm")` — build, mutate, measure, and a trajectory.
 - `?penm` — the function map.
-- `?penm_ensemble` — the `(ensemble, site_mut, mutation)` key.
 
 ## References
 
