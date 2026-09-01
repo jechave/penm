@@ -8,20 +8,15 @@
 [![R-CMD-check](https://github.com/jechave/penm/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jechave/penm/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-`penm` builds Elastic Network Models (ENMs) of proteins, perturbs them,
-and measures how far the perturbed protein has moved from the original
-in energy, structure and motion.
+Given an elastic network model of a protein, `penm` builds the model of
+a mutant. The mutant is itself a protein: its structure, energy and
+normal modes are computed exactly as the wild type’s, the two can be
+compared, and it can be mutated in turn.
 
-An ENM represents a protein as beads joined by springs: one node per
-residue, a spring between every pair closer than a cutoff. Diagonalising
-the resulting network gives the normal modes — the protein’s soft
-collective motions. `penm` then *perturbs* that network, by default by
-mutating a site, and gives you a menu of measures of the difference
-between the original and the perturbed protein, resolved either by site
-or by normal mode.
-
-The name means “perturb ENM”: mutation is the perturbation implemented
-today, and the design allows for others.
+Mutations follow the linearly forced ENM of Echave (2008) and Echave &
+Fernández (2010). The model has no amino acids: mutating a site perturbs
+the rest lengths of the springs connected to it, and the structure
+relaxes to a new equilibrium.
 
 ## Installation
 
@@ -32,10 +27,8 @@ remotes::install_github("jechave/penm")
 
 ## Usage
 
-Everything starts from `set_enm()`, which turns a `bio3d` pdb object
-into a `prot`. The package bundles one, `pdb_2acy_A`, so this runs
-as-is; for your own structure use `bio3d::read.pdb("your.pdb")` (and
-`bio3d::trim.pdb()` to pick a chain).
+`set_enm()` builds a network from a `bio3d` pdb object. The bundled
+`pdb_2acy_A` stands in for `bio3d::read.pdb("your.pdb")`.
 
 ``` r
 library(penm)
@@ -43,62 +36,57 @@ library(penm)
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
               d_max = 10.5, frustrated = FALSE)
 
-get_nsites(wt)   # number of nodes
-#> [1] 98
-get_nmodes(wt)   # 3 * nsites - 6
-#> [1] 288
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 1)
 ```
 
-Mutate a site to get a second `prot`:
+The same functions apply to either protein:
 
 ``` r
-mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
+c(wt = get_nsites(wt),  mut = get_nsites(mut))
+#>  wt mut 
+#>  98  98
+c(wt = enm_v_min(wt),   mut = enm_v_min(mut))
+#>       wt      mut 
+#> 0.000000 2.628451
 ```
 
-Then measure the difference. The `delta_*` families each take the pair,
-and report either a scalar, a profile over sites, or a profile over
-modes:
+The `delta_*` families compare them, by site or by normal mode:
 
 ``` r
-ddg_dv(wt, mut)                            # scalar: minimum-energy difference
-#> [1] 6.37624
-
-dr2i <- delta_structure_dr2i(wt, mut)      # one value per site
-which.max(dr2i)                            # the site that moved most
-#> [1] 40
+dr2i <- delta_structure_dr2i(wt, mut)   # deformation per site
+sum(dr2i)
+#> [1] 0.08758727
 ```
-
-`wt` and `mut` are *roles in a comparison*, not two kinds of object —
-both are `prot` objects, and either may play either part. That is what
-makes an evolutionary trajectory a loop: feed each mutant back as the
-next generation’s wild type, and strain accumulates.
 
 ``` r
-p <- wt
-for (gen in 1:3) {
-  p <- get_mutant_site(p, site_mut = 10 * gen, mutation = 1, ensemble = 7)
-  cat("generation", gen, "  minimum energy:", enm_v_min(p), "\n")
-}
-#> generation 1   minimum energy: 1.91085 
-#> generation 2   minimum energy: 5.275848 
-#> generation 3   minimum energy: 9.633732
+library(ggplot2)
+
+ggplot(tibble::tibble(site = get_site(wt), dr2 = dr2i), aes(site, dr2)) +
+  geom_line() +
+  geom_vline(xintercept = 11, linetype = "dashed", colour = "grey50") +
+  scale_y_log10() +
+  labs(x = "site", y = expression(dr^2), subtitle = "dashed: the mutated site") +
+  theme_minimal()
 ```
+
+<img src="man/figures/README-profile-1.png" width="100%" />
+
+Mutating the mutant, and so on, traces an evolutionary trajectory;
+`vignette("penm")` covers that and the rest of the measures.
 
 ## Learn more
 
-- `vignette("penm")` — the full build → mutate → measure walkthrough.
+- `vignette("penm")` — build, mutate, measure, and a trajectory.
 - `?penm` — the function map.
-- `?penm_ensemble` — what `ensemble` means, and when it should change.
+- `?penm_ensemble` — the `(ensemble, site_mut, mutation)` key.
 
 ## References
 
-The model and its derivation:
+Echave J (2008). Evolutionary divergence of protein structure: the
+linearly forced elastic network model. *Chemical Physics Letters*
+**457**(4–6), 413–416. <doi:10.1016/j.cplett.2008.04.042>
 
-- Echave J (2008). Evolutionary divergence of protein structure: the
-  linearly forced elastic network model. *Chemical Physics Letters*
-  **457**(4–6), 413–416. <doi:10.1016/j.cplett.2008.04.042>
-- Echave J, Fernández FM (2010). A perturbative view of protein
-  structural variation. *Proteins* **78**(1), 173–180.
-  <doi:10.1002/prot.22553>
+Echave J, Fernández FM (2010). A perturbative view of protein structural
+variation. *Proteins* **78**(1), 173–180. <doi:10.1002/prot.22553>
 
-Run `citation("penm")` for the same in BibTeX.
+`citation("penm")` gives these in BibTeX.
