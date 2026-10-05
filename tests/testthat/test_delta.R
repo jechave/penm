@@ -20,9 +20,6 @@ test_that("delta_structure by site match frozen values", {
   expect_equal(delta_structure_dr2i(wt, mut), delta_expected$dr2i)
   expect_equal(delta_structure_de2i(wt, mut, kmat_sqrt = kmat_sqrt), delta_expected$de2i)
   expect_equal(delta_structure_df2i(wt, mut), delta_expected$df2i)
-  expect_equal(delta_structure_dvmi(wt, mut), delta_expected$dvmi)
-  expect_equal(delta_structure_dvsi(wt, mut), delta_expected$dvsi)
-  expect_equal(delta_structure_dvsi_same_topology(wt, mut), delta_expected$dvsi_same_topology)
 })
 
 test_that("delta_structure by mode match frozen values", {
@@ -99,9 +96,16 @@ test_that("prot profiles match frozen values", {
   expect_equal(get_wcn(wt), prot_expected$wcn)
   expect_equal(get_msf_site(wt), prot_expected$msf_site)
   expect_equal(get_mlms(wt), prot_expected$mlms)
-  expect_equal(get_stress(wt), prot_expected$stress)
+  expect_equal(get_vmin_site(wt), prot_expected$stress)
   expect_equal(get_msf_mode(wt), prot_expected$msf_mode)
   expect_equal(get_dactive(wt, pdb_site_active), prot_expected$dactive)
+})
+
+test_that("get_vmin_site decomposes enm_v_min by site", {
+  # each spring is counted at both endpoints, so the profile sums to twice the
+  # total. For wt both sides are 0; the lfenm mutant is the case that can fail.
+  expect_equal(sum(get_vmin_site(wt)) / 2, enm_v_min(wt))
+  expect_equal(sum(get_vmin_site(mut)) / 2, enm_v_min(mut))
 })
 
 test_that("prot matrices match frozen values", {

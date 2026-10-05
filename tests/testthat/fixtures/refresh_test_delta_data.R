@@ -43,9 +43,6 @@ delta_expected <- list(
   dr2i                 = delta_structure_dr2i(wt, mut),
   de2i                 = delta_structure_de2i(wt, mut, kmat_sqrt = kmat_sqrt),
   df2i                 = delta_structure_df2i(wt, mut),
-  dvmi                 = delta_structure_dvmi(wt, mut),
-  dvsi                 = delta_structure_dvsi(wt, mut),
-  dvsi_same_topology   = delta_structure_dvsi_same_topology(wt, mut),
   # structure, by mode
   dr2n                 = delta_structure_dr2n(wt, mut),
   de2n                 = delta_structure_de2n(wt, mut),
@@ -79,7 +76,7 @@ prot_expected <- list(
   wcn                  = get_wcn(wt),
   msf_site             = get_msf_site(wt),
   mlms                 = get_mlms(wt),
-  stress               = get_stress(wt),
+  stress               = get_vmin_site(wt),   # key predates the rename from get_stress()
   msf_mode             = get_msf_mode(wt),
   dactive              = get_dactive(wt, pdb_site_active),
   # matrices

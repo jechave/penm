@@ -5,9 +5,6 @@
 \alias{delta_structure_dr2i}
 \alias{delta_structure_de2i}
 \alias{delta_structure_df2i}
-\alias{delta_structure_dvmi}
-\alias{delta_structure_dvsi}
-\alias{delta_structure_dvsi_same_topology}
 \title{Calculate site-dependent profiles of structure differences between two proteins}
 \usage{
 delta_structure_dr2i(wt, mut)
@@ -15,12 +12,6 @@ delta_structure_dr2i(wt, mut)
 delta_structure_de2i(wt, mut, kmat_sqrt)
 
 delta_structure_df2i(wt, mut)
-
-delta_structure_dvmi(wt, mut)
-
-delta_structure_dvsi(wt, mut)
-
-delta_structure_dvsi_same_topology(wt, mut)
 }
 \arguments{
 \item{wt}{A protein object with \code{xyz} defined}
@@ -42,12 +33,6 @@ This version works only for wt and mut with no indels
 `delta_structure_de2i` returns the square of deformation energy vector \eqn{\mathbf{C}^{1/2}\mathbf{f}}
 
 `delta_structure_df2i` returns the square of force vector \eqn{\mathbf{f}}
-
-`delta_structure_dvmi` returns the difference of site-dependent minimum-energy contributions
-
-`delta_structure_dvsi` returns the difference of site-dependent stress-energy contributions
-
-`delta_structure_dvsi_same_topology` returns the difference of site-dependent stress-energy contributions, assumes no change in topology
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",

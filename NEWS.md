@@ -1,3 +1,25 @@
+# penm 0.3.0
+
+## Breaking changes
+
+* `delta_structure_dvmi()`, `delta_structure_dvsi()` and
+  `delta_structure_dvsi_same_topology()` are removed. All three compare the two
+  graphs edge by edge, and none is correct when the contact map changes: `dvmi`
+  drops unshared edges, `dvsi` errors, and `dvsi_same_topology` matched rows by
+  position and could return wrong numbers silently. For the per-site
+  minimum-energy difference use `get_vmin_site(mut) - get_vmin_site(wt)`, which
+  sums to `2 * ddg_dv(wt, mut)`.
+
+## Other changes
+
+* `get_stress()` is renamed `get_vmin_site()`; `get_stress()` remains as a
+  deprecated alias. It is the per-site decomposition of `enm_v_min()`, not the
+  stress energy of `delta_energy_dvs()`.
+* `get_vmin_site()` always returns a vector of length `nsites`. Previously a
+  site with no springs was dropped, shortening and misaligning the result.
+* `ddg_tds()` now errors if `wt` and `mut` have a different number of modes,
+  instead of subtracting sums over spectra of different length.
+
 # penm 0.2.0
 
 ## Breaking changes

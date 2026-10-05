@@ -29,7 +29,7 @@ Other site profiles:
 \code{\link[=get_dactive]{get_dactive()}},
 \code{\link[=get_mlms]{get_mlms()}},
 \code{\link[=get_msf_site]{get_msf_site()}},
-\code{\link[=get_stress]{get_stress()}},
+\code{\link[=get_vmin_site]{get_vmin_site()}},
 \code{\link[=get_wcn]{get_wcn()}}
 }
 \concept{site profiles}

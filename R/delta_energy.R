@@ -45,8 +45,10 @@ ddg_dv <- function(wt, mut)
 #'
 #' @export
 #'
-ddg_tds <- function(wt, mut, beta = beta_boltzmann())
+ddg_tds <- function(wt, mut, beta = beta_boltzmann()) {
+  stopifnot(length(get_evalue(wt)) == length(get_evalue(mut)))
   enm_g_entropy(mut, beta) - enm_g_entropy(wt, beta)
+}
 
 
 #' @rdname delta_energy

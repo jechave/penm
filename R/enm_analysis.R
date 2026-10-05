@@ -152,12 +152,19 @@ get_mlms <- function(prot, sdij_cut = 2) {
 
 }
 
-#' Site-dependent ENM minimum stress energy profile
+#' Calculate minimum-energy site-dependent profile
 #'
-#' Calculates the sum for each site of the stress energy of each of it's springs at equilibrium
+#' Decomposes the minimum energy \code{\link{enm_v_min}} by site: for each site, the sum
+#' of \eqn{\frac{1}{2} k_{ij} (d_{ij} - l_{ij})^2} over the springs it takes
+#' part in, with \eqn{d_{ij}} the distances of \code{prot}'s own structure.
+#' Each spring is counted at both of its endpoints.
+#'
+#' This is not the stress energy of \code{\link{delta_energy_dvs}}, which evaluates the
+#' springs at an ideal conformation's distances.
 #'
 #' @param prot is a protein object obtained using set_enm()
-#' @returns a vector of site-dependent stress-energy values
+#' @returns a vector of size nsites with minimum-energy values for each site;
+#'   a site with no springs gets 0
 #'
 #' @export
 #'
@@ -169,17 +176,17 @@ get_mlms <- function(prot, sdij_cut = 2) {
 #' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
 #'
 #' # A prot fresh from set_enm() is unfrustrated: every spring sits at its rest
-#' # length, so the stress is identically zero.
-#' all(get_stress(wt) == 0)
+#' # length, so the profile is identically zero.
+#' all(get_vmin_site(wt) == 0)
 #'
 #' # After a mutation the strain is concentrated near the mutated site
-#' which.max(get_stress(mut))      # site_mut was 11
+#' which.max(get_vmin_site(mut))   # site_mut was 11
 #'
 #' # Each edge is counted at both of its endpoints, so the profile sums to
 #' # twice the total minimum energy
-#' all.equal(sum(get_stress(mut)) / 2, enm_v_min(mut))
+#' all.equal(sum(get_vmin_site(mut)) / 2, enm_v_min(mut))
 #'
-get_stress <- function(prot) {
+get_vmin_site <- function(prot) {
   g1 <- get_graph(prot)
   g2 <- g1 %>%
     select(edge, j, i, v0ij, sdij, lij, kij, dij)
@@ -187,13 +194,32 @@ get_stress <- function(prot) {
   g <- rbind(g1, g2)
 
   g <- g %>%
-    mutate(stress = .5 * kij * (dij - lij)^2) %>%
+    mutate(vmin = .5 * kij * (dij - lij)^2) %>%
     group_by(i) %>%
-    summarise(stress = sum(stress))  %>%
-    select(stress)
+    summarise(vmin = sum(vmin))
 
-  as.vector(g$stress)
+  # sites with no springs never appear as i: give them 0, keep length nsites
+  vmin_site <- rep(0, get_nsites(prot))
+  vmin_site[g$i] <- g$vmin
+  vmin_site
 
+}
+
+#' Deprecated: use get_vmin_site()
+#'
+#' \code{get_stress()} was renamed \code{\link{get_vmin_site}}: it returns the per-site
+#' decomposition of \code{\link{enm_v_min}}, not the stress energy of
+#' \code{\link{delta_energy_dvs}}.
+#'
+#' @param prot is a protein object obtained using set_enm()
+#' @returns see \code{\link{get_vmin_site}}
+#'
+#' @export
+#' @keywords internal
+#'
+get_stress <- function(prot) {
+  .Deprecated("get_vmin_site")
+  get_vmin_site(prot)
 }
 
 
