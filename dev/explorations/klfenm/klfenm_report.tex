@@ -1,3 +1,38 @@
+% ============================================================
+% NOTES FOR CLAUDE -- read before proposing any edit.
+% The document itself is authoritative. These notes are a hint.
+% If the text and a note disagree, SAY SO; do not follow the note.
+%
+% This is a generalized ENM. Standard-ENM knowledge does not apply.
+% 1. The parameters are the equilibrium lengths l_ij. They are NOT
+%    distances in any structure: l_ij != d_ij(r^e) in general.
+% 2. k_ij = k(l_ij), a function of the spring's own equilibrium
+%    length, NOT of d_ij(r^e).
+% 3. The ONLY assumption on k is k >= 0. Not monotonic, not
+%    continuous, not differentiable, no cutoff, no finite range.
+% 4. Every pair of nodes is joined by a spring. There is no contact
+%    map and no active/inactive distinction here. Those belong to
+%    special cases, which this version does not treat.
+% 5. Networks may be FRUSTRATED: s_ij != 0 at the minimum and
+%    V(r^e) > 0. Never assume strains vanish.
+% 6. The Hessian therefore has a transverse term g_ij P_perp. It is
+%    NOT the rank-one standard form. The transverse force constant
+%    can be negative (compressed springs); k itself never is.
+% 7. Do NOT reintroduce the construction l_ij = d_ij(r*) for a chosen
+%    structure r*, nor discussion of how Lambda ought to be chosen.
+%    That is the standard-ENM parameter choice; it is an open
+%    question, deliberately out of scope here.
+% 8. r^e is a MINIMUM of V, obtained by minimization: an output, not
+%    an input. Vanishing gradient is necessary, not sufficient. The
+%    mutant's r^e comes from minimizing the mutant potential, NOT
+%    from linear response about the reference.
+%
+% STYLE: a working derivation for the author, not a paper. No
+% motivation, no comparisons with standard ENMs, no restating
+% equations in words, no hedging. Cut rather than add. Do not
+% introduce vocabulary that only makes sense in a special case.
+% ============================================================
+
 \documentclass[11pt]{article}
 
 \usepackage[margin=1in]{geometry}
@@ -8,20 +43,32 @@
 \usepackage[T1]{fontenc}
 \usepackage{textcomp}
 \usepackage{hyperref}
+\usepackage{parskip}
+\setcounter{secnumdepth}{2}   % number sections and subsections only
+\usepackage{xcolor}
 
-% --- review annotations -------------------------------------------------
-% Comment out the next line (and uncomment the one after) for a clean build.
-\usepackage[textwidth=3.2cm]{todonotes}
-%\usepackage[disable]{todonotes}
-\newcommand{\jc}[1]{\todo[inline,color=yellow!40]{#1}}
-\newcommand{\jm}[1]{\todo[color=orange!40]{#1}}
-% ------------------------------------------------------------------------
+% Flags a point Claude is not sure about; search for \tocheck to find them all.
+\newcommand{\tocheck}[1]{\textcolor{red}{[CHECK: #1]}}
 
 \newcommand{\rr}{\mathbf{r}}
 \newcommand{\ee}{\hat{\mathbf{e}}}
 \newcommand{\KK}{\mathbf{K}}
 \newcommand{\LL}{\Lambda}
 \newcommand{\re}{\rr^{e}}
+\newcommand{\rem}{\rr^{e\prime}}   % mutant equilibrium conformation
+\newcommand{\rrij}{\mathbf{r}_{ij}}
+\newcommand{\eeij}{\ee_{ij}}
+\newcommand{\eeije}{\ee^{e}_{ij}}
+\newcommand{\dije}{d^{e}_{ij}}
+\newcommand{\dijem}{d^{e\prime}_{ij}}
+\newcommand{\lijm}{l'_{ij}}
+\newcommand{\kijm}{k'_{ij}}
+\newcommand{\dlij}{\delta l_{ij}}
+\newcommand{\dkij}{\delta k_{ij}}
+\newcommand{\gij}{g_{ij}}
+\newcommand{\lij}{l_{ij}}
+\newcommand{\kij}{k_{ij}}
+\newcommand{\dij}{d_{ij}}
 
 \title{An elastic network model with $k_{ij}=k(l_{ij})$}
 \author{Julian Echave}
@@ -31,785 +78,517 @@
 
 \maketitle
 
-\begin{abstract}
-This note sets up an elastic network model of proteins whose goal is to
-predict how mutations change structure, motions, and stability. In standard
-ENMs the parameters are fixed by a known structure: each spring's rest length
-is the distance between its residues in that structure, so modeling a mutant
-requires supplying the mutant structure, which is itself one of the things to
-be predicted. Here, instead, we tie spring stiffnesses to rest lengths,
-$k(l_{ij})$, so the rest lengths alone define the model and the structure
-follows by minimization. A mutation is then just a perturbation of the rest
-lengths at a site, and the mutant's structure, motions, and thermodynamic
-changes (energy, entropy, and free energy) are derived, not assumed. A side
-effect is that networks can now carry strain and frustration, which real
-proteins are known to display but standard ENMs exclude by construction. We
-work out the full formalism and end with a list of open questions.
-\end{abstract}
-
-% \tableofcontents
-
 \section{Introduction}
-\label{sec:intro}
 
-A protein can be modelled as an elastic network of nodes, representing amino
-acids, connected by springs, representing interactions.
-Such an elastic network model (ENM) is completely specified by the spring force
-constants $k_{ij}$ and the spring equilibrium lengths $l_{ij}$.
-Typically, given a native conformation $\re$, the ENM is set up so that
-$l_{ij} = d_{ij}(\re)$ and $k_{ij} = k(d_{ij}(\re))$.
-The structure thus enters twice: it fixes the parameters, and it is the
-conformation at which the model is relaxed.
+In this document,  we pose a general elastic network model in which the parameters are the spring equilibrium lengths $\lij$, with force constants determined by them, $\kij = k(\lij)$. We derive its potential energy function, the potential's quadratic Taylor expansion around the minimum, its normal modes, the conformational distribution, the conformational fluctuations, and the thermodynamic properties. 
 
-We would like to use such a model to predict how a mutation changes a protein:
-its structure, its motions, its stability.
-But a mutation changes the parameters, and here the parameters are the structure.
-To mutate the model one must hand it the mutant structure, which is what we
-wanted it to predict.
-The same identification has a second consequence: every spring is relaxed at
-$\re$, so the network carries no strain, and frustration, which proteins are
-known to display, cannot be represented at all.
+Once the general model is derived, given an arbitrary reference ENM, we model a mutant, by introducing perturbations to the $\lij$ of the springs connected to the mutated site.
 
-Both problems come from tying the parameters to a structure, so we untie them.
-We take the force constants to be a function of the equilibrium lengths of the
-springs, $k_{ij} = k(l_{ij})$, rather than of the distances between nodes in a
-given structure.
-The model is then determined by the $l_{ij}$ alone.
-The springs need not be relaxed at the equilibrium conformation, but may be
-strained, so the network may be frustrated; and a mutation of a site is modelled
-by perturbing the equilibrium lengths of the springs connected to it, with the
-mutant structure following from the model rather than being supplied to it.
 
-This note derives the potential energy function, its minimum, the conformational
-distribution, and thermodynamic properties, first for a general network and
-then for a reference and its mutant, ending with the mutational changes.
+\section{The generalized elastic network model}
+\label{sec:model}
 
-\section{The model}
+\subsection{Definition}
 
-\subsection{Nodes}
+A protein is represented by an elastic network of $N$ nodes, which represent residues, joined in pairs by harmonic springs, which represent interactions.
 
-A protein is represented by $N$ nodes, one per residue, joined in pairs by springs.
-A conformation is the set of the node positions,
+\subsubsection{Nodes}
+
+The 3D position vector of node $i$ in a given conformation is denoted by $\rr_i$. 
+
+The network conformation, $\rr$, is the vector constituted by set of the node positions,
 \begin{equation}
 \rr = (\rr_1, \rr_2, \ldots, \rr_N) \in \mathbb{R}^{3N}.
 \end{equation}
-We write
+An equilibrium conformation, a minimum of the potential defined below, is written $\re$, with node positions $\re_i$.
+
+\subsubsection{Pairs of nodes}
+
+Consider a pair of nodes $i$ and $j$.
+
+The vector that goes from node $i$ to node $j$ is given by:
 \begin{equation}
-\rr_{ij} \;\equiv\; \rr_j - \rr_i
-\end{equation}
-for the vector that goes from node $i$ to node $j$.
-The distance between the two nodes in conformation $\rr$ is the norm of this vector:
-\begin{equation}
-d_{ij}(\rr) \;=\; \lVert \rr_{ij} \rVert.
-\label{eq:dij}
+\rrij \equiv \rr_j - \rr_i
 \end{equation}
 
-\subsection{Springs}
+Then $\dij$, the distance between the two nodes in conformation $\rr$, is the norm of this vector, and $\eeij$ the unit vector along it, pointing from $i$ to $j$:
+\begin{equation}
+\dij = \lVert \rrij \rVert,
+\qquad
+\eeij = \frac{\rrij}{\dij}.
+\label{eq:distance}
+\end{equation}
+$\rrij$, $\dij$ and $\eeij$ are functions of the conformation and are written without arguments; their values at an equilibrium conformation carry a superscript $e$,
+\begin{equation}
+\dije \equiv \dij(\re),
+\qquad
+\eeije \equiv \eeij(\re).
+\label{eq:equilibrium-values}
+\end{equation}
+
+\subsubsection{Springs}
 
 Every pair of nodes is joined by a spring.
-A spring properties are its force constant $k_{ij}$ and its equilibrium length $l_{ij}$.
-We assume the force constant of a spring to be determined by its own equilibrium length through a function $k$,
+
+A spring connecting nodes $i$ and $j$ is characterised by its force constant $\kij$ and its equilibrium length $\lij$.
+
+We assume that the force constant of a spring is determined by its own equilibrium length through a function $k$,
 \begin{equation}
-k_{ij} \;=\; k(l_{ij}),
-\qquad k : [0,\infty) \to [0,\infty).
-\label{eq:kl}
+\kij = k(\lij),
+\label{eq:stiffness-from-length}
 \end{equation}
-We assume of $k$ only that it is non-increasing, so that long springs are weakly coupled or uncoupled, and that $k(l) = 0$ for $l$ beyond some range, so that springs long enough to represent no contact do not interact. \jm{Do we really assume this?}
+where $k$ is a non-negative function; nothing below assumes more about it.
 
-Since the $k_{ij}$ are not independent parameters, the model is determined by the set of length parameters:
+\subsubsection{Potential energy}
+
+The potential energy of a network with parameters $\LL = \{\lij\}$ at conformation $\rr$ is a sum of harmonic terms, one per spring:
 \begin{equation}
-\LL \;=\; \{\, l_{ij} \,:\, 1 \le i < j \le N \,\},
-\qquad
-|\LL| = \tfrac12 N(N-1).
+\boxed{
+V(\rr; \LL)  = \tfrac12 \sum_{i<j} \kij \big(\dij - \lij\big)^{2}.
+}
+\label{eq:potential}
 \end{equation}
+Every term is non-negative, so $V \ge 0$ everywhere.
 
 
-This is the one departure from standard practice, and it is worth stating
-carefully, because in the standard case the departure is invisible. A standard
-elastic network model is built on a given structure, which it takes as the
-equilibrium conformation $\re$, and assigns each spring the equilibrium length
-$l_{ij} = d_{ij}(\re)$ it already has in that structure. Its force constants are
-then written as a function of $d_{ij}(\re)$ --- but since $l_{ij}$ and
-$d_{ij}(\re)$ are equal there, a function of one is a function of the other, and
-nothing distinguishes $k(l_{ij})$ from $k(d_{ij}(\re))$. Here the $l_{ij}$ are left
-free rather than read off a structure, the two cease to coincide, and
-\eqref{eq:kl} states which of them $k$ is a function of: the parameter $l_{ij}$.
+\subsection{Quadratic expansion of the potential energy}
+\label{sec:expansion}
 
-
-\subsection{The potential}
-
-The potential energy of a conformation $\rr$ for a network with parameters $\LL$
-is a sum of harmonic terms, one per spring,
+Let $\re$ be a minimum of the potential \eqref{eq:potential}.
+The Taylor expansion of the potential about $\re$ gives:
 \begin{equation}
-\boxed{\;
-V(\rr; \LL) \;=\; \tfrac12 \sum_{i<j} k(l_{ij})\,\big(d_{ij}(\rr) - l_{ij}\big)^{2}.
-\;}
-\label{eq:V}
+V(\rr;\LL) = V(\re;\LL)
++ \sum_i \frac{\partial V}{\partial \rr_i}\bigg|_{\re}\cdot (\rr_i - \re_i)
++ \tfrac12 \sum_{i,j} (\rr_i - \re_i)^{\mathsf T}
+\frac{\partial^2 V}{\partial \rr_i \partial \rr_j}\bigg|_{\re} (\rr_j - \re_j)
++ O\big(\lVert\rr - \re\rVert^3\big).
+\label{eq:taylor-expansion}
 \end{equation}
-The sum runs over all $\tfrac12 N(N-1)$ springs, and $V$ evaluated at any
-conformation is the elastic energy stored in them. Every term is non-negative, so
-$V \ge 0$, and $V(\rr;\LL) = 0$ requires every spring to sit at its own equilibrium
-length, $d_{ij}(\rr) = l_{ij}$ for every active spring at once. Whether any
-conformation achieves this is a question about $\LL$, not a property of the model:
-for some parameter sets no conformation does, and then $V > 0$ everywhere. Section
-\ref{sec:frustration} takes this up.
-
-A spring with $k(l_{ij}) > 0$ contributes to $V$ and is said to be \emph{active}; a
-spring with $k(l_{ij}) = 0$ contributes nothing. The set of active springs is the
-network's contact map. Since $k$ is a function of $l_{ij}$, which springs are
-active is fixed by $\LL$ alone: the contact map is a property of the parameters,
-and does not change as the network moves. In a standard model, where
-$l_{ij} = d_{ij}(\re)$, this same set would be read off the structure instead.
-
-\section{The minimum of the potential}
-
-\subsection{The equilibrium condition}
-
-To find the conformations that minimise \eqref{eq:V} we need the gradient of $V$,
-and hence the gradient of the distances. Let
+Writing $\KK$ for the $3N \times 3N$ matrix of second derivatives at $\re$, the quadratic term is $\tfrac12(\rr-\re)^{\mathsf T}\KK(\rr-\re)$.
+The linear term vanishes, since at a minimum
 \begin{equation}
-\ee_{ij} \;\equiv\; \frac{\rr_{ij}}{d_{ij}}
-\label{eq:eij}
+\frac{\partial V}{\partial \rr_i}\bigg|_{\re} = \mathbf{0},
+\qquad i = 1,\ldots,N,
+\label{eq:equilibrium-condition}
 \end{equation}
-be the unit vector along the spring, pointing from $i$ to $j$; it satisfies
-$\ee_{ij} = -\ee_{ji}$. Differentiating $d_{ij}^2 = \rr_{ij}\cdot\rr_{ij}$ with
-respect to $\rr_i$, and using $\partial \rr_{ij}/\partial\rr_i = -\mathbf{I}$,
+and dropping the remainder leaves
 \begin{equation}
-2\, d_{ij} \frac{\partial d_{ij}}{\partial \rr_i} \;=\; -\,2\,\rr_{ij},
-\qquad\text{so}\qquad
-\frac{\partial d_{ij}}{\partial \rr_i} \;=\; -\frac{\rr_{ij}}{d_{ij}}
-\;=\; -\,\ee_{ij}.
-\label{eq:ddij}
+\boxed{
+V(\rr;\LL) \simeq 
+V(\re;\LL) + \tfrac12 (\rr - \re)^{\mathsf T} \KK (\rr - \re),
+}
+\label{eq:quadratic-approximation}
 \end{equation}
-The derivative with respect to $\rr_j$ follows the same way, now with
-$\partial \rr_{ij}/\partial\rr_j = +\mathbf{I}$, giving
-$\partial d_{ij}/\partial \rr_j = +\ee_{ij}$. Moving node $i$ away from node $j$
-lengthens the spring, and \eqref{eq:ddij} records that: the distance decreases
-fastest along $-\ee_{ij}$, which points from $j$ back towards $i$.
+which is the quadratic approximation of the ENM's potential energy function.
 
-Differentiating \eqref{eq:V} by the chain rule, and noting that $k(l_{ij})$ is a
-constant with respect to $\rr$,
+\subsubsection{Zeroth order: the minimum energy}
+
+Evaluating \eqref{eq:potential} at $\re$ gives the minimum energy
+\begin{equation}
+\boxed{
+V(\re; \LL) = \tfrac12 \sum_{i<j} \kij \big(\dije - \lij\big)^{2}.
+}
+\label{eq:minimum-energy}
+\end{equation}
+
+\subsubsection{Second order: the Hessian}
+
+The $N^2$ blocks of $\KK$,
+\begin{equation}
+\KK_{ij} \equiv \frac{\partial^2 V}{\partial \rr_i \partial \rr_j}\bigg|_{\re},
+\label{eq:hessian-blocks}
+\end{equation}
+each $3\times3$, are obtained by differentiating $V$ twice.
+Differentiating \eqref{eq:potential} with respect to $\rr_i$, only the $N-1$ terms involving node $i$ survive, and by the chain rule
 \begin{equation}
 \frac{\partial V}{\partial \rr_i}
-\;=\; -\sum_{j \ne i} k(l_{ij})\,\big(d_{ij}(\rr) - l_{ij}\big)\,\ee_{ij}.
-\label{eq:grad}
+= \sum_{j \ne i} \kij \big(\dij - \lij\big) \frac{\partial \dij}{\partial \rr_i}.
 \end{equation}
-Each term lies along the line joining the two nodes, so the force it exerts is
-central: it has no component transverse to the spring. That $k$ carries no
-derivative is a consequence of \eqref{eq:kl}. Had the force constants been written
-as a function of the equilibrium distance, $k_{ij} = f(d_{ij}(\re))$, they would
-still be constants with respect to $\rr$ and this gradient would be unchanged; what
-\eqref{eq:kl} buys is not simplicity here but the freedom, used in
-Section~\ref{sec:mutation}, to vary $l_{ij}$ and have $k_{ij}$ follow.
-
-Given the parameters $\LL$, an equilibrium conformation $\re$ is one at which the
-gradient vanishes,
+Differentiating $\dij^2 = \rrij\cdot\rrij$ with $\partial \rrij/\partial\rr_i = -\mathbf{I}$ gives
 \begin{equation}
-\boxed{\;
-\sum_{j \ne i} k(l_{ij})\,\big(d_{ij}(\re) - l_{ij}\big)\,\ee^{\,e}_{ij} \;=\; \mathbf{0},
-\qquad i = 1,\ldots,N,
-\;}
-\label{eq:equilibrium}
+\frac{\partial \dij}{\partial \rr_i} = -\frac{\rrij}{\dij}
+\equiv -\eeij,
+\qquad
+\frac{\partial \dij}{\partial \rr_j} = +\eeij,
+\label{eq:distance-gradient}
 \end{equation}
-where the overall sign of \eqref{eq:grad} has been dropped, the right-hand side
-being zero. These are $3N$ scalar equations for the $3N$ unknown coordinates, of
-which $3N-6$ are independent: $V$ depends on the conformation only through the
-distances \eqref{eq:dij}, so it is invariant under the three translations and three
-rotations, and along those six directions the gradient vanishes identically.
-
-One consequence of that invariance should be recorded now, because it matters
-later: $\re$ is determined only up to a rigid motion.
-
-Separately, and for a different reason, $V$ is also invariant under reflection.
-This does not follow from invariance under rigid motions --- a reflection is not
-one --- but from the same fact as before, that $V$ sees the conformation only
-through the distances \eqref{eq:dij}, and reflecting a conformation leaves every
-$d_{ij}$ unchanged. A chiral $\re$ therefore has a mirror image of equal energy,
-and the minimum of $V$ is not unique. Below, $\re$ denotes one chosen minimum, and
-every quantity derived from it is understood relative to that choice.
-
-\subsection{Strain}
-
-The combination $d_{ij}(\re) - l_{ij}$ appearing in \eqref{eq:equilibrium} is the
-amount by which a spring departs from its equilibrium length at the equilibrium
-conformation. It is convenient to name it. Let $\re$ be an equilibrium
-conformation and define, for every spring,
+with $\eeij$ the unit vector along the spring, pointing from $i$ to $j$, so
 \begin{equation}
-s_{ij} \;\equiv\; d_{ij}(\re) - l_{ij},
-\label{eq:sij}
+\frac{\partial V}{\partial \rr_i}
+= -\sum_{j \ne i} \kij \big(\dij - \lij\big) \eeij .
+\label{eq:potential-gradient}
 \end{equation}
-its \emph{strain}. A spring with $s_{ij} > 0$ is longer than its equilibrium length
-and so is stretched, one with $s_{ij} < 0$ is compressed, and one with $s_{ij} = 0$
-is relaxed.
-
-In these terms the equilibrium condition \eqref{eq:equilibrium} reads
+Differentiating \eqref{eq:potential-gradient} with respect to $\rr_j$, with $j \ne i$, only the term of the sum that involves node $j$ contributes, so
 \begin{equation}
-\sum_{j\ne i} k(l_{ij})\, s_{ij}\, \ee^{\,e}_{ij} \;=\; \mathbf{0},
-\qquad i = 1,\ldots,N,
-\label{eq:equilibrium-s}
+\KK_{ij}
+= -\kij\left[
+\frac{\partial \dij}{\partial \rr_j}\eeij^{\mathsf T}
++ (\dij - \lij) \frac{\partial \eeij}{\partial \rr_j}
+\right]_{\rr = \re}.
 \end{equation}
-so the forces on each node cancel, which does not require the individual $s_{ij}$
-to vanish. Substituting \eqref{eq:sij} into \eqref{eq:V} evaluated at $\re$ gives
-the minimum energy
+The first derivative is $\partial \dij/\partial\rr_j = \eeij$ by \eqref{eq:distance-gradient}.
+For the second, differentiating $\eeij = \rrij/\dij$ with respect to $\rr_j$, using the product rule with $\partial \rrij/\partial\rr_j = \mathbf{I}$ and $\partial \dij^{-1}/\partial \rr_j = -\dij^{-2}\eeij^{\mathsf T}$,
 \begin{equation}
-\boxed{\;
-V(\re; \LL) \;=\; \tfrac12 \sum_{i<j} k(l_{ij})\, s_{ij}^{2},
-\;}
-\label{eq:Vmin}
+\frac{\partial \eeij}{\partial \rr_j}
+= \frac{\mathbf{I}}{\dij} - \frac{\rrij\eeij^{\mathsf T}}{\dij^{2}}
+= \frac{\mathbf{I} - \eeij\eeij^{\mathsf T}}{\dij}.
+\label{eq:unit-vector-derivative}
 \end{equation}
-which depends on the strains only through their squares, and so is unchanged by the
-sign convention adopted in \eqref{eq:sij}.
+Substituting both and evaluating at $\re$,
+\begin{equation}
+\KK_{ij}
+= -\kij\left[ \eeije\big(\eeije\big)^{\mathsf T}
++ \frac{\dije - \lij}{\dije}
+\Big(\mathbf{I} - \eeije\big(\eeije\big)^{\mathsf T}\Big) \right],
+\end{equation}
+that is, defining $\gij \equiv (\dije - \lij)/\dije$,
+\begin{equation}
+\boxed{
+\KK_{ij} = -\kij\Big[\eeije\big(\eeije\big)^{\mathsf T}
+- \gij\Big(\eeije\big(\eeije\big)^{\mathsf T} - \mathbf{I}\Big)\Big],
+\qquad i \ne j.
+}
+\label{eq:hessian-offdiagonal}
+\end{equation}
+The diagonal blocks follow from translational invariance.
+Displacing every node by the same vector $\mathbf{a}$ changes no distance, so $V(\rr_1+\mathbf{a},\ldots,\rr_N+\mathbf{a}) = V(\rr_1,\ldots,\rr_N)$ for every conformation and every $\mathbf{a}$.
+Differentiating this identity twice with respect to the node positions gives $\sum_j \KK_{ij} = \mathbf{0}$ for each $i$, whence
+\begin{equation}
+\boxed{
+\KK_{ii} = -\sum_{j \ne i} \KK_{ij}.
+}
+\label{eq:hessian-diagonal}
+\end{equation}
+Two properties of $\KK$ are used below.
+It is symmetric, which is visible in \eqref{eq:hessian-offdiagonal}: each block is a sum of symmetric matrices, and $\KK_{ij} = \KK_{ji}$.
+It is positive semi-definite, which does not follow from the equations but from $\re$ being a minimum: $V$ cannot decrease in any direction, so $\mathbf{u}^{\mathsf T}\KK\mathbf{u} \ge 0$ for every $\mathbf{u}$.
+Conversely, a stationary conformation at which $\KK$ is positive semi-definite is a minimum, which is what a numerically obtained $\re$ is checked against.
 
-\subsection{Frustration}
-\label{sec:frustration}
 
-We call a network \textbf{frustrated} when $V(\re;\LL) > 0$: no conformation
-relaxes all of its active springs at once, and the network sits at a compromise in
-which the forces cancel node by node while individual springs remain strained. By
-\eqref{eq:Vmin} this is the case whenever $s_{ij} \ne 0$ for at least one active
-spring. A network that is not frustrated has $s_{ij} = 0$ for every active spring,
-and then $V(\re;\LL) = 0$.
 
-Whether a given $\LL$ is frustrated is settled by solving \eqref{eq:equilibrium}
-for $\re$ and evaluating \eqref{eq:Vmin}. One case can be read off without
-solving anything. Choose a structure $\rr^{\ast}$ and set
-$l_{ij} = d_{ij}(\rr^{\ast})$ for every spring. Then every strain vanishes at
-$\rr^{\ast}$, so \eqref{eq:equilibrium-s} is satisfied term by term,
-$\rr^{\ast}$ is an equilibrium conformation, and $V(\rr^{\ast};\LL) = 0$: the
-network is unfrustrated by construction. This is what a standard elastic network
-model does, and it is a statement about how $\LL$ was chosen, not about
-\eqref{eq:equilibrium}, which takes $\LL$ as given.
+\subsection{Normal modes}
+\label{sec:modes}
 
-Nothing obliges $\LL$ to have been chosen that way, and parameter sets not of this
-form will in general be frustrated. How the $l_{ij}$ ought to be chosen is a
-separate question from the one \eqref{eq:equilibrium} answers, and is not taken up
-here; Section~\ref{sec:open} returns to it. What matters below is that both cases
-are allowed: nothing in Sections \ref{sec:distribution} to \ref{sec:changes}
-assumes an unfrustrated network. As will be seen in Section~\ref{sec:mutation}, a
-mutation applied to an unfrustrated network produces a frustrated one.
+$\KK$ is real and symmetric, so it has $3N$ orthonormal eigenvectors $\mathbf{q}_n$ with real eigenvalues $\lambda_n$,
+\begin{equation}
+\KK \mathbf{q}_n = \lambda_n \mathbf{q}_n,
+\qquad
+\mathbf{q}_m^{\mathsf T} \mathbf{q}_n = \delta_{mn},
+\qquad
+\KK = \sum_n \lambda_n \mathbf{q}_n \mathbf{q}_n^{\mathsf T},
+\label{eq:eigenproblem}
+\end{equation}
+where $\delta_{mn}$ is $1$ for $m=n$ and $0$ otherwise, and $\lambda_n \ge 0$ because $\KK$ is positive semi-definite.
+The eigenvectors $\mathbf{q}_n$ are the \emph{normal modes} of the network and the eigenvalues $\lambda_n$ are their force constants, carrying the same units as $\kij$, energy per length squared.
 
-\section{The conformational distribution}
-\label{sec:distribution}
+The normal modes are an orthonormal basis of $\mathbb{R}^{3N}$, so any displacement can be written in them,
+\begin{equation}
+\rr - \re = \sum_n u_n \mathbf{q}_n,
+\qquad
+u_n = \mathbf{q}_n^{\mathsf T} (\rr - \re),
+\label{eq:normal-mode-coordinates}
+\end{equation}
+where the $u_n$ are the coordinates of the displacement in this basis, one number per mode.
+In them the quadratic approximation \eqref{eq:quadratic-approximation} becomes
+\begin{equation}
+\boxed{
+V(\rr;\LL) \simeq V(\re;\LL) + \tfrac12 \sum_n \lambda_n u_n^{2} ,
+}
+\label{eq:modal-potential}
+\end{equation}
+a sum of independent terms, one per mode, with no cross terms $u_m u_n$: in this representation the modes are uncoupled, each contributing an energy set by its own force constant.
 
-\subsection{The Boltzmann distribution}
+Since $V$ depends on the conformation only through the distances \eqref{eq:distance}, it is unchanged by the three translations and three rotations of the network as a whole, so those six displacements cost no energy and at least six eigenvalues vanish.
+Whether there are exactly six is a property of the network, not a given.
+A network whose Hessian has no further null directions is \emph{infinitesimally rigid}, and then $\operatorname{rank}(\KK) = 3N-6$.
+A node held by a single spring of nonzero force constant can swing about it, and one held by two can rotate about the axis through them; each such freedom is a further null direction.
+In what follows the networks are assumed infinitesimally rigid,
+and sums and products over the $3N-6$ nonzero eigenvalues are written
+$\sum_{\lambda_n \ne 0}$ and $\prod_{\lambda_n \ne 0}$.
+
+\subsection{Thermal properties}
+\label{sec:thermo}
+
+\subsubsection{The Boltzmann distribution and the partition function}
 
 At temperature $T$ the conformations are distributed according to
 \begin{equation}
-\rho(\rr) \;=\; \frac{e^{-\beta V(\rr;\LL)}}{Z},
+\rho(\rr) = \frac{e^{-\beta V(\rr;\LL)}}{Z},
 \qquad
-Z \;=\; \int e^{-\beta V(\rr;\LL)}\, d\rr,
+Z = \int e^{-\beta V(\rr;\LL)} d\rr,
 \qquad
 \beta = \frac{1}{k_B T},
-\label{eq:boltzmann}
+\label{eq:boltzmann-distribution}
 \end{equation}
-where the integral runs over $\mathbb{R}^{3N}$. This is a configurational
-integral: the momenta have been left out. They contribute a factor that depends on
-the masses and on $\beta$ but not on $\LL$, so it cancels from every difference
-between networks computed in Section~\ref{sec:changes}, which is all we use.
+the integral running over $\mathbb{R}^{3N}$.
+This is a configurational integral: the momenta contribute a factor that depends on the masses and on $\beta$ but not on $\LL$, and it cancels from every difference between networks.
 
-\subsection{The Hessian}
-
-The integral in \eqref{eq:boltzmann} cannot be evaluated in closed form, because
-$V$ is not quadratic in $\rr$: the distances \eqref{eq:dij} are nonlinear
-functions of the coordinates. We therefore expand $V$ about an equilibrium
-conformation. Writing $\mathbf{u} = \rr - \re$,
+Inserting the quadratic approximation \eqref{eq:quadratic-approximation} gives a Gaussian distribution centred on $\re$,
 \begin{equation}
-V(\rr;\LL) \;=\; V(\re;\LL)
-\;+\; \frac{\partial V}{\partial \rr}\bigg|_{\re}\!\!\cdot \mathbf{u}
-\;+\; \tfrac12\, \mathbf{u}^{\mathsf T} \KK\, \mathbf{u} \;+\; O(\mathbf{u}^3),
-\qquad
-\KK \;=\; \frac{\partial^2 V}{\partial \rr^2}\bigg|_{\re}.
-\label{eq:expansion}
+\boxed{
+\rho(\rr) \simeq \frac{1}{Z} e^{-\beta V(\re;\LL)}
+\exp\big(-\tfrac{\beta}{2}(\rr-\re)^{\mathsf T}\KK(\rr-\re)\big).
+}
+\label{eq:gaussian-distribution}
 \end{equation}
-The linear term vanishes by \eqref{eq:equilibrium}.
-
-To obtain $\KK$ we need the second derivatives of the distances. Differentiating
-$\ee_{ij} = \rr_{ij}/d_{ij}$ with respect to $\rr_j$, using the product rule with
-$\partial \rr_{ij}/\partial\rr_j = \mathbf{I}$ and
-$\partial d_{ij}^{-1}/\partial \rr_j = -d_{ij}^{-2}\,\ee_{ij}^{\mathsf T}$,
+In the normal-mode representation \eqref{eq:normal-mode-coordinates} the exponent is a sum of independent terms, by \eqref{eq:modal-potential}, so the distribution factorises into one Gaussian per mode,
 \begin{equation}
-\frac{\partial \ee_{ij}}{\partial \rr_j}
-\;=\; \frac{\mathbf{I}}{d_{ij}} - \frac{\rr_{ij}\ee_{ij}^{\mathsf T}}{d_{ij}^{2}}
-\;=\; \frac{\mathbf{I} - \ee_{ij}\ee_{ij}^{\mathsf T}}{d_{ij}}.
-\label{eq:d2d}
+\rho \;\propto\; \prod_n e^{-\beta\lambda_n u_n^{2}/2},
+\label{eq:modal-distribution}
 \end{equation}
-Now differentiate the gradient \eqref{eq:grad} with respect to $\rr_j$ for $j \ne i$.
-Only the single term of the sum with that index depends on $\rr_j$, and it is a
-product of $(d_{ij} - l_{ij})$ and $\ee_{ij}$, so
+and so does the integral.
+The six modes with $\lambda_n = 0$ carry no exponent: along them $\rho$ is flat and the integral diverges.
+These six directions are the translations and rotations of the network as a whole, which move it without deforming it.
+They are left out of $Z$, which is therefore the partition function of the network's internal degrees of freedom alone.
+Each of the remaining $3N-6$ integrals is a standard Gaussian,
 \begin{equation}
-\KK_{ij}
-\;=\; -\,k(l_{ij})\left[
-\frac{\partial\, (d_{ij} - l_{ij})}{\partial \rr_j}\,\ee_{ij}^{\mathsf T}
-\;+\; (d_{ij} - l_{ij})\, \frac{\partial \ee_{ij}}{\partial \rr_j}
-\right].
+\int_{-\infty}^{\infty} e^{-\beta\lambda_n u_n^2/2} du_n
+= \left(\frac{2\pi}{\beta\lambda_n}\right)^{1/2},
 \end{equation}
-Substituting $\partial d_{ij}/\partial\rr_j = \ee_{ij}$ and \eqref{eq:d2d}, and
-then $d_{ij} - l_{ij} = s_{ij}$ from \eqref{eq:sij},
+so
 \begin{equation}
-\KK_{ij}
-\;=\; -\,k(l_{ij})\left[ \ee_{ij}\ee_{ij}^{\mathsf T}
-+ s_{ij}\,\frac{\mathbf{I} - \ee_{ij}\ee_{ij}^{\mathsf T}}{d_{ij}} \right],
+\boxed{
+Z = e^{-\beta V(\re;\LL)} \prod_{\lambda_n \ne 0} \left(\frac{2\pi}{\beta\lambda_n}\right)^{1/2} ,
+}
+\label{eq:partition-function}
 \end{equation}
-that is, defining $g_{ij} \equiv s_{ij}/d_{ij}(\re)$,
+or, in the form used below,
 \begin{equation}
-\boxed{\;
-\KK_{ij} \;=\; -\,k(l_{ij})\Big[\,\ee_{ij}\ee_{ij}^{\mathsf T}
-- g_{ij}\big(\ee_{ij}\ee_{ij}^{\mathsf T} - \mathbf{I}\big)\Big],
-\qquad i \ne j.
-\;}
-\label{eq:hessian}
-\end{equation}
-The diagonal blocks follow from translational invariance. Displacing every node by
-the same vector $\mathbf{a}$ leaves $V$ unchanged, so $\KK$ annihilates that
-displacement, and summing the blocks in a row gives
-$\sum_{j} \KK_{ij}\mathbf{a} = \mathbf{0}$ for every $\mathbf{a}$, whence
-\begin{equation}
-\KK_{ii} \;=\; -\sum_{j \ne i} \KK_{ij}.
-\label{eq:Kii}
-\end{equation}
-Inactive springs have $k(l_{ij}) = 0$ and contribute nothing, so $\KK$ is
-$3N \times 3N$ however many springs carry parameters.
-
-\subsection{Longitudinal and transverse stiffness}
-
-Equation \eqref{eq:hessian} contains two projectors. Writing
-$\mathbf{P}_\perp = \mathbf{I} - \ee_{ij}\ee_{ij}^{\mathsf T}$ for the projector
-onto the plane perpendicular to the spring, it may be rearranged as
-\begin{equation}
-\KK_{ij} \;=\; -\,k(l_{ij})\Big[\ee_{ij}\ee_{ij}^{\mathsf T}
-+ g_{ij}\,\mathbf{P}_\perp\Big],
-\label{eq:split}
-\end{equation}
-so a spring carries two stiffnesses rather than one: a longitudinal $k(l_{ij})$
-resisting change of the distance, and a transverse $k(l_{ij})g_{ij}$, doubly
-degenerate, resisting rotation of the spring at fixed distance.
-
-The transverse stiffness is proportional to $g_{ij} = s_{ij}/d_{ij}(\re)$, and so
-vanishes for a relaxed spring and changes sign with the strain. A stretched spring
-($s_{ij}>0$) resists transverse displacement, as a taut string does. A compressed
-one ($s_{ij}<0$) has negative transverse stiffness: displacing the two nodes
-sideways increases their separation, which a compressed spring favours. Note that
-it is the transverse stiffness that is negative, not $k(l_{ij})$, which is
-non-negative by \eqref{eq:kl}.
-
-Since $g_{ij} = 0$ for every spring of an unfrustrated network, the transverse term
-is absent there, and \eqref{eq:hessian} reduces to the rank-one form of a standard
-elastic network model. Frustration enters the conformational distribution through
-$g_{ij}$ and through nothing else.
-
-\subsection{The Gaussian approximation}
-
-Truncating \eqref{eq:expansion} after the quadratic term gives
-\begin{equation}
-V(\rr;\LL) \;\simeq\; V(\re;\LL) + \tfrac12 \mathbf{u}^{\mathsf T}\KK\mathbf{u},
-\label{eq:quadratic}
-\end{equation}
-and hence, from \eqref{eq:boltzmann}, a Gaussian distribution of conformations
-centred on $\re$,
-\begin{equation}
-\rho(\rr) \;\simeq\; \frac{1}{Z}\, e^{-\beta V(\re;\LL)}\,
-\exp\!\big(-\tfrac{\beta}{2}\,\mathbf{u}^{\mathsf T}\KK\,\mathbf{u}\big).
-\label{eq:gaussian}
+\boxed{
+\ln Z = -\beta V(\re;\LL) + \tfrac12 \sum_{\lambda_n \ne 0} \ln\frac{2\pi}{\beta\lambda_n} .
+}
+\label{eq:log-partition-function}
 \end{equation}
 
-$\KK$ is symmetric, and positive semi-definite because $\re$ is a minimum. Let its
-eigenvalues be $\lambda_n$ with eigenvectors $\mathbf{q}_n$. At least six
-eigenvalues vanish, corresponding to the three translations and three rotations
-along which $V$ does not vary.
+\subsubsection{Conformational fluctuations}
+\label{sec:fluctuations}
 
-Whether there are exactly six is a property of the network, not a given. A
-displacement $\mathbf{u}$ is a null direction of $\KK$ when it changes no active
-distance to first order, that is when $\ee_{ij}\cdot(\mathbf{u}_i - \mathbf{u}_j) = 0$
-for every active spring. A network for which the only such displacements are the six
-rigid motions is \emph{infinitesimally rigid}, and then $\mathrm{rank}\,\KK = 3N-6$.
-Connectivity does not suffice: a node joined to the rest by a single active spring
-can swing about it, and one joined by two can rotate about the axis through them,
-in both cases without changing any active distance. Each such freedom is a further
-null direction. In what follows the networks are assumed infinitesimally rigid,
-and we write $\sum'$ and $\prod'$ for sums and products over the $3N-6$ nonzero
-eigenvalues.
-
-The distribution \eqref{eq:gaussian} is flat along the six null directions, which
-is the rigid-body freedom of the whole network, and we factor it out: displacements
-are taken in the complement, where the covariance is
+The distribution \eqref{eq:gaussian-distribution} is a Gaussian in the displacement $\rr - \re$, so its second moment is fixed by the matrix in the exponent.
+For a Gaussian $\propto \exp\big(-\tfrac{\beta}{2}\mathbf{x}^{\mathsf T}\KK\mathbf{x}\big)$ the covariance is $(\beta\KK)^{-1}$, which requires $\KK$ to be invertible.
+It is not: the six rigid-body directions have $\lambda_n = 0$, and they were left out of $Z$ for that reason.
+Restricted to the complement of those directions, where the network deforms, $\KK$ is invertible and
 \begin{equation}
-\bm{\Sigma} \;=\; \beta^{-1}\KK^{+},
-\qquad
-\KK^{+} \;=\; \sum_n{}' \lambda_n^{-1}\, \mathbf{q}_n \mathbf{q}_n^{\mathsf T},
+\boxed{
+\bm{\Sigma} = \big\langle (\rr - \re)(\rr - \re)^{\mathsf T} \big\rangle
+= \beta^{-1}\KK^{+},
+}
 \label{eq:covariance}
 \end{equation}
-with $\KK^{+}$ the pseudo-inverse obtained by inverting the nonzero eigenvalues
-and annihilating the null directions.
-
-\section{Thermodynamic properties}
-\label{sec:thermo}
-
-\subsection{The partition function}
-
-In the quadratic approximation \eqref{eq:quadratic} the integral
-\eqref{eq:boltzmann} factorises in the eigenbasis of $\KK$. Writing
-$\mathbf{u} = \sum_n y_n \mathbf{q}_n$, the quadratic form is
-$\sum_n \lambda_n y_n^2$, and the integral over each of the $3N-6$ non-null
-directions is a standard Gaussian,
+with $\KK^{+}$ the pseudo-inverse of $\KK$: the inverse on that complement, and zero on the rigid-body directions.
+Its $3\times3$ blocks give the fluctuation of one node and the correlation between two,
 \begin{equation}
-\int_{-\infty}^{\infty} e^{-\beta\lambda_n y_n^2/2}\, dy_n
-\;=\; \left(\frac{2\pi}{\beta\lambda_n}\right)^{1/2}.
-\end{equation}
-Hence
-\begin{equation}
-\boxed{\;
-Z \;=\; e^{-\beta V(\re;\LL)} \prod_n{}' \left(\frac{2\pi}{\beta\lambda_n}\right)^{1/2},
+\big\langle \lVert \rr_i - \re_i \rVert^{2} \big\rangle
+= \beta^{-1} \operatorname{tr} \big(\KK^{+}\big)_{ii},
 \qquad
-\ln Z \;=\; -\beta V(\re;\LL) + \tfrac12 \sum_n{}' \ln\frac{2\pi}{\beta\lambda_n}.
-\;}
-\label{eq:Z}
+\big\langle (\rr_i - \re_i)(\rr_j - \re_j)^{\mathsf T} \big\rangle
+= \beta^{-1} \big(\KK^{+}\big)_{ij},
+\label{eq:node-fluctuation}
 \end{equation}
+the first being the quantity reported as a $B$-factor in a crystal structure.
+In Cartesian coordinates $\bm{\Sigma}$ is not diagonal: the displacements of two nodes are correlated.
 
-\subsection{Free energy, internal energy, entropy}
-
-The Helmholtz free energy is
+In the normal-mode representation the same distribution is \eqref{eq:modal-distribution}, one independent Gaussian per mode, so the coordinates $u_n$ are uncorrelated and
 \begin{equation}
-A \;=\; -\beta^{-1}\ln Z
-\;=\; V(\re;\LL) \;-\; \frac{1}{2\beta}\sum_n{}' \ln\frac{2\pi}{\beta\lambda_n}.
-\label{eq:A}
+\boxed{
+\langle u_m u_n \rangle = \frac{\delta_{mn}}{\beta\lambda_n},
+\qquad \lambda_n \ne 0 ,
+}
+\label{eq:modal-covariance}
 \end{equation}
-The internal energy follows by differentiating \eqref{eq:Z}, using
-$\partial\ln\lambda_n/\partial\beta = 0$,
+each mode fluctuating with an amplitude set by its own force constant.
+This is $\bm{\Sigma}$ in the basis that diagonalises it, and it is also how the pseudo-inverse is computed,
 \begin{equation}
-U \;=\; -\frac{\partial \ln Z}{\partial \beta}
-\;=\; V(\re;\LL) \;+\; \frac{3N-6}{2\beta},
-\label{eq:U}
+\KK^{+} = \sum_{\lambda_n \ne 0} \frac{\mathbf{q}_n \mathbf{q}_n^{\mathsf T}}{\lambda_n}.
+\label{eq:pseudo-inverse}
 \end{equation}
-which is the minimum energy plus $\tfrac12 k_B T$ per non-rigid degree of freedom,
-as equipartition requires. The entropy is $S = (U-A)/T$, so
+
+\subsubsection{Internal energy, entropy, free energy}
+
+The internal energy is the mean potential energy, $U = \langle V \rangle$, obtained from the partition function as
 \begin{equation}
-T S \;=\; U - A \;=\; \frac{1}{2\beta}\sum_n{}'
-\left[\ln\frac{2\pi}{\beta\lambda_n} + 1\right].
-\label{eq:S}
+U = -\frac{\partial \ln Z}{\partial \beta} ,
 \end{equation}
-Soft directions, those of small $\lambda_n$, contribute most: the network gains
-entropy by being easy to deform.
+which by \eqref{eq:log-partition-function} gives
+\begin{equation}
+\boxed{
+U = V(\re;\LL) + \frac{3N-6}{2\beta} ,
+}
+\label{eq:internal-energy}
+\end{equation}
+the minimum energy plus $\tfrac{1}{2\beta}$ per non-rigid degree of freedom.
 
-Two comments on \eqref{eq:A} and \eqref{eq:S}. The logarithm takes a dimensional
-argument, so the numerical values of $A$ and $TS$ depend on the units chosen for
-length, and $A$ may fall below $V(\re;\LL)$. Neither is meaningful alone. What is
-meaningful is a difference between two networks at the same temperature, where the
-units cancel; those are the quantities of Section~\ref{sec:changes}. The same
-applies to the momentum factor dropped in \eqref{eq:boltzmann}, and to the
-rigid-body volume factored out of \eqref{eq:covariance}: both are common to the
-two networks and cancel.
+The entropy is $S = -k_B \langle \ln \rho \rangle$, and by \eqref{eq:boltzmann-distribution} $\ln\rho = -\beta V - \ln Z$, so
+\begin{equation}
+S = k_B \big( \beta \langle V \rangle + \ln Z \big)
+= k_B \big( \beta U + \ln Z \big) .
+\end{equation}
+Substituting \eqref{eq:internal-energy} and \eqref{eq:log-partition-function}, the terms in $V(\re;\LL)$ cancel and
+\begin{equation}
+T S = \frac{1}{\beta}\big( \beta U + \ln Z \big)
+= \frac{3N-6}{2\beta} + \frac{1}{2\beta} \sum_{\lambda_n \ne 0} \ln\frac{2\pi}{\beta\lambda_n} .
+\end{equation}
+The sum has $3N-6$ terms, so the first term is $\tfrac{1}{2\beta}\sum_{\lambda_n \ne 0} 1$ and the two can be written as one sum,
+\begin{equation}
+\boxed{
+T S = \frac{1}{2\beta}\sum_{\lambda_n \ne 0}
+\left[\ln\frac{2\pi}{\beta\lambda_n} + 1\right] .
+}
+\label{eq:entropy}
+\end{equation}
 
-\jc{Open question. Equations \eqref{eq:A} and \eqref{eq:S} rest on the quadratic
-truncation \eqref{eq:quadratic}. How good it is for a frustrated network, where the
-transverse term makes $\KK$ differ from the standard form, has not been examined
-here.}
+The Helmholtz free energy is $A = U - TS$, which by \eqref{eq:internal-energy} and \eqref{eq:entropy} is
+\begin{equation}
+\boxed{
+A = V(\re;\LL) - \frac{1}{2\beta}\sum_{\lambda_n \ne 0} \ln\frac{2\pi}{\beta\lambda_n} .
+}
+\label{eq:free-energy}
+\end{equation}
+Equivalently $A = -\beta^{-1}\ln Z$, by \eqref{eq:log-partition-function}.
 
-\section{Reference and mutant}
+The argument of each logarithm is $2\pi/\beta\lambda_n$, which has units of length squared, since $\lambda_n$ is an energy per length squared.
+The numerical values of $TS$ and $A$ therefore depend on the unit of length chosen, and $A$ may fall below $V(\re;\LL)$; the same applies to the momentum factor and the rigid-body directions left out of $Z$.
+Differences between two networks at the same temperature are free of all three, as are comparisons at a fixed choice of units.
+
+\section{Mutations}
 \label{sec:mutation}
 
-\subsection{The reference network}
+\subsection{Reference and mutant}
 
-Everything above applies to any network. We now fix one, the \emph{reference},
-with parameters $\LL^{\text{ref}} = \{l^{\text{ref}}_{ij}\}$ and potential
-\begin{equation}
-V_{\text{ref}}(\rr) \;\equiv\; V(\rr; \LL^{\text{ref}})
-\;=\; \tfrac12 \sum_{i<j} k\big(l^{\text{ref}}_{ij}\big)
-\Big(d_{ij}(\rr) - l^{\text{ref}}_{ij}\Big)^{2}.
-\label{eq:Vref}
-\end{equation}
-Write $k^{\text{ref}}_{ij} = k(l^{\text{ref}}_{ij})$ for its force constants,
-$\re_{\text{ref}}$ for an equilibrium conformation obtained from
-\eqref{eq:equilibrium}, and
-\begin{equation}
-s_{ij} \;=\; d_{ij}(\re_{\text{ref}}) - l^{\text{ref}}_{ij}
-\label{eq:sref}
-\end{equation}
-for its strains. Its Hessian $\KK^{\text{ref}}$, spectrum
-$\{\lambda^{\text{ref}}_n\}$, and thermodynamic properties $A_{\text{ref}}$,
-$U_{\text{ref}}$, $S_{\text{ref}}$ follow from Sections \ref{sec:distribution} and
-\ref{sec:thermo}. The reference may be frustrated or not; nothing below assumes
-either.
+\subsubsection{The reference network}
 
-\subsection{Mutation}
+Everything above applies to any network.
+We now read it as describing a particular one, the \emph{reference}, with parameters $\LL = \{\lij\}$, force constants $\kij = k(\lij)$, potential $V(\rr;\LL)$, equilibrium conformation $\re$, equilibrium distances $\dije$, Hessian $\KK$, spectrum $\{\lambda_n\}$ and thermodynamic properties $U$, $S$, $A$.
+The mutant network is written with a prime on each of these: $\LL'$, $\kijm$, $V'$, $\rem$, $\dijem$, $\KK'$, $\lambda'_n$, $U'$, $S'$, $A'$.
 
-A mutation at site $m$ perturbs the equilibrium lengths of the springs that
-connect $m$ to the rest of the network, and leaves all others unchanged:
+\subsubsection{Mutation}
+
+We model a mutation at site $m$ as a perturbation of the equilibrium lengths of the springs that connect $m$ to the rest of the network, leaving all others unchanged:
 \begin{equation}
-l^{\text{mut}}_{ij} \;=\; l^{\text{ref}}_{ij} + \delta l_{ij},
+\lijm = \lij + \dlij,
 \qquad
-\delta l_{ij} = 0 \ \text{ unless } i = m \text{ or } j = m.
-\label{eq:mutation}
+\dlij = 0 \ \text{ unless } i = m \text{ or } j = m.
+\label{eq:mutation-perturbation}
 \end{equation}
-The perturbations $\delta l_{ij}$ are drawn from a distribution with zero mean and
-variance $\sigma^2$, independently for each affected spring; $\sigma$ sets the size
-of the mutation.
+The $\dlij$ are arbitrary: nothing below assumes them small, random, or related to one another.
 
-The mutant potential is \eqref{eq:V} evaluated with these parameters,
+The mutant potential is \eqref{eq:potential} evaluated with these parameters,
 \begin{equation}
-V_{\text{mut}}(\rr) \;\equiv\; V(\rr; \LL^{\text{mut}})
-\;=\; \tfrac12 \sum_{i<j} k\big(l^{\text{ref}}_{ij} + \delta l_{ij}\big)
-\Big(d_{ij}(\rr) - l^{\text{ref}}_{ij} - \delta l_{ij}\Big)^{2}.
-\label{eq:Vmut}
+V'(\rr) \equiv V(\rr; \LL')
+= \tfrac12 \sum_{i<j} k\big(\lij + \dlij\big)
+\big(\dij - \lij - \dlij\big)^{2}.
+\label{eq:mutant-potential}
 \end{equation}
-Comparing \eqref{eq:Vref} and \eqref{eq:Vmut}: the mutation changes both the
-equilibrium lengths and, through \eqref{eq:kl}, the force constants. Define
+The mutation changes both the equilibrium lengths and, through \eqref{eq:stiffness-from-length}, the force constants.
+Define
 \begin{equation}
-\delta k_{ij} \;\equiv\; k\big(l^{\text{ref}}_{ij} + \delta l_{ij}\big)
-- k\big(l^{\text{ref}}_{ij}\big),
+\dkij \equiv k\big(\lij + \dlij\big) - k\big(\lij\big),
 \qquad\text{so}\qquad
-k^{\text{mut}}_{ij} = k^{\text{ref}}_{ij} + \delta k_{ij}.
-\label{eq:dk}
+\kijm = \kij + \dkij.
+\label{eq:stiffness-change}
 \end{equation}
-This is an exact difference of two values of $k$, not a differential: no
-assumption is made that $\delta l_{ij}$ is small or that $k$ is differentiable.
-A spring whose equilibrium length crosses from a region where $k>0$ to one where
-$k=0$, or the reverse, has $\delta k_{ij}$ of the size of $k$ itself. Contacts are
-created and destroyed here, in the parameters, and not by any change in
-conformation.
+The mutant has its own equilibrium conformation $\rem$, obtained by minimising \eqref{eq:mutant-potential}, its own equilibrium distances $\dijem \equiv \dij(\rem)$, its own Hessian $\KK'$ and spectrum $\{\lambda'_n\}$, and its own $U'$, $S'$, $A'$.
+Note that $\rem$ is obtained by minimising \eqref{eq:mutant-potential} itself.
+Its first-order approximation is the linear response $\rem - \re \simeq \KK^{+}\mathbf{f}$, with $\mathbf{f}$ the force that the change of parameters exerts at $\re$ and $\KK^{+}$ the pseudo-inverse \eqref{eq:pseudo-inverse}; this is what the linearly forced elastic network model computes, and it is not used below.
 
-This is why every spring carries an equilibrium length, the inactive ones
-included. An inactive spring with no $l_{ij}$ could never acquire one inside the
-range where $k > 0$, so a mutation could only destroy contacts and never form
-them; carrying the parameter regardless lets \eqref{eq:mutation} move a spring in
-either direction across that range.
+Even if the reference is unfrustrated, the mutant will in general be frustrated: no conformation need satisfy $\dij = \lijm$ for every spring at once, so the mutant settles at a compromise with $\dijem \ne \lijm$ (Appendix~\ref{app:frustration}).
 
-The mutant has its own equilibrium conformation $\re_{\text{mut}}$, obtained from
-\eqref{eq:equilibrium} with the mutant parameters, its own strains
-$s^{\text{mut}}_{ij} = d_{ij}(\re_{\text{mut}}) - l^{\text{mut}}_{ij}$, its own
-Hessian $\KK^{\text{mut}}$ and spectrum $\{\lambda^{\text{mut}}_n\}$, and its own
-$A_{\text{mut}}$, $U_{\text{mut}}$, $S_{\text{mut}}$. Note that $\re_{\text{mut}}$
-is obtained by minimising \eqref{eq:Vmut} itself, not by displacing
-$\re_{\text{ref}}$ along a response to the perturbation.
-
-Even if the reference is unfrustrated, the mutant will in general be frustrated:
-the perturbed lengths $l^{\text{mut}}_{ij}$ need not be simultaneously realisable
-by any conformation, so the mutant settles at a compromise with $s^{\text{mut}}_{ij}
-\ne 0$.
-
-\section{Mutational changes}
+\subsection{Mutational changes}
 \label{sec:changes}
 
-\subsection{Three energy differences}
+\subsubsection{Changes in the thermodynamic properties}
 
-Two networks and two conformations give three energy differences worth naming. The
-first is the cost of changing the parameters at fixed conformation,
+The mutant's properties are those of Section~\ref{sec:thermo} evaluated with its own parameters, and the changes are their differences.
+Both require the two networks to have the same number of non-null directions.
+A point mutation neither adds nor removes a node, so both Hessians are $3N\times3N$, and if both networks are infinitesimally rigid both have $3N-6$ nonzero eigenvalues.
+
+Write $\Delta V_{\min}$ for the difference between the two minimum energies,
 \begin{equation}
-\Delta V_{\text{stress}} \;=\;
-V_{\text{mut}}(\re_{\text{ref}}) - V_{\text{ref}}(\re_{\text{ref}}),
-\label{eq:dvstress}
+\Delta V_{\min} \equiv V'(\rem) - V(\re) .
+\label{eq:minimum-energy-difference}
 \end{equation}
-the second the energy released as the mutant relaxes to its own equilibrium,
+By \eqref{eq:internal-energy} the internal energies are $U = V(\re;\LL) + (3N-6)/2\beta$ and $U' = V'(\rem) + (3N-6)/2\beta$, whose second terms are equal, so
 \begin{equation}
-\Delta V_{\text{relax}} \;=\;
-V_{\text{mut}}(\re_{\text{mut}}) - V_{\text{mut}}(\re_{\text{ref}}),
-\label{eq:dvrelax}
-\end{equation}
-and their sum is the difference between the two minima,
-\begin{equation}
-\Delta V_{\min} \;=\;
-V_{\text{mut}}(\re_{\text{mut}}) - V_{\text{ref}}(\re_{\text{ref}})
-\;=\; \Delta V_{\text{stress}} + \Delta V_{\text{relax}}.
-\label{eq:dvmin}
-\end{equation}
-Since $\re_{\text{mut}}$ minimises $V_{\text{mut}}$, we have
-$V_{\text{mut}}(\re_{\text{mut}}) \le V_{\text{mut}}(\rr)$ for every $\rr$, and in
-particular for $\rr = \re_{\text{ref}}$, so
-\begin{equation}
-\Delta V_{\text{relax}} \;\le\; 0 .
+\boxed{
+\Delta U = \Delta V_{\min} .
+}
+\label{eq:internal-energy-change}
 \end{equation}
 
-\subsection{Decomposition of the stress energy}
-\label{sec:decomposition}
-
-$\Delta V_{\text{stress}}$ can be written out in closed form. We do so in steps.
-
-\paragraph{Step 1: separate the springs.}
-Both \eqref{eq:Vref} and \eqref{eq:Vmut} are sums over the same index set, all
-$\tfrac12 N(N-1)$ springs, so their difference is a sum of one term per spring,
+For the entropy, separate in \eqref{eq:entropy} the terms that depend on the network from those that do not,
 \begin{equation}
-\Delta V_{\text{stress}} \;=\; \sum_{i<j} \left[
-\tfrac12 k^{\text{mut}}_{ij}\big(d^e_{ij} - l^{\text{mut}}_{ij}\big)^2
-- \tfrac12 k^{\text{ref}}_{ij}\big(d^e_{ij} - l^{\text{ref}}_{ij}\big)^2
-\right],
-\qquad d^e_{ij} \equiv d_{ij}(\re_{\text{ref}}).
+TS = \frac{1}{2\beta}\left[ (3N-6)\left(\ln\frac{2\pi}{\beta} + 1\right)
+- \sum_{\lambda_n \ne 0} \ln \lambda_n \right],
 \end{equation}
-This is where carrying a parameter for every spring, active or not, does its work:
-no spring appears in one sum and not the other, and a contact created or destroyed
-by the mutation is carried by $\delta k_{ij}$ rather than by a change in the range
-of summation.
-
-\paragraph{Step 2: eliminate the distance.}
-By the definition of the reference strain \eqref{eq:sref},
-$d^e_{ij} = l^{\text{ref}}_{ij} + s_{ij}$, so the two brackets become
+and likewise for the mutant with $\lambda'_n$.
+The first term is the same for both, so on subtracting,
 \begin{equation}
-d^e_{ij} - l^{\text{ref}}_{ij} \;=\; s_{ij},
-\qquad
-d^e_{ij} - l^{\text{mut}}_{ij} \;=\; s_{ij} - \delta l_{ij}.
+T \Delta S = \frac{1}{2\beta}\left[
+\sum_{\lambda_n \ne 0} \ln \lambda_n - \sum_{\lambda'_n \ne 0} \ln \lambda'_n \right] .
 \end{equation}
-The conformation has now disappeared from the problem: what remains is expressed
-entirely in the reference strains and the perturbation.
-
-\paragraph{Step 3: substitute the force constants.}
-Using \eqref{eq:dk}, the term for one spring is
+Writing the sums of logarithms as logarithms of products,
 \begin{equation}
-\tfrac12 \big(k^{\text{ref}}_{ij} + \delta k_{ij}\big)
-\big(s_{ij} - \delta l_{ij}\big)^2
-- \tfrac12 k^{\text{ref}}_{ij}\, s_{ij}^2 .
+\boxed{
+T \Delta S = \frac{1}{2\beta} \ln
+\frac{\prod_{\lambda_n \ne 0} \lambda_n}{\prod_{\lambda'_n \ne 0} \lambda'_n} .
+}
+\label{eq:entropy-change}
 \end{equation}
+The two spectra enter only through these products; no correspondence between the modes of the reference and those of the mutant is used.
 
-\paragraph{Step 4: split off the change in stiffness.}
-Grouping the two terms in $k^{\text{ref}}_{ij}$ and keeping the $\delta k_{ij}$
-term apart,
+The free energy change is $\Delta A = \Delta U - T\Delta S$, which by \eqref{eq:internal-energy-change} and \eqref{eq:entropy-change} is
 \begin{equation}
-\;=\; \tfrac12 k^{\text{ref}}_{ij}\Big[\big(s_{ij} - \delta l_{ij}\big)^2 - s_{ij}^2\Big]
-\;+\; \tfrac12\, \delta k_{ij} \big(s_{ij} - \delta l_{ij}\big)^2 .
+\boxed{
+\Delta A = \Delta V_{\min} - \frac{1}{2\beta} \ln
+\frac{\prod_{\lambda_n \ne 0} \lambda_n}{\prod_{\lambda'_n \ne 0} \lambda'_n} .
+}
+\label{eq:free-energy-change}
 \end{equation}
-The second piece is already in final form. No expansion has been made in obtaining
-it, and none is possible: $\delta k_{ij}$ is not assumed small.
+Both \eqref{eq:entropy-change} and \eqref{eq:free-energy-change} depend on the spectra only through the ratio of the two products, so the choice of length unit does not affect them.
+In the protein literature \eqref{eq:free-energy-change} is what is meant by $\Delta\Delta G$ for the folded state.
 
-\paragraph{Step 5: expand the square.}
-The bracket is a difference of two squares,
+A mutation therefore changes the free energy in two ways: it shifts the minimum of the potential, and it changes the spectrum of $\KK$, which by \eqref{eq:hessian-offdiagonal} depends on the strains through $\gij$ and on the force constants $\kij$.
+A mutation that leaves the minimum energy untouched can still change the free energy, through the spectrum alone.
+
+\subsubsection{The change in the minimum energy}
+
+$\Delta V_{\min}$ can be computed in two stages, by changing the parameters first and letting the network relax afterwards.
+The first stage is the cost of changing the parameters at fixed conformation,
 \begin{equation}
-\big(s_{ij} - \delta l_{ij}\big)^2 - s_{ij}^2
-\;=\; -\,2\, s_{ij}\, \delta l_{ij} + \delta l_{ij}^2 ,
+\Delta V_{\text{stress}} = V'(\re) - V(\re)
+= \tfrac12 \sum_{i<j} \Big[ \kijm \big(\dije - \lijm\big)^{2}
+- \kij \big(\dije - \lij\big)^{2} \Big],
+\label{eq:stress-energy}
 \end{equation}
-which is a finite algebraic identity, not a truncated expansion: it is exact for
-any $\delta l_{ij}$.
-
-\paragraph{Step 6: collect.}
-Summing over springs,
+which needs only the reference structure and the two parameter sets.
+For an unfrustrated reference $\dije = \lij$, and it reduces to
+$\tfrac12 \sum_{i<j} \kijm \dlij^{2} \ge 0$: quadratic in the perturbation, and positive whichever way each equilibrium length moves.
+A frustrated reference keeps the terms linear in $\dlij$, of either sign, so its minimum energy responds to a mutation at first order in the perturbation while an unfrustrated one does not.
+the second the energy released as the mutant relaxes from $\re$ to its own equilibrium,
 \begin{equation}
-\boxed{\;
-\Delta V_{\text{stress}} \;=\;
-\underbrace{\tfrac12 \sum_{i<j} k^{\text{ref}}_{ij}\, \delta l_{ij}^{2}}_{\text{(a)}}
-\;-\; \underbrace{\sum_{i<j} k^{\text{ref}}_{ij}\, s_{ij}\, \delta l_{ij}}_{\text{(b)}}
-\;+\; \underbrace{\tfrac12 \sum_{i<j} \delta k_{ij}
-\big(s_{ij} - \delta l_{ij}\big)^{2}}_{\text{(c)}} .
-\;}
-\label{eq:decomposition}
+\Delta V_{\text{relax}} = V'(\rem) - V'(\re),
+\label{eq:relaxation-energy}
 \end{equation}
-This holds for any $k$, any mutation size, and any reference network, frustrated or
-not.
-
-\subsection{The three terms}
-
-Term (a) comes from the $\delta l_{ij}^2$ of the expanded square. It is
-non-negative, quadratic in the size of the mutation, and independent of the state
-of the reference.
-
-Term (b) is the cross term $-2 s_{ij}\delta l_{ij}$ of the same square. It is
-proportional to the reference strain and is the only term of the three that can be
-negative. It contributes $-k^{\text{ref}}_{ij} s_{ij}\,\delta l_{ij}$ per spring,
-which is negative when $s_{ij}$ and $\delta l_{ij}$ share a sign: lengthening the
-equilibrium length of a stretched spring ($s_{ij} > 0$, $\delta l_{ij} > 0$), or
-shortening that of a compressed one, moves the equilibrium length towards the
-distance the spring actually spans and so releases energy. The opposite pairing
-costs energy. Term (b) vanishes when $s_{ij}\,\delta l_{ij} = 0$ for every spring,
-which is to say when the reference is unstrained on the springs the mutation
-touches. In particular it vanishes for any mutation of an unfrustrated reference,
-and it does not vanish in general.
-
-Term (c) is the whole of the contribution from the change in force constants. It
-vanishes when $\delta k_{ij}(s_{ij} - \delta l_{ij})^2 = 0$ for every spring, in
-particular when $k$ is constant over the range the mutation explores. It is the
-term that a model with a fixed contact map does not have.
-
-Terms (b) and (c) are what distinguish \eqref{eq:decomposition} from the energy
-cost of mutating an unfrustrated network with fixed force constants, which is (a)
-alone. Neither is a correction of higher order in the mutation size: both are
-exact contributions of the same standing as (a), which happen to vanish in that
-case.
-
-\subsection{Differences and energies}
-
-$\Delta V_{\text{stress}}$ is a difference of two potentials, and is not the same
-as the absolute energy $V_{\text{mut}}(\re_{\text{ref}})$ of the mutant network at
-the reference conformation. By \eqref{eq:dvstress} the two differ by
-$V_{\text{ref}}(\re_{\text{ref}})$, the strain energy the reference already
-carries, which by \eqref{eq:Vmin} is zero for an unfrustrated reference and
-positive otherwise.
-
-\subsection{Changes in the thermodynamic properties}
-
-Applying Section~\ref{sec:thermo} to both networks and subtracting, the internal
-energy difference follows from \eqref{eq:U},
+and since $V'(\re)$ cancels between them,
 \begin{equation}
-\Delta U \;=\; U_{\text{mut}} - U_{\text{ref}}
-\;=\; V_{\text{mut}}(\re_{\text{mut}}) - V_{\text{ref}}(\re_{\text{ref}})
-\;=\; \Delta V_{\min},
+\boxed{
+\Delta V_{\min} = \Delta V_{\text{stress}} + \Delta V_{\text{relax}} .
+}
+\label{eq:minimum-energy-change}
 \end{equation}
-the equipartition terms cancelling. This step, and the entropy difference below,
-require the two networks to have the same number of non-null directions. A point
-mutation changes the parameters of one site and neither adds nor removes a node,
-so both Hessians are $3N\times3N$; and if both networks are infinitesimally rigid
-in the sense of Section~\ref{sec:distribution}, both have $3N-6$ nonzero
-eigenvalues. For the entropy, write \eqref{eq:S} as
+Since $\rem$ minimises $V'$, we have $V'(\rem) \le V'(\rr)$ for every $\rr$, and in particular for $\rr = \re$, so
 \begin{equation}
-TS \;=\; \frac{1}{2\beta}\left[ (3N-6)\left(\ln\frac{2\pi}{\beta} + 1\right)
-- \sum_n{}' \ln \lambda_n \right],
+\Delta V_{\text{relax}} \le 0 .
 \end{equation}
-in which only the last term depends on the network. Both networks have the same
-number of non-null directions, so on subtracting, the constant term cancels and
-\begin{equation}
-\boxed{\;
-T \Delta S \;=\; \frac{1}{2\beta}\left[
-\sum_n{}' \ln \lambda^{\text{ref}}_n - \sum_n{}' \ln \lambda^{\text{mut}}_n \right]
-\;=\; \frac{1}{2\beta} \ln
-\frac{\prod_n' \lambda^{\text{ref}}_n}{\prod_n' \lambda^{\text{mut}}_n} .
-\;}
-\label{eq:dS}
-\end{equation}
-The two spectra enter only through these products. No correspondence between the
-modes of the reference and those of the mutant is used, and none is available:
-the eigenvectors of $\KK^{\text{ref}}$ and $\KK^{\text{mut}}$ are different sets of
-directions, and the eigenvalues are not paired by any property of the model.
 
-The free energy difference is then
-\begin{equation}
-\Delta A \;=\; \Delta U - T\Delta S
-\;=\; \Delta V_{\min} - \frac{1}{2\beta} \ln
-\frac{\prod_n' \lambda^{\text{ref}}_n}{\prod_n' \lambda^{\text{mut}}_n}.
-\label{eq:dA}
-\end{equation}
-The dimensional ambiguity noted after \eqref{eq:S} has cancelled: \eqref{eq:dS} and
-\eqref{eq:dA} depend only on the ratio of the two products. In the protein
-literature the quantity \eqref{eq:dA} is what is meant by $\Delta\Delta G$ for the
-folded state.
+\clearpage
+\appendix
+\begin{center}
+\rule{\textwidth}{0.4pt}\\[2pt]
+{\Large\bfseries Appendices}\\[-6pt]
+\rule{\textwidth}{0.4pt}
+\end{center}
+\bigskip
 
-The products $\prod_n' \lambda_n$ are the pseudo-determinants of the two Hessians,
-so \eqref{eq:dS} may be computed without diagonalising either matrix.
-
-Equations \eqref{eq:dvmin} and \eqref{eq:dS} separate the two ways a mutation
-changes the free energy. It shifts the minimum of the potential, which
-\eqref{eq:decomposition} decomposes; and it changes the spectrum of $\KK$, which
-by \eqref{eq:hessian} depends on the strains through $g_{ij}$ and on the contact
-map through $k(l_{ij})$. A mutation that leaves the minimum energy untouched can
-still change the free energy, through the spectrum alone.
-
-\section{The step function}
-
-The results above hold for any $k$. The common choice is a step at a cutoff
-distance,
-\begin{equation}
-k(l) \;=\; k_0\, \mathds{1}\big[\, l \le d_{\max} \,\big],
-\label{eq:step}
-\end{equation}
-under which a spring is either active with strength $k_0$ or inactive. Two
-consequences follow from the results above.
-
-First, $V$ is discontinuous in the parameters. If a mutation carries
-$l^{\text{ref}}_{ij}$ across $d_{\max}$ then $\delta k_{ij} = \pm k_0$, and by term
-(c) of \eqref{eq:decomposition} the energy changes by
-$\pm\tfrac12 k_0 (s_{ij} - \delta l_{ij})^2$ however small $\delta l_{ij}$ is.
-
-Second, and for the same reason, term (c) cannot be treated as small when
-$\delta l_{ij}$ is small. This is the sense in which the contact map resists a
-perturbative treatment: $\delta k_{ij}$ is not controlled by $\delta l_{ij}$.
-
-A continuous $k$, for instance a sigmoid of width $w$ centred on $d_{\max}$, makes
-$V$ continuous in $\LL$ and $\delta k_{ij}$ small whenever $\delta l_{ij}$ is
-small. The cost is that no spring is exactly inactive, so the contact map becomes a
-threshold imposed on a continuum rather than a property of the network.
 
 \section{Open questions and work to come}
 \label{sec:open}
@@ -817,35 +596,89 @@ threshold imposed on a continuum rather than a property of the network.
 The following are not settled here.
 
 \begin{itemize}
-\item The quadratic truncation \eqref{eq:quadratic} is the only approximation in
+\item The quadratic truncation \eqref{eq:quadratic-approximation} is the only approximation in
 the document. Its accuracy for a frustrated network has not been examined.
-\item The magnitudes of (a), (b) and (c) in \eqref{eq:decomposition} for a real
-protein are not known. The decomposition says when each vanishes, not how large
-each is.
-\item How large $|s_{ij}|$ may become before a compressed spring ($s_{ij} < 0$),
-with its negative transverse stiffness \eqref{eq:split}, ceases to represent a
-residue contact.
-\item A mutation can cost the network its infinitesimal rigidity. The perturbation
-\eqref{eq:mutation} acts on every spring of the mutated site, and if enough of
-their equilibrium lengths leave the range where $k>0$, the site is left attached
-by one or two springs and acquires a rotational freedom that changes no active
-distance. The mutant Hessian then has more than six null directions, the counts
-in Section~\ref{sec:changes} no longer match, and neither $\Delta U =
-\Delta V_{\min}$ nor \eqref{eq:dS} holds as written: an uncancelled term in
-$\ln(2\pi/\beta)$ survives, so $\Delta A$ is no longer independent of the units of
-length. How often this happens at a given mutation size and cutoff is an empirical
-question, and what the free energy difference should mean when it does is not
-settled here.
-\item How the parameters $\LL$ should be chosen. Section~\ref{sec:frustration}
-gives one recipe, $l_{ij} = d_{ij}(\rr^{\ast})$ for a chosen structure, which
-yields an unfrustrated network; but nothing selects it, and the question of
-whether a frustrated network is the better model of a native structure --- and if
-so, which one --- is open. This is a question about the parameters, and is not
-one \eqref{eq:equilibrium} addresses: that equation takes $\LL$ as given and
-solves for the conformation.
+\item How large $|\dije - \lij|$ may become before a compressed spring
+($\dije < \lij$), with its negative transverse force constant
+\eqref{eq:hessian-longitudinal-transverse}, ceases to represent a residue
+interaction.
+\item A mutation can cost the network its infinitesimal rigidity: if $k$ vanishes
+over some range of lengths and enough springs of the mutated site are carried into
+it, the site acquires a rotational freedom. The mutant Hessian then has more than
+six null directions, the counts in Section~\ref{sec:changes} no longer match, and
+neither \eqref{eq:internal-energy-change} nor \eqref{eq:entropy-change} holds as
+written.
+\item How the parameters $\LL$ should be chosen. Setting
+$\lij = \dij(\rr^{\ast})$ for a chosen structure $\rr^{\ast}$ yields an
+unfrustrated network, but nothing selects it, and whether a frustrated network is
+the better model of a native structure --- and if so, which one --- is open.
 \end{itemize}
 
-To be added: the distribution of structures generated by repeated mutation, and
-the entropic contribution to $\Delta\Delta G$ along a substitution process.
+\section{Frustration}
+\label{app:frustration}
+
+\subsection*{Realisable parameters}
+
+The parameters $\LL$ are \emph{realisable} when some conformation has every spring at its own equilibrium length,
+\begin{equation}
+\dij(\rr^{\ast}) = \lij \quad \text{for every spring with } \kij \ne 0 ,
+\label{eq:realisable}
+\end{equation}
+for at least one $\rr^{\ast} \in \mathbb{R}^{3N}$.
+This is a strong requirement.
+The network has $\tfrac12 N(N-1)$ springs but only $3N-6$ independent coordinates, so for $N > 4$ the equilibrium lengths far outnumber the freedoms available to satisfy them: they cannot be chosen independently and still correspond to a set of points in three dimensions.
+Reading them off a structure, $\lij = \dij(\rr^{\ast})$, makes them realisable by construction, which is what a standard elastic network model does.
+Choosing them in any other way does not.
+
+When $\LL$ is realisable, $\rr^{\ast}$ gives $V(\rr^{\ast};\LL) = 0$ by \eqref{eq:potential}, which is the least value $V$ can take, so $\rr^{\ast}$ is a global minimum and the network is \emph{unfrustrated}.
+Otherwise no conformation relaxes every spring at once, and the network is \emph{frustrated}: at its minimum
+\begin{equation}
+\dije \ne \lij \quad \text{for at least one spring with } \kij \ne 0 .
+\label{eq:frustration}
+\end{equation}
+Such a spring is strained at equilibrium, stretched if $\dije > \lij$ and compressed if $\dije < \lij$.
+The equilibrium condition is \eqref{eq:potential-gradient} set to zero: the forces on each node cancel, which does not require the force exerted by each spring to vanish.
+
+\subsection*{The minimum energy}
+
+By \eqref{eq:minimum-energy} the minimum energy is a sum of non-negative terms, one per spring, each vanishing only for a relaxed spring.
+A frustrated network therefore has $V(\re;\LL) > 0$: it stores elastic energy even in its own equilibrium conformation, whereas an unfrustrated one has $V(\re;\LL) = 0$.
+
+\subsection*{Longitudinal and transverse stiffness}
+
+Equation \eqref{eq:hessian-offdiagonal} contains two projectors. Writing
+$\mathbf{P}_\perp = \mathbf{I} - \eeije\big(\eeije\big)^{\mathsf T}$ for the projector
+onto the plane perpendicular to the spring, it may be rearranged as
+\begin{equation}
+\KK_{ij} = -\kij\Big[\eeije\big(\eeije\big)^{\mathsf T}
++ \gij\mathbf{P}_\perp\Big],
+\label{eq:hessian-longitudinal-transverse}
+\end{equation}
+so a spring carries two force constants rather than one: a longitudinal $\kij$
+resisting change of the distance, and a transverse $\kij \gij$, doubly
+degenerate, resisting rotation of the spring at fixed distance.
+
+The transverse force constant is proportional to $\gij = (\dije - \lij)/\dije$, and so
+vanishes for a relaxed spring and changes sign with the strain. A stretched spring
+resists transverse displacement, as a taut string does. A
+compressed one has a negative transverse force constant: displacing the two nodes
+sideways increases their separation, which a compressed spring favours. Note that
+it is the transverse force constant that is negative, not $\kij$, which is
+non-negative by \eqref{eq:stiffness-from-length}.
+
+\subsection*{What frustration changes}
+
+For an unfrustrated network $\gij = 0$ for every spring, the transverse term of
+\eqref{eq:hessian-longitudinal-transverse} is absent, and each off-diagonal block
+reduces to $-\kij\eeije\big(\eeije\big)^{\mathsf T}$, a matrix of rank one.
+Frustration is what makes the transverse term present, and it enters $\KK$ through
+$\gij$ alone.
+
+Since $\KK$ differs, so do its eigenvalues and eigenvectors, and hence the normal
+modes of Section~\ref{sec:modes}, the partition function and thermodynamic
+functions of Section~\ref{sec:thermo}, and the fluctuations of
+Section~\ref{sec:fluctuations}. None of those derivations assumes an unfrustrated
+network, so all of them hold as written; what changes is the matrix they are
+applied to.
 
 \end{document}

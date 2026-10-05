@@ -1,0 +1,255 @@
+
+
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{dsfont}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{hyperref}
+\usepackage{parskip}
+\setcounter{secnumdepth}{2}   % number sections and subsections only
+\usepackage{xcolor}
+
+% Flags a point Claude is not sure about; search for \tocheck to find them all.
+\newcommand{\tocheck}[1]{\textcolor{red}{[CHECK: #1]}}
+
+\newcommand{\rr}{\mathbf{r}}
+\newcommand{\ee}{\hat{\mathbf{e}}}
+\newcommand{\KK}{\mathbf{K}}
+\newcommand{\LL}{\Lambda}
+\newcommand{\re}{\rr^{e}}
+\newcommand{\rem}{\rr^{e\prime}}   % mutant equilibrium conformation
+\newcommand{\rrij}{\mathbf{r}_{ij}}
+\newcommand{\eeij}{\ee_{ij}}
+\newcommand{\eeije}{\ee^{e}_{ij}}
+\newcommand{\dije}{d^{e}_{ij}}
+\newcommand{\dijem}{d^{e\prime}_{ij}}
+\newcommand{\lijm}{l'_{ij}}
+\newcommand{\kijm}{k'_{ij}}
+\newcommand{\dlij}{\delta l_{ij}}
+\newcommand{\dkij}{\delta k_{ij}}
+\newcommand{\gij}{g_{ij}}
+\newcommand{\lij}{l_{ij}}
+\newcommand{\kij}{k_{ij}}
+\newcommand{\dij}{d_{ij}}
+
+\title{First-order perturbation theory for the generalized elastic network model}
+\author{Julian Echave}
+\date{2026-08-26}
+
+\makeatletter
+\newcommand{\defref}[2]{\@namedef{r@#1}{{#2}{--}}}
+% labels below refer to the main report; numbers as in its current version
+\defref{sec:changes}{3.2}
+\defref{eq:potential}{6}
+\defref{eq:equilibrium-condition}{8}
+\defref{eq:potential-gradient}{14}
+\defref{eq:covariance}{29}
+\defref{eq:stress-energy}{48}
+\defref{eq:minimum-energy-change}{50}
+\defref{eq:entropy-change}{46}
+\defref{sec:expansion}{2.2}
+\defref{eq:pseudo-inverse}{32}
+\makeatother
+
+\begin{document}
+\maketitle
+
+
+\section*{Note}
+
+This is material removed from the main report on the generalized elastic network
+model, kept in case it is needed later. Equation references of the form
+\texttt{eq:...} that are not defined here refer to that report.
+
+Two results are worth remembering. The change of the Hessian must be projected
+onto the internal subspace before any of the eigenvector or covariance formulas
+are applied, because the rigid-body directions of the mutant differ from the
+reference's at first order; without the projection those formulas carry an error
+that does not vanish as the mutation is made smaller. And the change of the
+Hessian has two parts of the same order, one from the change of parameters at
+fixed conformation and one from the change of conformation at fixed parameters,
+the second involving third derivatives of the potential; keeping only the first
+is not a consistent first-order approximation.
+
+\section{First-order perturbation theory}
+\label{sec:perturbation}
+
+The results of Section~\ref{sec:changes} are exact within the quadratic approximation, but two of them are expensive: $\rem$ requires a minimisation and $\{\lambda'_n\}$ a diagonalisation of $\KK'$.
+This section obtains the mutant's structure, normal modes, fluctuations and energies to first order in the size of the mutation, using only quantities of the reference.
+
+\subsection*{The perturbation, its force and its change of the Hessian}
+
+Write the perturbation as a fixed pattern times a scale,
+\begin{equation}
+\dlij = \sigma\, m_{ij},
+\qquad
+m_{ij} = 0 \ \text{ unless } i = m \text{ or } j = m,
+\label{eq:mutation-scale}
+\end{equation}
+with the $m_{ij}$ fixed and $\sigma \to 0$ the limit in which the expansion is made; $k$ is assumed differentiable at the reference lengths, so that $\dkij = O(\sigma)$.
+The mutant potential is the reference potential plus a perturbation,
+\begin{equation}
+V'(\rr) = V(\rr;\LL) + W(\rr),
+\qquad
+W(\rr) \equiv V'(\rr) - V(\rr;\LL),
+\label{eq:perturbation}
+\end{equation}
+and $W$, being a difference of two potentials of the form \eqref{eq:potential}, is a function of the distances alone and is therefore invariant under rigid-body motions.
+
+Two quantities carry the whole of the perturbation's effect.
+The first is the force it exerts at the reference equilibrium.
+Since the reference gradient vanishes there, by \eqref{eq:equilibrium-condition} and \eqref{eq:potential-gradient},
+\begin{equation}
+\mathbf{f}_i \equiv -\frac{\partial W}{\partial \rr_i}\bigg|_{\re}
+= \sum_{j \ne i} \kijm \big(\dije - \lijm\big) \eeije
+= O(\sigma),
+\label{eq:mutational-force}
+\end{equation}
+localised on the mutated site and its neighbours, and with no component along the six rigid-body directions.
+The second is the change of the Hessian, $\delta\KK \equiv \KK' - \KK$, also $O(\sigma)$, with $\KK'$ the Hessian of $V'$ at $\rem$ and $\KK$ that of $V$ at $\re$.
+
+Both Hessians are written in a common frame, with $\rem$ superposed on $\re$, and $\delta\KK$ is understood as projected onto the internal subspace, the complement of the rigid-body directions:
+\begin{equation}
+\delta\KK \;\to\; \mathbf{P}\,\delta\KK\,\mathbf{P},
+\qquad
+\mathbf{P} = \KK^{+}\KK = \sum_{\lambda_n \ne 0} \mathbf{q}_n\mathbf{q}_n^{\mathsf T}.
+\label{eq:internal-projection}
+\end{equation}
+This is not a convention but a requirement.
+Both networks have exactly six null directions, but they do not span the same subspace: the three translations are the same vectors in both, since a uniform displacement does not depend on the structure, whereas the three infinitesimal rotations are generated by the node positions and so differ at $O(\sigma)$.
+An unprojected $\delta\KK$ therefore carries blocks coupling the internal and rigid-body subspaces, and these spoil the formulas below at the order at which they are meant to hold.
+
+\subsection*{The change in the equilibrium conformation}
+
+The mutant equilibrium satisfies $\nabla V'(\rem) = \mathbf{0}$ exactly.
+Writing $\rem = \re + \mathbf{w}$ and expanding about $\re$,
+\begin{equation}
+\mathbf{0} = -\mathbf{f} + \big(\KK + \delta\KK\big)\mathbf{w} + O(\mathbf{w}^{2}),
+\end{equation}
+in which $\delta\KK\,\mathbf{w}$ is $O(\sigma^{2})$ because $\mathbf{f}$ and $\delta\KK$ are both $O(\sigma)$, so $\KK$ may replace $\KK'$ at this order:
+\begin{equation}
+\boxed{
+\mathbf{w} \equiv \rem - \re = \KK^{+}\mathbf{f} + O(\sigma^{2}) .
+}
+\label{eq:first-order-displacement}
+\end{equation}
+This is the linear response approximation: the mutant structure is the reference deformed by the force \eqref{eq:mutational-force}, with $\KK^{+}$ as its compliance.
+In the normal-mode representation, writing $w_n = \mathbf{q}_n^{\mathsf T}\mathbf{w}$ for the components of this particular displacement,
+\begin{equation}
+\boxed{
+w_n = \frac{\mathbf{q}_n^{\mathsf T}\mathbf{f}}{\lambda_n} + O(\sigma^{2}),
+\qquad \lambda_n \ne 0,
+}
+\label{eq:first-order-displacement-modal}
+\end{equation}
+so each mode is excited in proportion to its overlap with the force and in inverse proportion to its force constant.
+A localised force gives a delocalised displacement, carried mostly by the modes that are both soft and aligned with it.
+
+\subsection*{The change in the normal modes}
+
+The eigenvalues shift by the diagonal elements of $\delta\KK$ in the reference basis,
+\begin{equation}
+\boxed{
+\lambda'_n = \lambda_n + \mathbf{q}_n^{\mathsf T}\, \delta\KK\, \mathbf{q}_n + O(\sigma^{2}),
+}
+\label{eq:eigenvalue-shift}
+\end{equation}
+and the eigenvectors rotate by the off-diagonal ones,
+\begin{equation}
+\boxed{
+\mathbf{q}'_n = \mathbf{q}_n + \sum_{\substack{m \ne n \\ \lambda_m \ne 0}}
+\frac{\mathbf{q}_m^{\mathsf T}\, \delta\KK\, \mathbf{q}_n}{\lambda_n - \lambda_m}\, \mathbf{q}_m
++ O(\sigma^{2}) .
+}
+\label{eq:eigenvector-shift}
+\end{equation}
+The eigenvalue shifts need no non-degeneracy: when several eigenvalues coincide, their individual shifts are ambiguous but their sum is the trace of $\delta\KK$ on the degenerate subspace, which is not.
+The eigenvector shifts do: \eqref{eq:eigenvector-shift} requires the gaps $\lambda_n - \lambda_m$ to be large compared with the corresponding elements of $\delta\KK$, and two modes of nearly equal force constant mix strongly under any perturbation that couples them.
+Since $V'$ is invariant under rigid-body motions like $V$, the mutant also has exactly six null eigenvalues, and \eqref{eq:eigenvalue-shift} returns zero for them; the directions they span, however, are the mutant's own, as noted above.
+
+\subsection*{The change in the fluctuations}
+
+Differentiating $\bm{\Sigma} = \beta^{-1}\KK^{+}$ of \eqref{eq:covariance}, and using \eqref{eq:internal-projection},
+\begin{equation}
+\boxed{
+\delta\bm{\Sigma} = -\beta^{-1}\, \KK^{+}\, \delta\KK\, \KK^{+} + O(\sigma^{2}) ,
+}
+\label{eq:covariance-change}
+\end{equation}
+which requires no diagonalisation of either network.
+In the reference normal-mode basis its elements are
+\begin{equation}
+\boxed{
+\mathbf{q}_m^{\mathsf T}\, \delta\bm{\Sigma}\, \mathbf{q}_n
+= -\frac{1}{\beta}\, \frac{\mathbf{q}_m^{\mathsf T}\, \delta\KK\, \mathbf{q}_n}{\lambda_m \lambda_n}
++ O(\sigma^{2}) ,
+}
+\label{eq:covariance-change-modal}
+\end{equation}
+whose diagonal, $\delta\langle u_n^{2}\rangle = -\delta\lambda_n/\beta\lambda_n^{2}$, is the change in each mode's amplitude: stiffening a mode narrows its distribution, and the weight $\lambda_n^{-2}$ makes the change largest for the softest modes.
+The off-diagonal elements are the substance of the change of basis: in the mutant the reference modes are no longer uncorrelated, and the correlation between two of them is set by the element of $\delta\KK$ that couples them, divided by both force constants.
+
+\subsection*{The changes in the energies}
+
+The stress energy \eqref{eq:stress-energy} needs no expansion: it is already exact and evaluated at the reference.
+The relaxation energy follows from \eqref{eq:first-order-displacement},
+\begin{equation}
+\boxed{
+\Delta V_{\text{relax}} = -\tfrac12\, \mathbf{f}^{\mathsf T}\KK^{+}\mathbf{f} + O(\sigma^{3})
+= -\frac{1}{2}\sum_{\lambda_n \ne 0} \frac{\big(\mathbf{q}_n^{\mathsf T}\mathbf{f}\big)^{2}}{\lambda_n}
++ O(\sigma^{3}) ,
+}
+\label{eq:first-order-relaxation}
+\end{equation}
+non-positive, as the exact result requires, and $O(\sigma^{2})$: the structural response reaches the energy one order later than the stress.
+With \eqref{eq:minimum-energy-change} this gives $\Delta U = \Delta V_{\min}$ without the mutant structure.
+
+For the entropy, substituting \eqref{eq:eigenvalue-shift} into \eqref{eq:entropy-change} and expanding the logarithm,
+\begin{equation}
+\boxed{
+T\Delta S = -\frac{1}{2\beta} \sum_{\lambda_n \ne 0} \frac{\delta\lambda_n}{\lambda_n}
+= -\frac{1}{2\beta} \operatorname{tr}\big(\KK^{+} \delta\KK\big) + O(\sigma^{2}) ,
+}
+\label{eq:first-order-entropy-change}
+\end{equation}
+which is $O(\sigma)$ and needs neither spectrum: only $\KK^{+}$ and $\delta\KK$ enter, and the trace projects onto the internal subspace of its own accord.
+A mutation that stiffens the network lowers its entropy.
+The free energy change is then
+\begin{equation}
+\boxed{
+\Delta A = \Delta V_{\text{stress}} - \tfrac12 \mathbf{f}^{\mathsf T}\KK^{+}\mathbf{f}
++ \frac{1}{2\beta} \operatorname{tr}\big(\KK^{+} \delta\KK\big) + O(\sigma^{3}) .
+}
+\label{eq:first-order-free-energy-change}
+\end{equation}
+
+\subsection*{What is assumed}
+
+Four things, none of them required by Section~\ref{sec:changes}.
+
+$k$ is differentiable at the reference lengths, so that $\dkij = O(\sigma)$.
+The exact results hold for any non-negative $k$.
+
+The displacement \eqref{eq:first-order-displacement} treats $\KK$ as constant between $\re$ and $\rem$, which is consistent at this order but fails once the mutation moves the network appreciably along its soft directions.
+
+The eigenvector shifts \eqref{eq:eigenvector-shift} and the expansions of the logarithm require the perturbation to be small compared with the spectral gaps and with the $\lambda_n$ themselves, which the softest modes violate first.
+
+The change of the Hessian has two parts of the same order,
+\begin{equation}
+\delta\KK =
+\underbrace{\frac{\partial^2 W}{\partial \rr^2}\bigg|_{\re}}_{\text{parameters}}
+\;+\;
+\underbrace{\frac{\partial^3 V}{\partial \rr^3}\bigg|_{\re} \cdot \big(\KK^{+}\mathbf{f}\big)}_{\text{structure}}
+\;+\; O(\sigma^{2}),
+\label{eq:hessian-change}
+\end{equation}
+the second involving third derivatives of $V$, outside the quadratic approximation of Section~\ref{sec:expansion}.
+Dropping it and keeping only the change of parameters at fixed conformation is not a consistent approximation: the two are of the same order in $\sigma$, so the error does not vanish as the mutation is made smaller.
+
+
+\end{document}
