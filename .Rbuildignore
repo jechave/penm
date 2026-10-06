@@ -18,3 +18,4 @@
 ^CONTRIBUTING\.md$
 ^penm_.*\.pdf$
 ^README\.Rmd$
+^vignettes/.*\.Rmd\.orig$
