@@ -65,9 +65,13 @@ kij_pfgnm <- kij_pfanm
 
 #' Calculate kij for model by Reach et al.
 #'
+#' Pairs one, two or three apart in sequence get fixed constants; all others
+#' decay exponentially with distance, with different constants within and
+#' between chains. Vectorised over `dij` and `sdij`, like the other kij_*.
+#'
 #' @noRd
 #'
-kij_reach <- function(dij, sdist = 5, same_chain = T, ...) {
+kij_reach <- function(dij, sdij, same_chain = TRUE, ...) {
   k12 <- 712
   k13 <- 6.92
   k14 <- 32.0
@@ -75,16 +79,49 @@ kij_reach <- function(dij, sdist = 5, same_chain = T, ...) {
   bin <- 0.8
   aex <- 1630
   bex <- 0.772
-  if (sdist == 1) {
-    kij <- k12
-  } else if (sdist == 2) {
-    kij <- k13
-  } else if (sdist == 3) {
-    kij <- k14
-  } else if (same_chain) {
+  stopifnot(length(sdij) == length(dij) || length(sdij) == 1)
+  if (same_chain) {
     kij <- ain * exp(-bin * dij)
   } else {
     kij <- aex * exp(-bex * dij)
   }
+  sdij <- rep_len(abs(sdij), length(dij))
+  kij[sdij == 1] <- k12
+  kij[sdij == 2] <- k13
+  kij[sdij == 3] <- k14
+  kij
+}
+
+
+#' Calculate kij for the ANM with a smoothed cutoff
+#'
+#' As [kij_anm()], with the step at `d_max` replaced by
+#' \eqn{\frac12 [1 - \tanh((d - d_{max}) / w)]}, so `kij = k/2` at the cutoff.
+#' i,i+1 contacts are forced to `k` regardless of distance, as in `kij_anm`.
+#'
+#' @param w width of the switching region; no default
+#'
+#' @noRd
+#'
+kij_anm_smooth <- function(dij, sdij, d_max = 10, w, k = 1, ...) {
+  kij <- k * 0.5 * (1 - tanh((dij - d_max) / w))
+  kij[abs(sdij) == 1] <- k
+  kij
+}
+
+
+#' Calculate kij for model by Ming and Wall (2005) with a smoothed cutoff
+#'
+#' As [kij_ming_wall()], with the step at `d_max` replaced by
+#' \eqn{\frac12 [1 - \tanh((d - d_{max}) / w)]}, so `kij = k/2` at the cutoff.
+#' i,i+1 contacts get `a * k` regardless of distance, as in `kij_ming_wall`.
+#'
+#' @param w width of the switching region; no default
+#'
+#' @noRd
+#'
+kij_ming_wall_smooth <- function(dij, sdij, d_max = 10.5, w, k = 4.5, a = 42, ...) {
+  kij <- k * 0.5 * (1 - tanh((dij - d_max) / w))
+  kij[abs(sdij) == 1] <- a * k
   kij
 }

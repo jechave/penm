@@ -42,12 +42,13 @@ internals_expected <- list(
   kij_ming_wall = penm:::kij_ming_wall(dij, sdij),
   kij_pfanm     = penm:::kij_pfanm(dij),
   kij_pfgnm     = penm:::kij_pfgnm(dij),
-  # kij_reach dispatches on a scalar sdist, so record one value per branch
-  kij_reach_sd1 = penm:::kij_reach(dij, sdist = 1),
-  kij_reach_sd2 = penm:::kij_reach(dij, sdist = 2),
-  kij_reach_sd3 = penm:::kij_reach(dij, sdist = 3),
-  kij_reach_in  = penm:::kij_reach(dij, sdist = 5, same_chain = TRUE),
-  kij_reach_ex  = penm:::kij_reach(dij, sdist = 5, same_chain = FALSE)
+  # kij_reach: one entry per branch, then the mixed sdij vector
+  kij_reach_sd1 = penm:::kij_reach(dij, sdij = 1),
+  kij_reach_sd2 = penm:::kij_reach(dij, sdij = 2),
+  kij_reach_sd3 = penm:::kij_reach(dij, sdij = 3),
+  kij_reach_in  = penm:::kij_reach(dij, sdij = 5, same_chain = TRUE),
+  kij_reach_ex  = penm:::kij_reach(dij, sdij = 5, same_chain = FALSE),
+  kij_reach     = penm:::kij_reach(dij, sdij)
 )
 
 ## ----------------------------------------------------------------------------------------------------------------------
