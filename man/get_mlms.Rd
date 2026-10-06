@@ -33,7 +33,6 @@ Other site profiles:
 \code{\link[=get_cn]{get_cn()}},
 \code{\link[=get_dactive]{get_dactive()}},
 \code{\link[=get_msf_site]{get_msf_site()}},
-\code{\link[=get_vmin_site]{get_vmin_site()}},
 \code{\link[=get_wcn]{get_wcn()}}
 }
 \concept{site profiles}

@@ -169,8 +169,6 @@ and there is nothing to integrate out.
 
 - `delta_structure_dvmi()` — joins the two graphs on `edge`, so unshared edges are
   silently dropped and the per-site profile no longer sums to `ddg_dv()`.
-  Redundant in any case: `get_stress(mut) − get_stress(wt)` gives the same
-  profile, computed on each protein's own graph.
 - `delta_structure_dvsi()` — asserts that the two edge lists are identical, so it
   errors.
 - `delta_structure_dvsi_same_topology()` — the same comparison by row position,

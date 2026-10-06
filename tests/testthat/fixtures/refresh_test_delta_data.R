@@ -76,7 +76,6 @@ prot_expected <- list(
   wcn                  = get_wcn(wt),
   msf_site             = get_msf_site(wt),
   mlms                 = get_mlms(wt),
-  stress               = get_vmin_site(wt),   # key predates the rename from get_stress()
   msf_mode             = get_msf_mode(wt),
   dactive              = get_dactive(wt, pdb_site_active),
   # matrices

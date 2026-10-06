@@ -344,7 +344,7 @@ cor(log(sensitivity), log(get_msf_site(wt)))
 ```
 
 `get_cn()` and `get_msf_site()` are two of several single-structure profiles —
-see also `get_wcn()` and `get_vmin_site()`.
+see also `get_wcn()` and `get_mlms()`.
 
 Both profiles are comparative. Responses scale as $dr^2 \propto \sigma^2$ with
 `mut_dl_sigma`, and with the spring constants, so their absolute size is

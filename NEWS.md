@@ -6,9 +6,7 @@
   `delta_structure_dvsi_same_topology()` are removed. All three compare the two
   graphs edge by edge, and none is correct when the contact map changes: `dvmi`
   drops unshared edges, `dvsi` errors, and `dvsi_same_topology` matched rows by
-  position and could return wrong numbers silently. For the per-site
-  minimum-energy difference use `get_vmin_site(mut) - get_vmin_site(wt)`, which
-  sums to `2 * ddg_dv(wt, mut)`.
+  position and could return wrong numbers silently.
 
 ## Other changes
 
