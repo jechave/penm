@@ -409,9 +409,9 @@ agreement <- c(
 )
 round(agreement, 3)
 #> structure, by site structure, by mode  dynamics, by site  dynamics, by mode 
-#>              0.890              0.986              0.964              0.982
+#>              0.871              0.987              0.954              0.973
 ```
 
 The single-point scan predicts the pattern in which tips separated by many
 mutations differ from each other: the correlations range from
-0.89 to 0.99.
+0.87 to 0.99.
