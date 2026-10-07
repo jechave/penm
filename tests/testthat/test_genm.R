@@ -255,6 +255,37 @@ test_that("an allele's draw depends on (ensemble, site, allele), and leaves the 
   expect_identical(x, y)
 })
 
+test_that("an allele's change to a spring does not depend on which other springs exist", {
+  # the change allele 3 at site_a makes to each of its springs, labelled by the
+  # site at the spring's other end
+  dl_by_partner <- function(e) {
+    springs <- genm_site_springs(e, site_a)
+    partner <- ifelse(springs$i == site_a, springs$j, springs$i)
+    dl <- genm_site_dl(e, site_a, 3L)
+    tibble::tibble(partner = partner, sdij = springs$sdij, dl = dl)
+  }
+  narrow <- dl_by_partner(enm)
+  perturbed <- narrow$sdij >= 2
+  # the shared springs are perturbed, so equal changes are not 0 == 0
+  expect_gt(sum(narrow$dl[perturbed] != 0), 10)
+
+  # more springs: site_a gains partners, and the ones it had keep their change
+  wide <- dl_by_partner(build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
+                                           d_max = 10.5, d_max_pairs = 16))
+  expect_gt(nrow(wide), nrow(narrow))
+  same_spring_in_wide <- match(narrow$partner, wide$partner)
+  expect_false(anyNA(same_spring_in_wide))
+  expect_identical(wide$dl[same_spring_in_wide], narrow$dl)
+
+  # mut_sd_min = 1 perturbs the i,i+1 bonds too; the springs both perturb keep
+  # their change
+  all_perturbed <- dl_by_partner(build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
+                                                    d_max = 10.5, d_max_pairs = 14,
+                                                    mut_sd_min = 1))
+  expect_identical(all_perturbed$partner, narrow$partner)
+  expect_identical(all_perturbed$dl[perturbed], narrow$dl[perturbed])
+})
+
 test_that("genm_mutate validates its input", {
   expect_error(genm_mutate(mut_a_enm, site_a, 3L), "already has allele")
   expect_error(genm_mutate(enm, site_a, 0L), "already has allele")

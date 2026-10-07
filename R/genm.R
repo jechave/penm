@@ -14,8 +14,10 @@
 #   lij = l0ij + delta(i, s_i)ij + delta(j, s_j)ij,
 #
 # with l0ij its length in the pdb, s_i the allele at site i, and delta(site, 0)
-# = 0. delta(site, allele) is a draw seeded by hashing (ensemble, site, allele),
-# as for get_mutant_site(); see ?penm_ensemble. Because lij is always computed
+# = 0. delta(site, allele) is a stream of draws seeded by hashing (ensemble,
+# site, allele), as for get_mutant_site(); see ?penm_ensemble. The spring from
+# site to site k takes the k-th draw, so delta(i, s_i)ij depends on the spring's
+# other end, not on which other springs exist. Because lij is always computed
 # from l0ij and the sequence, never accumulated, the same sequence gives the
 # same parameters bit for bit, however it was reached.
 #
@@ -231,6 +233,11 @@ genm_dl_from_end <- function(enm, rows, end_site) {
 #' draw with sd `mut_dl_sigma`, seeded by hashing `(ensemble, site, allele)`
 #' without disturbing the caller's RNG.
 #'
+#' The spring joining `site` to site `k` takes the `k`-th value of that stream.
+#' Its change therefore depends on `(ensemble, site, allele, k)` only, not on
+#' which other springs exist: networks built with a different `d_max_pairs` or
+#' `mut_sd_min` give the springs they share the same change.
+#'
 #' @param enm a `"genm"` object
 #' @param site sequential site index
 #' @param allele an allele in `0 .. n_alleles - 1`
@@ -239,15 +246,23 @@ genm_dl_from_end <- function(enm, rows, end_site) {
 #'
 genm_site_dl <- function(enm, site, allele) {
   param <- enm$param
+  springs <- enm$springs
   rows <- genm_site_rows(enm, site)
   dl <- numeric(length(rows))
   if (allele == 0) return(dl)
 
-  perturbed <- enm$springs$sdij[rows] >= param$mut_sd_min
-  dl[perturbed] <- with_mut_seed(
+  partner <- ifelse(springs$i[rows] == site, springs$j[rows], springs$i[rows])
+  # One draw per site, nsites in all, so that the draw for the spring to site k
+  # is simply draws[k]. Not nsites - 1: the value at k = site is never used (no
+  # spring joins a site to itself), and skipping it would mean shifting every
+  # index above site down by one. Each value depends only on its position in
+  # the stream, not on the stream's length.
+  draws <- with_mut_seed(
     mut_seed(param$ensemble, site, allele),
-    stats::rnorm(sum(perturbed), mean = 0, sd = param$mut_dl_sigma)
+    stats::rnorm(enm$nodes$nsites, mean = 0, sd = param$mut_dl_sigma)
   )
+  perturbed <- springs$sdij[rows] >= param$mut_sd_min
+  dl[perturbed] <- draws[partner[perturbed]]
   dl
 }
 
