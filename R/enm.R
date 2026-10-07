@@ -101,7 +101,7 @@ set_enm_graph <- function(prot) {
 #' @noRd
 #'
 set_enm_eij <- function(prot) {
-  prot$eij <- calculate_enm_eij(get_xyz(prot), get_graph(prot)$i, get_graph(prot)$j)
+  prot$eij <- calculate_enm_edge_geometry(get_xyz(prot), get_graph(prot)$i, get_graph(prot)$j)$eij
   prot
 }
 
@@ -191,7 +191,7 @@ calculate_enm_graph <- function(xyz, pdb_site, model, d_max, ...) {
     graph <- as_tibble(expand_grid(i = site, j = site)) %>%
       filter(j > i) %>%
       arrange(i, j) %>%
-      mutate(dij = dij_edge(xyz, i, j)) %>%
+      mutate(dij = calculate_enm_edge_geometry(xyz, i, j)$dij) %>%
       mutate(sdij = sdij_edge(pdb_site, i, j)) %>%
       filter(dij <= d_max | sdij == 1) %>%
       mutate(lij = dij)
@@ -210,21 +210,30 @@ calculate_enm_graph <- function(xyz, pdb_site, model, d_max, ...) {
     graph
   }
 
-#' Calculate distance of edges
+#' Calculate vectors, lengths and unit vectors of edges
 #'
+#' Vectorised over edges: this and `calculate_enm_kmat()` are called at every
+#' step of the generalized ENM's minimiser, where looping over edges was
+#' measured to make it about four times slower.
+#'
+#' @param xyz vector of xyz coordinates
+#' @param i,j integer vectors of nodes connected in each edge
+#' @return a list `(rij, dij, eij)`: `rij` a matrix with n_edges rows and 3
+#'   columns (x, y, z), row k the vector from node `i[k]` to node `j[k]`; `dij`
+#'   its length; `eij` the unit vector `rij / dij`
+#'
+#' @family enm builders
 #' @noRd
 #'
-dij_edge <- function(xyz, i, j) {
+calculate_enm_edge_geometry <- function(xyz, i, j) {
   stopifnot(length(i) == length(j))
-  xyz <- my_as_xyz(xyz)
-  dij <- rep(NA, length(i))
-  for (k in seq(length(i)))  {
-    ik <- i[k]
-    jk <- j[k]
-    rij <- xyz[, jk] - xyz[, ik]
-    dij[k] <- sqrt(sum(rij^2))
-  }
-  dij
+  xyz <- my_as_xyz(xyz) # column k is node k
+  rij <- t(xyz[, j, drop = FALSE] - xyz[, i, drop = FALSE])
+  dij <- sqrt(rowSums(rij^2))
+  eij <- rij / dij
+  # list(), not lst(): lst() takes ~100 us, half the time of this function,
+  # which the minimiser calls at every step
+  list(rij = rij, dij = dij, eij = eij)
 }
 
 #' Calculate edge sequence distance
@@ -239,38 +248,22 @@ sdij_edge <- function(pdb_site, i, j) {
 }
 
 
-#' Calculate unit vectors of edges
-#'
-#' @param i,j integer vectors of nodes connected in each edge
-#' @param xyz vector of xyz coordinates
-#' @return matrix with n_edge rows and 3 columns (x, y, z)
-#'
-#' @family enm builders
-#' @noRd
-#'
-calculate_enm_eij <- function(xyz, i, j) {
-
-  stopifnot(length(i) == length(j))
-  n_edges <- length(i)
-  xyz <- my_as_xyz(xyz)
-  # eij <- tibble(eij_x = rep(NA,n_edges),
-  #               eij_y = rep(NA,n_edges),
-  #               eij_z = rep(NA,n_edges))
-
-  eij <- matrix(NA, n_edges, 3)
-  for (k in seq(n_edges)) {
-    ik <- i[k]
-    jk <- j[k]
-    rij <- xyz[, jk] - xyz[, ik]
-    eij[k, ] <- rij / sqrt(sum(rij^2))
-  }
-  eij
-}
-
-
 #' Calculate kmat given the ENM graph
 #'
-#' @param graph A tibble representing the ENM graph (with edge information, especially \code{kij}
+#' The Hessian of \eqn{V = \frac12 \sum k_{ij} (d_{ij} - l_{ij})^2} at the
+#' conformation whose edge lengths are `graph$dij` and unit vectors `eij`. Each
+#' edge contributes the 3 x 3 block
+#' \eqn{K_{ij} = -k_{ij} [ e e^T + g_{ij} (I - e e^T) ]}, with
+#' \eqn{g_{ij} = (d_{ij} - l_{ij}) / d_{ij}}, at blocks (i, j) and (j, i); the
+#' diagonal blocks follow from translational invariance,
+#' \eqn{K_{ii} = -\sum_{j \ne i} K_{ij}}.
+#'
+#' For a network from [set_enm()], `lij` is a copy of `dij`, so `gij` is exactly
+#' 0 and each block is \eqn{-k_{ij} e e^T}. An lfenm mutant must never have its
+#' kmat recomputed here: in lfenm `K_mut = K_wt` by assumption, while a mutant's
+#' `lij != dij` would give it a transverse term.
+#'
+#' @param graph A tibble representing the ENM graph (with edge information, especially \code{kij}, \code{dij} and \code{lij})
 #' @param eij A matrix of size \code{n_edges x 3} of \code{eij} versors directed along ENM contacts
 #' @param nsites The number of nodes of the ENM network
 #'
@@ -281,7 +274,7 @@ calculate_enm_eij <- function(xyz, i, j) {
 #' pdb <- bio3d::read.pdb("2acy")
 #' nodes <- calculate_enm_nodes(pdb, node = "ca")
 #' graph <- calculate_enm_graph(nodes$xyz, nodes$pdb_site, model = "anm", d_max = 10.5)
-#' eij <- calculate_enm_eij(nodes$xyz, graph$i, graph$j)
+#' eij <- calculate_enm_edge_geometry(nodes$xyz, graph$i, graph$j)$eij
 #' kmat <- calculate_enm_kmat(graph, eij, nsites = nodes$nsites)
 #' }
 #'
@@ -291,19 +284,34 @@ calculate_enm_eij <- function(xyz, i, j) {
 #'
 calculate_enm_kmat <- function(graph, eij, nsites) {
   stopifnot(max(graph$i, graph$j) <= nsites,
-            nrow(graph) == nrow(eij))
+            nrow(graph) == nrow(eij),
+            !is.null(graph$dij), !is.null(graph$lij))
+  i <- graph$i
+  j <- graph$j
+  kij <- graph$kij
+  gij <- (graph$dij - graph$lij) / graph$dij # relative strain
+
+  # kmat[a, i, b, j] couples coordinate a of node i with coordinate b of node j.
+  # Reshaped to 3N x 3N at the end.
   kmat <- array(0, dim = c(3, nsites, 3, nsites))
-  for (edge in seq(nrow(graph))) {
-    i <- graph$i[[edge]]
-    j <- graph$j[[edge]]
-    kij <- graph$kij[[edge]]
-    eij_v <- eij[edge, ]
-    eij_mat <- tcrossprod(eij_v, eij_v)
-    kij_mat <- -kij * eij_mat
-    kmat[, j, , i] <- kmat[, i, , j] <- kij_mat
+
+  # Off-diagonal blocks, element (a, b) of every edge's block at once (vectorised
+  # over edges, for the minimiser's sake; see calculate_enm_edge_geometry()). A
+  # pair of nodes has at most one edge, so no block is written twice.
+  for (a in 1:3) {
+    for (b in 1:3) {
+      ee_ab <- eij[, a] * eij[, b]
+      identity_ab <- as.numeric(a == b)
+      kij_ab <- -kij * (ee_ab + gij * (identity_ab - ee_ab))
+      kmat[cbind(a, i, b, j)] <- kij_ab
+      kmat[cbind(a, j, b, i)] <- kij_ab
+    }
   }
-  for (i in seq(nsites)) {
-    kmat[, i, , i] <- -apply(kmat[, i, , -i], c(1, 2), sum)
+
+  # Diagonal blocks: K_ii = -sum over j of K_ij
+  row_sums <- apply(kmat, c(1, 2, 3), sum) # [a, i, b]
+  for (site in seq(nsites)) {
+    kmat[, site, , site] <- -row_sums[, site, ]
   }
 
   dim(kmat) <- c(3 * nsites, 3 * nsites)
@@ -346,42 +354,52 @@ canonical_sign <- function(umat) {
 
 #' Perform Normal Mode Analysis
 #'
-#' Given an enm `kmat`, perform NMA
+#' Given an enm `kmat`, perform NMA: the eigenvalues in ascending order, with
+#' the six null modes (rigid-body translations and rotations) left out, and the
+#' eigenvectors in the sign convention of [canonical_sign()].
+#'
+#' The null modes are checked, not assumed: there must be exactly six
+#' eigenvalues with \eqn{|\lambda| \le} `null_tol` \eqn{\max |\lambda|}, and
+#' none below \eqn{-}`null_tol` \eqn{\max |\lambda|}; otherwise an error. A
+#' seventh null eigenvalue means the network is not rigid; a negative one means
+#' `kmat` is not at a minimum (e.g. a network with negative springs). The
+#' threshold is relative so that it does not depend on the scale of `kij`.
 #'
 #' @param kmat The K matrix to diagonalize
-#' @param too_small=1.e-5 A small value, eigenvectors with eigenvalues larger than `too_small` are discarded
+#' @param null_tol relative threshold for a null eigenvalue
 #'
 #' @return A list with elements \code{lst(mode,evalue,cmat,umat)}
 #'
 #' @examples
 #' \dontrun{
-#' calculate_enm_anm(kmat, too_small = 1.e-10)
+#' calculate_enm_nma(kmat)
 #' }
 #'
 #'@family enm builders
 #' @noRd
 #'
 #'
-calculate_enm_nma <- function(kmat, too_small = 1.e-5) {
-  eig <- eigen(kmat, symmetric = TRUE)
-  evalue <- eig$values
-  umat <- eig$vectors
-  modes <- evalue > too_small
-  evalue <- evalue[modes]
-  umat  <- umat[, modes]
+calculate_enm_nma <- function(kmat, null_tol = 1e-8) {
+  eig <- eigen(kmat, symmetric = TRUE) # eigenvalues in decreasing order
+  null_threshold <- null_tol * max(abs(eig$values))
 
-  nmodes <- sum(modes)
-  mode <- order(seq(nmodes), decreasing = T)
-  evalue <- evalue[mode]
-  umat <- umat[, mode]
-  mode <- mode[mode]
+  n_negative <- sum(eig$values < -null_threshold)
+  if (n_negative > 0) {
+    stop("Hessian has ", n_negative, " negative eigenvalue(s): not a minimum")
+  }
+  n_null <- sum(abs(eig$values) <= null_threshold)
+  if (n_null != 6) {
+    stop("Hessian has ", n_null, " null eigenvalues, expected 6: the network is not rigid")
+  }
 
-  umat <- canonical_sign(umat)
-
-  cmat <-  umat %*% ((1 / evalue) * t(umat))
+  internal <- which(eig$values > null_threshold)
+  ascending <- rev(internal)
+  evalue <- eig$values[ascending]
+  umat <- canonical_sign(eig$vectors[, ascending, drop = FALSE])
+  cmat <- umat %*% ((1 / evalue) * t(umat)) # pseudo-inverse of kmat
 
   nma <- list(
-    mode = mode,
+    mode = seq_along(evalue),
     evalue = evalue,
     cmat = cmat,
     umat = umat

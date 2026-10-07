@@ -16,7 +16,7 @@ genm_v_min            <- penm:::genm_v_min
 genm_energy           <- penm:::genm_energy
 genm_gradient         <- penm:::genm_gradient
 genm_hessian          <- penm:::genm_hessian
-genm_geometry         <- penm:::genm_geometry
+calculate_enm_edge_geometry <- penm:::calculate_enm_edge_geometry
 genm_superpose        <- penm:::genm_superpose
 genm_superpose_prot   <- penm:::genm_superpose_prot
 genm_kij              <- penm:::genm_kij
@@ -31,7 +31,8 @@ nsites <- get_nsites(wt)
 
 # length of every spring, at the protein's minimum
 spring_d <- function(prot) {
-  genm_geometry(get_xyz(prot), prot$enm$springs$i, prot$enm$springs$j)$dij
+  geometry <- calculate_enm_edge_geometry(get_xyz(prot), prot$enm$springs$i, prot$enm$springs$j)
+  geometry$dij
 }
 
 # apply a path of mutations, given as a table with columns site and allele
@@ -106,8 +107,8 @@ test_that("the Hessian, transverse term included, matches finite differences of 
   # at the frustrated minimum, where the transverse term must be large enough
   # to be seen above the tolerance
   x <- get_xyz(mut_a)
-  geo <- genm_geometry(x, sp$i, sp$j)
-  expect_gt(max(abs(sp$kij * (geo$dij - sp$lij) / geo$dij)), 0.1)
+  dij <- calculate_enm_edge_geometry(x, sp$i, sp$j)$dij
+  expect_gt(max(abs(sp$kij * (dij - sp$lij) / dij)), 0.1)
   expect_lt(max(abs(genm_hessian(x, sp, nsites) - hess_fd(x))), 1e-6)
 
   # and away from it: the formula holds at any conformation

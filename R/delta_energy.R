@@ -103,7 +103,7 @@ calculate_vs <- function(prot, ideal) {
   edge_in_ideal <- g$edge %in% g_ideal$edge
   g$dij_ideal <- NA
   g$dij_ideal[edge_in_ideal] <- g_ideal$dij
-  g$dij_ideal[!edge_in_ideal] <- dij_edge(get_xyz(ideal), g$i[!edge_in_ideal], g$j[!edge_in_ideal])
+  g$dij_ideal[!edge_in_ideal] <- calculate_enm_edge_geometry(get_xyz(ideal), g$i[!edge_in_ideal], g$j[!edge_in_ideal])$dij
 
   dij <- g$dij_ideal
   v0ij <- g$v0ij

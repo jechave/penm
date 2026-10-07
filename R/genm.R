@@ -29,9 +29,10 @@
 # Coordinates are a flat vector of length 3 * nsites, x1 y1 z1 x2 y2 z2 ..., as
 # in the rest of penm.
 #
-# Isolated from the set_enm() / get_mutant_site() machinery on purpose: nothing
-# here calls it. Shared with it: calculate_enm_nodes() (pdb parsing), the kij_*
-# functions, canonical_sign(), and the mutant-key hashing in R/seed.R.
+# Does not call set_enm() or get_mutant_site(). Shared with them:
+# calculate_enm_nodes() (pdb parsing), calculate_enm_edge_geometry()
+# (geometry), calculate_enm_kmat() (Hessian), calculate_enm_nma() (normal
+# modes), the kij_* functions, and the mutant-key hashing in R/seed.R.
 
 
 # Build the parameters ---------------------------------------------------------
@@ -115,9 +116,9 @@ build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
     i = i,
     j = j,
     sdij = abs(nodes$pdb_site[j] - nodes$pdb_site[i]),
-    # recomputed with genm_geometry(), the distance V uses, so that the wild
-    # type sits at V = 0 exactly rather than to within rounding
-    l0ij = genm_geometry(nodes$xyz, i, j)$dij
+    # recomputed with calculate_enm_edge_geometry(), the distance V uses, so
+    # that the wild type sits at V = 0 exactly rather than to within rounding
+    l0ij = calculate_enm_edge_geometry(nodes$xyz, i, j)$dij
   )
   springs$lij <- springs$l0ij
   springs$kij <- genm_kij(param, springs$lij, springs$sdij)
@@ -370,13 +371,13 @@ prot_from_enm <- function(enm, xyz_seed, gtol = 1e-10, max_iter = 100) {
 #'
 #' @param prot a `"genm_prot"` object
 #' @returns `prot`, with `nma = list(mode, evalue, cmat, umat)` (see
-#'   [genm_nma()])
+#'   [calculate_enm_nma()])
 #'
 #' @noRd
 #'
 genm_add_nma <- function(prot) {
   stopifnot(inherits(prot, "genm_prot"))
-  prot$nma <- genm_nma(prot$kmat)
+  prot$nma <- calculate_enm_nma(prot$kmat)
   prot
 }
 
@@ -412,7 +413,7 @@ genm_superpose_prot <- function(prot, target) {
   prot$nodes$xyz <- xyz
   prot$kmat <- genm_hessian(xyz, genm_springs_with_k(prot$enm), nsites)
   has_modes <- !identical(prot$nma, NA)
-  if (has_modes) prot$nma <- genm_nma(prot$kmat)
+  if (has_modes) prot$nma <- calculate_enm_nma(prot$kmat)
   prot
 }
 
@@ -448,23 +449,6 @@ genm_v_min <- function(prot) {
 
 # Potential, gradient, Hessian -------------------------------------------------
 
-#' Spring vectors and lengths at a conformation
-#'
-#' @param xyz coordinates, a vector of length `3 * nsites`
-#' @param i,j the two nodes of each spring
-#'
-#' @returns `list(rij, dij)`: `rij` a matrix with one row per spring, the vector
-#'   from node `i` to node `j`; `dij` its length
-#'
-#' @noRd
-#'
-genm_geometry <- function(xyz, i, j) {
-  position <- matrix(xyz, nrow = 3) # column k is node k
-  rij <- t(position[, j, drop = FALSE] - position[, i, drop = FALSE])
-  list(rij = rij, dij = sqrt(rowSums(rij^2)))
-}
-
-
 #' Potential energy
 #'
 #' \eqn{V = \frac12 \sum_{ij} k_{ij} (d_{ij} - l_{ij})^2}
@@ -475,8 +459,8 @@ genm_geometry <- function(xyz, i, j) {
 #' @noRd
 #'
 genm_energy <- function(xyz, springs) {
-  dij <- genm_geometry(xyz, springs$i, springs$j)$dij
-  0.5 * sum(springs$kij * (dij - springs$lij)^2)
+  geometry <- calculate_enm_edge_geometry(xyz, springs$i, springs$j)
+  0.5 * sum(springs$kij * (geometry$dij - springs$lij)^2)
 }
 
 
@@ -495,11 +479,10 @@ genm_energy <- function(xyz, springs) {
 #' @noRd
 #'
 genm_gradient <- function(xyz, springs, nsites) {
-  geometry <- genm_geometry(xyz, springs$i, springs$j)
+  geometry <- calculate_enm_edge_geometry(xyz, springs$i, springs$j)
   stretch <- geometry$dij - springs$lij
-  unit <- geometry$rij / geometry$dij
   # k (d - l) e for each spring, one row per spring
-  spring_term <- springs$kij * stretch * unit
+  spring_term <- springs$kij * stretch * geometry$eij
 
   gradient <- matrix(0, nrow = 3, ncol = nsites) # column k is node k
   for (a in 1:3) {
@@ -531,12 +514,9 @@ genm_sum_by_node <- function(values, node, nsites) {
 
 #' Hessian of the potential
 #'
-#' Each spring (i, j) contributes the 3 x 3 block
-#' \eqn{K_{ij} = -k_{ij} [ e e^T + g_{ij} (I - e e^T) ]}, with
-#' \eqn{g_{ij} = (d_{ij} - l_{ij}) / d_{ij}}, at blocks (i, j) and (j, i). The
-#' diagonal blocks follow from translational invariance,
-#' \eqn{K_{ii} = -\sum_{j \ne i} K_{ij}}. Valid at any conformation, not only at
-#' a minimum.
+#' [calculate_enm_kmat()] at conformation `xyz`: the springs' lengths and unit
+#' vectors are evaluated there, since `springs` holds no `dij`. Includes the
+#' transverse term, so it is valid at any conformation, not only at a minimum.
 #'
 #' @param xyz coordinates, a vector of length `3 * nsites`
 #' @param springs tibble with columns `i, j, lij, kij`: any set of springs
@@ -547,34 +527,9 @@ genm_sum_by_node <- function(values, node, nsites) {
 #' @noRd
 #'
 genm_hessian <- function(xyz, springs, nsites) {
-  geometry <- genm_geometry(xyz, springs$i, springs$j)
-  unit <- geometry$rij / geometry$dij              # e, one row per spring
-  g <- (geometry$dij - springs$lij) / geometry$dij  # relative strain
-  k <- springs$kij
-
-  # The Hessian as a 4-index array: kmat[a, i, b, j] couples coordinate a of
-  # node i with coordinate b of node j. Reshaped to 3N x 3N at the end.
-  kmat <- array(0, dim = c(3, nsites, 3, nsites))
-
-  # Off-diagonal blocks, element (a, b) for every spring at once. A pair of
-  # nodes has at most one spring, so no block is written twice.
-  for (a in 1:3) {
-    for (b in 1:3) {
-      ee_ab <- unit[, a] * unit[, b]
-      identity_ab <- as.numeric(a == b)
-      block_ab <- -k * (ee_ab + g * (identity_ab - ee_ab))
-      kmat[cbind(a, springs$i, b, springs$j)] <- block_ab
-      kmat[cbind(a, springs$j, b, springs$i)] <- block_ab
-    }
-  }
-
-  # Diagonal blocks: K_ii = -sum over j of K_ij
-  row_sums <- apply(kmat, c(1, 2, 3), sum) # [a, i, b]
-  for (i in seq_len(nsites)) {
-    kmat[, i, , i] <- -row_sums[, i, ]
-  }
-
-  dim(kmat) <- c(3 * nsites, 3 * nsites)
+  geometry <- calculate_enm_edge_geometry(xyz, springs$i, springs$j)
+  springs$dij <- geometry$dij
+  kmat <- calculate_enm_kmat(springs, geometry$eij, nsites)
   kmat
 }
 
@@ -797,50 +752,6 @@ genm_superpose <- function(xyz, target) {
   rotation <- svd_corr$u %*% diag(c(1, 1, handedness)) %*% t(svd_corr$v)
 
   as.vector(rotation %*% mobile + fixed_centroid)
-}
-
-
-# Normal modes -----------------------------------------------------------------
-
-#' Normal-mode analysis of a genm Hessian
-#'
-#' Same output and conventions as `calculate_enm_nma()` (eigenvalues ascending,
-#' `mode = 1..nmodes`, [canonical_sign()]), but checks rather than assumes the
-#' null space: exactly six eigenvalues with `|lambda| <= null_tol * max(lambda)`
-#' and none below `-null_tol * max(lambda)`, else an error. A seventh null
-#' direction is a network that is not rigid; a negative eigenvalue is not a
-#' minimum.
-#'
-#' @param kmat the Hessian
-#' @param null_tol relative threshold for a null eigenvalue
-#'
-#' @returns `list(mode, evalue, cmat, umat)`
-#'
-#' @noRd
-#'
-genm_nma <- function(kmat, null_tol = 1e-8) {
-  eig <- eigen(kmat, symmetric = TRUE) # eigenvalues in decreasing order
-  null_threshold <- null_tol * max(abs(eig$values))
-
-  n_negative <- sum(eig$values < -null_threshold)
-  if (n_negative > 0) {
-    stop("Hessian has ", n_negative, " negative eigenvalue(s): not a minimum")
-  }
-  n_null <- sum(abs(eig$values) <= null_threshold)
-  if (n_null != 6) {
-    stop("Hessian has ", n_null, " null eigenvalues, expected 6: the network is not rigid")
-  }
-
-  internal <- which(eig$values > null_threshold)
-  ascending <- rev(internal)
-  evalue <- eig$values[ascending]
-  umat <- canonical_sign(eig$vectors[, ascending, drop = FALSE])
-  list(
-    mode = seq_along(evalue),
-    evalue = evalue,
-    cmat = umat %*% ((1 / evalue) * t(umat)), # pseudo-inverse of kmat
-    umat = umat
-  )
 }
 
 

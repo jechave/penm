@@ -38,3 +38,12 @@ test_that("set_enm accepts both 'cb' and 'beta' for beta carbon nodes", {
   expect_equal(prot_cb1$nodes$xyz, prot_cb2$nodes$xyz)
   expect_equal(prot_cb1$nodes$bfactor, prot_cb2$nodes$bfactor)
 })
+
+test_that("set_enm stops on a network with negative springs", {
+  # kij_hnm is negative below 2390/860 = 2.78 A; with side-chain nodes 2acy has
+  # two pairs closer than that, which give the Hessian negative eigenvalues
+  prot_ca <- set_enm(pdb_2acy_A, node = "ca", model = "hnm", d_max = 10.5)
+  expect_equal(get_nmodes(prot_ca), 3 * get_nsites(prot_ca) - 6)
+  expect_error(set_enm(pdb_2acy_A, node = "sc", model = "hnm", d_max = 10.5),
+               "negative eigenvalue")
+})
