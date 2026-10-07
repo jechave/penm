@@ -84,7 +84,7 @@ wt_enm <- build_enm_from_pdb(
   ensemble = 1, n_alleles = 10, mut_dl_sigma = 0.3, mut_sd_min = 2
 )
 names(wt_enm)
-#> [1] "param"    "nodes"    "sequence" "springs"
+#> [1] "param"    "nodes"    "sequence" "graph"
 ```
 
 `prot_from_enm()` makes the protein: it minimises the potential, starting from
@@ -119,7 +119,7 @@ sites   <- get_site(wt)               # 1 .. number of sites
 modes   <- get_mode(wt)               # 1 .. number of normal modes, softest first
 alleles <- 0:(wt_enm$param$n_alleles - 1)
 
-c(sites = length(sites), modes = length(modes), springs = nrow(wt_enm$springs))
+c(sites = length(sites), modes = length(modes), springs = nrow(wt_enm$graph))
 #>   sites   modes springs 
 #>      98     288    1842
 ```

@@ -1,23 +1,23 @@
 # Generalized ENM ------------------------------------------------------------
 #
-# The state of a protein is a parameter set: a fixed set of springs, one per
+# The state of a protein is a parameter set: a fixed set of edges, one per
 # listed pair of nodes, each with an equilibrium length lij and a force constant
-# kij = k(lij). Structure, energy and Hessian are derived from it by minimising
+# kij = k(lij). Structure, energy and kmat are derived from it by minimising
 #
 #   V(r) = 1/2 sum_ij kij (dij(r) - lij)^2.
 #
 # See dev/explorations/klfenm/klfenm_report.tex for the derivation.
 #
 # The parameters are a function of the sequence. Each site carries an allele,
-# 0 .. n_alleles - 1, with 0 the residue of the pdb. A spring's length is
+# 0 .. n_alleles - 1, with 0 the residue of the pdb. An edge's length is
 #
 #   lij = l0ij + delta(i, s_i)ij + delta(j, s_j)ij,
 #
 # with l0ij its length in the pdb, s_i the allele at site i, and delta(site, 0)
 # = 0. delta(site, allele) is a stream of draws seeded by hashing (ensemble,
-# site, allele), as for get_mutant_site(); see ?penm_ensemble. The spring from
-# site to site k takes the k-th draw, so delta(i, s_i)ij depends on the spring's
-# other end, not on which other springs exist. Because lij is always computed
+# site, allele), as for get_mutant_site(); see ?penm_ensemble. The edge from
+# site to site k takes the k-th draw, so delta(i, s_i)ij depends on the edge's
+# other end, not on which other edges exist. Because lij is always computed
 # from l0ij and the sequence, never accumulated, the same sequence gives the
 # same parameters bit for bit, however it was reached.
 #
@@ -32,22 +32,24 @@
 # Does not call set_enm() or get_mutant_site(). Shared with them:
 # calculate_enm_nodes() (pdb parsing), dij_edge() and calculate_enm_eij()
 # (geometry), calculate_enm_nma() (normal modes), the kij_* functions, and the
-# mutant-key hashing in R/seed.R. The Hessian is genm_hessian(), not
-# calculate_enm_kmat(): it has the transverse term of frustrated springs, which
-# the standard ENM's kmat does not.
+# mutant-key hashing in R/seed.R.
+#
+# kmat is the Hessian of V. Here it is genm_kmat(), not calculate_enm_kmat(): it
+# has the transverse term of frustrated edges, which the standard ENM's kmat
+# does not.
 
 
 # Build the parameters ---------------------------------------------------------
 
 #' Build a generalized ENM from a pdb structure
 #'
-#' There is one spring for every pair of nodes closer than `d_max_pairs` in the
-#' pdb, plus one for every i,i+1 pair regardless of distance; each spring's
+#' There is one edge for every pair of nodes closer than `d_max_pairs` in the
+#' pdb, plus one for every i,i+1 pair regardless of distance; each edge's
 #' `l0ij` is its distance in the pdb. Every site starts at allele 0, so
 #' `lij = l0ij` and `kij = k(lij)`.
 #'
-#' `d_max_pairs` is not the contact cutoff. The springs must reach out to where
-#' `k` is negligible, so that a spring whose `lij` shortens past `d_max` can
+#' `d_max_pairs` is not the contact cutoff. The edges must reach out to where
+#' `k` is negligible, so that an edge whose `lij` shortens past `d_max` can
 #' become a contact later. A warning is given when `k(d_max_pairs)` is not small
 #' compared with `k` at contact distances (see [genm_check_d_max_pairs()]).
 #'
@@ -60,20 +62,20 @@
 #'   `"ming_wall_smooth"`
 #' @param d_max cutoff passed to the `kij_*` function
 #' @param d_max_pairs distance (A) in the pdb within which a pair of nodes gets a
-#'   spring
+#'   edge
 #' @param ... further named parameters of the `kij_*` function, e.g. `w` for the
 #'   smoothed models. Names it does not accept are an error.
 #' @param ensemble which realization of the mutational process the alleles refer
 #'   to; see `?penm_ensemble`
 #' @param n_alleles number of alleles per site, including the pdb's (allele 0)
 #' @param mut_dl_sigma standard deviation of the change in `lij` that an allele
-#'   contributes to each of its site's springs
-#' @param mut_sd_min springs joining sites less than `mut_sd_min` apart in
+#'   contributes to each of its site's edges
+#' @param mut_sd_min edges joining sites less than `mut_sd_min` apart in
 #'   sequence are not changed by mutations; the default 2 leaves the i,i+1 bonds
-#'   alone, 1 perturbs every spring
+#'   alone, 1 perturbs every edge
 #'
-#' @returns an object of class `"genm"`: `list(param, nodes, sequence, springs)`,
-#'   with `sequence` all zeros and `springs` a tibble
+#' @returns an object of class `"genm"`: `list(param, nodes, sequence, graph)`,
+#'   with `sequence` all zeros and `graph` a tibble
 #'   `(i, j, sdij, l0ij, lij, kij)` sorted by `(i, j)`
 #'
 #' @noRd
@@ -106,16 +108,16 @@ build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
   nodes <- calculate_enm_nodes(pdb, node)
   nsites <- nodes$nsites
 
-  # Which pairs get a spring: within d_max_pairs in the pdb, or bonded (i,i+1).
+  # Which pairs get an edge: within d_max_pairs in the pdb, or bonded (i,i+1).
   distance <- as.matrix(stats::dist(t(matrix(nodes$xyz, nrow = 3))))
   seq_distance <- abs(outer(nodes$pdb_site, nodes$pdb_site, "-"))
-  has_spring <- upper.tri(distance) & (distance <= d_max_pairs | seq_distance == 1)
-  pairs <- which(has_spring, arr.ind = TRUE)
+  has_edge <- upper.tri(distance) & (distance <= d_max_pairs | seq_distance == 1)
+  pairs <- which(has_edge, arr.ind = TRUE)
   pairs <- pairs[order(pairs[, 1], pairs[, 2]), , drop = FALSE]
   i <- unname(pairs[, 1])
   j <- unname(pairs[, 2])
 
-  springs <- tibble(
+  graph <- tibble(
     i = i,
     j = j,
     sdij = abs(nodes$pdb_site[j] - nodes$pdb_site[i]),
@@ -123,15 +125,15 @@ build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
     # sits at V = 0 exactly rather than to within rounding
     l0ij = dij_edge(nodes$xyz, i, j)
   )
-  springs$lij <- springs$l0ij
-  springs$kij <- genm_kij(param, springs$lij, springs$sdij)
+  graph$lij <- graph$l0ij
+  graph$kij <- genm_kij(param, graph$lij, graph$sdij)
 
   enm <- list(
     param = param,
     nodes = list(nsites = nsites, site = nodes$site,
                  pdb_site = nodes$pdb_site, bfactor = nodes$bfactor),
     sequence = integer(nsites),
-    springs = springs
+    graph = graph
   )
   class(enm) <- c("genm", "list")
 
@@ -145,12 +147,12 @@ build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
 #' Mutate a site of a generalized ENM
 #'
 #' Changes the allele at `site` from its current value to `allele`, and
-#' recomputes `lij` and `kij` of the springs connected to `site`. Produces no
+#' recomputes `lij` and `kij` of the edges connected to `site`. Produces no
 #' structure and no energy, and looks at no other protein.
 #'
 #' `allele` must differ from the current one: a mutation that changes nothing is
 #' an error. Mutating back to an earlier allele, 0 included, is a mutation like
-#' any other, and restores that site's springs exactly.
+#' any other, and restores that site's edges exactly.
 #'
 #' @param enm a `"genm"` object
 #' @param site the site to mutate (sequential index, not pdb numbering)
@@ -176,72 +178,72 @@ genm_mutate <- function(enm, site, allele) {
     stop("allele ", allele, " at site ", site, " would make ", sum(new_lij <= 0),
          " equilibrium length(s) <= 0")
   }
-  enm$springs$lij[rows] <- new_lij
-  enm$springs$kij <- genm_kij(enm$param, enm$springs$lij, enm$springs$sdij)
+  enm$graph$lij[rows] <- new_lij
+  enm$graph$kij <- genm_kij(enm$param, enm$graph$lij, enm$graph$sdij)
   enm
 }
 
 
 #' Equilibrium lengths implied by the sequence
 #'
-#' For each spring in `rows`, \eqn{l_{ij} = l^0_{ij} + \delta(i, s_i)_{ij} +
+#' For each edge in `rows`, \eqn{l_{ij} = l^0_{ij} + \delta(i, s_i)_{ij} +
 #' \delta(j, s_j)_{ij}}: its pdb length, plus what the allele at each of its two
 #' ends contributes. Uses `l0ij` and `enm$sequence` only, never the current
 #' `lij`, so equal sequences give bitwise-equal lengths.
 #'
 #' @param enm a `"genm"` object
-#' @param rows row indices of `enm$springs`
+#' @param rows row indices of `enm$graph`
 #'
 #' @returns the lengths, one per row
 #'
 #' @noRd
 #'
 genm_lij <- function(enm, rows) {
-  springs <- enm$springs
-  dl_from_i <- genm_dl_from_end(enm, rows, springs$i[rows])
-  dl_from_j <- genm_dl_from_end(enm, rows, springs$j[rows])
+  graph <- enm$graph
+  delta_lij_from_i <- genm_delta_lij_from_end(enm, rows, graph$i[rows])
+  delta_lij_from_j <- genm_delta_lij_from_end(enm, rows, graph$j[rows])
   # always added in this order: floating-point addition is not associative, and
   # equal sequences must give bitwise-equal lengths
-  (springs$l0ij[rows] + dl_from_i) + dl_from_j
+  (graph$l0ij[rows] + delta_lij_from_i) + delta_lij_from_j
 }
 
 
-#' What the alleles at one end of each spring contribute to its length
+#' What the alleles at one end of each edge contribute to its length
 #'
 #' @param enm a `"genm"` object
-#' @param rows row indices of `enm$springs`
+#' @param rows row indices of `enm$graph`
 #' @param end_site for each of `rows`, the site at the end being considered
-#'   (`springs$i[rows]` or `springs$j[rows]`)
+#'   (`graph$i[rows]` or `graph$j[rows]`)
 #'
-#' @returns one value per row: \eqn{\delta(s, \text{allele}_s)} for the spring,
+#' @returns one value per row: \eqn{\delta(s, \text{allele}_s)} for the edge,
 #'   with `s = end_site`
 #'
 #' @noRd
 #'
-genm_dl_from_end <- function(enm, rows, end_site) {
-  dl <- numeric(length(rows))
+genm_delta_lij_from_end <- function(enm, rows, end_site) {
+  delta_lij <- numeric(length(rows))
   mutated <- unique(end_site[enm$sequence[end_site] != 0]) # allele 0 contributes 0
   for (site in mutated) {
     at_this_site <- end_site == site
-    site_dl <- genm_site_dl(enm, site, enm$sequence[site])
+    site_delta_lij <- genm_site_delta_lij(enm, site, enm$sequence[site])
     position <- match(rows[at_this_site], genm_site_rows(enm, site))
-    dl[at_this_site] <- site_dl[position]
+    delta_lij[at_this_site] <- site_delta_lij[position]
   }
-  dl
+  delta_lij
 }
 
 
-#' The change an allele makes to its site's springs
+#' The change an allele makes to its site's edges
 #'
-#' One value per spring connected to `site`, in the order of [genm_site_rows()]:
-#' 0 for allele 0 and for springs with `sdij < mut_sd_min`; otherwise a normal
+#' One value per edge connected to `site`, in the order of [genm_site_rows()]:
+#' 0 for allele 0 and for edges with `sdij < mut_sd_min`; otherwise a normal
 #' draw with sd `mut_dl_sigma`, seeded by hashing `(ensemble, site, allele)`
 #' without disturbing the caller's RNG.
 #'
-#' The spring joining `site` to site `k` takes the `k`-th value of that stream.
+#' The edge joining `site` to site `k` takes the `k`-th value of that stream.
 #' Its change therefore depends on `(ensemble, site, allele, k)` only, not on
-#' which other springs exist: networks built with a different `d_max_pairs` or
-#' `mut_sd_min` give the springs they share the same change.
+#' which other edges exist: networks built with a different `d_max_pairs` or
+#' `mut_sd_min` give the edges they share the same change.
 #'
 #' @param enm a `"genm"` object
 #' @param site sequential site index
@@ -249,30 +251,30 @@ genm_dl_from_end <- function(enm, rows, end_site) {
 #'
 #' @noRd
 #'
-genm_site_dl <- function(enm, site, allele) {
+genm_site_delta_lij <- function(enm, site, allele) {
   param <- enm$param
-  springs <- enm$springs
+  graph <- enm$graph
   rows <- genm_site_rows(enm, site)
-  dl <- numeric(length(rows))
-  if (allele == 0) return(dl)
+  delta_lij <- numeric(length(rows))
+  if (allele == 0) return(delta_lij)
 
-  partner <- ifelse(springs$i[rows] == site, springs$j[rows], springs$i[rows])
-  # One draw per site, nsites in all, so that the draw for the spring to site k
+  partner <- ifelse(graph$i[rows] == site, graph$j[rows], graph$i[rows])
+  # One draw per site, nsites in all, so that the draw for the edge to site k
   # is simply draws[k]. Not nsites - 1: the value at k = site is never used (no
-  # spring joins a site to itself), and skipping it would mean shifting every
+  # edge joins a site to itself), and skipping it would mean shifting every
   # index above site down by one. Each value depends only on its position in
   # the stream, not on the stream's length.
   draws <- with_mut_seed(
     mut_seed(param$ensemble, site, allele),
     stats::rnorm(enm$nodes$nsites, mean = 0, sd = param$mut_dl_sigma)
   )
-  perturbed <- springs$sdij[rows] >= param$mut_sd_min
-  dl[perturbed] <- draws[partner[perturbed]]
-  dl
+  perturbed <- graph$sdij[rows] >= param$mut_sd_min
+  delta_lij[perturbed] <- draws[partner[perturbed]]
+  delta_lij
 }
 
 
-#' Rows of `enm$springs` connected to a site
+#' Rows of `enm$graph` connected to a site
 #'
 #' @param enm a `"genm"` object
 #' @param site sequential site index
@@ -282,30 +284,30 @@ genm_site_dl <- function(enm, site, allele) {
 #' @noRd
 #'
 genm_site_rows <- function(enm, site) {
-  which(enm$springs$i == site | enm$springs$j == site)
+  which(enm$graph$i == site | enm$graph$j == site)
 }
 
 
-#' Springs connected to a site
+#' Edges connected to a site
 #'
-#' The springs a mutation at `site` can change (those with
+#' The edges a mutation at `site` can change (those with
 #' `sdij >= mut_sd_min`), together with any it leaves alone.
 #'
 #' @param enm a `"genm"` object
 #' @param site sequential site index
 #'
-#' @returns a tibble `(pair, i, j, sdij, l0ij, lij, kij)`, `pair` being the row
-#'   index in `enm$springs`
+#' @returns a tibble `(row, i, j, sdij, l0ij, lij, kij)`, `row` being the row
+#'   index in `enm$graph`
 #'
 #' @noRd
 #'
-genm_site_springs <- function(enm, site) {
+genm_site_graph <- function(enm, site) {
   stopifnot(inherits(enm, "genm"))
   genm_check_integer(site, "site", min = 1, max = enm$nodes$nsites)
   rows <- genm_site_rows(enm, site)
-  springs <- enm$springs[rows, ]
-  tibble(pair = rows, i = springs$i, j = springs$j, sdij = springs$sdij,
-         l0ij = springs$l0ij, lij = springs$lij, kij = springs$kij)
+  graph <- enm$graph[rows, ]
+  tibble(row = rows, i = graph$i, j = graph$j, sdij = graph$sdij,
+         l0ij = graph$l0ij, lij = graph$lij, kij = graph$kij)
 }
 
 
@@ -314,8 +316,8 @@ genm_site_springs <- function(enm, site) {
 #' Build the protein implied by a generalized ENM
 #'
 #' Minimises the potential starting from `xyz_seed`, superposes the minimum onto
-#' `xyz_seed`, and evaluates the Hessian there, including the transverse term of
-#' frustrated springs.
+#' `xyz_seed`, and evaluates the kmat there, including the transverse term of
+#' frustrated edges.
 #'
 #' The result depends on `enm` alone when the potential has a single minimum.
 #' A frustrated network can have several, and then the one returned is the one
@@ -325,7 +327,7 @@ genm_site_springs <- function(enm, site) {
 #' Fails if the minimiser does not converge, or if the stationary point reached
 #' is not a minimum of a rigid network.
 #'
-#' The Hessian is not diagonalised: `nma` is left `NA`, so every getter that
+#' The kmat is not diagonalised: `nma` is left `NA`, so every getter that
 #' reads the modes errors until [genm_add_nma()] fills it.
 #'
 #' @param enm a `"genm"` object
@@ -350,13 +352,13 @@ prot_from_enm <- function(enm, xyz_seed, gtol = 1e-10, max_iter = 100) {
   }
 
   # kij is read from enm, never evaluated here
-  springs <- genm_springs_with_k(enm)
-  minimum <- genm_minimize(springs, nsites, xyz_seed, gtol, max_iter)
+  graph <- genm_graph_with_k(enm)
+  minimum <- genm_minimize(graph, nsites, xyz_seed, gtol, max_iter)
 
   prot <- list(
     enm = enm,
     nodes = c(enm$nodes, list(xyz = minimum$xyz)),
-    v_min = genm_energy(minimum$xyz, springs),
+    v_min = genm_v_xyz(minimum$xyz, graph),
     kmat = minimum$kmat,
     nma = NA, # a trajectory of mutations needs only the minimum, not the modes
     minimization = list(iter = minimum$iter, grad_max = minimum$grad_max)
@@ -368,7 +370,7 @@ prot_from_enm <- function(enm, xyz_seed, gtol = 1e-10, max_iter = 100) {
 
 #' Add normal modes to a genm_prot
 #'
-#' Diagonalises the Hessian the protein already holds and returns the protein
+#' Diagonalises the kmat the protein already holds and returns the protein
 #' with `nma` filled in; every other component is left as it is. Calling it on a
 #' protein that already has modes recomputes them, with the same result: they
 #' are a function of `kmat` alone.
@@ -390,7 +392,7 @@ genm_add_nma <- function(prot) {
 #'
 #' Rotates and translates the protein so that its structure has the smallest
 #' RMSD to `target`, and recomputes everything that depends on orientation from
-#' the new coordinates: the Hessian, and the normal modes if the protein has
+#' the new coordinates: the kmat, and the normal modes if the protein has
 #' them. The parameters (`enm`) and the minimum energy do not depend on
 #' orientation and are kept.
 #'
@@ -415,26 +417,26 @@ genm_superpose_prot <- function(prot, target) {
 
   xyz <- genm_superpose(prot$nodes$xyz, target)
   prot$nodes$xyz <- xyz
-  prot$kmat <- genm_hessian(xyz, genm_springs_with_k(prot$enm), nsites)
+  prot$kmat <- genm_kmat(xyz, genm_graph_with_k(prot$enm), nsites)
   has_modes <- !identical(prot$nma, NA)
   if (has_modes) prot$nma <- calculate_enm_nma(prot$kmat)
   prot
 }
 
 
-#' Springs with a nonzero force constant
+#' Edges with a nonzero force constant
 #'
-#' The springs left out, those with `k = 0`, contribute exactly nothing to V,
-#' its gradient or its Hessian.
+#' The edges left out, those with `k = 0`, contribute exactly nothing to V,
+#' its gradient or its kmat.
 #'
 #' @param enm a `"genm"` object
-#' @returns the rows of `enm$springs` with `kij > 0`
+#' @returns the rows of `enm$graph` with `kij > 0`
 #'
 #' @noRd
 #'
-genm_springs_with_k <- function(enm) {
+genm_graph_with_k <- function(enm) {
   # for speed only: about a third of the minimiser's time for 2acy
-  enm$springs[enm$springs$kij > 0, ]
+  enm$graph[enm$graph$kij > 0, ]
 }
 
 
@@ -451,48 +453,51 @@ genm_v_min <- function(prot) {
 }
 
 
-# Potential, gradient, Hessian -------------------------------------------------
+# Potential, gradient, kmat ---------------------------------------------------
 
-#' Potential energy
+#' Potential energy at a conformation
 #'
+#' [v_dij()] with the edge lengths of `xyz`:
 #' \eqn{V = \frac12 \sum_{ij} k_{ij} (d_{ij} - l_{ij})^2}
 #'
 #' @param xyz coordinates, a vector of length `3 * nsites`
-#' @param springs tibble with columns `i, j, lij, kij`: any set of springs
+#' @param graph tibble with columns `i, j, lij, kij`: any set of edges
 #'
 #' @noRd
 #'
-genm_energy <- function(xyz, springs) {
-  dij <- dij_edge(xyz, springs$i, springs$j)
-  0.5 * sum(springs$kij * (dij - springs$lij)^2)
+genm_v_xyz <- function(xyz, graph) {
+  dij <- dij_edge(xyz, graph$i, graph$j)
+  v0ij <- 0
+  v <- v_dij(dij, v0ij, graph$kij, graph$lij)
+  v
 }
 
 
 #' Gradient of the potential
 #'
 #' \eqn{\partial V / \partial r_i = -\sum_j k_{ij} (d_{ij} - l_{ij}) e_{ij}}, with
-#' \eqn{e_{ij}} the unit vector from `i` to `j`. Each spring contributes
+#' \eqn{e_{ij}} the unit vector from `i` to `j`. Each edge contributes
 #' \eqn{-k (d - l) e} to node `i` and \eqn{+k (d - l) e} to node `j`.
 #'
 #' @param xyz coordinates, a vector of length `3 * nsites`
-#' @param springs tibble with columns `i, j, lij, kij`: any set of springs
+#' @param graph tibble with columns `i, j, lij, kij`: any set of edges
 #' @param nsites number of nodes
 #'
 #' @returns a vector of length `3 * nsites`
 #'
 #' @noRd
 #'
-genm_gradient <- function(xyz, springs, nsites) {
-  dij <- dij_edge(xyz, springs$i, springs$j)
-  eij <- calculate_enm_eij(xyz, springs$i, springs$j)
-  stretch <- dij - springs$lij
-  # k (d - l) e for each spring, one row per spring
-  spring_term <- springs$kij * stretch * eij
+genm_gradient <- function(xyz, graph, nsites) {
+  dij <- dij_edge(xyz, graph$i, graph$j)
+  eij <- calculate_enm_eij(xyz, graph$i, graph$j)
+  stretch <- dij - graph$lij
+  # k (d - l) e for each edge, one row per edge
+  edge_term <- graph$kij * stretch * eij
 
   gradient <- matrix(0, nrow = 3, ncol = nsites) # column k is node k
   for (a in 1:3) {
-    gradient[a, ] <- genm_sum_by_node(-spring_term[, a], springs$i, nsites) +
-      genm_sum_by_node(spring_term[, a], springs$j, nsites)
+    gradient[a, ] <- genm_sum_by_node(-edge_term[, a], graph$i, nsites) +
+      genm_sum_by_node(edge_term[, a], graph$j, nsites)
   }
   as.vector(gradient)
 }
@@ -500,7 +505,7 @@ genm_gradient <- function(xyz, springs, nsites) {
 
 #' Sum values per node
 #'
-#' @param values one value per spring
+#' @param values one value per edge
 #' @param node the node each value belongs to
 #' @param nsites number of nodes
 #'
@@ -517,9 +522,9 @@ genm_sum_by_node <- function(values, node, nsites) {
 }
 
 
-#' Hessian of the potential
+#' kmat: the Hessian of the potential
 #'
-#' Each spring (i, j) contributes the 3 x 3 block
+#' Each edge (i, j) contributes the 3 x 3 block
 #' \eqn{K_{ij} = -k_{ij} [ e e^T + g_{ij} (I - e e^T) ]}, with
 #' \eqn{g_{ij} = (d_{ij} - l_{ij}) / d_{ij}}, at blocks (i, j) and (j, i). The
 #' diagonal blocks follow from translational invariance,
@@ -527,27 +532,27 @@ genm_sum_by_node <- function(values, node, nsites) {
 #' a minimum.
 #'
 #' @param xyz coordinates, a vector of length `3 * nsites`
-#' @param springs tibble with columns `i, j, lij, kij`: any set of springs
+#' @param graph tibble with columns `i, j, lij, kij`: any set of edges
 #' @param nsites number of nodes
 #'
-#' @returns the `3 nsites x 3 nsites` Hessian
+#' @returns the `3 nsites x 3 nsites` kmat
 #'
 #' @noRd
 #'
-genm_hessian <- function(xyz, springs, nsites) {
-  dij <- dij_edge(xyz, springs$i, springs$j)
-  eij <- calculate_enm_eij(xyz, springs$i, springs$j)
-  gij <- (dij - springs$lij) / dij # relative strain
-  i <- springs$i
-  j <- springs$j
-  kij <- springs$kij
+genm_kmat <- function(xyz, graph, nsites) {
+  dij <- dij_edge(xyz, graph$i, graph$j)
+  eij <- calculate_enm_eij(xyz, graph$i, graph$j)
+  gij <- (dij - graph$lij) / dij # relative strain
+  i <- graph$i
+  j <- graph$j
+  kij <- graph$kij
 
   # kmat[a, i, b, j] couples coordinate a of node i with coordinate b of node j.
   # Reshaped to 3N x 3N at the end.
   kmat <- array(0, dim = c(3, nsites, 3, nsites))
 
-  # Off-diagonal blocks, element (a, b) of every spring's block at once. A pair
-  # of nodes has at most one spring, so no block is written twice.
+  # Off-diagonal blocks, element (a, b) of every edge's block at once. A pair
+  # of nodes has at most one edge, so no block is written twice.
   for (a in 1:3) {
     for (b in 1:3) {
       ee_ab <- eij[, a] * eij[, b]
@@ -578,7 +583,7 @@ genm_hessian <- function(xyz, springs, nsites) {
 #' Then superposes the result onto `xyz_seed` and checks that it is a minimum of
 #' a rigid network ([genm_is_minimum()]). Errors if either fails.
 #'
-#' @param springs tibble with columns `i, j, lij, kij`: any set of springs
+#' @param graph tibble with columns `i, j, lij, kij`: any set of edges
 #' @param nsites number of nodes
 #' @param xyz_seed starting coordinates
 #' @param gtol convergence threshold on `max(abs(gradient))`
@@ -588,30 +593,30 @@ genm_hessian <- function(xyz, springs, nsites) {
 #'
 #' @noRd
 #'
-genm_minimize <- function(springs, nsites, xyz_seed, gtol, max_iter) {
+genm_minimize <- function(graph, nsites, xyz_seed, gtol, max_iter) {
   stopifnot(is.numeric(gtol), gtol > 0, is.numeric(max_iter), max_iter >= 0)
   xyz <- xyz_seed
   iter <- 0
   repeat {
-    gradient <- genm_gradient(xyz, springs, nsites)
+    gradient <- genm_gradient(xyz, graph, nsites)
     grad_max <- max(abs(gradient))
     if (grad_max < gtol) break
     if (iter >= max_iter) {
       stop("genm_minimize did not converge in ", max_iter,
            " iterations: max |gradient| = ", signif(grad_max, 3))
     }
-    step <- genm_newton_step(xyz, gradient, springs, nsites)
-    xyz <- genm_line_search(xyz, step, gradient, springs, nsites)
+    step <- genm_newton_step(xyz, gradient, graph, nsites)
+    xyz <- genm_line_search(xyz, step, gradient, graph, nsites)
     iter <- iter + 1
   }
 
   # with no step taken xyz is xyz_seed itself; superposing would only add rounding
   if (iter > 0) xyz <- genm_superpose(xyz, xyz_seed)
 
-  kmat <- genm_hessian(xyz, springs, nsites)
+  kmat <- genm_kmat(xyz, graph, nsites)
   if (!genm_is_minimum(xyz, kmat)) {
     stop("genm_minimize reached a stationary point that is not a minimum of a rigid network ",
-         "(the Hessian is not positive definite on the internal coordinates)")
+         "(the kmat is not positive definite on the internal coordinates)")
   }
   list(xyz = xyz, kmat = kmat, iter = iter, grad_max = grad_max)
 }
@@ -625,15 +630,15 @@ genm_minimize <- function(springs, nsites, xyz_seed, gtol, max_iter) {
 #'
 #' @param xyz coordinates, a vector of length `3 * nsites`
 #' @param gradient the gradient at `xyz`
-#' @param springs tibble with columns `i, j, lij, kij`
+#' @param graph tibble with columns `i, j, lij, kij`
 #' @param nsites number of nodes
 #'
 #' @returns the step, a vector of length `3 * nsites`
 #'
 #' @noRd
 #'
-genm_newton_step <- function(xyz, gradient, springs, nsites) {
-  kmat <- genm_hessian(xyz, springs, nsites)
+genm_newton_step <- function(xyz, gradient, graph, nsites) {
+  kmat <- genm_kmat(xyz, graph, nsites)
   # K is singular along the six rigid-body directions. Make it invertible by
   # adding a stiffness c along exactly those directions, K + c P, with P the
   # projector onto them and c the mean of K's diagonal; the rigid-body part of
@@ -647,7 +652,7 @@ genm_newton_step <- function(xyz, gradient, springs, nsites) {
     # kmat_shifted = t(cholesky) %*% cholesky; solve in two triangular steps
     step <- -backsolve(cholesky, backsolve(cholesky, gradient, transpose = TRUE))
   } else {
-    # Far from a minimum, compressed springs can make K + c P indefinite, and
+    # Far from a minimum, compressed edges can make K + c P indefinite, and
     # the plain Newton step may then point uphill. Replacing every eigenvalue by
     # its absolute value gives a step that still goes downhill.
     eig <- eigen(kmat_shifted, symmetric = TRUE)
@@ -673,17 +678,17 @@ genm_newton_step <- function(xyz, gradient, springs, nsites) {
 #' @param xyz current coordinates
 #' @param step the proposed step
 #' @param gradient the gradient at `xyz`
-#' @param springs tibble with columns `i, j, lij, kij`
+#' @param graph tibble with columns `i, j, lij, kij`
 #' @param nsites number of nodes
 #'
 #' @returns the new coordinates
 #'
 #' @noRd
 #'
-genm_line_search <- function(xyz, step, gradient, springs, nsites) {
+genm_line_search <- function(xyz, step, gradient, graph, nsites) {
   sufficient_decrease <- 1e-4                       # Armijo constant
   smallest_fraction <- 1e-10                        # give up below this
-  v_now <- genm_energy(xyz, springs)
+  v_now <- genm_v_xyz(xyz, graph)
   v_rounding <- 64 * .Machine$double.eps * abs(v_now) # rounding error of V
   grad_max_now <- max(abs(gradient))
 
@@ -693,7 +698,7 @@ genm_line_search <- function(xyz, step, gradient, springs, nsites) {
   fraction <- 1
   repeat {
     xyz_new <- xyz + fraction * step
-    v_new <- genm_energy(xyz_new, springs)
+    v_new <- genm_v_xyz(xyz_new, graph)
 
     if (v_new <= v_now + sufficient_decrease * fraction * slope) return(xyz_new)
 
@@ -703,7 +708,7 @@ genm_line_search <- function(xyz, step, gradient, springs, nsites) {
     # gradient has become smaller.
     v_unchanged <- v_new <= v_now + v_rounding
     if (v_unchanged) {
-      grad_max_new <- max(abs(genm_gradient(xyz_new, springs, nsites)))
+      grad_max_new <- max(abs(genm_gradient(xyz_new, graph, nsites)))
       if (grad_max_new < grad_max_now) return(xyz_new)
     }
 
@@ -717,11 +722,11 @@ genm_line_search <- function(xyz, step, gradient, springs, nsites) {
 
 #' Is a stationary point a minimum of a rigid network?
 #'
-#' True when the Hessian is positive definite on the internal coordinates.
+#' True when the kmat is positive definite on the internal coordinates.
 #' False for a saddle point, and for a network that is not rigid.
 #'
 #' @param xyz coordinates of the stationary point
-#' @param kmat the Hessian there
+#' @param kmat the kmat at `xyz`
 #'
 #' @noRd
 #'
@@ -840,12 +845,12 @@ genm_kij <- function(param, lij, sdij) {
   # the kij_* functions name their first argument dij; here it receives lij
   kij <- do.call(kij_fun, c(list(lij, sdij = sdij, d_max = param$d_max), param$kij_par))
   if (length(kij) != length(lij)) {
-    stop("kij_", param$model, " returned ", length(kij), " values for ", length(lij), " springs")
+    stop("kij_", param$model, " returned ", length(kij), " values for ", length(lij), " edges")
   }
   if (any(!is.finite(kij))) stop("kij_", param$model, " returned non-finite values")
   if (any(kij < 0)) {
     stop("kij_", param$model, " is negative for ", sum(kij < 0),
-         " spring(s), e.g. at lij = ", signif(lij[kij < 0][1], 4), ": k must be >= 0")
+         " edge(s), e.g. at lij = ", signif(lij[kij < 0][1], 4), ": k must be >= 0")
   }
   kij
 }
@@ -853,10 +858,10 @@ genm_kij <- function(param, lij, sdij) {
 
 #' Warn when d_max_pairs truncates k
 #'
-#' Pairs of nodes farther apart than `d_max_pairs` in the pdb get no spring, so
+#' Pairs of nodes farther apart than `d_max_pairs` in the pdb get no edge, so
 #' they can never become contacts. That is harmless only if `k` is negligible
 #' there. Compares `k(d_max_pairs)`, for a pair far apart in sequence, with the
-#' largest `k` among springs more than three apart in sequence (beyond the
+#' largest `k` among edges more than three apart in sequence (beyond the
 #' special-cased bonded neighbours of some models), and warns when the ratio
 #' exceeds `ratio_max`. For power-law and gaussian models (pfanm, hnm0) there is
 #' no distance where `k` is negligible, and the truncation then acts as a hard
@@ -871,11 +876,11 @@ genm_check_d_max_pairs <- function(enm, ratio_max = 0.01) {
   param <- enm$param
   far_in_sequence <- 1e6
   k_far <- genm_kij(param, param$d_max_pairs, sdij = far_in_sequence)
-  k_near <- max(enm$springs$kij[enm$springs$sdij > 3])
+  k_near <- max(enm$graph$kij[enm$graph$sdij > 3])
   if (k_far > ratio_max * k_near) {
     warning("k(d_max_pairs = ", param$d_max_pairs, ") is ", signif(k_far / k_near, 2),
             " of the largest non-bonded k for model '", param$model, "'. ",
-            "Pairs beyond d_max_pairs get no spring, so the truncation acts as a hard ",
+            "Pairs beyond d_max_pairs get no edge, so the truncation acts as a hard ",
             "cutoff and no contact can form beyond it.", call. = FALSE)
   }
   invisible(enm)

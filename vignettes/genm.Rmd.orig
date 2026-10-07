@@ -117,7 +117,7 @@ sites   <- get_site(wt)               # 1 .. number of sites
 modes   <- get_mode(wt)               # 1 .. number of normal modes, softest first
 alleles <- 0:(wt_enm$param$n_alleles - 1)
 
-c(sites = length(sites), modes = length(modes), springs = nrow(wt_enm$springs))
+c(sites = length(sites), modes = length(modes), springs = nrow(wt_enm$graph))
 ```
 
 ## What is measured
@@ -221,7 +221,7 @@ plot_profiles(profile_table(scan_profile),
 ```
 
 ```{r bonds, include = FALSE}
-n_bonds <- sum(wt_enm$springs$sdij == 1)
+n_bonds <- sum(wt_enm$graph$sdij == 1)
 ```
 
 Modes are numbered from the softest. The structural mode profile drops sharply
