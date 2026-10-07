@@ -83,7 +83,7 @@ interface; the list structure is not.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 
 get_nsites(wt)                  # number of ENM nodes
 get_nmodes(wt)                  # 3 * nsites - 6 for a generic structure

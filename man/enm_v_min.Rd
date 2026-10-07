@@ -23,7 +23,7 @@ mutant.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
 
 enm_v_min(wt)                   # 0: a network fresh from set_enm() is unstrained

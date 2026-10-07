@@ -11,7 +11,7 @@ library(testthat)  # for test_path()
 ## ----------------------------------------------------------------------------------------------------------------------
 load(test_path("fixtures", "pdb_2acy_A.rda"))
 
-wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
 save(wt, file = test_path("fixtures", "wt.rda"))
 
 ## ----------------------------------------------------------------------------------------------------------------------
@@ -20,14 +20,6 @@ mut_lf  <- get_mutant_site(wt, site_mut = 80, mutation = 1,
                            mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1)
 
 save(mut_lf, file = test_path("fixtures", "mut_lf.rda"))
-
-## ----------------------------------------------------------------------------------------------------------------------
-skip <-  TRUE
-if (!skip) {
-  mut_qf <- get_mutant_site(wt, site_mut = 80, mutation = 1,
-                            mut_model = "sclfenm", mut_dl_sigma = 0.3, mut_sd_min = 1)
-  save(mut_qf, file = test_path("fixtures", "mut_qf.rda"))
-}
 
 
 

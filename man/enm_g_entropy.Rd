@@ -20,7 +20,7 @@ the ENM eigenvalue spectrum.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 
 # beta has no default; beta_boltzmann() is the usual choice
 enm_g_entropy(wt, beta_boltzmann())
@@ -28,7 +28,7 @@ enm_g_entropy(wt, beta_boltzmann())
 # the term depends on the whole eigenvalue spectrum, so it moves when the
 # network does: a shorter cutoff keeps fewer contacts
 wt2 <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-               d_max = 9, frustrated = FALSE)
+               d_max = 9)
 enm_g_entropy(wt2, beta_boltzmann())
 
 }

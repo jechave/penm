@@ -9,7 +9,7 @@
 #' parameters, and normal modes. It is the entry point of the package: everything
 #' else takes the `prot` it returns.
 #'
-#' All five arguments are required — there are no defaults.
+#' All four arguments are required — there are no defaults.
 #'
 #' @param pdb   pdb object obtained using [bio3d::read.pdb()]
 #' @param node  how network nodes are built: `"ca"` (alpha carbons), `"sc"` (side
@@ -19,8 +19,6 @@
 #'   `"pfanm"`, `"reach"`. These select the spring-constant function applied to each
 #'   contact.
 #' @param d_max distance cutoff (Å) used to define enm contacts
-#' @param frustrated logical value indicating whether to include frustrations in
-#'   calculation of kmat. **Only `FALSE` is currently supported**; `TRUE` errors.
 #'
 #' @returns an object of class `prot`, which is a list `lst(param, nodes, graph, eij, kmat, nma)`
 #'
@@ -33,20 +31,18 @@
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #' get_nsites(wt)
 #' get_nmodes(wt)
 #'
 #' # side-chain nodes, a different variant and cutoff
 #' wt_sc <- set_enm(pdb_2acy_A, node = "sc", model = "anm",
-#'                  d_max = 12.5, frustrated = FALSE)
+#'                  d_max = 12.5)
 #' get_nsites(wt_sc)
-set_enm <- function(pdb, node, model, d_max, frustrated) {
-
-  stopifnot(!frustrated) # WARNING: need to test frustrated = T option, not sure whether mut_graph is consistent with kmat calculation
+set_enm <- function(pdb, node, model, d_max) {
 
   prot <- create_enm() %>%
-    set_enm_param(node = node, model = model, d_max = d_max, frustrated = frustrated) %>%
+    set_enm_param(node = node, model = model, d_max = d_max) %>%
     set_enm_nodes(pdb = pdb) %>%
     set_enm_graph() %>%
     set_enm_eij() %>%
@@ -75,8 +71,8 @@ create_enm <- function() {
 #'
 #' @noRd
 #'
-set_enm_param <- function(prot, node, model, d_max, frustrated) {
-  prot$param <- lst(node, model, d_max, frustrated)
+set_enm_param <- function(prot, node, model, d_max) {
+  prot$param <- lst(node, model, d_max)
   prot
 }
 
@@ -114,7 +110,7 @@ set_enm_eij <- function(prot) {
 #' @noRd
 #'
 set_enm_kmat <- function(prot) {
-  prot$kmat <- calculate_enm_kmat(get_graph(prot), get_eij(prot), get_nsites(prot), get_frustrated(prot))
+  prot$kmat <- calculate_enm_kmat(get_graph(prot), get_eij(prot), get_nsites(prot))
   prot
 }
 
@@ -277,7 +273,6 @@ calculate_enm_eij <- function(xyz, i, j) {
 #' @param graph A tibble representing the ENM graph (with edge information, especially \code{kij}
 #' @param eij A matrix of size \code{n_edges x 3} of \code{eij} versors directed along ENM contacts
 #' @param nsites The number of nodes of the ENM network
-#' @param frustrated Logical indicating whether to add frustration or not before calculating \code{kmat}
 #'
 #' @return The \code{3 nsites x 3 nsites} stiffness matrix of the ENM
 #'
@@ -287,14 +282,14 @@ calculate_enm_eij <- function(xyz, i, j) {
 #' nodes <- calculate_enm_nodes(pdb, node = "ca")
 #' graph <- calculate_enm_graph(nodes$xyz, nodes$pdb_site, model = "anm", d_max = 10.5)
 #' eij <- calculate_enm_eij(nodes$xyz, graph$i, graph$j)
-#' kmat <- calculate_enm_kmat(graph, eij, nsites = nodes$nsites, frustrated = FALSE)
+#' kmat <- calculate_enm_kmat(graph, eij, nsites = nodes$nsites)
 #' }
 #'
 #' @family enm builders
 #' @noRd
 #'
 #'
-calculate_enm_kmat <- function(graph, eij, nsites, frustrated) {
+calculate_enm_kmat <- function(graph, eij, nsites) {
   stopifnot(max(graph$i, graph$j) <= nsites,
             nrow(graph) == nrow(eij))
   kmat <- array(0, dim = c(3, nsites, 3, nsites))
@@ -302,14 +297,9 @@ calculate_enm_kmat <- function(graph, eij, nsites, frustrated) {
     i <- graph$i[[edge]]
     j <- graph$j[[edge]]
     kij <- graph$kij[[edge]]
-    if (frustrated) {
-      gij <- graph$lij[[edge]] / graph$dij[[edge]] - 1
-    } else {
-      gij <- 0
-    }
     eij_v <- eij[edge, ]
     eij_mat <- tcrossprod(eij_v, eij_v)
-    kij_mat <- -kij * (eij_mat + gij * (eij_mat - diag(3)))
+    kij_mat <- -kij * eij_mat
     kmat[, j, , i] <- kmat[, i, , j] <- kij_mat
   }
   for (i in seq(nsites)) {

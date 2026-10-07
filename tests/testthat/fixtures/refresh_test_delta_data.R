@@ -7,8 +7,7 @@
 # calculation. A mismatch means something changed; the change is what needs
 # explaining, and the fixture is not to be regenerated to make a test pass.
 #
-# lfenm only. sclfenm is deliberately absent: its correctness is unresolved
-# (see CLAUDE.md), and freezing its output would fix that question in place.
+# Mutants are lfenm.
 
 ## ----------------------------------------------------------------------------------------------------------------------
 # load libraries
@@ -21,7 +20,7 @@ library(testthat)  # for test_path()
 ## ----------------------------------------------------------------------------------------------------------------------
 load(test_path("fixtures", "pdb_2acy_A.rda"))
 
-wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
 
 # ensemble passed explicitly: the other refresh scripts rely on get_mutant_site()'s
 # default, so their fixtures would move if that default ever changed.

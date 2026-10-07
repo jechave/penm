@@ -20,35 +20,6 @@ convenience on top of the primitive, not the primitive itself.
 
 Start from `set_enm()` (`R/enm.R`) and `get_mutant_site()` (`R/penm.R`).
 
-## sclfenm — something smells, unexplored
-
-**Something is off about `sclfenm`, and what exactly is not yet known.** Julian has
-not investigated it; as of 2026-08-13 it is an open question he intends to explore
-and think about, not a diagnosed defect with a known fix. Treat every statement below
-as an observation, not a conclusion.
-
-What is actually observed:
-
-- Its tests skip, with the message `"Skip sclfenm test until sclefnm is fixed"`.
-- The refresh scripts guard its fixtures behind `skip <- TRUE`, so `mut_qf.rda`
-  predates *both* key changes (the 2026-08-13 hashing of the mutant key, and the
-  2026-08-19 rename to `ensemble` that dropped a key component) and `mut_sc_qf.rda`
-  was never created. Both are unused while the tests skip. Note `mut_sc_lf.rda` is a
-  different file: it is not guarded, and was regenerated on 2026-08-19 with the rest.
-- Two `#TODO` markers in `R/penm.R`: one on the `lij` update ("mut parameters are
-  w.r.t. w0, not wt"), one on frustrated handling in `mutate_graph()`.
-- sclfenm changes the *number of graph edges* (e.g. 956 → 962 for 2acy site 80), which
-  follows from recalculating the contact map from mutant coordinates. This one looks
-  like the model working as designed rather than part of the smell — but that reading
-  has not been checked against the science either.
-
-Whether these are one problem, several, or mostly harmless is unresolved.
-
-**So: do not regenerate the fixtures, un-skip the tests, or "fix" the TODOs as a side
-effect of other work.** Not because the model is known wrong, but because acting
-would bake in an answer to a question that is still open. If a task touches sclfenm,
-stop and ask.
-
 ## Other standing decisions
 
 - **The mutant key is `(ensemble, site_mut, mutation)`, hashed to seed the draw.**
@@ -60,8 +31,6 @@ stop and ask.
   stable. **No `.9000` suffix** — that marks "a dev build after release X",
   which means nothing here because penm has no release event distinct from
   "what is in git". A dependent needs a version floor it can write.
-- **`frustrated = TRUE` is disabled**, not merely untested — `set_enm()` has a
-  `stopifnot(!frustrated)`. Don't enable it as a side effect of other work.
 
 ## House conventions
 

@@ -9,7 +9,7 @@ library(testthat)  # for test_path()
 
 load(test_path("fixtures", "pdb_2acy_A.rda"))
 
-prot_2acy_A_ming_wall_ca <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+prot_2acy_A_ming_wall_ca <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
 
 save(prot_2acy_A_ming_wall_ca, file = test_path("fixtures", "prot_2acy_A_ming_wall_ca.rda"))
 

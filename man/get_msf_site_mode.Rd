@@ -19,7 +19,7 @@ recovers [get_msf_mode()].
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 
 m <- get_msf_site_mode(wt)
 dim(m)                          # nsites x nmodes

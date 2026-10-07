@@ -59,7 +59,7 @@ chain A) bundled with the package.
 
 ```{r build}
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 
 get_nsites(wt)
 get_nmodes(wt)
@@ -78,10 +78,10 @@ pdb <- read.pdb("path/to/your/structure.pdb")   # or read.pdb("2acy") to fetch
 pdb_A <- trim.pdb(pdb, chain = "A")
 
 wt <- set_enm(pdb_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 ```
 
-All five arguments are required, so that the network is recorded in the call:
+All four arguments are required, so that the network is recorded in the call:
 
 - **`node`** — which atom represents a residue: `"ca"` (alpha carbons), `"sc"`
   (side-chain centroids) or `"cb"` (beta carbons).
@@ -90,7 +90,6 @@ All five arguments are required, so that the network is recorded in the call:
   `"reach"` make $k_{ij}$ depend on distance or on separation along the sequence.
 - **`d_max`** — the contact cutoff in ångström. For Cα networks, 10–12 Å is the
   usual range. Shorter cutoffs give sparser, softer networks.
-- **`frustrated`** — `FALSE`. `TRUE` is not currently supported and errors.
 
 These choices define the network, so hold them fixed across any comparison.
 

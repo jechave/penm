@@ -17,7 +17,7 @@ Calculates the reduced covariance matrix (size nsites x nsites)
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 
 cmat_r <- get_reduced_cmat(wt)
 dim(cmat_r)                     # nsites x nsites, from the 3N x 3N cmat

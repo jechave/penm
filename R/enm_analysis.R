@@ -16,7 +16,7 @@
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' cn <- get_cn(wt)
 #' length(cn)                      # one value per site
@@ -37,7 +37,7 @@ get_cn <- function(prot) cn_xyz(get_xyz(prot), get_d_max(prot))
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' wcn <- get_wcn(wt)
 #' length(wcn)                     # one value per site
@@ -63,7 +63,7 @@ get_wcn <- function(prot) wcn_xyz(get_xyz(prot))
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' # pdb_site_active is in PDB numbering (resno), not sequential site index;
 #' # take the values from get_pdb_site() to be sure they match
@@ -99,7 +99,7 @@ get_dactive <- function(prot, pdb_site_active) {
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' msf <- get_msf_site(wt)
 #' which.max(msf)                  # most mobile site
@@ -127,7 +127,7 @@ get_msf_site <- function(prot) {
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' mlms <- get_mlms(wt)
 #' length(mlms)                    # one value per site
@@ -171,7 +171,7 @@ get_mlms <- function(prot, sdij_cut = 2) {
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' msf_n <- get_msf_mode(wt)
 #' length(msf_n) == get_nmodes(wt)
@@ -200,7 +200,7 @@ get_msf_mode <-  function(prot) 1 / get_evalue(prot)
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' rho <- get_rho_matrix(wt)
 #' dim(rho)                        # nsites x nsites
@@ -227,7 +227,7 @@ get_rho_matrix <- function(prot) {
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' cmat_r <- get_reduced_cmat(wt)
 #' dim(cmat_r)                     # nsites x nsites, from the 3N x 3N cmat
@@ -253,7 +253,7 @@ get_reduced_cmat <- function(prot) {
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' kmat_r <- get_reduced_kmat(wt)
 #' dim(kmat_r)                     # nsites x nsites, from the 3N x 3N kmat
@@ -288,7 +288,7 @@ get_reduced_kmat <- function(prot) {
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' m <- get_msf_site_mode(wt)
 #' dim(m)                          # nsites x nmodes
@@ -318,7 +318,7 @@ get_msf_site_mode <- function(prot) {
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' u2 <- get_umat2(wt)
 #' dim(u2)                         # nsites x nmodes
@@ -361,7 +361,7 @@ get_umat2 <- function(prot) {
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' ks <- get_kmat_sqrt(wt)
 #' dim(ks)                         # 3 nsites x 3 nsites
@@ -391,7 +391,7 @@ get_kmat_sqrt <- function(prot) {
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' cs <- get_cmat_sqrt(wt)
 #' all.equal(cs %*% cs, as.matrix(get_cmat(wt)), check.attributes = FALSE)

@@ -24,7 +24,7 @@ Needed to call \code{\link{delta_structure_de2i}}, which takes
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 
 ks <- get_kmat_sqrt(wt)
 dim(ks)                         # 3 nsites x 3 nsites

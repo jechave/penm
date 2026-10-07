@@ -20,7 +20,7 @@
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' get_nsites(wt)                  # number of ENM nodes
 #' get_nmodes(wt)                  # 3 * nsites - 6 for a generic structure
@@ -86,16 +86,6 @@ get_enm_model <- function(prot)  prot$param$model
 #' @noRd
 #'
 get_d_max <- function(prot) prot$param$d_max
-
-#' Get ENM parameter frustrated
-#'
-#' @param prot is a prot object
-#' @return frustrated, the parameter that defines whether the ENM is frustrated fully relaxed
-#'
-#'
-#' @noRd
-#'
-get_frustrated <- function(prot)  prot$param$frustrated
 
 
 #' @rdname get_prot_property

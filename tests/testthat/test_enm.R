@@ -5,13 +5,13 @@ load(test_path("fixtures", "prot_2acy_A_ming_wall_ca.rda"))
 
 
 test_that("set_enm gets prot  equal to prot_2acy_A", {
-  expect_equal(set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE),
+  expect_equal(set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5),
                prot_2acy_A_ming_wall_ca)
 })
 
 test_that("set_enm works with beta carbon nodes", {
   # Test that CB nodes can be created
-  prot_cb <- set_enm(pdb_2acy_A, node = "cb", model = "anm", d_max = 12.0, frustrated = FALSE)
+  prot_cb <- set_enm(pdb_2acy_A, node = "cb", model = "anm", d_max = 12.0)
 
   # Check that the object is created properly
   expect_s3_class(prot_cb, "prot")
@@ -31,8 +31,8 @@ test_that("set_enm works with beta carbon nodes", {
 
 test_that("set_enm accepts both 'cb' and 'beta' for beta carbon nodes", {
   # Test that both 'cb' and 'beta' work
-  prot_cb1 <- set_enm(pdb_2acy_A, node = "cb", model = "anm", d_max = 12.0, frustrated = FALSE)
-  prot_cb2 <- set_enm(pdb_2acy_A, node = "beta", model = "anm", d_max = 12.0, frustrated = FALSE)
+  prot_cb1 <- set_enm(pdb_2acy_A, node = "cb", model = "anm", d_max = 12.0)
+  prot_cb2 <- set_enm(pdb_2acy_A, node = "beta", model = "anm", d_max = 12.0)
 
   # Both should produce the same result
   expect_equal(prot_cb1$nodes$xyz, prot_cb2$nodes$xyz)

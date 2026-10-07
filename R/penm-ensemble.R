@@ -83,7 +83,7 @@
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5, frustrated = FALSE)
+#'               d_max = 10.5)
 #'
 #' # Same realization, same (site, mutation): the same mutation, twice.
 #' a <- get_mutant_site(wt, site_mut = 80, mutation = 3, ensemble = 1L)

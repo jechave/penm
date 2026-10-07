@@ -4,7 +4,7 @@
 \alias{set_enm}
 \title{Set up 'prot' object}
 \usage{
-set_enm(pdb, node, model, d_max, frustrated)
+set_enm(pdb, node, model, d_max)
 }
 \arguments{
 \item{pdb}{pdb object obtained using [bio3d::read.pdb()]}
@@ -18,9 +18,6 @@ and `"beta"` are accepted as synonyms.}
 contact.}
 
 \item{d_max}{distance cutoff (Å) used to define enm contacts}
-
-\item{frustrated}{logical value indicating whether to include frustrations in
-calculation of kmat. **Only `FALSE` is currently supported**; `TRUE` errors.}
 }
 \value{
 an object of class `prot`, which is a list `lst(param, nodes, graph, eij, kmat, nma)`
@@ -30,17 +27,17 @@ an object of class `prot`, which is a list `lst(param, nodes, graph, eij, kmat, 
 parameters, and normal modes. It is the entry point of the package: everything
 else takes the `prot` it returns.
 
-All five arguments are required — there are no defaults.
+All four arguments are required — there are no defaults.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 get_nsites(wt)
 get_nmodes(wt)
 
 # side-chain nodes, a different variant and cutoff
 wt_sc <- set_enm(pdb_2acy_A, node = "sc", model = "anm",
-                 d_max = 12.5, frustrated = FALSE)
+                 d_max = 12.5)
 get_nsites(wt_sc)
 }
 \seealso{

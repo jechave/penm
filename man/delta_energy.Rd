@@ -50,14 +50,14 @@ Calculate energy differences between a mutant and wild type
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
 
 ddg_dv(wt, mut)      # minimum-energy difference
 
 # Under "lfenm" the contact map — and so kmat and its spectrum — is unchanged,
-# which makes the entropic term exactly zero. It is informative only for models
-# that rebuild the network, such as "sclfenm".
+# which makes the entropic term exactly zero. It is informative only for
+# mutational models that change the network.
 ddg_tds(wt, mut)
 
 }

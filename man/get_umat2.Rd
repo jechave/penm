@@ -17,7 +17,7 @@ Calculates a matrix of size nsites x nmodes. Element umat2(i,n) is the contribut
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 
 u2 <- get_umat2(wt)
 dim(u2)                         # nsites x nmodes

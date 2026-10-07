@@ -25,7 +25,7 @@
 load(test_path("fixtures", "pdb_2acy_A.rda"))
 load(test_path("fixtures", "internals_expected.rda"))
 
-wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
 dij  <- internals_expected$dij
 sdij <- internals_expected$sdij
 
@@ -148,7 +148,7 @@ test_that("distribution measures match frozen values", {
   # Compared against a DIFFERENT ENM model, not against the lfenm mutant: lfenm
   # leaves kmat and hence cmat unchanged, so that comparison would freeze the
   # degenerate 0/1/0 answers and could not detect a broken function.
-  wt_anm <- set_enm(pdb_2acy_A, node = "ca", model = "anm", d_max = 10.5, frustrated = FALSE)
+  wt_anm <- set_enm(pdb_2acy_A, node = "ca", model = "anm", d_max = 10.5)
   bwt  <- site_block(get_cmat(wt),     internals_expected$site_block)
   bmut <- site_block(get_cmat(wt_anm), internals_expected$site_block)
   expect_equal(penm:::dbhat(bwt, bmut), internals_expected$dbhat)

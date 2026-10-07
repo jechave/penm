@@ -56,7 +56,7 @@ internals_expected <- list(
 
 load(test_path("fixtures", "pdb_2acy_A.rda"))
 
-wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
 
 # dbhat/rwsip/dh are only ever called on the 3x3 single-site block of cmat --
 # see delta_motion_dbhati/rwsipi/dhi in R/delta_motion_by_site.R. Feed them the
@@ -73,7 +73,7 @@ site_block <- function(cmat, i) {
 # cmat is identical to wt's and dbhat/dh would freeze as 0 and rwsip as 1 --
 # values that hold even if the functions were broken. Use a different ENM model
 # instead, which changes kmat and so genuinely changes cmat.
-wt_anm <- set_enm(pdb_2acy_A, node = "ca", model = "anm", d_max = 10.5, frustrated = FALSE)
+wt_anm <- set_enm(pdb_2acy_A, node = "ca", model = "anm", d_max = 10.5)
 
 site <- 11L
 bwt  <- site_block(get_cmat(wt),     site)

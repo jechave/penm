@@ -17,7 +17,7 @@ Calculates the Contact Number (CN) of each site
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 
 cn <- get_cn(wt)
 length(cn)                      # one value per site

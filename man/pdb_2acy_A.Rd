@@ -27,7 +27,7 @@ calculations in the examples fast.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 get_nsites(wt)
 }
 \keyword{datasets}

@@ -7,7 +7,7 @@ load(test_path("fixtures", "pdb_2acy_A.rda"))
 load(test_path("fixtures", "delta_expected.rda"))
 load(test_path("fixtures", "prot_expected.rda"))
 
-wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, frustrated = FALSE)
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
 mut <- get_mutant_site(wt, site_mut = 80, mutation = 1,
                        mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1,
                        ensemble = 1L)
@@ -39,7 +39,7 @@ test_that("delta_structure by mode match frozen values", {
 # So assert the invariance itself, in closed form, instead of freezing its
 # numeric shadow. These fail on a NaN, which the frozen version could not.
 # Exercising the measures on genuinely different networks needs a mutant model
-# that rebuilds the contact map -- see dev/ideas.md, to be settled with sclfenm.
+# that changes the network -- see dev/ideas.md.
 
 test_that("lfenm leaves the network, and so the motion, unchanged", {
   expect_equal(get_kmat(wt), get_kmat(mut))

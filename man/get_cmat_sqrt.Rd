@@ -19,7 +19,7 @@ as \eqn{\mathbf{U} \sqrt{1/\lambda} \mathbf{U}^T}. The dual of
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 
 cs <- get_cmat_sqrt(wt)
 all.equal(cs \%*\% cs, as.matrix(get_cmat(wt)), check.attributes = FALSE)

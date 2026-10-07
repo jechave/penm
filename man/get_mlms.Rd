@@ -19,7 +19,7 @@ Calculates the Mean Local Mutational Stress (MLMS) profile using graph of prot o
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 
 mlms <- get_mlms(wt)
 length(mlms)                    # one value per site

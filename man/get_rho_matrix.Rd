@@ -17,7 +17,7 @@ Calculates the reduced correlation matrix (size nsites x nsites, diag(rho) = 1)
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 
 rho <- get_rho_matrix(wt)
 dim(rho)                        # nsites x nsites

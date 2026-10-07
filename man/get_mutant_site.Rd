@@ -21,7 +21,7 @@ get_mutant_site(
 
 \item{mutation}{An integer, if 0, return \code{wt} without mutating}
 
-\item{mut_model}{A string specifying mutational model ("lfenm" or "sclfenm")}
+\item{mut_model}{A string specifying mutational model; currently only "lfenm"}
 
 \item{mut_dl_sigma}{The standard deviation of a normal distribution from which edge-length perturbation is picked.}
 
@@ -47,7 +47,7 @@ what that means and when \code{ensemble} may be changed.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 mut <- get_mutant_site(wt, site_mut = 11, mutation = 1,
                        mut_model = "lfenm", ensemble = 7)
 

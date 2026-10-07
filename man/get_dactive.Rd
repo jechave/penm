@@ -19,7 +19,7 @@ Calculates the distance from each site to the closest active residue
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, frustrated = FALSE)
+              d_max = 10.5)
 
 # pdb_site_active is in PDB numbering (resno), not sequential site index;
 # take the values from get_pdb_site() to be sure they match
