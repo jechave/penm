@@ -1,25 +1,20 @@
 # Generalized ENM (R/genm.R).
 #
-# Nothing here is frozen: every expectation is an invariant or a closed form, so
-# there are no fixtures to regenerate. Where two quantities are compared, the
-# test also asserts that they were reached by different routes, so that the
-# comparison is not equal by construction.
+# Nothing here is frozen: every expectation is an invariant or a closed form.
+# Where two quantities are compared, they are reached by different routes, so
+# that the comparison is not equal by construction.
 
 build_enm_from_pdb    <- penm:::build_enm_from_pdb
 genm_mutate           <- penm:::genm_mutate
-genm_lij              <- penm:::genm_lij
-genm_site_delta_lij          <- penm:::genm_site_delta_lij
-prot_from_enm         <- penm:::prot_from_enm
-genm_site_graph     <- penm:::genm_site_graph
-genm_add_nma          <- penm:::genm_add_nma
-genm_v_min            <- penm:::genm_v_min
-genm_v_xyz           <- penm:::genm_v_xyz
-genm_gradient         <- penm:::genm_gradient
-genm_kmat          <- penm:::genm_kmat
-dij_edge              <- penm:::dij_edge
-genm_superpose        <- penm:::genm_superpose
-genm_superpose_prot   <- penm:::genm_superpose_prot
+genm_allele_delta_lij <- penm:::genm_allele_delta_lij
 genm_kij              <- penm:::genm_kij
+prot_from_enm         <- penm:::prot_from_enm
+genm_add_nma          <- penm:::genm_add_nma
+genm_superpose_prot   <- penm:::genm_superpose_prot
+genm_v_xyz            <- penm:::genm_v_xyz
+genm_gradient         <- penm:::genm_gradient
+genm_kmat             <- penm:::genm_kmat
+dij_edge              <- penm:::dij_edge
 
 load(test_path("fixtures", "pdb_2acy_A.rda"))
 
@@ -34,6 +29,15 @@ edge_d <- function(prot) {
   dij_edge(get_xyz(prot), prot$enm$graph$i, prot$enm$graph$j)
 }
 
+# the edges of a site: their row in the graph, and the site at the other end
+site_edges <- function(enm, site) {
+  graph <- enm$graph
+  row <- which(graph$i == site | graph$j == site)
+  partner <- ifelse(graph$i[row] == site, graph$j[row], graph$i[row])
+  tibble::tibble(row = row, partner = partner, sdij = graph$sdij[row],
+                 l0ij = graph$l0ij[row], lij = graph$lij[row], kij = graph$kij[row])
+}
+
 # apply a path of mutations, given as a table with columns site and allele
 mutate_path <- function(enm, path) {
   for (k in seq_len(nrow(path))) {
@@ -42,12 +46,17 @@ mutate_path <- function(enm, path) {
   enm
 }
 
+superpose <- function(xyz, target) {
+  all_coordinates <- seq_along(target)
+  as.vector(bio3d::fit.xyz(fixed = target, mobile = xyz,
+                           fixed.inds = all_coordinates, mobile.inds = all_coordinates))
+}
+
 # Two sites joined by an edge, so that mutating both changes a shared edge.
 # site_b is the first site in contact with site_a (k > 0) that is not bonded to it.
 site_a <- 80L
-edges_a <- genm_site_graph(enm, site_a)
-contacts_a <- edges_a[edges_a$kij > 0 & edges_a$sdij >= 2, ]
-site_b <- if (contacts_a$i[1] == site_a) contacts_a$j[1] else contacts_a$i[1]
+edges_a <- site_edges(enm, site_a)
+site_b <- edges_a$partner[edges_a$kij > 0 & edges_a$sdij >= 2][1]
 
 mut_a_enm <- genm_mutate(enm, site_a, 3L)
 mut_a <- genm_add_nma(prot_from_enm(mut_a_enm, get_xyz(wt)))
@@ -58,7 +67,7 @@ mut_a <- genm_add_nma(prot_from_enm(mut_a_enm, get_xyz(wt)))
 test_that("wild type: the minimiser does not move the pdb structure, and V_min = 0", {
   expect_equal(wt$minimization$iter, 0)
   expect_identical(get_xyz(wt), xyz_pdb)
-  expect_identical(genm_v_min(wt), 0)
+  expect_identical(wt$v_min, 0)
 })
 
 test_that("wild type: started off the structure, the minimiser returns to it", {
@@ -68,9 +77,9 @@ test_that("wild type: started off the structure, the minimiser returns to it", {
 
   p <- prot_from_enm(enm, seed)
   expect_gt(p$minimization$iter, 0)
-  expect_lt(genm_v_min(p), 1e-20)
+  expect_lt(p$v_min, 1e-20)
   expect_lt(max(abs(edge_d(p) - enm$graph$lij)), 1e-9)
-  expect_lt(max(abs(genm_superpose(get_xyz(p), xyz_pdb) - xyz_pdb)), 1e-9)
+  expect_lt(max(abs(superpose(get_xyz(p), xyz_pdb) - xyz_pdb)), 1e-9)
 })
 
 
@@ -133,16 +142,19 @@ test_that("the kmat has exactly six null modes, for the wild type and for a muta
 # the sequence determines the parameters ------------------------------------
 
 test_that("an enm's parameters are those its sequence implies, whatever the path", {
-  # a path that mutates a site twice and two sites that share an edge
-  e <- mutate_path(enm, tibble::tibble(
+  # the same sequence reached by two paths: one mutates site_a twice and passes
+  # through intermediate alleles, the other mutates each site once
+  long_way <- mutate_path(enm, tibble::tibble(
     site   = c(site_a, site_b, site_a, 10, site_b),
     allele = c(3,      7,      5,      1,  2)
   ))
-  expect_equal(e$sequence[c(site_a, site_b, 10)], c(5L, 2L, 1L))
-  expect_equal(sum(e$sequence != 0), 3)
-  # lij recomputed from l0ij and the sequence alone matches, bit for bit
-  expect_identical(e$graph$lij, genm_lij(e, seq_len(nrow(e$graph))))
-  expect_identical(e$graph$kij, genm_kij(e$param, e$graph$lij, e$graph$sdij))
+  short_way <- mutate_path(enm, tibble::tibble(
+    site   = c(10, site_b, site_a),
+    allele = c(1,  2,      5)
+  ))
+  expect_equal(long_way$sequence[c(site_a, site_b, 10)], c(5L, 2L, 1L))
+  expect_equal(sum(long_way$sequence != 0), 3)
+  expect_identical(long_way, short_way)
 })
 
 test_that("state function: two orders, through different intermediates, reach the same protein", {
@@ -160,14 +172,14 @@ test_that("state function: two orders, through different intermediates, reach th
   p_ba <- prot_from_enm(e_ba, get_xyz(p_b))
 
   # the routes genuinely differ
-  expect_gt(abs(genm_v_min(mut_a) - genm_v_min(p_b)), 0.1)
+  expect_gt(abs(mut_a$v_min - p_b$v_min), 0.1)
   expect_gt(max(abs(get_xyz(mut_a) - get_xyz(p_b))), 0.01)
   expect_gt(p_ab$minimization$iter, 0)
   expect_gt(p_ba$minimization$iter, 0)
 
   # same parameters, bit for bit; same minimum, to minimiser precision
   expect_identical(e_ab, e_ba)
-  expect_lt(abs(genm_v_min(p_ab) - genm_v_min(p_ba)) / genm_v_min(p_ab), 1e-12)
+  expect_lt(abs(p_ab$v_min - p_ba$v_min) / p_ab$v_min, 1e-12)
   expect_lt(max(abs(edge_d(p_ab) - edge_d(p_ba))), 1e-9)
 })
 
@@ -176,9 +188,9 @@ test_that("reversibility: mutating back restores the protein, from the wild type
   back_enm <- genm_mutate(mut_a_enm, site_a, 0L)
   back <- prot_from_enm(back_enm, get_xyz(mut_a))
   expect_identical(back_enm, enm)
-  expect_gt(genm_v_min(mut_a), 0.1)
+  expect_gt(mut_a$v_min, 0.1)
   expect_gt(back$minimization$iter, 0)
-  expect_lt(genm_v_min(back), 1e-20)
+  expect_lt(back$v_min, 1e-20)
   expect_lt(max(abs(edge_d(back) - edge_d(wt))), 1e-9)
 
   # from a frustrated reference: the mutant at site_b
@@ -189,9 +201,9 @@ test_that("reversibility: mutating back restores the protein, from the wild type
   back_enm <- genm_mutate(fwd_enm, site_a, 0L)
   back <- prot_from_enm(back_enm, get_xyz(fwd))
   expect_identical(back_enm, ref_enm)
-  expect_gt(genm_v_min(ref), 0.1)
-  expect_gt(abs(genm_v_min(fwd) - genm_v_min(ref)), 0.1)
-  expect_lt(abs(genm_v_min(back) - genm_v_min(ref)) / genm_v_min(ref), 1e-12)
+  expect_gt(ref$v_min, 0.1)
+  expect_gt(abs(fwd$v_min - ref$v_min), 0.1)
+  expect_lt(abs(back$v_min - ref$v_min) / ref$v_min, 1e-12)
   expect_lt(max(abs(edge_d(back) - edge_d(ref))), 1e-9)
 })
 
@@ -204,8 +216,8 @@ test_that("a path out and back, from an arbitrary sequence, returns to it exactl
     allele = c(7,      1,  9)
   ))
 
-  # out: re-mutate a site that is already mutated, mutate site_a (which shares a
-  # edge with site_b) twice, and add new sites
+  # out: re-mutate a site that is already mutated, mutate site_a (which shares
+  # an edge with site_b) twice, and add new sites
   e <- mutate_path(start, tibble::tibble(
     site   = c(site_a, site_b, 5, site_a, 40, 70),
     allele = c(3,      2,      4, 6,      1,  8)
@@ -223,32 +235,31 @@ test_that("a path out and back, from an arbitrary sequence, returns to it exactl
 # the mutational process ----------------------------------------------------
 
 test_that("allele 0 changes nothing, and other alleles change exactly the edges they should", {
-  expect_identical(genm_site_delta_lij(enm, site_a, 0L), numeric(nrow(genm_site_graph(enm, site_a))))
+  expect_identical(genm_allele_delta_lij(enm, site_a, 0L), numeric(nsites))
 
-  edges <- genm_site_graph(enm, site_a)
-  delta_lij <- genm_site_delta_lij(enm, site_a, 3L)
-  expect_true(all(delta_lij[edges$sdij < 2] == 0))
-  expect_true(all(delta_lij[edges$sdij >= 2] != 0))
-  # and only those: every other edge is untouched
+  # allele 3 at site_a changes the edges of site_a with sdij >= 2, and no other
   changed <- which(mut_a_enm$graph$lij != enm$graph$lij)
-  expect_setequal(changed, edges$row[edges$sdij >= 2])
+  expect_setequal(changed, edges_a$row[edges_a$sdij >= 2])
+  expect_gt(length(changed), 10)
 
   # mut_sd_min = 1 perturbs the i,i+1 bonds as well
   e1 <- build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
                            d_max = 10.5, d_max_pairs = 14, mut_sd_min = 1)
-  expect_true(all(genm_site_delta_lij(e1, site_a, 3L) != 0))
+  changed_1 <- which(genm_mutate(e1, site_a, 3L)$graph$lij != e1$graph$lij)
+  expect_setequal(changed_1, site_edges(e1, site_a)$row)
 })
 
 test_that("an allele's draw depends on (ensemble, site, allele), and leaves the caller's RNG alone", {
-  d1 <- genm_site_delta_lij(enm, site_a, 3L)
-  expect_identical(genm_site_delta_lij(enm, site_a, 3L), d1)
-  expect_false(isTRUE(all.equal(genm_site_delta_lij(enm, site_a, 4L), d1)))
+  d1 <- genm_allele_delta_lij(enm, site_a, 3L)
+  expect_identical(genm_allele_delta_lij(enm, site_a, 3L), d1)
+  expect_false(isTRUE(all.equal(genm_allele_delta_lij(enm, site_a, 4L), d1)))
+  expect_false(isTRUE(all.equal(genm_allele_delta_lij(enm, site_b, 3L), d1)))
   e2 <- build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
                            d_max = 10.5, d_max_pairs = 14, ensemble = 2L)
-  expect_false(isTRUE(all.equal(genm_site_delta_lij(e2, site_a, 3L), d1)))
-  # sd of the draws is mut_dl_sigma (0.3), loosely: about 40 draws
-  expect_gt(sd(d1[d1 != 0]), 0.15)
-  expect_lt(sd(d1[d1 != 0]), 0.45)
+  expect_false(isTRUE(all.equal(genm_allele_delta_lij(e2, site_a, 3L), d1)))
+  # sd of the draws is mut_dl_sigma (0.3), loosely: nsites draws
+  expect_gt(sd(d1), 0.2)
+  expect_lt(sd(d1), 0.4)
 
   set.seed(42); x <- runif(3)
   set.seed(42); invisible(genm_mutate(enm, site_a, 3L)); y <- runif(3)
@@ -258,32 +269,31 @@ test_that("an allele's draw depends on (ensemble, site, allele), and leaves the 
 test_that("an allele's change to an edge does not depend on which other edges exist", {
   # the change allele 3 at site_a makes to each of its edges, labelled by the
   # site at the edge's other end
-  dl_by_partner <- function(e) {
-    edges <- genm_site_graph(e, site_a)
-    partner <- ifelse(edges$i == site_a, edges$j, edges$i)
-    delta_lij <- genm_site_delta_lij(e, site_a, 3L)
-    tibble::tibble(partner = partner, sdij = edges$sdij, delta_lij = delta_lij)
+  change_by_partner <- function(e) {
+    edges <- site_edges(genm_mutate(e, site_a, 3L), site_a)
+    tibble::tibble(partner = edges$partner, sdij = edges$sdij,
+                   change = edges$lij - edges$l0ij)
   }
-  narrow <- dl_by_partner(enm)
+  narrow <- change_by_partner(enm)
   perturbed <- narrow$sdij >= 2
   # the shared edges are perturbed, so equal changes are not 0 == 0
-  expect_gt(sum(narrow$delta_lij[perturbed] != 0), 10)
+  expect_gt(sum(narrow$change[perturbed] != 0), 10)
 
   # more edges: site_a gains partners, and the ones it had keep their change
-  wide <- dl_by_partner(build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
-                                           d_max = 10.5, d_max_pairs = 16))
+  wide <- change_by_partner(build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
+                                               d_max = 10.5, d_max_pairs = 16))
   expect_gt(nrow(wide), nrow(narrow))
   same_edge_in_wide <- match(narrow$partner, wide$partner)
   expect_false(anyNA(same_edge_in_wide))
-  expect_identical(wide$delta_lij[same_edge_in_wide], narrow$delta_lij)
+  expect_identical(wide$change[same_edge_in_wide], narrow$change)
 
   # mut_sd_min = 1 perturbs the i,i+1 bonds too; the edges both perturb keep
   # their change
-  all_perturbed <- dl_by_partner(build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
-                                                    d_max = 10.5, d_max_pairs = 14,
-                                                    mut_sd_min = 1))
+  all_perturbed <- change_by_partner(build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
+                                                        d_max = 10.5, d_max_pairs = 14,
+                                                        mut_sd_min = 1))
   expect_identical(all_perturbed$partner, narrow$partner)
-  expect_identical(all_perturbed$delta_lij[perturbed], narrow$delta_lij[perturbed])
+  expect_identical(all_perturbed$change[perturbed], narrow$change[perturbed])
 })
 
 test_that("genm_mutate validates its input", {
@@ -306,12 +316,11 @@ test_that("genm_mutate validates its input", {
 test_that("kij follows lij: a mutation that moves an edge across the cutoff changes its k", {
   # search the alleles of site_a for one whose draw carries an edge across
   # d_max = 10.5 in either direction
-  edges <- genm_site_graph(enm, site_a)
   crossed <- NULL
   for (a in 1:9) {
     m <- genm_mutate(enm, site_a, a)
-    flip <- which((m$graph$lij[edges$row] <= 10.5) != (edges$lij <= 10.5) & edges$sdij >= 2)
-    if (length(flip) > 0) { crossed <- list(m = m, rows = edges$row[flip]); break }
+    flip <- which((m$graph$lij[edges_a$row] <= 10.5) != (edges_a$lij <= 10.5) & edges_a$sdij >= 2)
+    if (length(flip) > 0) { crossed <- list(m = m, rows = edges_a$row[flip]); break }
   }
   expect_false(is.null(crossed))
   m <- crossed$m
@@ -331,7 +340,7 @@ test_that("a negative k is rejected", {
 
 test_that("build_enm_from_pdb validates the model, its parameters and the mutational process", {
   b <- function(...) build_enm_from_pdb(pdb_2acy_A, node = "ca", d_max = 10.5, d_max_pairs = 14, ...)
-  expect_error(b(model = "no_such_model"), "unknown model")
+  expect_error(b(model = "no_such_model"), "kij_no_such_model")
   expect_error(b(model = "ming_wall", wdth = 1), "does not take parameter")
   expect_error(b(model = "ming_wall", 1), "must be named")
   expect_error(b(model = "ming_wall_smooth"), "\"w\" is missing")
@@ -373,15 +382,11 @@ test_that("d_max_pairs warns when the truncation is a hard cutoff", {
 
 # the protein ---------------------------------------------------------------
 
-test_that("the minimum is optimally superposed onto the seed", {
-  # closed form: a known rotation and translation are undone exactly
-  th <- 0.7
-  rot <- matrix(c(cos(th), sin(th), 0, -sin(th), cos(th), 0, 0, 0, 1), 3)
-  moved <- as.vector(rot %*% matrix(xyz_pdb, 3) + c(5, -3, 2))
-  expect_lt(max(abs(genm_superpose(moved, xyz_pdb) - xyz_pdb)), 1e-10)
-
-  # the mutant is already superposed onto its seed: superposing again is a no-op
-  expect_lt(max(abs(genm_superpose(get_xyz(mut_a), get_xyz(wt)) - get_xyz(mut_a))), 1e-10)
+test_that("the minimum is superposed onto the seed", {
+  # the mutant moved from its seed, the wild type's structure ...
+  expect_gt(max(abs(get_xyz(mut_a) - get_xyz(wt))), 0.01)
+  # ... and is already superposed onto it: superposing again is a no-op
+  expect_lt(max(abs(superpose(get_xyz(mut_a), get_xyz(wt)) - get_xyz(mut_a))), 1e-10)
 })
 
 test_that("genm_superpose_prot rotates the whole protein, kmat and modes included", {
@@ -405,7 +410,7 @@ test_that("genm_superpose_prot rotates the whole protein, kmat and modes include
 
   # what does not depend on orientation is untouched
   expect_identical(q$enm, mut_a$enm)
-  expect_identical(genm_v_min(q), genm_v_min(mut_a))
+  expect_identical(q$v_min, mut_a$v_min)
 
   # a protein without modes stays without modes
   no_modes <- prot_from_enm(mut_a_enm, get_xyz(wt))

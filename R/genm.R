@@ -1,128 +1,93 @@
-# Generalized ENM ------------------------------------------------------------
+# Generalized ENM (genm) -------------------------------------------------------
 #
-# The state of a protein is a parameter set: a fixed set of edges, one per
-# listed pair of nodes, each with an equilibrium length lij and a force constant
-# kij = k(lij). Structure, energy and kmat are derived from it by minimising
+# An ENM whose force constants depend on the equilibrium lengths, kij = k(lij),
+# and whose equilibrium lengths depend on the sequence:
 #
-#   V(r) = 1/2 sum_ij kij (dij(r) - lij)^2.
+#   lij = l0ij + delta(i, s_i)ij + delta(j, s_j)ij
 #
-# See dev/explorations/klfenm/klfenm_report.tex for the derivation.
+# l0ij is the edge's length in the pdb, and s_i the allele at site i (allele 0 is
+# the pdb's residue, and contributes nothing). The protein is the minimum of
 #
-# The parameters are a function of the sequence. Each site carries an allele,
-# 0 .. n_alleles - 1, with 0 the residue of the pdb. An edge's length is
+#   V(r) = 1/2 sum_ij kij (dij(r) - lij)^2,
 #
-#   lij = l0ij + delta(i, s_i)ij + delta(j, s_j)ij,
-#
-# with l0ij its length in the pdb, s_i the allele at site i, and delta(site, 0)
-# = 0. delta(site, allele) is a stream of draws seeded by hashing (ensemble,
-# site, allele), as for get_mutant_site(); see ?penm_ensemble. The edge from
-# site to site k takes the k-th draw, so delta(i, s_i)ij depends on the edge's
-# other end, not on which other edges exist. Because lij is always computed
-# from l0ij and the sequence, never accumulated, the same sequence gives the
-# same parameters bit for bit, however it was reached.
+# with its kmat (the Hessian of V there) and normal modes.
 #
 # Two objects:
 #   - "genm": the parameters (build_enm_from_pdb, genm_mutate)
-#   - "genm_prot": what the parameters imply (prot_from_enm; genm_add_nma adds
-#     the normal modes on request)
-#
-# Coordinates are a flat vector of length 3 * nsites, x1 y1 z1 x2 y2 z2 ..., as
-# in the rest of penm.
-#
-# Does not call set_enm() or get_mutant_site(). Shared with them:
-# calculate_enm_nodes() (pdb parsing), dij_edge() and calculate_enm_eij()
-# (geometry), calculate_enm_nma() (normal modes), the kij_* functions, and the
-# mutant-key hashing in R/seed.R.
-#
-# kmat is the Hessian of V. Here it is genm_kmat(), not calculate_enm_kmat(): it
-# has the transverse term of frustrated edges, which the standard ENM's kmat
-# does not.
+#   - "genm_prot": the protein they imply (prot_from_enm, genm_add_nma)
 
 
-# Build the parameters ---------------------------------------------------------
+# Parameters -------------------------------------------------------------------
 
 #' Build a generalized ENM from a pdb structure
 #'
-#' There is one edge for every pair of nodes closer than `d_max_pairs` in the
-#' pdb, plus one for every i,i+1 pair regardless of distance; each edge's
-#' `l0ij` is its distance in the pdb. Every site starts at allele 0, so
-#' `lij = l0ij` and `kij = k(lij)`.
+#' One edge for every pair of nodes closer than `d_max_pairs` in the pdb, and
+#' one for every i,i+1 pair. `l0ij` is the edge's length in the pdb. Every site
+#' starts at allele 0, so `lij = l0ij`, and `kij = k(lij)`.
 #'
-#' `d_max_pairs` is not the contact cutoff. The edges must reach out to where
-#' `k` is negligible, so that an edge whose `lij` shortens past `d_max` can
-#' become a contact later. A warning is given when `k(d_max_pairs)` is not small
-#' compared with `k` at contact distances (see [genm_check_d_max_pairs()]).
-#'
-#' The last four arguments define the mutational process, and are fixed for
-#' every protein derived from this one: they decide what each allele means.
+#' `d_max_pairs` is not the contact cutoff: it must reach out to where `k` is
+#' negligible, so that an edge whose `lij` shortens past `d_max` can become a
+#' contact. A warning is given when it does not (see
+#' [genm_check_d_max_pairs()]).
 #'
 #' @param pdb pdb object obtained using [bio3d::read.pdb()]
-#' @param node `"ca"`, `"sc"` or `"cb"` (or `"calpha"`, `"side_chain"`, `"beta"`)
-#' @param model name of a `kij_*` function, e.g. `"ming_wall"`, `"anm"`,
-#'   `"ming_wall_smooth"`
+#' @param node `"ca"`, `"sc"` or `"cb"`
+#' @param model name of a `kij_*` function, e.g. `"ming_wall"`
 #' @param d_max cutoff passed to the `kij_*` function
-#' @param d_max_pairs distance (A) in the pdb within which a pair of nodes gets a
-#'   edge
-#' @param ... further named parameters of the `kij_*` function, e.g. `w` for the
-#'   smoothed models. Names it does not accept are an error.
-#' @param ensemble which realization of the mutational process the alleles refer
-#'   to; see `?penm_ensemble`
+#' @param d_max_pairs distance (A) in the pdb within which a pair of nodes gets
+#'   an edge
+#' @param ... further named parameters of the `kij_*` function, e.g. `w`
+#' @param ensemble which realization of the mutational process the alleles
+#'   refer to; see `?penm_ensemble`
 #' @param n_alleles number of alleles per site, including the pdb's (allele 0)
-#' @param mut_dl_sigma standard deviation of the change in `lij` that an allele
-#'   contributes to each of its site's edges
+#' @param mut_dl_sigma standard deviation of the change an allele makes to
+#'   `lij`
 #' @param mut_sd_min edges joining sites less than `mut_sd_min` apart in
-#'   sequence are not changed by mutations; the default 2 leaves the i,i+1 bonds
-#'   alone, 1 perturbs every edge
+#'   sequence are not changed by mutations
 #'
 #' @returns an object of class `"genm"`: `list(param, nodes, sequence, graph)`,
-#'   with `sequence` all zeros and `graph` a tibble
-#'   `(i, j, sdij, l0ij, lij, kij)` sorted by `(i, j)`
+#'   with `graph` a tibble `(i, j, sdij, l0ij, lij, kij)`
 #'
 #' @noRd
 #'
 build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
                                ensemble = 1L, n_alleles = 10L,
                                mut_dl_sigma = 0.3, mut_sd_min = 2L) {
-  stopifnot(is.numeric(d_max), length(d_max) == 1, d_max > 0,
-            is.numeric(d_max_pairs), length(d_max_pairs) == 1)
-  if (d_max_pairs < d_max) {
-    stop("d_max_pairs (", d_max_pairs, ") must not be smaller than d_max (",
-         d_max, "): pairs inside the cutoff would be left out")
-  }
+  if (d_max_pairs < d_max) stop("d_max_pairs must not be smaller than d_max")
   check_ensemble(ensemble)
-  genm_check_integer(n_alleles, "n_alleles", min = 2)
-  genm_check_integer(mut_sd_min, "mut_sd_min", min = 1)
-  if (!is.numeric(mut_dl_sigma) || length(mut_dl_sigma) != 1 ||
-      !is.finite(mut_dl_sigma) || mut_dl_sigma <= 0) {
-    stop("mut_dl_sigma must be a single positive number")
+  stopifnot(n_alleles >= 2, mut_dl_sigma > 0, mut_sd_min >= 1)
+
+  kij_fun <- match.fun(paste0("kij_", model))
+  kij_par <- list(...)
+  if (length(kij_par) > 0 && (is.null(names(kij_par)) || any(names(kij_par) == ""))) {
+    stop("parameters in ... must be named")
+  }
+  unknown <- setdiff(names(kij_par), names(formals(kij_fun)))
+  if (length(unknown) > 0) {
+    stop("kij_", model, " does not take parameter(s): ", paste(unknown, collapse = ", "))
   }
 
   param <- list(node = node, model = model, d_max = d_max,
-                d_max_pairs = d_max_pairs, kij_par = list(...),
+                d_max_pairs = d_max_pairs, kij_par = kij_par,
                 ensemble = ensemble, n_alleles = as.integer(n_alleles),
                 mut_dl_sigma = mut_dl_sigma, mut_sd_min = as.integer(mut_sd_min))
-  genm_kij_fun(param) # validate model and kij_par before any work
 
-  # The only place where a structure determines parameters: everything derived
-  # from this enm gets its parameters from l0ij and the sequence.
   nodes <- calculate_enm_nodes(pdb, node)
   nsites <- nodes$nsites
 
-  # Which pairs get an edge: within d_max_pairs in the pdb, or bonded (i,i+1).
+  # edges: every pair within d_max_pairs in the pdb, and every i,i+1 pair
   distance <- as.matrix(stats::dist(t(matrix(nodes$xyz, nrow = 3))))
-  seq_distance <- abs(outer(nodes$pdb_site, nodes$pdb_site, "-"))
-  has_edge <- upper.tri(distance) & (distance <= d_max_pairs | seq_distance == 1)
-  pairs <- which(has_edge, arr.ind = TRUE)
-  pairs <- pairs[order(pairs[, 1], pairs[, 2]), , drop = FALSE]
-  i <- unname(pairs[, 1])
-  j <- unname(pairs[, 2])
+  sequence_distance <- abs(outer(nodes$pdb_site, nodes$pdb_site, "-"))
+  is_edge <- upper.tri(distance) & (distance <= d_max_pairs | sequence_distance == 1)
+  edges <- which(is_edge, arr.ind = TRUE)
+  edges <- edges[order(edges[, 1], edges[, 2]), , drop = FALSE]
+  i <- unname(edges[, 1])
+  j <- unname(edges[, 2])
 
   graph <- tibble(
     i = i,
     j = j,
-    sdij = abs(nodes$pdb_site[j] - nodes$pdb_site[i]),
-    # recomputed with dij_edge(), the distance V uses, so that the wild type
-    # sits at V = 0 exactly rather than to within rounding
+    sdij = sdij_edge(nodes$pdb_site, i, j),
     l0ij = dij_edge(nodes$xyz, i, j)
   )
   graph$lij <- graph$l0ij
@@ -142,21 +107,15 @@ build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
 }
 
 
-# Mutate the parameters --------------------------------------------------------
-
 #' Mutate a site of a generalized ENM
 #'
-#' Changes the allele at `site` from its current value to `allele`, and
-#' recomputes `lij` and `kij` of the edges connected to `site`. Produces no
-#' structure and no energy, and looks at no other protein.
-#'
-#' `allele` must differ from the current one: a mutation that changes nothing is
-#' an error. Mutating back to an earlier allele, 0 included, is a mutation like
-#' any other, and restores that site's edges exactly.
+#' Sets the allele at `site` and recomputes `lij` and `kij`. Mutating back to
+#' an earlier allele restores the earlier parameters exactly.
 #'
 #' @param enm a `"genm"` object
 #' @param site the site to mutate (sequential index, not pdb numbering)
-#' @param allele the new allele, in `0 .. n_alleles - 1`
+#' @param allele the new allele, in `0 .. n_alleles - 1`, different from the
+#'   current one
 #'
 #' @returns the mutant `"genm"` object
 #'
@@ -164,21 +123,23 @@ build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
 #'
 genm_mutate <- function(enm, site, allele) {
   stopifnot(inherits(enm, "genm"))
-  genm_check_integer(site, "site", min = 1, max = enm$nodes$nsites)
-  genm_check_integer(allele, "allele", min = 0, max = enm$param$n_alleles - 1)
+  if (!(site %in% seq_len(enm$nodes$nsites))) {
+    stop("site must be one of 1..", enm$nodes$nsites)
+  }
+  if (!(allele %in% 0:(enm$param$n_alleles - 1))) {
+    stop("allele must be one of 0..", enm$param$n_alleles - 1)
+  }
   if (allele == enm$sequence[site]) {
     stop("site ", site, " already has allele ", allele, ": nothing to mutate")
   }
 
   enm$sequence[site] <- as.integer(allele)
-
-  rows <- genm_site_rows(enm, site)
-  new_lij <- genm_lij(enm, rows)
-  if (any(new_lij <= 0)) {
-    stop("allele ", allele, " at site ", site, " would make ", sum(new_lij <= 0),
+  lij <- genm_lij(enm)
+  if (any(lij <= 0)) {
+    stop("allele ", allele, " at site ", site, " would make ", sum(lij <= 0),
          " equilibrium length(s) <= 0")
   }
-  enm$graph$lij[rows] <- new_lij
+  enm$graph$lij <- lij
   enm$graph$kij <- genm_kij(enm$param, enm$graph$lij, enm$graph$sdij)
   enm
 }
@@ -186,647 +147,56 @@ genm_mutate <- function(enm, site, allele) {
 
 #' Equilibrium lengths implied by the sequence
 #'
-#' For each edge in `rows`, \eqn{l_{ij} = l^0_{ij} + \delta(i, s_i)_{ij} +
-#' \delta(j, s_j)_{ij}}: its pdb length, plus what the allele at each of its two
-#' ends contributes. Uses `l0ij` and `enm$sequence` only, never the current
-#' `lij`, so equal sequences give bitwise-equal lengths.
+#' \eqn{l_{ij} = l^0_{ij} + \delta(i, s_i)_{ij} + \delta(j, s_j)_{ij}} for every
+#' edge, with \eqn{\delta} given by [genm_allele_delta_lij()] for edges with
+#' `sdij >= mut_sd_min`, and 0 for the others. Computed from `l0ij` and the
+#' sequence only, so equal sequences give identical lengths.
 #'
 #' @param enm a `"genm"` object
-#' @param rows row indices of `enm$graph`
 #'
-#' @returns the lengths, one per row
+#' @returns `lij`, one per edge
 #'
 #' @noRd
 #'
-genm_lij <- function(enm, rows) {
+genm_lij <- function(enm) {
   graph <- enm$graph
-  delta_lij_from_i <- genm_delta_lij_from_end(enm, rows, graph$i[rows])
-  delta_lij_from_j <- genm_delta_lij_from_end(enm, rows, graph$j[rows])
-  # always added in this order: floating-point addition is not associative, and
-  # equal sequences must give bitwise-equal lengths
-  (graph$l0ij[rows] + delta_lij_from_i) + delta_lij_from_j
-}
+  perturbed <- graph$sdij >= enm$param$mut_sd_min
+  delta_from_i <- numeric(nrow(graph))
+  delta_from_j <- numeric(nrow(graph))
 
-
-#' What the alleles at one end of each edge contribute to its length
-#'
-#' @param enm a `"genm"` object
-#' @param rows row indices of `enm$graph`
-#' @param end_site for each of `rows`, the site at the end being considered
-#'   (`graph$i[rows]` or `graph$j[rows]`)
-#'
-#' @returns one value per row: \eqn{\delta(s, \text{allele}_s)} for the edge,
-#'   with `s = end_site`
-#'
-#' @noRd
-#'
-genm_delta_lij_from_end <- function(enm, rows, end_site) {
-  delta_lij <- numeric(length(rows))
-  mutated <- unique(end_site[enm$sequence[end_site] != 0]) # allele 0 contributes 0
-  for (site in mutated) {
-    at_this_site <- end_site == site
-    site_delta_lij <- genm_site_delta_lij(enm, site, enm$sequence[site])
-    position <- match(rows[at_this_site], genm_site_rows(enm, site))
-    delta_lij[at_this_site] <- site_delta_lij[position]
+  for (site in which(enm$sequence != 0)) {
+    delta_lij <- genm_allele_delta_lij(enm, site, enm$sequence[site])
+    site_is_i <- perturbed & graph$i == site
+    site_is_j <- perturbed & graph$j == site
+    delta_from_i[site_is_i] <- delta_lij[graph$j[site_is_i]]
+    delta_from_j[site_is_j] <- delta_lij[graph$i[site_is_j]]
   }
-  delta_lij
+
+  # always added in this order: floating-point addition is not associative
+  (graph$l0ij + delta_from_i) + delta_from_j
 }
 
 
-#' The change an allele makes to its site's edges
+#' The change an allele makes to the edges of its site
 #'
-#' One value per edge connected to `site`, in the order of [genm_site_rows()]:
-#' 0 for allele 0 and for edges with `sdij < mut_sd_min`; otherwise a normal
-#' draw with sd `mut_dl_sigma`, seeded by hashing `(ensemble, site, allele)`
-#' without disturbing the caller's RNG.
-#'
-#' The edge joining `site` to site `k` takes the `k`-th value of that stream.
-#' Its change therefore depends on `(ensemble, site, allele, k)` only, not on
-#' which other edges exist: networks built with a different `d_max_pairs` or
-#' `mut_sd_min` give the edges they share the same change.
+#' A vector of `nsites` normal draws with sd `mut_dl_sigma`, seeded by
+#' `(ensemble, site, allele)` without disturbing the caller's RNG. Element `k`
+#' is the change to the edge between `site` and site `k` (element `site` itself
+#' is not used). Allele 0 changes nothing.
 #'
 #' @param enm a `"genm"` object
 #' @param site sequential site index
 #' @param allele an allele in `0 .. n_alleles - 1`
 #'
-#' @noRd
-#'
-genm_site_delta_lij <- function(enm, site, allele) {
-  param <- enm$param
-  graph <- enm$graph
-  rows <- genm_site_rows(enm, site)
-  delta_lij <- numeric(length(rows))
-  if (allele == 0) return(delta_lij)
-
-  partner <- ifelse(graph$i[rows] == site, graph$j[rows], graph$i[rows])
-  # One draw per site, nsites in all, so that the draw for the edge to site k
-  # is simply draws[k]. Not nsites - 1: the value at k = site is never used (no
-  # edge joins a site to itself), and skipping it would mean shifting every
-  # index above site down by one. Each value depends only on its position in
-  # the stream, not on the stream's length.
-  draws <- with_mut_seed(
-    mut_seed(param$ensemble, site, allele),
-    stats::rnorm(enm$nodes$nsites, mean = 0, sd = param$mut_dl_sigma)
-  )
-  perturbed <- graph$sdij[rows] >= param$mut_sd_min
-  delta_lij[perturbed] <- draws[partner[perturbed]]
-  delta_lij
-}
-
-
-#' Rows of `enm$graph` connected to a site
-#'
-#' @param enm a `"genm"` object
-#' @param site sequential site index
-#'
-#' @returns integer row indices, in increasing order
+#' @returns a vector of length `nsites`
 #'
 #' @noRd
 #'
-genm_site_rows <- function(enm, site) {
-  which(enm$graph$i == site | enm$graph$j == site)
-}
-
-
-#' Edges connected to a site
-#'
-#' The edges a mutation at `site` can change (those with
-#' `sdij >= mut_sd_min`), together with any it leaves alone.
-#'
-#' @param enm a `"genm"` object
-#' @param site sequential site index
-#'
-#' @returns a tibble `(row, i, j, sdij, l0ij, lij, kij)`, `row` being the row
-#'   index in `enm$graph`
-#'
-#' @noRd
-#'
-genm_site_graph <- function(enm, site) {
-  stopifnot(inherits(enm, "genm"))
-  genm_check_integer(site, "site", min = 1, max = enm$nodes$nsites)
-  rows <- genm_site_rows(enm, site)
-  graph <- enm$graph[rows, ]
-  tibble(row = rows, i = graph$i, j = graph$j, sdij = graph$sdij,
-         l0ij = graph$l0ij, lij = graph$lij, kij = graph$kij)
-}
-
-
-# From parameters to protein ---------------------------------------------------
-
-#' Build the protein implied by a generalized ENM
-#'
-#' Minimises the potential starting from `xyz_seed`, superposes the minimum onto
-#' `xyz_seed`, and evaluates the kmat there, including the transverse term of
-#' frustrated edges.
-#'
-#' The result depends on `enm` alone when the potential has a single minimum.
-#' A frustrated network can have several, and then the one returned is the one
-#' reached from `xyz_seed`. `xyz_seed` also fixes the frame: the minimum is
-#' superposed onto it.
-#'
-#' Fails if the minimiser does not converge, or if the stationary point reached
-#' is not a minimum of a rigid network.
-#'
-#' The kmat is not diagonalised: `nma` is left `NA`, so every getter that
-#' reads the modes errors until [genm_add_nma()] fills it.
-#'
-#' @param enm a `"genm"` object
-#' @param xyz_seed starting coordinates, a vector of length `3 * nsites`
-#' @param gtol convergence threshold on the largest gradient component
-#' @param max_iter maximum number of Newton steps
-#'
-#' @returns an object of class `"genm_prot"`:
-#'   `list(enm, nodes, v_min, kmat, nma, minimization)`, with `nma = NA`.
-#'   `nodes`, `kmat` and (once filled) `nma` have the layout of a `prot` from
-#'   [set_enm()], so the getters and analysis functions that read only those
-#'   work on it. Those that read `graph` or `param` do not.
-#'
-#' @noRd
-#'
-prot_from_enm <- function(enm, xyz_seed, gtol = 1e-10, max_iter = 100) {
-  stopifnot(inherits(enm, "genm"))
+genm_allele_delta_lij <- function(enm, site, allele) {
   nsites <- enm$nodes$nsites
-  xyz_seed <- as.vector(xyz_seed)
-  if (!is.numeric(xyz_seed) || length(xyz_seed) != 3 * nsites || any(!is.finite(xyz_seed))) {
-    stop("xyz_seed must be a finite numeric vector of length 3 * nsites = ", 3 * nsites)
-  }
-
-  # kij is read from enm, never evaluated here
-  graph <- genm_graph_with_k(enm)
-  minimum <- genm_minimize(graph, nsites, xyz_seed, gtol, max_iter)
-
-  prot <- list(
-    enm = enm,
-    nodes = c(enm$nodes, list(xyz = minimum$xyz)),
-    v_min = genm_v_xyz(minimum$xyz, graph),
-    kmat = minimum$kmat,
-    nma = NA, # a trajectory of mutations needs only the minimum, not the modes
-    minimization = list(iter = minimum$iter, grad_max = minimum$grad_max)
-  )
-  class(prot) <- c("genm_prot", "list")
-  prot
-}
-
-
-#' Add normal modes to a genm_prot
-#'
-#' Diagonalises the kmat the protein already holds and returns the protein
-#' with `nma` filled in; every other component is left as it is. Calling it on a
-#' protein that already has modes recomputes them, with the same result: they
-#' are a function of `kmat` alone.
-#'
-#' @param prot a `"genm_prot"` object
-#' @returns `prot`, with `nma = list(mode, evalue, cmat, umat)` (see
-#'   [calculate_enm_nma()])
-#'
-#' @noRd
-#'
-genm_add_nma <- function(prot) {
-  stopifnot(inherits(prot, "genm_prot"))
-  prot$nma <- calculate_enm_nma(prot$kmat)
-  prot
-}
-
-
-#' Superpose a genm_prot onto target coordinates
-#'
-#' Rotates and translates the protein so that its structure has the smallest
-#' RMSD to `target`, and recomputes everything that depends on orientation from
-#' the new coordinates: the kmat, and the normal modes if the protein has
-#' them. The parameters (`enm`) and the minimum energy do not depend on
-#' orientation and are kept.
-#'
-#' Two proteins must be in the same orientation before they are compared site
-#' by site or mode by mode; this puts one in the orientation of the other.
-#'
-#' @param prot a `"genm_prot"` object
-#' @param target coordinates to superpose onto, a vector of length
-#'   `3 * nsites`, e.g. `get_xyz()` of another protein
-#'
-#' @returns `prot`, superposed onto `target`
-#'
-#' @noRd
-#'
-genm_superpose_prot <- function(prot, target) {
-  stopifnot(inherits(prot, "genm_prot"))
-  nsites <- prot$enm$nodes$nsites
-  target <- as.vector(target)
-  if (!is.numeric(target) || length(target) != 3 * nsites || any(!is.finite(target))) {
-    stop("target must be a finite numeric vector of length 3 * nsites = ", 3 * nsites)
-  }
-
-  xyz <- genm_superpose(prot$nodes$xyz, target)
-  prot$nodes$xyz <- xyz
-  prot$kmat <- genm_kmat(xyz, genm_graph_with_k(prot$enm), nsites)
-  has_modes <- !identical(prot$nma, NA)
-  if (has_modes) prot$nma <- calculate_enm_nma(prot$kmat)
-  prot
-}
-
-
-#' Edges with a nonzero force constant
-#'
-#' The edges left out, those with `k = 0`, contribute exactly nothing to V,
-#' its gradient or its kmat.
-#'
-#' @param enm a `"genm"` object
-#' @returns the rows of `enm$graph` with `kij > 0`
-#'
-#' @noRd
-#'
-genm_graph_with_k <- function(enm) {
-  # for speed only: about a third of the minimiser's time for 2acy
-  enm$graph[enm$graph$kij > 0, ]
-}
-
-
-#' Minimum energy of a genm_prot
-#'
-#' @param prot a `"genm_prot"` object
-#' @returns \eqn{V(r_e)}, the potential at the minimum
-#'
-#' @noRd
-#'
-genm_v_min <- function(prot) {
-  stopifnot(inherits(prot, "genm_prot"))
-  prot$v_min
-}
-
-
-# Potential, gradient, kmat ---------------------------------------------------
-
-#' Potential energy at a conformation
-#'
-#' [v_dij()] with the edge lengths of `xyz`:
-#' \eqn{V = \frac12 \sum_{ij} k_{ij} (d_{ij} - l_{ij})^2}
-#'
-#' @param xyz coordinates, a vector of length `3 * nsites`
-#' @param graph tibble with columns `i, j, lij, kij`: any set of edges
-#'
-#' @noRd
-#'
-genm_v_xyz <- function(xyz, graph) {
-  dij <- dij_edge(xyz, graph$i, graph$j)
-  v0ij <- 0
-  v <- v_dij(dij, v0ij, graph$kij, graph$lij)
-  v
-}
-
-
-#' Gradient of the potential
-#'
-#' \eqn{\partial V / \partial r_i = -\sum_j k_{ij} (d_{ij} - l_{ij}) e_{ij}}, with
-#' \eqn{e_{ij}} the unit vector from `i` to `j`. Each edge contributes
-#' \eqn{-k (d - l) e} to node `i` and \eqn{+k (d - l) e} to node `j`.
-#'
-#' @param xyz coordinates, a vector of length `3 * nsites`
-#' @param graph tibble with columns `i, j, lij, kij`: any set of edges
-#' @param nsites number of nodes
-#'
-#' @returns a vector of length `3 * nsites`
-#'
-#' @noRd
-#'
-genm_gradient <- function(xyz, graph, nsites) {
-  dij <- dij_edge(xyz, graph$i, graph$j)
-  eij <- calculate_enm_eij(xyz, graph$i, graph$j)
-  stretch <- dij - graph$lij
-  # k (d - l) e for each edge, one row per edge
-  edge_term <- graph$kij * stretch * eij
-
-  gradient <- matrix(0, nrow = 3, ncol = nsites) # column k is node k
-  for (a in 1:3) {
-    gradient[a, ] <- genm_sum_by_node(-edge_term[, a], graph$i, nsites) +
-      genm_sum_by_node(edge_term[, a], graph$j, nsites)
-  }
-  as.vector(gradient)
-}
-
-
-#' Sum values per node
-#'
-#' @param values one value per edge
-#' @param node the node each value belongs to
-#' @param nsites number of nodes
-#'
-#' @returns a vector of length `nsites`: for each node, the sum of its values
-#'   (0 for a node with none)
-#'
-#' @noRd
-#'
-genm_sum_by_node <- function(values, node, nsites) {
-  total <- numeric(nsites)
-  per_node <- rowsum(values, node) # one row per node that has values, named by node
-  total[as.integer(rownames(per_node))] <- per_node
-  total
-}
-
-
-#' kmat: the Hessian of the potential
-#'
-#' Each edge (i, j) contributes the 3 x 3 block
-#' \eqn{K_{ij} = -k_{ij} [ e e^T + g_{ij} (I - e e^T) ]}, with
-#' \eqn{g_{ij} = (d_{ij} - l_{ij}) / d_{ij}}, at blocks (i, j) and (j, i). The
-#' diagonal blocks follow from translational invariance,
-#' \eqn{K_{ii} = -\sum_{j \ne i} K_{ij}}. Valid at any conformation, not only at
-#' a minimum.
-#'
-#' @param xyz coordinates, a vector of length `3 * nsites`
-#' @param graph tibble with columns `i, j, lij, kij`: any set of edges
-#' @param nsites number of nodes
-#'
-#' @returns the `3 nsites x 3 nsites` kmat
-#'
-#' @noRd
-#'
-genm_kmat <- function(xyz, graph, nsites) {
-  dij <- dij_edge(xyz, graph$i, graph$j)
-  eij <- calculate_enm_eij(xyz, graph$i, graph$j)
-  gij <- (dij - graph$lij) / dij # relative strain
-  i <- graph$i
-  j <- graph$j
-  kij <- graph$kij
-
-  # kmat[a, i, b, j] couples coordinate a of node i with coordinate b of node j.
-  # Reshaped to 3N x 3N at the end.
-  kmat <- array(0, dim = c(3, nsites, 3, nsites))
-
-  # Off-diagonal blocks, element (a, b) of every edge's block at once. A pair
-  # of nodes has at most one edge, so no block is written twice.
-  for (a in 1:3) {
-    for (b in 1:3) {
-      ee_ab <- eij[, a] * eij[, b]
-      identity_ab <- as.numeric(a == b)
-      kij_ab <- -kij * (ee_ab + gij * (identity_ab - ee_ab))
-      kmat[cbind(a, i, b, j)] <- kij_ab
-      kmat[cbind(a, j, b, i)] <- kij_ab
-    }
-  }
-
-  # Diagonal blocks: K_ii = -sum over j of K_ij
-  row_sums <- apply(kmat, c(1, 2, 3), sum) # [a, i, b]
-  for (site in seq_len(nsites)) {
-    kmat[, site, , site] <- -row_sums[, site, ]
-  }
-
-  dim(kmat) <- c(3 * nsites, 3 * nsites)
-  kmat
-}
-
-
-# Minimisation ----------------------------------------------------------------
-
-#' Minimise the potential by Newton's method
-#'
-#' Repeats Newton steps ([genm_newton_step()]) with a backtracking line search
-#' ([genm_line_search()]) until the largest gradient component is below `gtol`.
-#' Then superposes the result onto `xyz_seed` and checks that it is a minimum of
-#' a rigid network ([genm_is_minimum()]). Errors if either fails.
-#'
-#' @param graph tibble with columns `i, j, lij, kij`: any set of edges
-#' @param nsites number of nodes
-#' @param xyz_seed starting coordinates
-#' @param gtol convergence threshold on `max(abs(gradient))`
-#' @param max_iter maximum number of Newton steps
-#'
-#' @returns `list(xyz, kmat, iter, grad_max)`
-#'
-#' @noRd
-#'
-genm_minimize <- function(graph, nsites, xyz_seed, gtol, max_iter) {
-  stopifnot(is.numeric(gtol), gtol > 0, is.numeric(max_iter), max_iter >= 0)
-  xyz <- xyz_seed
-  iter <- 0
-  repeat {
-    gradient <- genm_gradient(xyz, graph, nsites)
-    grad_max <- max(abs(gradient))
-    if (grad_max < gtol) break
-    if (iter >= max_iter) {
-      stop("genm_minimize did not converge in ", max_iter,
-           " iterations: max |gradient| = ", signif(grad_max, 3))
-    }
-    step <- genm_newton_step(xyz, gradient, graph, nsites)
-    xyz <- genm_line_search(xyz, step, gradient, graph, nsites)
-    iter <- iter + 1
-  }
-
-  # with no step taken xyz is xyz_seed itself; superposing would only add rounding
-  if (iter > 0) xyz <- genm_superpose(xyz, xyz_seed)
-
-  kmat <- genm_kmat(xyz, graph, nsites)
-  if (!genm_is_minimum(xyz, kmat)) {
-    stop("genm_minimize reached a stationary point that is not a minimum of a rigid network ",
-         "(the kmat is not positive definite on the internal coordinates)")
-  }
-  list(xyz = xyz, kmat = kmat, iter = iter, grad_max = grad_max)
-}
-
-
-#' One Newton step, without rigid-body motion
-#'
-#' The step that solves \eqn{K \, step = -gradient} in the internal
-#' coordinates, with no translation or rotation. Where \eqn{K} is not positive
-#' definite (far from a minimum), a step that still goes downhill.
-#'
-#' @param xyz coordinates, a vector of length `3 * nsites`
-#' @param gradient the gradient at `xyz`
-#' @param graph tibble with columns `i, j, lij, kij`
-#' @param nsites number of nodes
-#'
-#' @returns the step, a vector of length `3 * nsites`
-#'
-#' @noRd
-#'
-genm_newton_step <- function(xyz, gradient, graph, nsites) {
-  kmat <- genm_kmat(xyz, graph, nsites)
-  # K is singular along the six rigid-body directions. Make it invertible by
-  # adding a stiffness c along exactly those directions, K + c P, with P the
-  # projector onto them and c the mean of K's diagonal; the rigid-body part of
-  # the resulting step is discarded at the end.
-  rigid <- genm_rigid_basis(xyz) # 3N x 6, orthonormal columns
-  kmat_shifted <- kmat + mean(diag(kmat)) * tcrossprod(rigid)
-
-  # Cholesky fails exactly when kmat_shifted is not positive definite
-  cholesky <- tryCatch(chol(kmat_shifted), error = function(e) NULL)
-  if (!is.null(cholesky)) {
-    # kmat_shifted = t(cholesky) %*% cholesky; solve in two triangular steps
-    step <- -backsolve(cholesky, backsolve(cholesky, gradient, transpose = TRUE))
-  } else {
-    # Far from a minimum, compressed edges can make K + c P indefinite, and
-    # the plain Newton step may then point uphill. Replacing every eigenvalue by
-    # its absolute value gives a step that still goes downhill.
-    eig <- eigen(kmat_shifted, symmetric = TRUE)
-    # keep tiny eigenvalues away from zero so the step stays finite
-    floor <- 1e-8 * max(abs(eig$values))
-    stiffness <- pmax(abs(eig$values), floor)
-    step <- -eig$vectors %*% (crossprod(eig$vectors, gradient) / stiffness)
-  }
-
-  rigid_part <- rigid %*% crossprod(rigid, step)
-  as.vector(step - rigid_part)
-}
-
-
-#' Backtracking line search along a Newton step
-#'
-#' Tries the full step, then half, a quarter, ..., and accepts the first that
-#' lowers V enough (the Armijo condition: by at least a small fraction of the
-#' decrease the gradient predicts), or that leaves V unchanged within rounding
-#' and makes the gradient smaller. Errors if no fraction down to 1e-10 is
-#' accepted.
-#'
-#' @param xyz current coordinates
-#' @param step the proposed step
-#' @param gradient the gradient at `xyz`
-#' @param graph tibble with columns `i, j, lij, kij`
-#' @param nsites number of nodes
-#'
-#' @returns the new coordinates
-#'
-#' @noRd
-#'
-genm_line_search <- function(xyz, step, gradient, graph, nsites) {
-  sufficient_decrease <- 1e-4                       # Armijo constant
-  smallest_fraction <- 1e-10                        # give up below this
-  v_now <- genm_v_xyz(xyz, graph)
-  v_rounding <- 64 * .Machine$double.eps * abs(v_now) # rounding error of V
-  grad_max_now <- max(abs(gradient))
-
-  slope <- sum(gradient * step) # dV/dt along the step, at t = 0
-  if (slope >= 0) stop("genm_minimize: Newton step is not a descent direction")
-
-  fraction <- 1
-  repeat {
-    xyz_new <- xyz + fraction * step
-    v_new <- genm_v_xyz(xyz_new, graph)
-
-    if (v_new <= v_now + sufficient_decrease * fraction * slope) return(xyz_new)
-
-    # Close to the minimum, the decrease in V becomes smaller than the rounding
-    # error of V itself, and the Armijo condition can no longer be checked.
-    # There a step is accepted if V has not risen by more than rounding and the
-    # gradient has become smaller.
-    v_unchanged <- v_new <= v_now + v_rounding
-    if (v_unchanged) {
-      grad_max_new <- max(abs(genm_gradient(xyz_new, graph, nsites)))
-      if (grad_max_new < grad_max_now) return(xyz_new)
-    }
-
-    fraction <- fraction / 2
-    if (fraction < smallest_fraction) {
-      stop("genm_minimize: line search failed to decrease the energy")
-    }
-  }
-}
-
-
-#' Is a stationary point a minimum of a rigid network?
-#'
-#' True when the kmat is positive definite on the internal coordinates.
-#' False for a saddle point, and for a network that is not rigid.
-#'
-#' @param xyz coordinates of the stationary point
-#' @param kmat the kmat at `xyz`
-#'
-#' @noRd
-#'
-genm_is_minimum <- function(xyz, kmat) {
-  # positive definite on the internal coordinates exactly when K + c P (see
-  # genm_newton_step()) has a Cholesky factorisation
-  rigid <- genm_rigid_basis(xyz)
-  kmat_shifted <- kmat + mean(diag(kmat)) * tcrossprod(rigid)
-  !is.null(tryCatch(chol(kmat_shifted), error = function(e) NULL))
-}
-
-
-#' Orthonormal basis of the rigid-body displacements
-#'
-#' Three translations and three infinitesimal rotations about the centroid.
-#'
-#' @param xyz coordinates, a vector of length `3 * nsites`
-#' @returns a `3 nsites x 6` matrix with orthonormal columns
-#'
-#' @noRd
-#'
-genm_rigid_basis <- function(xyz) {
-  position <- matrix(xyz, nrow = 3)            # column k is node k
-  r <- position - rowMeans(position)           # relative to the centroid
-  nsites <- ncol(r)
-
-  # each displacement as a 3 x nsites matrix, one column per node. A rotation
-  # about axis u moves the node at r by u x r.
-  displacements <- list(
-    move_x = matrix(c(1, 0, 0), nrow = 3, ncol = nsites),
-    move_y = matrix(c(0, 1, 0), nrow = 3, ncol = nsites),
-    move_z = matrix(c(0, 0, 1), nrow = 3, ncol = nsites),
-    turn_x = rbind(0, -r[3, ], r[2, ]),          # (1, 0, 0) x r
-    turn_y = rbind(r[3, ], 0, -r[1, ]),          # (0, 1, 0) x r
-    turn_z = rbind(-r[2, ], r[1, ], 0)           # (0, 0, 1) x r
-  )
-  basis <- sapply(displacements, as.vector)     # 3N x 6
-  qr.Q(qr(basis))                               # orthonormalised
-}
-
-
-#' Superpose coordinates onto a target (Kabsch)
-#'
-#' Applies to `xyz` the rotation and translation that minimise its RMSD to
-#' `target`. Internal distances are unchanged.
-#'
-#' @param xyz,target coordinate vectors of length `3 * nsites`
-#' @returns `xyz` superposed onto `target`
-#'
-#' @noRd
-#'
-genm_superpose <- function(xyz, target) {
-  mobile <- matrix(xyz, nrow = 3)
-  fixed <- matrix(target, nrow = 3)
-  mobile_centroid <- rowMeans(mobile)
-  fixed_centroid <- rowMeans(fixed)
-  mobile <- mobile - mobile_centroid
-  fixed <- fixed - fixed_centroid
-
-  # Kabsch: the best rotation comes from the SVD of the 3 x 3 correlation
-  # matrix; the sign correction keeps it a rotation rather than a reflection
-  svd_corr <- svd(fixed %*% t(mobile))
-  handedness <- sign(det(svd_corr$u %*% t(svd_corr$v)))
-  rotation <- svd_corr$u %*% diag(c(1, 1, handedness)) %*% t(svd_corr$v)
-
-  as.vector(rotation %*% mobile + fixed_centroid)
-}
-
-
-# Force constants -------------------------------------------------------------
-
-#' The kij function of a genm
-#'
-#' Finds the function `kij_<model>`, and checks that every name in
-#' `param$kij_par` is an argument it accepts. Errors on an unknown model or
-#' argument.
-#'
-#' @param param the `param` list of a `"genm"` object
-#' @returns the function
-#'
-#' @noRd
-#'
-genm_kij_fun <- function(param) {
-  # match.fun(), as calculate_enm_graph() does
-  kij_fun <- tryCatch(match.fun(paste0("kij_", param$model)),
-                      error = function(e) stop("unknown model: '", param$model, "'", call. = FALSE))
-  extra <- param$kij_par
-  if (length(extra) > 0) {
-    if (is.null(names(extra)) || any(names(extra) == "")) {
-      stop("parameters in ... must be named")
-    }
-    # what the user may set: the function's own parameters, not the ones penm passes
-    accepted <- setdiff(names(formals(kij_fun)), c("dij", "sdij", "d_max", "..."))
-    unknown <- setdiff(names(extra), accepted)
-    if (length(unknown) > 0) {
-      stop("kij_", param$model, " does not take parameter(s): ", paste(unknown, collapse = ", "),
-           if (length(accepted) > 0) paste0(" (it takes: ", paste(accepted, collapse = ", "), ")"))
-    }
-  }
-  kij_fun
+  if (allele == 0) return(numeric(nsites))
+  seed <- mut_seed(enm$param$ensemble, site, allele)
+  with_mut_seed(seed, stats::rnorm(nsites, mean = 0, sd = enm$param$mut_dl_sigma))
 }
 
 
@@ -836,21 +206,17 @@ genm_kij_fun <- function(param) {
 #' @param lij equilibrium lengths
 #' @param sdij sequence separations
 #'
-#' @returns `kij`, checked to be finite and non-negative
+#' @returns `kij`; an error if any is not finite or is negative
 #'
 #' @noRd
 #'
 genm_kij <- function(param, lij, sdij) {
-  kij_fun <- genm_kij_fun(param)
+  kij_fun <- match.fun(paste0("kij_", param$model))
   # the kij_* functions name their first argument dij; here it receives lij
   kij <- do.call(kij_fun, c(list(lij, sdij = sdij, d_max = param$d_max), param$kij_par))
-  if (length(kij) != length(lij)) {
-    stop("kij_", param$model, " returned ", length(kij), " values for ", length(lij), " edges")
-  }
   if (any(!is.finite(kij))) stop("kij_", param$model, " returned non-finite values")
   if (any(kij < 0)) {
-    stop("kij_", param$model, " is negative for ", sum(kij < 0),
-         " edge(s), e.g. at lij = ", signif(lij[kij < 0][1], 4), ": k must be >= 0")
+    stop("kij_", param$model, " is negative for ", sum(kij < 0), " edge(s): k must be >= 0")
   }
   kij
 }
@@ -858,17 +224,13 @@ genm_kij <- function(param, lij, sdij) {
 
 #' Warn when d_max_pairs truncates k
 #'
-#' Pairs of nodes farther apart than `d_max_pairs` in the pdb get no edge, so
-#' they can never become contacts. That is harmless only if `k` is negligible
-#' there. Compares `k(d_max_pairs)`, for a pair far apart in sequence, with the
-#' largest `k` among edges more than three apart in sequence (beyond the
-#' special-cased bonded neighbours of some models), and warns when the ratio
-#' exceeds `ratio_max`. For power-law and gaussian models (pfanm, hnm0) there is
-#' no distance where `k` is negligible, and the truncation then acts as a hard
-#' cutoff.
+#' Pairs farther apart than `d_max_pairs` in the pdb get no edge, so they can
+#' never become contacts. Warns when `k(d_max_pairs)`, for a pair far apart in
+#' sequence, is more than `ratio_max` of the largest `k` among edges more than
+#' three apart in sequence.
 #'
 #' @param enm a `"genm"` object
-#' @param ratio_max largest acceptable `k_far / k_near`
+#' @param ratio_max largest acceptable ratio
 #'
 #' @noRd
 #'
@@ -887,22 +249,252 @@ genm_check_d_max_pairs <- function(enm, ratio_max = 0.01) {
 }
 
 
-#' Check that a value is a single integer in a range
+# Protein ----------------------------------------------------------------------
+
+#' Build the protein implied by a generalized ENM
 #'
-#' @param x the value
-#' @param name its name, for the error message
-#' @param min,max the allowed range, inclusive
+#' Minimises V starting from `xyz_seed`, superposes the minimum onto
+#' `xyz_seed`, and computes kmat there. Errors if the minimisation does not
+#' converge, or ends somewhere that is not a minimum. `nma` is left `NA`: add
+#' the modes with [genm_add_nma()].
 #'
-#' @returns `x`, invisibly, or an error
+#' @param enm a `"genm"` object
+#' @param xyz_seed starting coordinates, a vector of length `3 * nsites`
+#' @param gtol convergence threshold on the largest force component
+#' @param max_iter maximum number of steps
+#'
+#' @returns an object of class `"genm_prot"`:
+#'   `list(enm, nodes, v_min, kmat, nma, minimization)`
 #'
 #' @noRd
 #'
-genm_check_integer <- function(x, name, min, max = Inf) {
-  ok <- is.numeric(x) && length(x) == 1 && !is.na(x) &&
-    x == round(x) && x >= min && x <= max
-  if (!ok) {
-    range <- if (is.finite(max)) paste0("in ", min, "..", max) else paste0(">= ", min)
-    stop(name, " must be a single integer ", range)
+prot_from_enm <- function(enm, xyz_seed, gtol = 1e-10, max_iter = 100) {
+  stopifnot(inherits(enm, "genm"))
+  nsites <- enm$nodes$nsites
+  xyz_seed <- as.vector(xyz_seed)
+  if (length(xyz_seed) != 3 * nsites) stop("xyz_seed must have length 3 * nsites = ", 3 * nsites)
+
+  # edges with k = 0 contribute nothing to V, its gradient or kmat
+  graph <- enm$graph[enm$graph$kij > 0, ]
+
+  xyz <- xyz_seed
+  iter <- 0
+  repeat {
+    force <- -genm_gradient(xyz, graph, nsites)
+    if (max(abs(force)) < gtol) break
+    if (iter == max_iter) {
+      stop("no convergence in ", max_iter, " steps: max |force| = ", signif(max(abs(force)), 3))
+    }
+    # Newton step: the linear response to the force, dxyz = kmat^-1 force
+    kmat <- genm_kmat(xyz, graph, nsites)
+    dxyz <- as.vector(solve(genm_kmat_without_rigid_motion(kmat, xyz), force))
+    # far from the minimum the full step can overshoot: halve it until V
+    # decreases (allowing for rounding in V)
+    v_now <- genm_v_xyz(xyz, graph)
+    halvings <- 0
+    while (genm_v_xyz(xyz + dxyz, graph) > v_now * (1 + 1e-12)) {
+      dxyz <- dxyz / 2
+      halvings <- halvings + 1
+      if (halvings > 50) stop("no step along the linear response decreases V")
+    }
+    xyz <- xyz + dxyz
+    iter <- iter + 1
   }
-  invisible(x)
+  if (iter > 0) {
+    all_coordinates <- seq_along(xyz)
+    xyz <- as.vector(bio3d::fit.xyz(fixed = xyz_seed, mobile = xyz,
+                                    fixed.inds = all_coordinates,
+                                    mobile.inds = all_coordinates))
+  }
+
+  kmat <- genm_kmat(xyz, graph, nsites)
+  # a minimum: kmat is positive definite on the internal coordinates
+  cholesky <- tryCatch(chol(genm_kmat_without_rigid_motion(kmat, xyz)), error = function(e) NULL)
+  if (is.null(cholesky)) stop("the minimisation ended at a point that is not a minimum")
+
+  prot <- list(
+    enm = enm,
+    nodes = c(enm$nodes, list(xyz = xyz)),
+    v_min = genm_v_xyz(xyz, graph),
+    kmat = kmat,
+    nma = NA,
+    minimization = list(iter = iter, force_max = max(abs(force)))
+  )
+  class(prot) <- c("genm_prot", "list")
+  prot
+}
+
+
+#' Add normal modes to a genm_prot
+#'
+#' @param prot a `"genm_prot"` object
+#' @returns `prot`, with `nma` from [calculate_enm_nma()]
+#'
+#' @noRd
+#'
+genm_add_nma <- function(prot) {
+  stopifnot(inherits(prot, "genm_prot"))
+  prot$nma <- calculate_enm_nma(prot$kmat)
+  prot
+}
+
+
+#' Superpose a genm_prot onto target coordinates
+#'
+#' Rotates and translates the protein onto `target`, and recomputes kmat, and
+#' the modes if it has them, in the new orientation.
+#'
+#' @param prot a `"genm_prot"` object
+#' @param target coordinates, a vector of length `3 * nsites`
+#'
+#' @returns `prot`, superposed onto `target`
+#'
+#' @noRd
+#'
+genm_superpose_prot <- function(prot, target) {
+  stopifnot(inherits(prot, "genm_prot"))
+  nsites <- prot$enm$nodes$nsites
+  target <- as.vector(target)
+  if (length(target) != 3 * nsites) stop("target must have length 3 * nsites = ", 3 * nsites)
+
+  all_coordinates <- seq_along(target)
+  xyz <- as.vector(bio3d::fit.xyz(fixed = target, mobile = prot$nodes$xyz,
+                                  fixed.inds = all_coordinates,
+                                  mobile.inds = all_coordinates))
+  graph <- prot$enm$graph[prot$enm$graph$kij > 0, ]
+  prot$nodes$xyz <- xyz
+  prot$kmat <- genm_kmat(xyz, graph, nsites)
+  has_modes <- !identical(prot$nma, NA)
+  if (has_modes) prot$nma <- calculate_enm_nma(prot$kmat)
+  prot
+}
+
+
+# V, its gradient, and kmat ----------------------------------------------------
+
+#' V at a conformation
+#'
+#' [v_dij()] with the edge lengths of `xyz`.
+#'
+#' @param xyz coordinates, a vector of length `3 * nsites`
+#' @param graph tibble with columns `i, j, lij, kij`
+#'
+#' @noRd
+#'
+genm_v_xyz <- function(xyz, graph) {
+  dij <- dij_edge(xyz, graph$i, graph$j)
+  v0ij <- 0
+  v <- v_dij(dij, v0ij, graph$kij, graph$lij)
+  v
+}
+
+
+#' Gradient of V at a conformation
+#'
+#' \eqn{\partial V / \partial r_i = -\sum_j k_{ij} (d_{ij} - l_{ij}) e_{ij}},
+#' with \eqn{e_{ij}} the unit vector from `i` to `j`.
+#'
+#' @param xyz coordinates, a vector of length `3 * nsites`
+#' @param graph tibble with columns `i, j, lij, kij`
+#' @param nsites number of nodes
+#'
+#' @returns a vector of length `3 * nsites`
+#'
+#' @noRd
+#'
+genm_gradient <- function(xyz, graph, nsites) {
+  dij <- dij_edge(xyz, graph$i, graph$j)
+  eij <- calculate_enm_eij(xyz, graph$i, graph$j)
+  edge_term <- graph$kij * (dij - graph$lij) * eij # one row per edge
+
+  # each edge adds -edge_term to node i and +edge_term to node j
+  n_edges <- nrow(graph)
+  incidence <- matrix(0, nrow = n_edges, ncol = nsites)
+  incidence[cbind(seq_len(n_edges), graph$i)] <- -1
+  incidence[cbind(seq_len(n_edges), graph$j)] <- 1
+  gradient <- crossprod(incidence, edge_term) # one row per node
+
+  as.vector(t(gradient))
+}
+
+
+#' kmat at a conformation
+#'
+#' The Hessian of V. Each edge contributes the 3 x 3 block
+#' \eqn{K_{ij} = -k_{ij} [ e e^T + g_{ij} (I - e e^T) ]}, with
+#' \eqn{g_{ij} = (d_{ij} - l_{ij}) / d_{ij}}, at blocks (i, j) and (j, i); the
+#' diagonal blocks are \eqn{K_{ii} = -\sum_{j \ne i} K_{ij}}. The \eqn{g} term
+#' vanishes where `dij = lij`.
+#'
+#' @param xyz coordinates, a vector of length `3 * nsites`
+#' @param graph tibble with columns `i, j, lij, kij`
+#' @param nsites number of nodes
+#'
+#' @returns the `3 nsites x 3 nsites` kmat
+#'
+#' @noRd
+#'
+genm_kmat <- function(xyz, graph, nsites) {
+  dij <- dij_edge(xyz, graph$i, graph$j)
+  eij <- calculate_enm_eij(xyz, graph$i, graph$j)
+  gij <- (dij - graph$lij) / dij
+  i <- graph$i
+  j <- graph$j
+  kij <- graph$kij
+
+  # kmat[a, i, b, j] couples coordinate a of node i with coordinate b of node j
+  kmat <- array(0, dim = c(3, nsites, 3, nsites))
+  for (a in 1:3) {
+    for (b in 1:3) {
+      ee_ab <- eij[, a] * eij[, b]
+      identity_ab <- as.numeric(a == b)
+      kij_ab <- -kij * (ee_ab + gij * (identity_ab - ee_ab))
+      kmat[cbind(a, i, b, j)] <- kij_ab # element (a, b) of every edge's block
+      kmat[cbind(a, j, b, i)] <- kij_ab
+    }
+  }
+  row_sums <- apply(kmat, c(1, 2, 3), sum)
+  for (site in seq_len(nsites)) {
+    kmat[, site, , site] <- -row_sums[, site, ]
+  }
+
+  dim(kmat) <- c(3 * nsites, 3 * nsites)
+  kmat
+}
+
+
+#' kmat made stiff against rigid-body motion
+#'
+#' kmat plus a stiffness, the mean of its diagonal, along each of the six
+#' rigid-body motions of `xyz` (three translations, three rotations about the
+#' centroid). At a minimum those are kmat's null modes; away from one, the
+#' rotations are soft but not null. Either way the result is invertible, and
+#' unchanged for any displacement without rigid-body motion.
+#'
+#' @param kmat a kmat
+#' @param xyz the coordinates it was computed at
+#'
+#' @returns a matrix the size of `kmat`
+#'
+#' @noRd
+#'
+genm_kmat_without_rigid_motion <- function(kmat, xyz) {
+  position <- matrix(xyz, nrow = 3)            # column k is node k
+  r <- position - rowMeans(position)           # relative to the centroid
+  nsites <- ncol(r)
+
+  # each motion as a 3 x nsites matrix, one column per node; a rotation about
+  # axis u moves the node at r by u x r
+  motions <- list(
+    move_x = matrix(c(1, 0, 0), nrow = 3, ncol = nsites),
+    move_y = matrix(c(0, 1, 0), nrow = 3, ncol = nsites),
+    move_z = matrix(c(0, 0, 1), nrow = 3, ncol = nsites),
+    turn_x = rbind(0, -r[3, ], r[2, ]),
+    turn_y = rbind(r[3, ], 0, -r[1, ]),
+    turn_z = rbind(-r[2, ], r[1, ], 0)
+  )
+  rigid <- qr.Q(qr(sapply(motions, as.vector))) # 3N x 6, orthonormal columns
+
+  stiffness <- mean(diag(kmat))
+  kmat + stiffness * tcrossprod(rigid)
 }
