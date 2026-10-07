@@ -31,16 +31,17 @@
 #
 # Does not call set_enm() or get_mutant_site(). Shared with them:
 # calculate_enm_nodes() (pdb parsing), calculate_enm_edge_geometry()
-# (geometry), calculate_enm_kmat() (Hessian), calculate_enm_nma() (normal
-# modes), the kij_* functions, and the mutant-key hashing in R/seed.R.
+# (geometry), calculate_enm_nma() (normal modes), the kij_* functions, and the
+# mutant-key hashing in R/seed.R. The Hessian is genm_hessian(), not
+# calculate_enm_kmat(): it has the transverse term of frustrated springs, which
+# the standard ENM's kmat does not.
 
 
 # Build the parameters ---------------------------------------------------------
 
 #' Build a generalized ENM from a pdb structure
 #'
-#' The only place where a structure determines parameters. There is one spring
-#' for every pair of nodes closer than `d_max_pairs` in the pdb, plus one for
+#' There is one spring for every pair of nodes closer than `d_max_pairs` in the pdb, plus one for
 #' every i,i+1 pair regardless of distance; each spring's `l0ij` is its distance
 #' in the pdb. Every site starts at allele 0, so `lij = l0ij` and
 #' `kij = k(lij)`.
@@ -100,6 +101,8 @@ build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
                 mut_dl_sigma = mut_dl_sigma, mut_sd_min = as.integer(mut_sd_min))
   genm_kij_fun(param) # validate model and kij_par before any work
 
+  # The only place where a structure determines parameters: everything derived
+  # from this enm gets its parameters from l0ij and the sequence.
   nodes <- calculate_enm_nodes(pdb, node)
   nsites <- nodes$nsites
 
@@ -184,8 +187,7 @@ genm_mutate <- function(enm, site, allele) {
 #' For each spring in `rows`, \eqn{l_{ij} = l^0_{ij} + \delta(i, s_i)_{ij} +
 #' \delta(j, s_j)_{ij}}: its pdb length, plus what the allele at each of its two
 #' ends contributes. Uses `l0ij` and `enm$sequence` only, never the current
-#' `lij`, and always adds in this order, so equal sequences give bitwise-equal
-#' lengths.
+#' `lij`, so equal sequences give bitwise-equal lengths.
 #'
 #' @param enm a `"genm"` object
 #' @param rows row indices of `enm$springs`
@@ -198,6 +200,8 @@ genm_lij <- function(enm, rows) {
   springs <- enm$springs
   dl_from_i <- genm_dl_from_end(enm, rows, springs$i[rows])
   dl_from_j <- genm_dl_from_end(enm, rows, springs$j[rows])
+  # always added in this order: floating-point addition is not associative, and
+  # equal sequences must give bitwise-equal lengths
   (springs$l0ij[rows] + dl_from_i) + dl_from_j
 }
 
@@ -311,7 +315,7 @@ genm_site_springs <- function(enm, site) {
 #'
 #' Minimises the potential starting from `xyz_seed`, superposes the minimum onto
 #' `xyz_seed`, and evaluates the Hessian there, including the transverse term of
-#' frustrated springs. `kij` is read from `enm`, never evaluated here.
+#' frustrated springs.
 #'
 #' The result depends on `enm` alone when the potential has a single minimum.
 #' A frustrated network can have several, and then the one returned is the one
@@ -322,8 +326,7 @@ genm_site_springs <- function(enm, site) {
 #' is not a minimum of a rigid network.
 #'
 #' The Hessian is not diagonalised: `nma` is left `NA`, so every getter that
-#' reads the modes errors until [genm_add_nma()] fills it. A trajectory of
-#' mutations needs only the minimum, not the modes.
+#' reads the modes errors until [genm_add_nma()] fills it.
 #'
 #' @param enm a `"genm"` object
 #' @param xyz_seed starting coordinates, a vector of length `3 * nsites`
@@ -346,6 +349,7 @@ prot_from_enm <- function(enm, xyz_seed, gtol = 1e-10, max_iter = 100) {
     stop("xyz_seed must be a finite numeric vector of length 3 * nsites = ", 3 * nsites)
   }
 
+  # kij is read from enm, never evaluated here
   springs <- genm_springs_with_k(enm)
   minimum <- genm_minimize(springs, nsites, xyz_seed, gtol, max_iter)
 
@@ -354,7 +358,7 @@ prot_from_enm <- function(enm, xyz_seed, gtol = 1e-10, max_iter = 100) {
     nodes = c(enm$nodes, list(xyz = minimum$xyz)),
     v_min = genm_energy(minimum$xyz, springs),
     kmat = minimum$kmat,
-    nma = NA,
+    nma = NA, # a trajectory of mutations needs only the minimum, not the modes
     minimization = list(iter = minimum$iter, grad_max = minimum$grad_max)
   )
   class(prot) <- c("genm_prot", "list")
@@ -420,9 +424,8 @@ genm_superpose_prot <- function(prot, target) {
 
 #' Springs with a nonzero force constant
 #'
-#' Springs with `k = 0` contribute exactly nothing to V, its gradient or its
-#' Hessian; leaving them out is for speed only (about a third of the time for
-#' 2acy).
+#' The springs left out, those with `k = 0`, contribute exactly nothing to V,
+#' its gradient or its Hessian.
 #'
 #' @param enm a `"genm"` object
 #' @returns the rows of `enm$springs` with `kij > 0`
@@ -430,6 +433,7 @@ genm_superpose_prot <- function(prot, target) {
 #' @noRd
 #'
 genm_springs_with_k <- function(enm) {
+  # for speed only: about a third of the minimiser's time for 2acy
   enm$springs[enm$springs$kij > 0, ]
 }
 
@@ -514,9 +518,12 @@ genm_sum_by_node <- function(values, node, nsites) {
 
 #' Hessian of the potential
 #'
-#' [calculate_enm_kmat()] at conformation `xyz`: the springs' lengths and unit
-#' vectors are evaluated there, since `springs` holds no `dij`. Includes the
-#' transverse term, so it is valid at any conformation, not only at a minimum.
+#' Each spring (i, j) contributes the 3 x 3 block
+#' \eqn{K_{ij} = -k_{ij} [ e e^T + g_{ij} (I - e e^T) ]}, with
+#' \eqn{g_{ij} = (d_{ij} - l_{ij}) / d_{ij}}, at blocks (i, j) and (j, i). The
+#' diagonal blocks follow from translational invariance,
+#' \eqn{K_{ii} = -\sum_{j \ne i} K_{ij}}. Valid at any conformation, not only at
+#' a minimum.
 #'
 #' @param xyz coordinates, a vector of length `3 * nsites`
 #' @param springs tibble with columns `i, j, lij, kij`: any set of springs
@@ -528,8 +535,35 @@ genm_sum_by_node <- function(values, node, nsites) {
 #'
 genm_hessian <- function(xyz, springs, nsites) {
   geometry <- calculate_enm_edge_geometry(xyz, springs$i, springs$j)
-  springs$dij <- geometry$dij
-  kmat <- calculate_enm_kmat(springs, geometry$eij, nsites)
+  eij <- geometry$eij
+  gij <- (geometry$dij - springs$lij) / geometry$dij # relative strain
+  i <- springs$i
+  j <- springs$j
+  kij <- springs$kij
+
+  # kmat[a, i, b, j] couples coordinate a of node i with coordinate b of node j.
+  # Reshaped to 3N x 3N at the end.
+  kmat <- array(0, dim = c(3, nsites, 3, nsites))
+
+  # Off-diagonal blocks, element (a, b) of every spring's block at once. A pair
+  # of nodes has at most one spring, so no block is written twice.
+  for (a in 1:3) {
+    for (b in 1:3) {
+      ee_ab <- eij[, a] * eij[, b]
+      identity_ab <- as.numeric(a == b)
+      kij_ab <- -kij * (ee_ab + gij * (identity_ab - ee_ab))
+      kmat[cbind(a, i, b, j)] <- kij_ab
+      kmat[cbind(a, j, b, i)] <- kij_ab
+    }
+  }
+
+  # Diagonal blocks: K_ii = -sum over j of K_ij
+  row_sums <- apply(kmat, c(1, 2, 3), sum) # [a, i, b]
+  for (site in seq_len(nsites)) {
+    kmat[, site, , site] <- -row_sums[, site, ]
+  }
+
+  dim(kmat) <- c(3 * nsites, 3 * nsites)
   kmat
 }
 
@@ -540,9 +574,8 @@ genm_hessian <- function(xyz, springs, nsites) {
 #'
 #' Repeats Newton steps ([genm_newton_step()]) with a backtracking line search
 #' ([genm_line_search()]) until the largest gradient component is below `gtol`.
-#' Then superposes the result onto `xyz_seed` (unless no step was taken, in
-#' which case it is `xyz_seed` itself) and checks that it is a minimum of a
-#' rigid network ([genm_is_minimum()]). Errors if either fails.
+#' Then superposes the result onto `xyz_seed` and checks that it is a minimum of
+#' a rigid network ([genm_is_minimum()]). Errors if either fails.
 #'
 #' @param springs tibble with columns `i, j, lij, kij`: any set of springs
 #' @param nsites number of nodes
@@ -585,16 +618,9 @@ genm_minimize <- function(springs, nsites, xyz_seed, gtol, max_iter) {
 
 #' One Newton step, without rigid-body motion
 #'
-#' The Newton step solves \eqn{K \, step = -gradient}, but \eqn{K} is singular
-#' along the six rigid-body directions (three translations, three rotations).
-#' So \eqn{K} is made invertible by adding a stiffness \eqn{c} along exactly
-#' those directions, \eqn{K + c P} with \eqn{P} the projector onto them and
-#' \eqn{c} the mean of \eqn{K}'s diagonal; the rigid-body part of the resulting
-#' step is then discarded.
-#'
-#' Far from a minimum, compressed springs can make \eqn{K + c P} indefinite, and
-#' the plain Newton step may then point uphill. In that case every eigenvalue is
-#' replaced by its absolute value, which gives a step that still goes downhill.
+#' The step that solves \eqn{K \, step = -gradient} in the internal
+#' coordinates, with no translation or rotation. Where \eqn{K} is not positive
+#' definite (far from a minimum), a step that still goes downhill.
 #'
 #' @param xyz coordinates, a vector of length `3 * nsites`
 #' @param gradient the gradient at `xyz`
@@ -607,6 +633,10 @@ genm_minimize <- function(springs, nsites, xyz_seed, gtol, max_iter) {
 #'
 genm_newton_step <- function(xyz, gradient, springs, nsites) {
   kmat <- genm_hessian(xyz, springs, nsites)
+  # K is singular along the six rigid-body directions. Make it invertible by
+  # adding a stiffness c along exactly those directions, K + c P, with P the
+  # projector onto them and c the mean of K's diagonal; the rigid-body part of
+  # the resulting step is discarded at the end.
   rigid <- genm_rigid_basis(xyz) # 3N x 6, orthonormal columns
   kmat_shifted <- kmat + mean(diag(kmat)) * tcrossprod(rigid)
 
@@ -616,6 +646,9 @@ genm_newton_step <- function(xyz, gradient, springs, nsites) {
     # kmat_shifted = t(cholesky) %*% cholesky; solve in two triangular steps
     step <- -backsolve(cholesky, backsolve(cholesky, gradient, transpose = TRUE))
   } else {
+    # Far from a minimum, compressed springs can make K + c P indefinite, and
+    # the plain Newton step may then point uphill. Replacing every eigenvalue by
+    # its absolute value gives a step that still goes downhill.
     eig <- eigen(kmat_shifted, symmetric = TRUE)
     # keep tiny eigenvalues away from zero so the step stays finite
     floor <- 1e-8 * max(abs(eig$values))
@@ -632,12 +665,9 @@ genm_newton_step <- function(xyz, gradient, springs, nsites) {
 #'
 #' Tries the full step, then half, a quarter, ..., and accepts the first that
 #' lowers V enough (the Armijo condition: by at least a small fraction of the
-#' decrease the gradient predicts).
-#'
-#' Close to the minimum, the decrease in V becomes smaller than the rounding
-#' error of V itself, and the Armijo condition can no longer be checked. There a
-#' step is accepted if V has not risen by more than rounding and the gradient
-#' has become smaller.
+#' decrease the gradient predicts), or that leaves V unchanged within rounding
+#' and makes the gradient smaller. Errors if no fraction down to 1e-10 is
+#' accepted.
 #'
 #' @param xyz current coordinates
 #' @param step the proposed step
@@ -666,6 +696,10 @@ genm_line_search <- function(xyz, step, gradient, springs, nsites) {
 
     if (v_new <= v_now + sufficient_decrease * fraction * slope) return(xyz_new)
 
+    # Close to the minimum, the decrease in V becomes smaller than the rounding
+    # error of V itself, and the Armijo condition can no longer be checked.
+    # There a step is accepted if V has not risen by more than rounding and the
+    # gradient has become smaller.
     v_unchanged <- v_new <= v_now + v_rounding
     if (v_unchanged) {
       grad_max_new <- max(abs(genm_gradient(xyz_new, springs, nsites)))
@@ -682,9 +716,8 @@ genm_line_search <- function(xyz, step, gradient, springs, nsites) {
 
 #' Is a stationary point a minimum of a rigid network?
 #'
-#' True when the Hessian is positive definite on the internal coordinates,
-#' i.e. when \eqn{K + c P} (see [genm_newton_step()]) has a Cholesky
-#' factorisation. False for a saddle point, and for a network that is not rigid.
+#' True when the Hessian is positive definite on the internal coordinates.
+#' False for a saddle point, and for a network that is not rigid.
 #'
 #' @param xyz coordinates of the stationary point
 #' @param kmat the Hessian there
@@ -692,6 +725,8 @@ genm_line_search <- function(xyz, step, gradient, springs, nsites) {
 #' @noRd
 #'
 genm_is_minimum <- function(xyz, kmat) {
+  # positive definite on the internal coordinates exactly when K + c P (see
+  # genm_newton_step()) has a Cholesky factorisation
   rigid <- genm_rigid_basis(xyz)
   kmat_shifted <- kmat + mean(diag(kmat)) * tcrossprod(rigid)
   !is.null(tryCatch(chol(kmat_shifted), error = function(e) NULL))
@@ -700,8 +735,7 @@ genm_is_minimum <- function(xyz, kmat) {
 
 #' Orthonormal basis of the rigid-body displacements
 #'
-#' Three translations and three infinitesimal rotations about the centroid. A
-#' rotation about axis \eqn{u} moves the node at \eqn{r} by \eqn{u \times r}.
+#' Three translations and three infinitesimal rotations about the centroid.
 #'
 #' @param xyz coordinates, a vector of length `3 * nsites`
 #' @returns a `3 nsites x 6` matrix with orthonormal columns
@@ -713,7 +747,8 @@ genm_rigid_basis <- function(xyz) {
   r <- position - rowMeans(position)           # relative to the centroid
   nsites <- ncol(r)
 
-  # each displacement as a 3 x nsites matrix, one column per node
+  # each displacement as a 3 x nsites matrix, one column per node. A rotation
+  # about axis u moves the node at r by u x r.
   displacements <- list(
     move_x = matrix(c(1, 0, 0), nrow = 3, ncol = nsites),
     move_y = matrix(c(0, 1, 0), nrow = 3, ncol = nsites),
@@ -759,8 +794,9 @@ genm_superpose <- function(xyz, target) {
 
 #' The kij function of a genm
 #'
-#' Resolves `kij_<model>` with `match.fun()`, as `calculate_enm_graph()` does, and
-#' checks that every name in `param$kij_par` is an argument it accepts.
+#' Finds the function `kij_<model>`, and checks that every name in
+#' `param$kij_par` is an argument it accepts. Errors on an unknown model or
+#' argument.
 #'
 #' @param param the `param` list of a `"genm"` object
 #' @returns the function
@@ -768,6 +804,7 @@ genm_superpose <- function(xyz, target) {
 #' @noRd
 #'
 genm_kij_fun <- function(param) {
+  # match.fun(), as calculate_enm_graph() does
   kij_fun <- tryCatch(match.fun(paste0("kij_", param$model)),
                       error = function(e) stop("unknown model: '", param$model, "'", call. = FALSE))
   extra <- param$kij_par

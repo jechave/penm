@@ -1,19 +1,8 @@
 #' Validate an ensemble label
 #'
-#' \code{ensemble} names which realization of the mutational process a mutant
-#' belongs to (see \code{?penm_ensemble}), so a malformed value is not a small
-#' problem: it selects a realization nobody chose, and does so reproducibly,
-#' which is what makes it dangerous -- the mistake never surfaces.
-#'
-#' Every bad value used to get one, because the key is built with
-#' \code{paste()}, which stringifies anything. Measured before this check was
-#' added: \code{NULL} yielded the key \code{"-80-1"} and hashed fine, and
-#' \code{NA}, \code{"banana"} and \code{c(1, 2)} all returned a plausible
-#' integer.
-#'
-#' The \code{length() != 1L} test must precede \code{is.na()}, so the latter is
-#' never handed a vector. \code{ensemble != trunc(ensemble)} rejects \code{1.5}
-#' while accepting \code{1024} typed at the console, which is a double.
+#' Errors unless \code{ensemble} is a single, non-missing, integer-valued
+#' number (\code{1024} typed at the console, a double, is accepted; \code{1.5}
+#' is not).
 #'
 #' @param ensemble The value to check.
 #'
@@ -21,6 +10,19 @@
 #'
 #' @noRd
 check_ensemble <- function(ensemble) {
+  # ensemble names which realization of the mutational process a mutant belongs
+  # to (see ?penm_ensemble), so a malformed value is not a small problem: it
+  # selects a realization nobody chose, and does so reproducibly, which is what
+  # makes it dangerous -- the mistake never surfaces.
+  #
+  # Every bad value used to get one, because the key is built with paste(),
+  # which stringifies anything. Measured before this check was added: NULL
+  # yielded the key "-80-1" and hashed fine, and NA, "banana" and c(1, 2) all
+  # returned a plausible integer.
+  #
+  # The length() != 1L test must precede is.na(), so the latter is never handed
+  # a vector. ensemble != trunc(ensemble) rejects 1.5 while accepting 1024 typed
+  # at the console, which is a double.
   if (is.null(ensemble) || length(ensemble) != 1L || !is.numeric(ensemble) ||
       is.na(ensemble) || ensemble != trunc(ensemble)) {
     stop("`ensemble` must be a single non-missing integer. ",
@@ -35,33 +37,12 @@ check_ensemble <- function(ensemble) {
 #' A mutant is identified by the tuple \code{(ensemble, site_mut, mutation)}:
 #' \code{(site_mut, mutation)} names a specific mutation at a specific site,
 #' and \code{ensemble} says which realization of the mutational process those
-#' names refer to (see \code{?penm_ensemble}).
+#' names refer to (see \code{?penm_ensemble}). The tuple is hashed, and the
+#' hash is the seed: \code{ensemble} is a label, not a seed.
 #'
-#' This function is the only place where a seed in the \code{set.seed()} sense
-#' exists. \code{ensemble} is not one: it is a label, hashed together with the
-#' rest of the tuple, and it is the hash that seeds the RNG.
-#'
-#' The tuple is hashed rather than packed arithmetically. Arithmetic keys
-#' collide structurally: the previous scheme \code{seed + site_mut * mutation}
-#' gave every divisor pair of the same product an identical random stream (for
-#' 228 sites x 10 mutations, 1710 of 2280 mutants shared a seed, up to 8 on one
-#' value), and a positional key \code{seed + site_mut * K + mutation} merely
-#' moves the collision up a level, making \code{seed + 1} indistinguishable
-#' from \code{mutation + 1}. Hashing makes distinctness a property of the hash
-#' instead of a property of a hand-checked formula.
-#'
-#' Because the key never mentions \code{nmut}, a given \code{(site, mutation)}
-#' draws the same stream in every scan that refers to it: an \code{nmut = 50}
-#' run is a strict superset of the \code{nmut = 10} run.
-#'
-#' There is deliberately no separate ensemble-index slot beside a scan label.
-#' The key once carried both, because \code{sdmrs} needs two independent
-#' ensembles and, under the arithmetic key, scaling the label (\code{1*seed},
-#' \code{2*seed}) gave sets that overlapped whenever \code{nsites * nmut >
-#' seed}. Under the hash two different labels are already disjoint over a whole
-#' scan -- measured over 228 sites x 10 mutations, the overlap is 0 for 1024 vs
-#' 1025 and for 1024 vs 7 -- so a second slot was a second name for one axis.
-#' Independent ensembles come from two different values of \code{ensemble}.
+#' The seed depends on the tuple alone, so a given \code{(site_mut, mutation)}
+#' gets the same seed in every scan or trajectory that refers to it, however
+#' many other mutations that scan includes.
 #'
 #' @param ensemble An integer naming the realization (see \code{?penm_ensemble}).
 #' @param site_mut The mutated site (sequential index, not pdb_site).
@@ -71,6 +52,29 @@ check_ensemble <- function(ensemble) {
 #'
 #' @noRd
 mut_seed <- function(ensemble, site_mut, mutation) {
+  # This function is the only place where a seed in the set.seed() sense exists.
+  #
+  # The tuple is hashed rather than packed arithmetically. Arithmetic keys
+  # collide structurally: the previous scheme seed + site_mut * mutation gave
+  # every divisor pair of the same product an identical random stream (for 228
+  # sites x 10 mutations, 1710 of 2280 mutants shared a seed, up to 8 on one
+  # value), and a positional key seed + site_mut * K + mutation merely moves the
+  # collision up a level, making seed + 1 indistinguishable from mutation + 1.
+  # Hashing makes distinctness a property of the hash instead of a property of a
+  # hand-checked formula.
+  #
+  # Because the key never mentions nmut, an nmut = 50 run is a strict superset
+  # of the nmut = 10 run.
+  #
+  # There is deliberately no separate ensemble-index slot beside a scan label.
+  # The key once carried both, because sdmrs needs two independent ensembles
+  # and, under the arithmetic key, scaling the label (1*seed, 2*seed) gave sets
+  # that overlapped whenever nsites * nmut > seed. Under the hash two different
+  # labels are already disjoint over a whole scan -- measured over 228 sites x
+  # 10 mutations, the overlap is 0 for 1024 vs 1025 and for 1024 vs 7 -- so a
+  # second slot was a second name for one axis. Independent ensembles come from
+  # two different values of ensemble.
+
   # Checked here as well as at the get_mutant_site() boundary: a direct penm:::
   # caller reaches this function without passing through it.
   check_ensemble(ensemble)
@@ -88,26 +92,9 @@ mut_seed <- function(ensemble, site_mut, mutation) {
 
 #' Evaluate an expression under a fixed seed, leaving the caller's RNG alone
 #'
-#' \code{set.seed()} writes \code{.Random.seed} in the global environment, so
-#' seeding a mutant's perturbations also silently reseeds whatever the caller
-#' was doing. A loop that draws a mutant and then draws something of its own
-#' gets its stream reset on every iteration.
-#'
-#' Restoring the previous \code{.Random.seed} on exit changes no drawn value
-#' inside \code{expr} -- the seeding is identical, only the aftermath differs.
-#' Written by hand rather than with \code{withr::with_seed()} to avoid taking a
-#' dependency for one call site.
-#'
-#' \code{expr} is a promise, forced on the last line: inside the function, and
-#' before \code{on.exit} fires. Do not "simplify" this with \code{force()} or
-#' \code{eval()}.
-#'
-#' If \code{.Random.seed} does not exist yet (no RNG use in the session so far)
-#' it is removed again afterwards, so the session is returned to the state it
-#' was actually in. That branch is deliberately not covered by a test:
-#' arranging "no \code{.Random.seed} exists" means deleting it from the global
-#' environment, and testthat would carry that side effect into later test
-#' files.
+#' Evaluates \code{expr} after \code{set.seed(seed)}, then restores the
+#' caller's \code{.Random.seed}, or removes it if there was none. The values
+#' drawn inside \code{expr} are those \code{set.seed(seed)} gives.
 #'
 #' @param seed An integer seed, as returned by \code{mut_seed()}.
 #' @param expr An expression to evaluate.
@@ -116,6 +103,19 @@ mut_seed <- function(ensemble, site_mut, mutation) {
 #'
 #' @noRd
 with_mut_seed <- function(seed, expr) {
+  # set.seed() writes .Random.seed in the global environment, so seeding a
+  # mutant's perturbations would also silently reseed whatever the caller was
+  # doing: a loop that draws a mutant and then draws something of its own would
+  # get its stream reset on every iteration.
+  #
+  # Written by hand rather than with withr::with_seed() to avoid taking a
+  # dependency for one call site.
+  #
+  # If .Random.seed does not exist yet (no RNG use in the session so far) it is
+  # removed again afterwards, so the session is returned to the state it was
+  # actually in. That branch is deliberately not covered by a test: arranging
+  # "no .Random.seed exists" means deleting it from the global environment, and
+  # testthat would carry that side effect into later test files.
   had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
   if (had) old <- get(".Random.seed", envir = globalenv(), inherits = FALSE)
   on.exit({
@@ -123,5 +123,7 @@ with_mut_seed <- function(seed, expr) {
     else rm(".Random.seed", envir = globalenv())
   }, add = TRUE)
   set.seed(seed)
+  # expr is a promise, forced here: inside the function, and before on.exit
+  # fires. Do not "simplify" this with force() or eval().
   expr
 }

@@ -212,10 +212,6 @@ calculate_enm_graph <- function(xyz, pdb_site, model, d_max, ...) {
 
 #' Calculate vectors, lengths and unit vectors of edges
 #'
-#' Vectorised over edges: this and `calculate_enm_kmat()` are called at every
-#' step of the generalized ENM's minimiser, where looping over edges was
-#' measured to make it about four times slower.
-#'
 #' @param xyz vector of xyz coordinates
 #' @param i,j integer vectors of nodes connected in each edge
 #' @return a list `(rij, dij, eij)`: `rij` a matrix with n_edges rows and 3
@@ -228,6 +224,8 @@ calculate_enm_graph <- function(xyz, pdb_site, model, d_max, ...) {
 calculate_enm_edge_geometry <- function(xyz, i, j) {
   stopifnot(length(i) == length(j))
   xyz <- my_as_xyz(xyz) # column k is node k
+  # all edges at once, not a loop over edges: the generalized ENM's minimiser
+  # calls this at every step, and a loop made it about four times slower
   rij <- t(xyz[, j, drop = FALSE] - xyz[, i, drop = FALSE])
   dij <- sqrt(rowSums(rij^2))
   eij <- rij / dij
@@ -250,20 +248,7 @@ sdij_edge <- function(pdb_site, i, j) {
 
 #' Calculate kmat given the ENM graph
 #'
-#' The Hessian of \eqn{V = \frac12 \sum k_{ij} (d_{ij} - l_{ij})^2} at the
-#' conformation whose edge lengths are `graph$dij` and unit vectors `eij`. Each
-#' edge contributes the 3 x 3 block
-#' \eqn{K_{ij} = -k_{ij} [ e e^T + g_{ij} (I - e e^T) ]}, with
-#' \eqn{g_{ij} = (d_{ij} - l_{ij}) / d_{ij}}, at blocks (i, j) and (j, i); the
-#' diagonal blocks follow from translational invariance,
-#' \eqn{K_{ii} = -\sum_{j \ne i} K_{ij}}.
-#'
-#' For a network from [set_enm()], `lij` is a copy of `dij`, so `gij` is exactly
-#' 0 and each block is \eqn{-k_{ij} e e^T}. An lfenm mutant must never have its
-#' kmat recomputed here: in lfenm `K_mut = K_wt` by assumption, while a mutant's
-#' `lij != dij` would give it a transverse term.
-#'
-#' @param graph A tibble representing the ENM graph (with edge information, especially \code{kij}, \code{dij} and \code{lij})
+#' @param graph A tibble representing the ENM graph (with edge information, especially \code{kij}
 #' @param eij A matrix of size \code{n_edges x 3} of \code{eij} versors directed along ENM contacts
 #' @param nsites The number of nodes of the ENM network
 #'
@@ -284,34 +269,19 @@ sdij_edge <- function(pdb_site, i, j) {
 #'
 calculate_enm_kmat <- function(graph, eij, nsites) {
   stopifnot(max(graph$i, graph$j) <= nsites,
-            nrow(graph) == nrow(eij),
-            !is.null(graph$dij), !is.null(graph$lij))
-  i <- graph$i
-  j <- graph$j
-  kij <- graph$kij
-  gij <- (graph$dij - graph$lij) / graph$dij # relative strain
-
-  # kmat[a, i, b, j] couples coordinate a of node i with coordinate b of node j.
-  # Reshaped to 3N x 3N at the end.
+            nrow(graph) == nrow(eij))
   kmat <- array(0, dim = c(3, nsites, 3, nsites))
-
-  # Off-diagonal blocks, element (a, b) of every edge's block at once (vectorised
-  # over edges, for the minimiser's sake; see calculate_enm_edge_geometry()). A
-  # pair of nodes has at most one edge, so no block is written twice.
-  for (a in 1:3) {
-    for (b in 1:3) {
-      ee_ab <- eij[, a] * eij[, b]
-      identity_ab <- as.numeric(a == b)
-      kij_ab <- -kij * (ee_ab + gij * (identity_ab - ee_ab))
-      kmat[cbind(a, i, b, j)] <- kij_ab
-      kmat[cbind(a, j, b, i)] <- kij_ab
-    }
+  for (edge in seq(nrow(graph))) {
+    i <- graph$i[[edge]]
+    j <- graph$j[[edge]]
+    kij <- graph$kij[[edge]]
+    eij_v <- eij[edge, ]
+    eij_mat <- tcrossprod(eij_v, eij_v)
+    kij_mat <- -kij * eij_mat
+    kmat[, j, , i] <- kmat[, i, , j] <- kij_mat
   }
-
-  # Diagonal blocks: K_ii = -sum over j of K_ij
-  row_sums <- apply(kmat, c(1, 2, 3), sum) # [a, i, b]
-  for (site in seq(nsites)) {
-    kmat[, site, , site] <- -row_sums[, site, ]
+  for (i in seq(nsites)) {
+    kmat[, i, , i] <- -apply(kmat[, i, , -i], c(1, 2), sum)
   }
 
   dim(kmat) <- c(3 * nsites, 3 * nsites)
@@ -321,20 +291,10 @@ calculate_enm_kmat <- function(graph, eij, nsites) {
 
 #' Fix the sign convention of a matrix of eigenvectors
 #'
-#' `eigen()` determines each eigenvector only up to a factor of -1, and which
-#' sign comes back depends on the LAPACK build — so the same `kmat` yields
-#' different `umat` on different machines. That makes any stored eigenvector,
-#' or any comparison against one, non-portable.
-#'
-#' The convention adopted here: scale each column so that its largest-magnitude
-#' element is positive. This is deterministic given the eigenvector, and leaves
-#' every derived quantity unchanged, since all of them (`cmat`, msf, the
-#' `delta_*` profiles) are quadratic in `umat`.
-#'
-#' Note this does not disambiguate degenerate eigenvalues, where any rotation
-#' within the degenerate subspace is a valid eigenbasis. ENM spectra of real
-#' proteins are generically non-degenerate, so in practice the sign is the whole
-#' ambiguity — but a rotation, if one occurred, would survive this.
+#' Scales each column by -1 or 1 so that its largest-magnitude element is
+#' positive. Every quantity penm derives from `umat` is quadratic in it, so none
+#' changes. Degenerate eigenvalues are not disambiguated: there any rotation
+#' within the degenerate subspace is a valid eigenbasis, and it survives this.
 #'
 #' @param umat a matrix whose columns are eigenvectors
 #' @return `umat` with each column's largest-magnitude element made positive
@@ -342,6 +302,12 @@ calculate_enm_kmat <- function(graph, eij, nsites) {
 #' @noRd
 #'
 canonical_sign <- function(umat) {
+  # eigen() determines each eigenvector only up to a factor of -1, and which
+  # sign comes back depends on the LAPACK build, so the same kmat yields
+  # different umat on different machines: any stored eigenvector, or any
+  # comparison against one, would be non-portable. ENM spectra of real proteins
+  # are generically non-degenerate, so in practice the sign is the whole
+  # ambiguity.
   umat <- as.matrix(umat)
   # sign of the largest-magnitude entry of each column
   pivot <- apply(umat, 2, function(u) u[which.max(abs(u))])
@@ -362,8 +328,7 @@ canonical_sign <- function(umat) {
 #' eigenvalues with \eqn{|\lambda| \le} `null_tol` \eqn{\max |\lambda|}, and
 #' none below \eqn{-}`null_tol` \eqn{\max |\lambda|}; otherwise an error. A
 #' seventh null eigenvalue means the network is not rigid; a negative one means
-#' `kmat` is not at a minimum (e.g. a network with negative springs). The
-#' threshold is relative so that it does not depend on the scale of `kij`.
+#' `kmat` is not at a minimum (e.g. a network with negative springs).
 #'
 #' @param kmat The K matrix to diagonalize
 #' @param null_tol relative threshold for a null eigenvalue
@@ -381,6 +346,7 @@ canonical_sign <- function(umat) {
 #'
 calculate_enm_nma <- function(kmat, null_tol = 1e-8) {
   eig <- eigen(kmat, symmetric = TRUE) # eigenvalues in decreasing order
+  # relative, so that it does not depend on the scale of kij
   null_threshold <- null_tol * max(abs(eig$values))
 
   n_negative <- sum(eig$values < -null_threshold)
