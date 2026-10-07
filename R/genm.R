@@ -30,7 +30,7 @@
 # in the rest of penm.
 #
 # Does not call set_enm() or get_mutant_site(). Shared with them:
-# calculate_enm_nodes() (pdb parsing), calculate_enm_edge_geometry()
+# calculate_enm_nodes() (pdb parsing), dij_edge() and calculate_enm_eij()
 # (geometry), calculate_enm_nma() (normal modes), the kij_* functions, and the
 # mutant-key hashing in R/seed.R. The Hessian is genm_hessian(), not
 # calculate_enm_kmat(): it has the transverse term of frustrated springs, which
@@ -41,10 +41,10 @@
 
 #' Build a generalized ENM from a pdb structure
 #'
-#' There is one spring for every pair of nodes closer than `d_max_pairs` in the pdb, plus one for
-#' every i,i+1 pair regardless of distance; each spring's `l0ij` is its distance
-#' in the pdb. Every site starts at allele 0, so `lij = l0ij` and
-#' `kij = k(lij)`.
+#' There is one spring for every pair of nodes closer than `d_max_pairs` in the
+#' pdb, plus one for every i,i+1 pair regardless of distance; each spring's
+#' `l0ij` is its distance in the pdb. Every site starts at allele 0, so
+#' `lij = l0ij` and `kij = k(lij)`.
 #'
 #' `d_max_pairs` is not the contact cutoff. The springs must reach out to where
 #' `k` is negligible, so that a spring whose `lij` shortens past `d_max` can
@@ -119,9 +119,9 @@ build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
     i = i,
     j = j,
     sdij = abs(nodes$pdb_site[j] - nodes$pdb_site[i]),
-    # recomputed with calculate_enm_edge_geometry(), the distance V uses, so
-    # that the wild type sits at V = 0 exactly rather than to within rounding
-    l0ij = calculate_enm_edge_geometry(nodes$xyz, i, j)$dij
+    # recomputed with dij_edge(), the distance V uses, so that the wild type
+    # sits at V = 0 exactly rather than to within rounding
+    l0ij = dij_edge(nodes$xyz, i, j)
   )
   springs$lij <- springs$l0ij
   springs$kij <- genm_kij(param, springs$lij, springs$sdij)
@@ -463,8 +463,8 @@ genm_v_min <- function(prot) {
 #' @noRd
 #'
 genm_energy <- function(xyz, springs) {
-  geometry <- calculate_enm_edge_geometry(xyz, springs$i, springs$j)
-  0.5 * sum(springs$kij * (geometry$dij - springs$lij)^2)
+  dij <- dij_edge(xyz, springs$i, springs$j)
+  0.5 * sum(springs$kij * (dij - springs$lij)^2)
 }
 
 
@@ -483,10 +483,11 @@ genm_energy <- function(xyz, springs) {
 #' @noRd
 #'
 genm_gradient <- function(xyz, springs, nsites) {
-  geometry <- calculate_enm_edge_geometry(xyz, springs$i, springs$j)
-  stretch <- geometry$dij - springs$lij
+  dij <- dij_edge(xyz, springs$i, springs$j)
+  eij <- calculate_enm_eij(xyz, springs$i, springs$j)
+  stretch <- dij - springs$lij
   # k (d - l) e for each spring, one row per spring
-  spring_term <- springs$kij * stretch * geometry$eij
+  spring_term <- springs$kij * stretch * eij
 
   gradient <- matrix(0, nrow = 3, ncol = nsites) # column k is node k
   for (a in 1:3) {
@@ -534,9 +535,9 @@ genm_sum_by_node <- function(values, node, nsites) {
 #' @noRd
 #'
 genm_hessian <- function(xyz, springs, nsites) {
-  geometry <- calculate_enm_edge_geometry(xyz, springs$i, springs$j)
-  eij <- geometry$eij
-  gij <- (geometry$dij - springs$lij) / geometry$dij # relative strain
+  dij <- dij_edge(xyz, springs$i, springs$j)
+  eij <- calculate_enm_eij(xyz, springs$i, springs$j)
+  gij <- (dij - springs$lij) / dij # relative strain
   i <- springs$i
   j <- springs$j
   kij <- springs$kij

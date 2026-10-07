@@ -94,7 +94,7 @@ get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_m
   mut <- wt
   mut$graph$lij <-  wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
   mut$nodes$xyz <- wt$nodes$xyz + dxyz
-  mut$graph$dij <- calculate_enm_edge_geometry(mut$nodes$xyz, mut$graph$i, mut$graph$j)$dij
+  mut$graph$dij <- dij_edge(mut$nodes$xyz, mut$graph$i, mut$graph$j)
   return(mut)
 }
 

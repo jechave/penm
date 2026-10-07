@@ -101,7 +101,7 @@ set_enm_graph <- function(prot) {
 #' @noRd
 #'
 set_enm_eij <- function(prot) {
-  prot$eij <- calculate_enm_edge_geometry(get_xyz(prot), get_graph(prot)$i, get_graph(prot)$j)$eij
+  prot$eij <- calculate_enm_eij(get_xyz(prot), get_graph(prot)$i, get_graph(prot)$j)
   prot
 }
 
@@ -191,7 +191,7 @@ calculate_enm_graph <- function(xyz, pdb_site, model, d_max, ...) {
     graph <- as_tibble(expand_grid(i = site, j = site)) %>%
       filter(j > i) %>%
       arrange(i, j) %>%
-      mutate(dij = calculate_enm_edge_geometry(xyz, i, j)$dij) %>%
+      mutate(dij = dij_edge(xyz, i, j)) %>%
       mutate(sdij = sdij_edge(pdb_site, i, j)) %>%
       filter(dij <= d_max | sdij == 1) %>%
       mutate(lij = dij)
@@ -210,28 +210,17 @@ calculate_enm_graph <- function(xyz, pdb_site, model, d_max, ...) {
     graph
   }
 
-#' Calculate vectors, lengths and unit vectors of edges
+#' Calculate distance of edges
 #'
-#' @param xyz vector of xyz coordinates
-#' @param i,j integer vectors of nodes connected in each edge
-#' @return a list `(rij, dij, eij)`: `rij` a matrix with n_edges rows and 3
-#'   columns (x, y, z), row k the vector from node `i[k]` to node `j[k]`; `dij`
-#'   its length; `eij` the unit vector `rij / dij`
-#'
-#' @family enm builders
 #' @noRd
 #'
-calculate_enm_edge_geometry <- function(xyz, i, j) {
+dij_edge <- function(xyz, i, j) {
   stopifnot(length(i) == length(j))
-  xyz <- my_as_xyz(xyz) # column k is node k
-  # all edges at once, not a loop over edges: the generalized ENM's minimiser
-  # calls this at every step, and a loop made it about four times slower
-  rij <- t(xyz[, j, drop = FALSE] - xyz[, i, drop = FALSE])
+  xyz <- my_as_xyz(xyz)                 # column k is node k
+  # all edges at once, not a loop: genm's minimiser calls this at every step
+  rij <- t(xyz[, j] - xyz[, i])         # one row per edge: node i to node j
   dij <- sqrt(rowSums(rij^2))
-  eij <- rij / dij
-  # list(), not lst(): lst() takes ~100 us, half the time of this function,
-  # which the minimiser calls at every step
-  list(rij = rij, dij = dij, eij = eij)
+  dij
 }
 
 #' Calculate edge sequence distance
@@ -243,6 +232,26 @@ sdij_edge <- function(pdb_site, i, j) {
   stopifnot(length(i) == length(j))
   sdij <- abs(pdb_site[j] - pdb_site[i])
   sdij
+}
+
+
+#' Calculate unit vectors of edges
+#'
+#' @param i,j integer vectors of nodes connected in each edge
+#' @param xyz vector of xyz coordinates
+#' @return matrix with n_edge rows and 3 columns (x, y, z)
+#'
+#' @family enm builders
+#' @noRd
+#'
+calculate_enm_eij <- function(xyz, i, j) {
+  stopifnot(length(i) == length(j))
+  xyz <- my_as_xyz(xyz)                 # column k is node k
+  # all edges at once, not a loop: genm's minimiser calls this at every step
+  rij <- t(xyz[, j] - xyz[, i])         # one row per edge: node i to node j
+  dij <- sqrt(rowSums(rij^2))
+  eij <- rij / dij
+  eij
 }
 
 
@@ -259,7 +268,7 @@ sdij_edge <- function(pdb_site, i, j) {
 #' pdb <- bio3d::read.pdb("2acy")
 #' nodes <- calculate_enm_nodes(pdb, node = "ca")
 #' graph <- calculate_enm_graph(nodes$xyz, nodes$pdb_site, model = "anm", d_max = 10.5)
-#' eij <- calculate_enm_edge_geometry(nodes$xyz, graph$i, graph$j)$eij
+#' eij <- calculate_enm_eij(nodes$xyz, graph$i, graph$j)
 #' kmat <- calculate_enm_kmat(graph, eij, nsites = nodes$nsites)
 #' }
 #'
@@ -320,52 +329,52 @@ canonical_sign <- function(umat) {
 
 #' Perform Normal Mode Analysis
 #'
-#' Given an enm `kmat`, perform NMA: the eigenvalues in ascending order, with
-#' the six null modes (rigid-body translations and rotations) left out, and the
-#' eigenvectors in the sign convention of [canonical_sign()].
+#' Given an enm `kmat`, perform NMA
 #'
-#' The null modes are checked, not assumed: there must be exactly six
-#' eigenvalues with \eqn{|\lambda| \le} `null_tol` \eqn{\max |\lambda|}, and
-#' none below \eqn{-}`null_tol` \eqn{\max |\lambda|}; otherwise an error. A
-#' seventh null eigenvalue means the network is not rigid; a negative one means
-#' `kmat` is not at a minimum (e.g. a network with negative springs).
+#' Stops if `kmat` has a negative eigenvalue (not a minimum) or does not have
+#' exactly six null eigenvalues (not rigid).
 #'
 #' @param kmat The K matrix to diagonalize
-#' @param null_tol relative threshold for a null eigenvalue
+#' @param null_tol=1.e-8 Eigenvalues smaller in magnitude than `null_tol` times the largest are null, and are discarded
 #'
 #' @return A list with elements \code{lst(mode,evalue,cmat,umat)}
 #'
 #' @examples
 #' \dontrun{
-#' calculate_enm_nma(kmat)
+#' calculate_enm_nma(kmat, null_tol = 1.e-10)
 #' }
 #'
 #'@family enm builders
 #' @noRd
 #'
 #'
-calculate_enm_nma <- function(kmat, null_tol = 1e-8) {
-  eig <- eigen(kmat, symmetric = TRUE) # eigenvalues in decreasing order
-  # relative, so that it does not depend on the scale of kij
-  null_threshold <- null_tol * max(abs(eig$values))
-
-  n_negative <- sum(eig$values < -null_threshold)
-  if (n_negative > 0) {
-    stop("Hessian has ", n_negative, " negative eigenvalue(s): not a minimum")
+calculate_enm_nma <- function(kmat, null_tol = 1.e-8) {
+  eig <- eigen(kmat, symmetric = TRUE)
+  evalue <- eig$values
+  umat <- eig$vectors
+  too_small <- null_tol * max(abs(evalue))
+  if (any(evalue < -too_small)) {
+    stop("kmat has ", sum(evalue < -too_small), " negative eigenvalue(s): not a minimum")
   }
-  n_null <- sum(abs(eig$values) <= null_threshold)
-  if (n_null != 6) {
-    stop("Hessian has ", n_null, " null eigenvalues, expected 6: the network is not rigid")
+  if (sum(abs(evalue) <= too_small) != 6) {
+    stop("kmat has ", sum(abs(evalue) <= too_small), " null eigenvalues, expected 6: the network is not rigid")
   }
+  modes <- evalue > too_small
+  evalue <- evalue[modes]
+  umat  <- umat[, modes]
 
-  internal <- which(eig$values > null_threshold)
-  ascending <- rev(internal)
-  evalue <- eig$values[ascending]
-  umat <- canonical_sign(eig$vectors[, ascending, drop = FALSE])
-  cmat <- umat %*% ((1 / evalue) * t(umat)) # pseudo-inverse of kmat
+  nmodes <- sum(modes)
+  mode <- order(seq(nmodes), decreasing = T)
+  evalue <- evalue[mode]
+  umat <- umat[, mode]
+  mode <- mode[mode]
+
+  umat <- canonical_sign(umat)
+
+  cmat <-  umat %*% ((1 / evalue) * t(umat))
 
   nma <- list(
-    mode = seq_along(evalue),
+    mode = mode,
     evalue = evalue,
     cmat = cmat,
     umat = umat
