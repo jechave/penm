@@ -181,7 +181,7 @@ get_kmat <- function(prot) prot$kmat
 #'
 #' @export
 #'
-get_mode <- function(prot) prot$nma$mode
+get_mode <- function(prot) get_nma(prot)$mode
 
 #' @rdname get_prot_property
 #'
@@ -190,7 +190,7 @@ get_mode <- function(prot) prot$nma$mode
 #'
 #' @export
 #'
-get_evalue <- function(prot) prot$nma$evalue
+get_evalue <- function(prot) get_nma(prot)$evalue
 
 #' @rdname get_prot_property
 #'
@@ -199,7 +199,7 @@ get_evalue <- function(prot) prot$nma$evalue
 #'
 #' @export
 #'
-get_umat <- function(prot) prot$nma$umat
+get_umat <- function(prot) get_nma(prot)$umat
 
 #' @rdname get_prot_property
 #'
@@ -208,7 +208,7 @@ get_umat <- function(prot) prot$nma$umat
 #'
 #' @export
 #'
-get_cmat <- function(prot) prot$nma$cmat
+get_cmat <- function(prot) get_nma(prot)$cmat
 
 
 #' @rdname get_prot_property
@@ -218,4 +218,18 @@ get_cmat <- function(prot) prot$nma$cmat
 #'
 #' @export
 #'
-get_nmodes <- function(prot) length(prot$nma$mode)
+get_nmodes <- function(prot) length(get_nma(prot)$mode)
+
+
+#' Get the normal modes of a prot
+#'
+#' @param prot is a prot object
+#' @return the `nma` list of `prot`; an error if it has none, as a genm mutant
+#'   from [get_mutant_site()] does until [set_enm_nma()] adds them
+#'
+#' @noRd
+#'
+get_nma <- function(prot) {
+  if (identical(prot$nma, NA)) stop("prot has no normal modes: add them with set_enm_nma()")
+  prot$nma
+}

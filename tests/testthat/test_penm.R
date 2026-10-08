@@ -75,7 +75,7 @@ test_that("an allele makes the same change to an edge in lfenm and in genm", {
   wt_genm <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, ensemble = 3L,
                      mut_model = "genm", d_max_graph = 14)
   m_lfenm <- get_mutant_site(wt_alleles, 80, 3)
-  m_genm <- penm:::genm_mutate(wt_genm, 80, 3)
+  m_genm <- get_mutant_site(wt_genm, 80, 3)
   change <- function(p) tibble::tibble(edge = p$graph$edge, change = p$graph$lij - p$graph$l0ij)
   shared <- dplyr::inner_join(change(m_lfenm), change(m_genm), by = "edge", suffix = c("_lfenm", "_genm"))
   expect_equal(nrow(shared), nrow(m_lfenm$graph))

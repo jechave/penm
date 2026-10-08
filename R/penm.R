@@ -22,6 +22,14 @@
 #' changed. The equilibrium lengths depend only on the alleles, so mutating a
 #' site back to an earlier allele restores its earlier lengths.
 #'
+#' The two mutational models (see `mut_model` in [set_enm()]) make the mutant's
+#' structure differently. In `"lfenm"` it is the linear response to the force
+#' the changed lengths exert; the mutant keeps the network matrix and normal
+#' modes of the protein `set_enm()` built. In `"genm"` the spring constants
+#' follow the lengths, and the structure is the minimum of the mutant's energy,
+#' found starting from `wt`'s structure and superposed onto it. A genm mutant
+#' is returned without normal modes; add them with [set_enm_nma()] when needed.
+#'
 #' @export
 #'
 #' @seealso [set_enm()] to build the `wt` argument and choose how it mutates;
@@ -40,6 +48,12 @@
 #' # mutating back restores the wild type's equilibrium lengths
 #' back <- get_mutant_site(mut, site_mut = 11, mutation = 0)
 #' identical(back$graph$lij, wt$graph$lij)
+#'
+#' # the genm model: the mutant has no normal modes until they are added
+#' wt_genm <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+#'                    mut_model = "genm", d_max_graph = 14)
+#' mut_genm <- set_enm_nma(get_mutant_site(wt_genm, site_mut = 11, mutation = 1))
+#' ddg_tds(wt_genm, mut_genm)
 #'
 #' @family enm mutating functions
 #'
@@ -64,8 +78,12 @@ get_mutant_site <- function(wt, site_mut, mutation = 0) {
     mut <- get_mutant_site_lfenm(wt, site_mut, mutation)
     return(mut)
   }
+  if (param$mut_model == "genm") {
+    mut <- get_mutant_site_genm(wt, site_mut, mutation)
+    return(mut)
+  }
 
-  stop("get_mutant_site does not support mut_model = \"", param$mut_model, "\" yet")
+  stop("get_mutant_site: undefined mut_model \"", param$mut_model, "\"")
 
 }
 

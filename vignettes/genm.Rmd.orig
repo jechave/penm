@@ -54,13 +54,11 @@ library(penm)
 library(ggplot2)
 ```
 
-The wild type is built with `set_enm()`, like any `prot`. The functions that
-mutate it are not exported yet, while their interface settles. Until they are,
-they have to be fetched from inside the package:
+The wild type is built with `set_enm()`, and mutated with `get_mutant_site()`,
+like any `prot`. One function used here, which rotates a protein onto another
+structure, is not exported yet, and has to be fetched from inside the package:
 
 ```{r internals}
-genm_mutate         <- penm:::genm_mutate
-set_enm_nma         <- penm:::set_enm_nma
 genm_superpose_prot <- penm:::genm_superpose_prot
 ```
 
@@ -123,7 +121,7 @@ alleles <- 0:(get_enm_param(wt)$n_alleles - 1)
 c(sites = length(sites), modes = length(modes), springs = nrow(wt$graph))
 ```
 
-`genm_mutate()` changes the allele at a site and minimises the potential,
+`get_mutant_site()` changes the allele at a site and minimises the potential,
 starting from the structure of the protein it mutates. The mutant has no normal
 modes: they are costly, and a long trajectory does not need them at every step.
 `set_enm_nma()` adds them.
@@ -164,7 +162,7 @@ mutations <- mutations[mutations$allele != wt$nodes$sequence[mutations$site], ]
 nrow(mutations)
 
 compare_mutant <- function(row) {
-  mutant <- genm_mutate(wt, mutations$site[row], mutations$allele[row])
+  mutant <- get_mutant_site(wt, mutations$site[row], mutations$allele[row])
   mutant <- set_enm_nma(mutant)
   list(
     dr2i  = delta_structure_dr2i(wt, mutant),
@@ -260,7 +258,7 @@ run_trajectory <- function(trajectory) {
   for (step in seq_len(n_steps)) {
     site <- pick_one(sites)
     allele <- pick_one(setdiff(alleles, protein$nodes$sequence[site]))
-    protein <- genm_mutate(protein, site, allele)
+    protein <- get_mutant_site(protein, site, allele)
   }
   protein
 }

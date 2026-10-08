@@ -207,10 +207,34 @@ set_enm_kmat <- function(prot) {
   prot
 }
 
-#' Set normal-mode-analysis component of prot object
+#' Set the normal modes of a prot object
 #'
-#' @noRd
+#' Computes the normal modes of a protein from its network matrix (`kmat`):
+#' eigenvalues, eigenvectors and covariance matrix, as the mode accessors
+#' ([get_prot_property]) and the measures built on them read them.
 #'
+#' A protein from [set_enm()] has its modes, and so does an lfenm mutant, which
+#' inherits them. A genm mutant from [get_mutant_site()] does not: its modes
+#' cost an eigendecomposition, which a long trajectory need not pay at every
+#' step. Call `set_enm_nma()` on the proteins whose modes you need.
+#'
+#' If the protein already has modes, they are recomputed from `kmat`, which
+#' gives the same modes.
+#'
+#' @param prot a `prot`, with or without normal modes
+#'
+#' @returns `prot`, with its normal modes
+#'
+#' @export
+#'
+#' @seealso [get_mutant_site()]; [get_prot_property] for the mode accessors.
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+#'               mut_model = "genm", d_max_graph = 14)
+#' mut <- get_mutant_site(wt, site_mut = 80, mutation = 3)
+#' mut <- set_enm_nma(mut)
+#' get_nmodes(mut)
 set_enm_nma <- function(prot) {
   prot$nma <- calculate_enm_nma(get_kmat(prot))
   prot

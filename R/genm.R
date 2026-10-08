@@ -88,49 +88,37 @@ calculate_genm_graph <- function(xyz, pdb_site, param) {
 
 # Mutations --------------------------------------------------------------------
 
-#' Mutate a site of a genm protein
+#' Get a single-point mutant using genm model
 #'
-#' Sets the allele at `site`, recomputes `lij` and `kij`, and finds the new
-#' minimum with [genm_minimize()], starting from the protein's structure.
-#' Mutating back to an earlier allele restores the earlier parameters exactly.
+#' Gives `site_mut` the allele `mutation`, recomputes `lij` and `kij`, and finds
+#' the new minimum with [genm_minimize()], starting from the protein's
+#' structure. Mutating back to an earlier allele restores the earlier
+#' parameters exactly.
 #'
 #' The mutant has no normal modes (`nma` is `NA`): add them with
 #' [set_enm_nma()] when they are needed.
 #'
-#' @param prot a genm `prot`
-#' @param site the site to mutate (sequential index, not pdb numbering)
-#' @param allele the new allele, in `0 .. n_alleles - 1`, different from the
-#'   current one
+#' @param wt The genm \code{prot} to mutate
+#' @param site_mut The site to mutate (not the pdb_site, but sequential)
+#' @param mutation The new allele, different from the site's current one
 #'
 #' @returns the mutant `prot`
 #'
 #' @noRd
 #'
-genm_mutate <- function(prot, site, allele) {
-  if (!identical(get_enm_param(prot)$mut_model, "genm")) {
-    stop("prot was not built for mut_model = \"genm\"")
-  }
-  nsites <- get_nsites(prot)
-  n_alleles <- get_enm_param(prot)$n_alleles
-  if (!(site %in% seq_len(nsites))) {
-    stop("site must be one of 1..", nsites)
-  }
-  if (!(allele %in% 0:(n_alleles - 1))) {
-    stop("allele must be one of 0..", n_alleles - 1)
-  }
-  if (allele == prot$nodes$sequence[site]) {
-    stop("site ", site, " already has allele ", allele, ": nothing to mutate")
-  }
-
-  prot$nodes$sequence[site] <- as.integer(allele)
-  lij <- calculate_lij(prot)
+#' @family enm mutating functions
+#'
+get_mutant_site_genm <- function(wt, site_mut, mutation) {
+  mut <- wt
+  mut$nodes$sequence[site_mut] <- as.integer(mutation)
+  lij <- calculate_lij(mut)
   if (any(lij <= 0)) {
-    stop("allele ", allele, " at site ", site, " would make ", sum(lij <= 0),
+    stop("allele ", mutation, " at site ", site_mut, " would make ", sum(lij <= 0),
          " equilibrium length(s) <= 0")
   }
-  prot$graph$lij <- lij
-  prot$graph$kij <- genm_kij(prot$param, prot$graph$lij, prot$graph$sdij)
-  genm_minimize(prot)
+  mut$graph$lij <- lij
+  mut$graph$kij <- genm_kij(mut$param, mut$graph$lij, mut$graph$sdij)
+  genm_minimize(mut)
 }
 
 
