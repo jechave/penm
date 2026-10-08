@@ -240,37 +240,6 @@ genm_minimize <- function(prot, gtol = 1e-10, max_iter = 100) {
 }
 
 
-#' Superpose a genm protein onto target coordinates
-#'
-#' Rotates and translates the protein onto `target`, and recomputes `dij`,
-#' kmat, and the modes if it has them, in the new orientation.
-#'
-#' @param prot a genm `prot`
-#' @param target coordinates, a vector of length `3 * nsites`
-#'
-#' @returns `prot`, superposed onto `target`
-#'
-#' @noRd
-#'
-genm_superpose_prot <- function(prot, target) {
-  nsites <- get_nsites(prot)
-  target <- as.vector(target)
-  if (length(target) != 3 * nsites) stop("target must have length 3 * nsites = ", 3 * nsites)
-
-  all_coordinates <- seq_along(target)
-  xyz <- as.vector(bio3d::fit.xyz(fixed = target, mobile = get_xyz(prot),
-                                  fixed.inds = all_coordinates,
-                                  mobile.inds = all_coordinates))
-  graph <- prot$graph[prot$graph$kij > 0, ]
-  prot$nodes$xyz <- xyz
-  prot$graph$dij <- dij_edge(xyz, prot$graph$i, prot$graph$j)
-  prot$kmat <- genm_kmat(xyz, graph, nsites)
-  has_modes <- !identical(prot$nma, NA)
-  if (has_modes) prot$nma <- calculate_enm_nma(prot$kmat)
-  prot
-}
-
-
 # V, its gradient, and kmat ----------------------------------------------------
 
 #' V at a conformation

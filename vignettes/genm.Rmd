@@ -48,13 +48,7 @@ library(ggplot2)
 ```
 
 The wild type is built with `set_enm()`, and mutated with `get_mutant_site()`,
-like any `prot`. One function used here, which rotates a protein onto another
-structure, is not exported yet, and has to be fetched from inside the package:
-
-
-```r
-genm_superpose_prot <- penm:::genm_superpose_prot
-```
+like any `prot`.
 
 The mutants of the scan, and the trajectories of the tree, are independent of
 each other, so they are computed in parallel, with `mclapply()` from R's
@@ -287,13 +281,13 @@ summary(sites_changed)
 ```
 
 To be compared site by site, the tips must all have the same orientation.
-`genm_superpose_prot()` rotates each tip onto the wild type's structure, and
-recomputes its Hessian in the new orientation. Only the tips are compared, so
-only they need normal modes, added afterwards:
+`superpose_prot()` rotates each tip onto the wild type's structure, and its
+Hessian with it. Only the tips are compared, so only they need normal modes,
+added afterwards:
 
 
 ```r
-aligned_tips <- lapply(tips, genm_superpose_prot, target = get_xyz(wt))
+aligned_tips <- lapply(tips, superpose_prot, fixed = get_xyz(wt))
 aligned_tips <- lapply(aligned_tips, set_enm_nma)
 ```
 

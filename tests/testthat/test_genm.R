@@ -7,7 +7,6 @@
 allele_delta_lij      <- penm:::allele_delta_lij
 genm_kij              <- penm:::genm_kij
 genm_minimize         <- penm:::genm_minimize
-genm_superpose_prot   <- penm:::genm_superpose_prot
 genm_v_xyz            <- penm:::genm_v_xyz
 genm_gradient         <- penm:::genm_gradient
 genm_kmat             <- penm:::genm_kmat
@@ -394,36 +393,17 @@ test_that("dij in the graph are the edge lengths of the protein's structure", {
   expect_gt(max(abs(mut_a$graph$dij - wt$graph$dij)), 0.01)
 })
 
-test_that("genm_superpose_prot rotates the whole protein, kmat and modes included", {
-  # a known rotation and translation of the mutant's own structure
+test_that("superposing a genm protein rotates its kmat into the kmat at the new coordinates", {
+  # superpose_prot rotates kmat, for any prot (test_superpose.R); for genm the
+  # rotated kmat must be the Hessian at the rotated structure
   th <- 0.7
   rot <- matrix(c(cos(th), sin(th), 0, -sin(th), cos(th), 0, 0, 0, 1), 3)
   moved <- as.vector(rot %*% matrix(get_xyz(mut_a), 3) + c(5, -3, 2))
-
-  q <- genm_superpose_prot(mut_a, target = moved)
-  expect_lt(max(abs(get_xyz(q) - moved)), 1e-10)
-
-  # The kmat and the covariance must be the original ones, rotated: with the
-  # coordinates ordered x1 y1 z1 x2 ..., the rotation of the whole protein is
-  # block-diagonal, one copy of rot per node.
-  rot_all <- kronecker(diag(nsites), rot)
+  q <- superpose_prot(mut_a, moved)
+  springs <- q$graph[q$graph$kij > 0, ]
   k <- get_kmat(mut_a)
-  expect_lt(max(abs(get_kmat(q) - rot_all %*% k %*% t(rot_all))), 1e-9 * max(abs(k)))
-  cmat <- get_cmat(mut_a)
-  expect_lt(max(abs(get_cmat(q) - rot_all %*% cmat %*% t(rot_all))), 1e-9 * max(abs(cmat)))
-  expect_equal(get_evalue(q), get_evalue(mut_a))
-
-  # what does not depend on orientation is unchanged
-  expect_identical(parameters(q), parameters(mut_a))
-  expect_identical(q$graph$dij, edge_d(q))
-  expect_lt(max(abs(q$graph$dij - mut_a$graph$dij)), 1e-10)
-  expect_lt(abs(enm_v_min(q) - enm_v_min(mut_a)) / enm_v_min(mut_a), 1e-12)
-
-  # a protein without modes stays without modes
-  no_modes <- get_mutant_site(wt, site_a, 3L)
-  expect_identical(genm_superpose_prot(no_modes, target = moved)$nma, NA)
-
-  expect_error(genm_superpose_prot(mut_a, target = moved[-1]), "length")
+  expect_gt(max(abs(get_kmat(q) - k)), 0.1)
+  expect_lt(max(abs(get_kmat(q) - genm_kmat(get_xyz(q), springs, nsites))), 1e-9 * max(abs(k)))
 })
 
 test_that("the existing analysis getters work on a genm prot", {
