@@ -47,7 +47,7 @@ c(wt = get_nsites(wt),  mut = get_nsites(mut))
 #>  98  98
 c(wt = enm_v_min(wt),   mut = enm_v_min(mut))
 #>       wt      mut 
-#> 0.000000 2.628451
+#> 0.000000 2.068515
 ```
 
 The `delta_*` families compare them, by site or by normal mode:
@@ -55,7 +55,7 @@ The `delta_*` families compare them, by site or by normal mode:
 ``` r
 dr2i <- delta_structure_dr2i(wt, mut)   # deformation per site
 sum(dr2i)
-#> [1] 0.08758727
+#> [1] 0.05350642
 ```
 
 ``` r

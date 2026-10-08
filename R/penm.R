@@ -4,7 +4,9 @@
 #'
 #' @param wt The protein \code{prot} to mutate
 #' @param site_mut The site to mutate (not the pdb_site, but sequential)
-#' @param mutation An integer, if 0, return \code{wt} without mutating
+#' @param mutation The allele \code{site_mut} is given: an integer from 0 to
+#'   \code{n_alleles - 1} (see [set_enm()]). Allele 0 is the pdb's residue. If
+#'   the site already has this allele, \code{wt} is returned unchanged.
 #'
 #' @return A mutated protein object
 #'
@@ -13,11 +15,12 @@
 #' \code{ensemble} — is part of \code{wt}: it was set by [set_enm()], and the
 #' mutant inherits it, so that it can be mutated in turn the same way.
 #'
-#' The mutation is a set of random perturbations of the contacts of
-#' \code{site_mut}; there are no amino acids in this model, and no finite set
-#' of mutations to draw from. Which perturbations a given mutant gets is fixed
-#' by \code{(ensemble, site_mut, mutation)} — see \code{?penm_ensemble} for
-#' what that means and when \code{ensemble} may be changed.
+#' Each site carries an allele. There are no amino acids in this model: what an
+#' allele does is a set of random perturbations of the equilibrium lengths of
+#' the site's contacts, fixed by \code{(ensemble, site_mut, mutation)} — see
+#' \code{?penm_ensemble} for what that means and when \code{ensemble} may be
+#' changed. The equilibrium lengths depend only on the alleles, so mutating a
+#' site back to an earlier allele restores its earlier lengths.
 #'
 #' @export
 #'
@@ -31,19 +34,34 @@
 #'               d_max = 10.5, ensemble = 7)
 #' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
 #'
-#' # mutation = 0 returns wt unchanged
+#' # the allele a site already has returns the protein unchanged
 #' identical(get_mutant_site(wt, site_mut = 11, mutation = 0), wt)
+#'
+#' # mutating back restores the wild type's equilibrium lengths
+#' back <- get_mutant_site(mut, site_mut = 11, mutation = 0)
+#' identical(back$graph$lij, wt$graph$lij)
 #'
 #' @family enm mutating functions
 #'
 get_mutant_site <- function(wt, site_mut, mutation = 0) {
   param <- get_enm_param(wt)
-  if (is.null(param$mut_model)) {
-    stop("wt has no mut_model: it was built by an earlier version of penm. Rebuild it with set_enm().")
+  if (is.null(param$mut_model) || is.null(wt$nodes$sequence)) {
+    stop("wt has no mut_model or no sequence: it was built by an earlier version of penm. Rebuild it with set_enm().")
+  }
+  nsites <- get_nsites(wt)
+  if (!(site_mut %in% seq_len(nsites))) {
+    stop("site_mut must be one of 1..", nsites)
+  }
+  if (!(mutation %in% 0:(param$n_alleles - 1))) {
+    stop("mutation must be an allele, one of 0..", param$n_alleles - 1)
+  }
+  if (mutation == wt$nodes$sequence[site_mut]) {
+    # the protein with this allele at site_mut is wt itself
+    return(wt)
   }
 
   if (param$mut_model == "lfenm") {
-    mut <- get_mutant_site_lfenm(wt, site_mut, mutation, param$mut_dl_sigma, param$mut_sd_min, param$ensemble)
+    mut <- get_mutant_site_lfenm(wt, site_mut, mutation)
     return(mut)
   }
 
@@ -53,17 +71,15 @@ get_mutant_site <- function(wt, site_mut, mutation = 0) {
 
 #' Get a single-point mutant using lfenm model
 #'
-#' Returns a mutant given a wt and a site to mutate (site_mut)
+#' Gives `site_mut` the allele `mutation`, recomputes the equilibrium lengths,
+#' and moves the structure by the linear response to the force their change
+#' exerts. kmat, the normal modes and the edge directions are those of the
+#' protein `set_enm()` built, so the mutant's structure is that protein's plus
+#' the response to `lij - l0ij`, whatever path of mutations led to it.
 #'
 #' @param wt The protein \code{prot} to mutate
 #' @param site_mut The site to mutate (not the pdb_site, but sequential)
-#' @param mutation An integer, if 0, return \code{wt} without mutating
-#' @param mut_dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
-#' @param mut_sd_min An integer, only edges with \code{sdij >= mut_sd_min} are mutated
-#' @param ensemble An integer naming which realization of the mutational process
-#'   the mutant belongs to. With \code{ensemble} fixed, \code{(site_mut, mutation)}
-#'   names one specific, reproducible set of contact perturbations. Hold it
-#'   constant across a scan or a trajectory; see \code{?penm_ensemble}.
+#' @param mutation The new allele, different from the site's current one
 #'
 #' @return A mutated protein
 
@@ -72,45 +88,77 @@ get_mutant_site <- function(wt, site_mut, mutation = 0) {
 #'
 #' @family enm mutating functions
 #'
-get_mutant_site_lfenm <- function(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min,  ensemble) {
-
-  if (mutation == 0) {
-    # if mutation is 0, return wt
-    return(wt)
-  }
-
-  delta_lij <- with_mut_seed(
-    mut_seed(ensemble, site_mut, mutation),
-    generate_delta_lij(wt, site_mut, mut_sd_min, mut_dl_sigma)
-  )
+get_mutant_site_lfenm <- function(wt, site_mut, mutation) {
+  mut <- wt
+  mut$nodes$sequence[site_mut] <- as.integer(mutation)
+  mut$graph$lij <- calculate_lij(mut)
+  delta_lij <- mut$graph$lij - wt$graph$lij
   f <- calculate_force(wt, delta_lij)
   dxyz <- calculate_dxyz(wt, f)
-  mut <- wt
-  mut$graph$lij <-  wt$graph$lij + delta_lij #TODO revise this: mut parameters are w.r.t. w0, not wt...
   mut$nodes$xyz <- wt$nodes$xyz + dxyz
   mut$graph$dij <- dij_edge(mut$nodes$xyz, mut$graph$i, mut$graph$j)
   return(mut)
 }
 
 
-
-#' Perturbations (delta_lij) of contacts of mutated site
+#' Equilibrium lengths implied by the sequence
+#'
+#' \eqn{l_{ij} = l^0_{ij} + \delta(i, s_i)_{ij} + \delta(j, s_j)_{ij}} for every
+#' edge, with \eqn{\delta} given by [allele_delta_lij()] for edges with
+#' `sdij >= mut_sd_min`, and 0 for the others. Computed from `l0ij` and the
+#' sequence only, so equal sequences give identical lengths. Used by both
+#' mutational models.
+#'
+#' @param prot a `prot`
+#'
+#' @returns `lij`, one per edge
 #'
 #' @noRd
 #' @family enm mutating functions
-generate_delta_lij <- function(wt, site_mut, mut_sd_min, mut_dl_sigma) {
-  graph <- get_graph(wt)
+#'
+calculate_lij <- function(prot) {
+  graph <- prot$graph
+  sequence <- prot$nodes$sequence
+  perturbed <- graph$sdij >= prot$param$mut_sd_min
+  delta_from_i <- numeric(nrow(graph))
+  delta_from_j <- numeric(nrow(graph))
 
-  delta_lij <-  rep(0, nrow(get_graph(wt)))
+  for (site in which(sequence != 0)) {
+    delta_lij <- allele_delta_lij(prot, site, sequence[site])
+    site_is_i <- perturbed & graph$i == site
+    site_is_j <- perturbed & graph$j == site
+    delta_from_i[site_is_i] <- delta_lij[graph$j[site_is_i]]
+    delta_from_j[site_is_j] <- delta_lij[graph$i[site_is_j]]
+  }
 
-  # pick edges to mutate
-
-  mut_edge <- (graph$i == site_mut | graph$j == site_mut) & (graph$sdij >= mut_sd_min)
-  n_mut_edge <- sum(mut_edge)
-  delta_lij[mut_edge] <- rnorm(n_mut_edge, 0, mut_dl_sigma)
-
-  delta_lij
+  # always added in this order: floating-point addition is not associative
+  (graph$l0ij + delta_from_i) + delta_from_j
 }
+
+
+#' The change an allele makes to the edges of its site
+#'
+#' A vector of `nsites` normal draws with sd `mut_dl_sigma`, seeded by
+#' `(ensemble, site, allele)` without disturbing the caller's RNG. Element `k`
+#' is the change to the edge between `site` and site `k` (element `site` itself
+#' is not used). Allele 0 changes nothing.
+#'
+#' @param prot a `prot`
+#' @param site sequential site index
+#' @param allele an allele in `0 .. n_alleles - 1`
+#'
+#' @returns a vector of length `nsites`
+#'
+#' @noRd
+#' @family enm mutating functions
+#'
+allele_delta_lij <- function(prot, site, allele) {
+  nsites <- get_nsites(prot)
+  if (allele == 0) return(numeric(nsites))
+  seed <- mut_seed(prot$param$ensemble, site, allele)
+  with_mut_seed(seed, stats::rnorm(nsites, mean = 0, sd = prot$param$mut_dl_sigma))
+}
+
 
 #' Calculate structural response of network to applied force
 #'

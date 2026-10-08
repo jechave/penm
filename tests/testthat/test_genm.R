@@ -5,7 +5,7 @@
 # that the comparison is not equal by construction.
 
 genm_mutate           <- penm:::genm_mutate
-genm_allele_delta_lij <- penm:::genm_allele_delta_lij
+allele_delta_lij      <- penm:::allele_delta_lij
 genm_kij              <- penm:::genm_kij
 genm_minimize         <- penm:::genm_minimize
 genm_superpose_prot   <- penm:::genm_superpose_prot
@@ -235,7 +235,7 @@ test_that("a path out and back, from an arbitrary sequence, returns to it exactl
 # the mutational process ----------------------------------------------------
 
 test_that("allele 0 changes nothing, and other alleles change exactly the edges they should", {
-  expect_identical(genm_allele_delta_lij(wt, site_a, 0L), numeric(nsites))
+  expect_identical(allele_delta_lij(wt, site_a, 0L), numeric(nsites))
 
   # allele 3 at site_a changes the edges of site_a with sdij >= 2, and no other
   changed <- which(mut_a$graph$lij != wt$graph$lij)
@@ -250,13 +250,13 @@ test_that("allele 0 changes nothing, and other alleles change exactly the edges 
 })
 
 test_that("an allele's draw depends on (ensemble, site, allele), and leaves the caller's RNG alone", {
-  d1 <- genm_allele_delta_lij(wt, site_a, 3L)
-  expect_identical(genm_allele_delta_lij(wt, site_a, 3L), d1)
-  expect_false(isTRUE(all.equal(genm_allele_delta_lij(wt, site_a, 4L), d1)))
-  expect_false(isTRUE(all.equal(genm_allele_delta_lij(wt, site_b, 3L), d1)))
+  d1 <- allele_delta_lij(wt, site_a, 3L)
+  expect_identical(allele_delta_lij(wt, site_a, 3L), d1)
+  expect_false(isTRUE(all.equal(allele_delta_lij(wt, site_a, 4L), d1)))
+  expect_false(isTRUE(all.equal(allele_delta_lij(wt, site_b, 3L), d1)))
   wt_2 <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
                   mut_model = "genm", d_max_graph = 14, ensemble = 2L)
-  expect_false(isTRUE(all.equal(genm_allele_delta_lij(wt_2, site_a, 3L), d1)))
+  expect_false(isTRUE(all.equal(allele_delta_lij(wt_2, site_a, 3L), d1)))
   # sd of the draws is mut_dl_sigma (0.3), loosely: nsites draws
   expect_gt(sd(d1), 0.2)
   expect_lt(sd(d1), 0.4)

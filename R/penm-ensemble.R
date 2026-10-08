@@ -1,12 +1,11 @@
 #' What `ensemble` means, and when to change it
 #'
 #' @description
-#' In the LFENM there are no amino acids. A mutation at site \code{j} is
-#' represented directly as a set of random perturbations applied to the
-#' equilibrium lengths of that site's contacts — not as the substitution of one
-#' residue type for another. Nothing in the model says which amino acid a
-#' mutation *is*, and \code{mutation} is not drawn from a finite set: there are
-#' infinitely many possible mutations at every site.
+#' There are no amino acids in penm's mutational models. Each site carries an
+#' allele, from 0 (the pdb's residue) to \code{n_alleles - 1}, and what an
+#' allele does is a set of random perturbations of the equilibrium lengths of
+#' that site's contacts — not the substitution of one residue type for another.
+#' Nothing in the model says which amino acid an allele *is*.
 #'
 #' That leaves a gap. A real substitution has an identity: measuring the same
 #' one twice must give the same answer. \code{ensemble} is what fills it.
@@ -51,12 +50,12 @@
 #' mutants drawn under different \code{ensemble} values share a random stream,
 #' including for adjacent values such as 1 and 2.
 #'
-#' @section How many mutations you ask for does not matter:
+#' @section How many alleles there are does not matter:
 #'
-#' The key never mentions \code{nmut}, so a scan of 50 mutations per site
-#' contains the 10-mutation scan exactly: the first ten mutants at each site
-#' are the same ten mutants. A scan can be extended without invalidating what
-#' you already have.
+#' The key never mentions \code{n_alleles}, so with \code{n_alleles = 51} the
+#' first ten alleles at each site are the same ten alleles as with
+#' \code{n_alleles = 11}. A scan can be extended without invalidating what you
+#' already have.
 #'
 #' @section Choosing a value:
 #'
@@ -79,8 +78,8 @@
 #' Hashing, rather than arithmetic, is what keeps distinct mutants distinct. An
 #' arithmetic key such as \code{seed + site_mut * mutation} maps every divisor
 #' pair of the same product onto one stream, which silently made thousands of
-#' mutants in a scan copies of each other. Drawing each mutant from its own
-#' hashed stream is also why a scan does not depend on \code{nmut}, and why
+#' mutants in a scan copies of each other. Drawing each allele from its own
+#' hashed stream is also why a scan does not depend on \code{n_alleles}, and why
 #' mutants can be generated in any order.
 #'
 #' @seealso [set_enm()], which takes the `ensemble` argument;

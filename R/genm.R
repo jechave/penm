@@ -123,7 +123,7 @@ genm_mutate <- function(prot, site, allele) {
   }
 
   prot$nodes$sequence[site] <- as.integer(allele)
-  lij <- genm_lij(prot)
+  lij <- calculate_lij(prot)
   if (any(lij <= 0)) {
     stop("allele ", allele, " at site ", site, " would make ", sum(lij <= 0),
          " equilibrium length(s) <= 0")
@@ -131,62 +131,6 @@ genm_mutate <- function(prot, site, allele) {
   prot$graph$lij <- lij
   prot$graph$kij <- genm_kij(prot$param, prot$graph$lij, prot$graph$sdij)
   genm_minimize(prot)
-}
-
-
-#' Equilibrium lengths implied by the sequence
-#'
-#' \eqn{l_{ij} = l^0_{ij} + \delta(i, s_i)_{ij} + \delta(j, s_j)_{ij}} for every
-#' edge, with \eqn{\delta} given by [genm_allele_delta_lij()] for edges with
-#' `sdij >= mut_sd_min`, and 0 for the others. Computed from `l0ij` and the
-#' sequence only, so equal sequences give identical lengths.
-#'
-#' @param prot a genm `prot`
-#'
-#' @returns `lij`, one per edge
-#'
-#' @noRd
-#'
-genm_lij <- function(prot) {
-  graph <- prot$graph
-  sequence <- prot$nodes$sequence
-  perturbed <- graph$sdij >= prot$param$mut_sd_min
-  delta_from_i <- numeric(nrow(graph))
-  delta_from_j <- numeric(nrow(graph))
-
-  for (site in which(sequence != 0)) {
-    delta_lij <- genm_allele_delta_lij(prot, site, sequence[site])
-    site_is_i <- perturbed & graph$i == site
-    site_is_j <- perturbed & graph$j == site
-    delta_from_i[site_is_i] <- delta_lij[graph$j[site_is_i]]
-    delta_from_j[site_is_j] <- delta_lij[graph$i[site_is_j]]
-  }
-
-  # always added in this order: floating-point addition is not associative
-  (graph$l0ij + delta_from_i) + delta_from_j
-}
-
-
-#' The change an allele makes to the edges of its site
-#'
-#' A vector of `nsites` normal draws with sd `mut_dl_sigma`, seeded by
-#' `(ensemble, site, allele)` without disturbing the caller's RNG. Element `k`
-#' is the change to the edge between `site` and site `k` (element `site` itself
-#' is not used). Allele 0 changes nothing.
-#'
-#' @param prot a genm `prot`
-#' @param site sequential site index
-#' @param allele an allele in `0 .. n_alleles - 1`
-#'
-#' @returns a vector of length `nsites`
-#'
-#' @noRd
-#'
-genm_allele_delta_lij <- function(prot, site, allele) {
-  nsites <- get_nsites(prot)
-  if (allele == 0) return(numeric(nsites))
-  seed <- mut_seed(prot$param$ensemble, site, allele)
-  with_mut_seed(seed, stats::rnorm(nsites, mean = 0, sd = prot$param$mut_dl_sigma))
 }
 
 

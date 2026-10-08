@@ -11,7 +11,9 @@ get_mutant_site(wt, site_mut, mutation = 0)
 
 \item{site_mut}{The site to mutate (not the pdb_site, but sequential)}
 
-\item{mutation}{An integer, if 0, return \code{wt} without mutating}
+\item{mutation}{The allele \code{site_mut} is given: an integer from 0 to
+\code{n_alleles - 1} (see [set_enm()]). Allele 0 is the pdb's residue. If
+the site already has this allele, \code{wt} is returned unchanged.}
 }
 \value{
 A mutated protein object
@@ -24,19 +26,24 @@ How the mutant is made — the mutational model and its parameters, and the
 \code{ensemble} — is part of \code{wt}: it was set by [set_enm()], and the
 mutant inherits it, so that it can be mutated in turn the same way.
 
-The mutation is a set of random perturbations of the contacts of
-\code{site_mut}; there are no amino acids in this model, and no finite set
-of mutations to draw from. Which perturbations a given mutant gets is fixed
-by \code{(ensemble, site_mut, mutation)} — see \code{?penm_ensemble} for
-what that means and when \code{ensemble} may be changed.
+Each site carries an allele. There are no amino acids in this model: what an
+allele does is a set of random perturbations of the equilibrium lengths of
+the site's contacts, fixed by \code{(ensemble, site_mut, mutation)} — see
+\code{?penm_ensemble} for what that means and when \code{ensemble} may be
+changed. The equilibrium lengths depend only on the alleles, so mutating a
+site back to an earlier allele restores its earlier lengths.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
               d_max = 10.5, ensemble = 7)
 mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
 
-# mutation = 0 returns wt unchanged
+# the allele a site already has returns the protein unchanged
 identical(get_mutant_site(wt, site_mut = 11, mutation = 0), wt)
+
+# mutating back restores the wild type's equilibrium lengths
+back <- get_mutant_site(mut, site_mut = 11, mutation = 0)
+identical(back$graph$lij, wt$graph$lij)
 
 }
 \seealso{

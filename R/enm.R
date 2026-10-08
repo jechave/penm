@@ -27,12 +27,13 @@
 #' @param ... further parameters of the spring-constant function, by name; for
 #'   example `d_max_width`, which `"anm_smooth"` and `"ming_wall_smooth"` require:
 #'   the width (Å) of the switch from contact to no contact around `d_max`.
-#' @param mut_model the mutational model, `"lfenm"` or `"genm"`. In `"lfenm"` a
-#'   mutation perturbs the equilibrium lengths of a site's contacts, and the
-#'   mutant's structure is the wild type's linear response to the resulting
-#'   force. In `"genm"` each site carries an allele, the equilibrium lengths
-#'   depend on the alleles, the spring constants on the equilibrium lengths,
-#'   and a mutant's structure is the minimum of its energy.
+#' @param mut_model the mutational model, `"lfenm"` or `"genm"`. In both, each
+#'   site carries an allele, and the equilibrium lengths of the edges depend on
+#'   the alleles of the sites they join; a mutation changes the allele at one
+#'   site. In `"lfenm"` the spring constants do not change, and the mutant's
+#'   structure is the linear response to the resulting force. In `"genm"` the
+#'   spring constants depend on the equilibrium lengths, and a mutant's
+#'   structure is the minimum of its energy.
 #' @param d_max_graph distance (Å) in the pdb within which a pair of nodes
 #'   gets an edge (pairs adjacent in sequence always get one). For `"lfenm"` it
 #'   must equal `d_max`. For `"genm"` it must reach out to where the spring
@@ -40,8 +41,10 @@
 #'   become contacts; a warning is given when it does not.
 #' @param ensemble an integer naming which realization of the mutational
 #'   process the protein's mutants belong to; see `?penm_ensemble`.
-#' @param n_alleles for `"genm"`, the number of alleles per site, including the
-#'   pdb's (allele 0). No effect for `"lfenm"`.
+#' @param n_alleles the number of alleles per site, including the pdb's
+#'   (allele 0). One ensemble offers `n_alleles - 1` mutations at each site; a
+#'   profile averaged over the mutations at one site may need more than the
+#'   default gives, or several ensembles.
 #' @param mut_dl_sigma the standard deviation (Å) of the change a mutation makes
 #'   to an equilibrium length.
 #' @param mut_sd_min mutations leave alone the edges between sites less than
@@ -88,6 +91,7 @@ set_enm <- function(pdb, node, model, d_max, ..., mut_model = "lfenm",
 
   if (mut_model == "lfenm") {
     prot <- prot %>%
+      set_enm_sequence() %>%
       set_enm_graph() %>%
       set_enm_eij() %>%
       set_enm_kmat() %>%
@@ -295,7 +299,8 @@ calculate_enm_graph <- function(xyz, pdb_site, model, d_max, kij_par) {
       mutate(edge = paste(i, j, sep = "-"),
              lij = dij) %>%
       mutate(v0ij = 0) %>%
-      dplyr::select(edge, i, j, v0ij, sdij, lij, kij, dij)
+      mutate(l0ij = dij) %>%
+      dplyr::select(edge, i, j, v0ij, sdij, l0ij, lij, kij, dij)
 
     graph
   }

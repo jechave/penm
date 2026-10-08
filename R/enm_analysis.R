@@ -137,9 +137,10 @@ get_msf_site <- function(prot) {
 #'
 get_mlms <- function(prot, sdij_cut = 2) {
   g1 <- get_graph(prot)
-  g2 <- g1 %>%
-    select(edge, j, i, v0ij, sdij, lij, kij, dij)
-  names(g2) <- names(g1)
+  # each edge once more, from j's side
+  g2 <- g1
+  g2$i <- g1$j
+  g2$j <- g1$i
   g <- rbind(g1, g2)
 
   g <- g %>%

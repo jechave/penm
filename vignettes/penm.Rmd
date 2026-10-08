@@ -157,26 +157,28 @@ convert:
 which(get_pdb_site(wt) == 11)
 ```
 
-The model has no amino acids, so a mutation is not a substitution of one residue
-type for another: it is a random shift of the rest lengths $l_{ij}$ at the
-mutated site, drawn with standard deviation `mut_dl_sigma` (a `set_enm()`
-argument, default 0.3 Å). `mut_sd_min` (default 2) excludes springs between
-residues close in sequence.
+The model has no amino acids. Each site carries an allele, from 0 (the residue
+in the pdb) to `n_alleles - 1` (a `set_enm()` argument, default 10), and a
+mutation gives a site a new allele. What an allele does is a random shift of the
+rest lengths $l_{ij}$ of the site's springs, drawn with standard deviation
+`mut_dl_sigma` (default 0.3 Å). `mut_sd_min` (default 2) excludes springs
+between residues close in sequence.
 Shifting the rest lengths is what leaves the relaxed structure strained.
 
 ### Identifying a mutant
 
-Three integers name a mutant. `site_mut` is the site. `mutation` indexes
-independent draws at that site — `1`, `2`, `3` are three different mutations of
-the same residue, and `0` returns the wild type unchanged. `ensemble` indexes
-realizations of the whole mutational process.
+Three integers name a mutant. `site_mut` is the site. `mutation` is the allele
+it is given — `1`, `2`, `3` are three different mutations of the same residue,
+and the allele a site already has (`0`, in the wild type) returns the protein
+unchanged. `ensemble` indexes realizations of the whole mutational process.
 
 The triple is hashed to seed the draw, so the same triple always yields the same
 mutant: these calls are reproducible, not random from call to call.
 
 `mutation` and `ensemble` differ in scope. Vary `mutation` for replicates within
-one study; change `ensemble` to repeat an entire study — every site, every
-replicate — as an independent realization. `ensemble` is set by `set_enm()`, and
+one study — there are `n_alleles - 1` of them at each site; change `ensemble` to
+repeat an entire study — every site, every replicate — as an independent
+realization. `ensemble` is set by `set_enm()`, and
 every mutant inherits it, so it is held fixed across a scan or a trajectory.
 `?penm_ensemble` is the full account.
 
@@ -294,20 +296,21 @@ much a site is perturbed by mutations elsewhere (its **sensitivity**).
 
 A single mutant is one random draw, and draws at the same site scatter widely,
 as the replicates above showed. Average over several mutants per site, or the
-profiles are mostly noise:
+profiles are mostly noise. Here, over the nine alleles other than the wild
+type's:
 
 ```{r profiles}
 sites <- get_site(wt)
-n_mut <- 10
+alleles <- 1:9
 dr2 <- matrix(0, length(sites), length(sites))   # [responding site, mutated site]
 
 for (s in sites) {
   acc <- numeric(length(sites))
-  for (m in 1:n_mut) {
+  for (m in alleles) {
     mut_s <- get_mutant_site(wt, site_mut = s, mutation = m)
     acc <- acc + delta_structure_dr2i(wt, mut_s)
   }
-  dr2[, s] <- acc / n_mut
+  dr2[, s] <- acc / length(alleles)
 }
 
 influence   <- colSums(dr2)
@@ -369,7 +372,8 @@ traj <- tibble::tibble(gen = 1:n_gen, v_min = NA_real_, dr2 = NA_real_)
 
 for (g in 1:n_gen) {
   site_g <- sample(get_site(wt), 1)
-  p <- get_mutant_site(p, site_mut = site_g, mutation = g)
+  allele_g <- sample(setdiff(0:9, p$nodes$sequence[site_g]), 1)   # a new allele
+  p <- get_mutant_site(p, site_mut = site_g, mutation = allele_g)
 
   traj$v_min[g] <- enm_v_min(p)                      # strain carried by this generation
   traj$dr2[g]   <- sum(delta_structure_dr2i(wt, p))  # divergence from the original
@@ -389,9 +393,10 @@ ggplot(tidyr::pivot_longer(traj, c(v_min, dr2)),
 
 Both grow, for different reasons. Strain accumulates because each generation
 inherits the previous one's perturbed rest lengths and adds to them. Structural
-divergence grows because the mutations do not undo one another — the lineage
-random-walks away from its starting structure, so the drift is not monotonic
-generation to generation.
+divergence grows because the mutations rarely undo one another — only a site
+mutated back to an earlier allele would — and the lineage random-walks away from
+its starting structure, so the drift is not monotonic generation to
+generation.
 
 Only the starting network is unstrained. Every later generation acts as the wild
 type of the next comparison while itself carrying strain.
