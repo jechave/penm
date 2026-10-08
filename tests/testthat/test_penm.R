@@ -31,6 +31,13 @@ test_that("get_mutant_site validates the site and the allele", {
   expect_error(get_mutant_site(no_sequence, 80, 1), "Rebuild it with set_enm")
 })
 
+test_that("a mutant's xyz is a vector of length 3 * nsites, like the wild type's", {
+  m <- get_mutant_site(get_mutant_site(wt_alleles, 80, 3), 20, 5)
+  expect_null(dim(get_xyz(m)))
+  expect_identical(attributes(get_xyz(m)), attributes(get_xyz(wt_alleles)))
+  expect_length(get_xyz(m), 3 * get_nsites(wt_alleles))
+})
+
 test_that("the allele a site already has returns the protein unchanged", {
   expect_identical(get_mutant_site(wt_alleles, 80, 0), wt_alleles)
   m <- get_mutant_site(wt_alleles, 80, 3)
@@ -43,8 +50,7 @@ test_that("mutating back restores the wild type", {
   expect_gt(max(abs(get_xyz(m) - get_xyz(wt_alleles))), 0.01)
   expect_identical(back$graph$lij, wt_alleles$graph$lij)
   expect_identical(back$nodes$sequence, wt_alleles$nodes$sequence)
-  # as.vector: an lfenm mutant's xyz is a 3N x 1 matrix, the wild type's a vector
-  expect_equal(as.vector(get_xyz(back)), get_xyz(wt_alleles))
+  expect_equal(get_xyz(back), get_xyz(wt_alleles))
 })
 
 test_that("an lfenm mutant is the wild type plus the response to lij - l0ij, whatever the path", {
@@ -60,9 +66,8 @@ test_that("an lfenm mutant is the wild type plus the response to lij - l0ij, wha
   f <- penm:::calculate_force(wt_alleles, delta_lij)
   xyz_direct <- get_xyz(wt_alleles) + as.vector(get_cmat(wt_alleles) %*% f)
   expect_gt(max(abs(xyz_direct - get_xyz(wt_alleles))), 0.01)
-  # as.vector: an lfenm mutant's xyz is a 3N x 1 matrix
-  expect_equal(as.vector(get_xyz(path_1)), xyz_direct)
-  expect_equal(as.vector(get_xyz(path_2)), xyz_direct)
+  expect_equal(get_xyz(path_1), xyz_direct)
+  expect_equal(get_xyz(path_2), xyz_direct)
 })
 
 test_that("an allele makes the same change to an edge in lfenm and in genm", {

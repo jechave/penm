@@ -171,7 +171,7 @@ calculate_dxyz <- function(wt, f) {
   cmat <- get_cmat(wt)
   nzf <- f != 0 # consider only non-zero forces, to make next step faster
   dxyz <-  crossprod(cmat[nzf, ], f[nzf]) # calculate mutant equilibrium conformation (LRA)
-  dxyz
+  as.vector(dxyz) # crossprod gives a 3N x 1 matrix; xyz is a vector
 }
 
 
