@@ -20,7 +20,9 @@ contact.}
 \item{d_max}{distance cutoff (Å) used to define enm contacts}
 }
 \value{
-an object of class `prot`, which is a list `lst(param, nodes, graph, eij, kmat, nma)`
+an object of class `prot`, which is a list
+  `lst(param, nodes, graph, kmat, nma, internal)`. `internal` holds what
+  penm needs for its own computations and is not meant to be read.
 }
 \description{
 `set_enm` sets up a `prot` object containing information on ENM structure,

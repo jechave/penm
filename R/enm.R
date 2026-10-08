@@ -20,7 +20,9 @@
 #'   contact.
 #' @param d_max distance cutoff (Å) used to define enm contacts
 #'
-#' @returns an object of class `prot`, which is a list `lst(param, nodes, graph, eij, kmat, nma)`
+#' @returns an object of class `prot`, which is a list
+#'   `lst(param, nodes, graph, kmat, nma, internal)`. `internal` holds what
+#'   penm needs for its own computations and is not meant to be read.
 #'
 #' @export
 #'
@@ -62,7 +64,7 @@ set_enm <- function(pdb, node, model, d_max) {
 #'
 
 create_enm <- function() {
-  prot <- lst(param = NA, nodes = NA, graph = NA, eij = NA, kmat = NA, nma = NA)
+  prot <- lst(param = NA, nodes = NA, graph = NA, kmat = NA, nma = NA, internal = list())
   class(prot) <- c("prot", class(prot))
   prot
 }
@@ -101,7 +103,7 @@ set_enm_graph <- function(prot) {
 #' @noRd
 #'
 set_enm_eij <- function(prot) {
-  prot$eij <- calculate_enm_eij(get_xyz(prot), get_graph(prot)$i, get_graph(prot)$j)
+  prot$internal$eij <- calculate_enm_eij(get_xyz(prot), get_graph(prot)$i, get_graph(prot)$j)
   prot
 }
 

@@ -149,13 +149,16 @@ get_graph <- function(prot) prot$graph
 
 #' Get the unit vectors eij
 #'
+#' The edge directions of the structure at which `kmat` was computed. An lfenm
+#' mutant inherits them, with `kmat`, from the protein `set_enm()` built.
+#'
 #' @param prot is a prot object
 #' @return a matrix of size nedges x 3, containing unit vectors eij for all edges
 #'
 #'
 #' @noRd
 #'
-get_eij <- function(prot) prot$eij
+get_eij <- function(prot) prot$internal$eij
 
 
 #' @rdname get_prot_property
