@@ -39,9 +39,13 @@ carry the largest fluctuations. Six eigenvalues vanish, corresponding to the
 rigid-body translations and rotations, leaving $3N - 6$ internal modes.
 
 Given such a network, `penm` — "perturbed ENM" — builds the network of a mutant.
-Mutations follow the linearly forced ENM (LFENM) of Echave (2008) and Echave &
-Fernández (2010): mutating a site shifts the rest lengths $l_{ij}$ of the springs
-connected to it, and the structure relaxes to a new equilibrium.
+By default, mutations follow the linearly forced ENM (LFENM) of Echave (2008) and
+Echave & Fernández (2010): mutating a site shifts the rest lengths $l_{ij}$ of the
+springs connected to it, and the structure relaxes to a new equilibrium, as the
+linear response to the force those shifts exert. A second mutational model, the
+generalized ENM (`mut_model = "genm"` in `set_enm()`), lets the force constants
+follow the rest lengths, and finds the mutant's structure as the minimum of its
+energy. This vignette uses the LFENM; `vignette("genm")` covers the other.
 
 The mutant is a protein like any other in this package. Its structure, energy and
 modes are computed by the same functions as the wild type's, the two can be
@@ -286,6 +290,23 @@ ddg_tds(wt, mut)
 This is why `delta_motion_dmsfi` returned zero above. Under this model the
 informative measures are those built on coordinates.
 
+The generalized model, `mut_model = "genm"`, is different. The force constants
+follow the rest lengths, and the mutant's structure is the minimum of its
+energy, so $\mathbf{K}$ and the normal modes change with the mutation. A genm
+mutant comes back without normal modes, because computing them for every
+generation of a long trajectory would be wasted; `set_enm_nma()` adds them:
+
+```{r genm}
+wt_genm <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+                   mut_model = "genm", d_max_graph = 14, ensemble = 1)
+mut_genm <- set_enm_nma(get_mutant_site(wt_genm, site_mut = 11, mutation = 1))
+ddg_tds(wt_genm, mut_genm)
+```
+
+`d_max_graph` is the distance within which a pair of residues gets a spring at
+all; in the generalized model it must reach beyond `d_max`, so that residues a
+mutation brings closer can come into contact. See `?set_enm`.
+
 ## Influential and sensitive sites
 
 `delta_structure_dr2i(wt, mut)` gives the response *at every site* to mutating
@@ -407,8 +428,13 @@ belongs to one realization.
 ## Where to go next
 
 - `?penm` — the map of what the package offers.
+- `vignette("genm")` — the generalized model: a complete mutational scan and a
+  star tree of evolutionary trajectories.
+- `?set_enm` — the two mutational models and their parameters.
 - `?penm_ensemble` — the `(ensemble, site_mut, mutation)` key in depth.
 - `?get_prot_property` — every accessor.
+- `?superpose_prot` — putting two proteins in the same orientation, as genm
+  trajectories need before they are compared site by site.
 - The `delta_*` help pages — the full menu of measures.
 
 ## References

@@ -14,6 +14,15 @@
 #'     (\code{\link{delta_structure_by_site}}, \code{\link{delta_structure_by_mode}}), and
 #'     motion (\code{\link{delta_motion_by_site}}, \code{\link{delta_motion_by_mode}}).
 #'
+#'  How a protein mutates is chosen when it is built, with \code{mut_model} in
+#'     \code{\link{set_enm}}: the linearly forced ENM (\code{"lfenm"}, the
+#'     default), or a generalized ENM (\code{"genm"}) in which the force
+#'     constants follow the rest lengths and a mutant's structure is the minimum
+#'     of its energy. A genm mutant comes without normal modes;
+#'     \code{\link{set_enm_nma}} adds them. \code{\link{superpose_prot}} puts
+#'     a protein in the orientation of another structure, for comparing proteins
+#'     site by site.
+#'
 #'  Mutants are identified by \code{(ensemble, site_mut, mutation)}; see
 #'     \code{\link{penm_ensemble}} for what \code{ensemble} means and when it
 #'     may be changed.
@@ -23,7 +32,8 @@
 #'     the \code{delta_*} functions take both. An evolutionary trajectory exploits
 #'     it, feeding each mutant back as the wild type of the next generation.
 #'
-#'  Start with \code{vignette("penm")}.
+#'  Start with \code{vignette("penm")}; \code{vignette("genm")} covers the
+#'     generalized model.
 #'
 #' @references
 #'  Echave J (2008). Evolutionary divergence of protein structure: the linearly

@@ -13,10 +13,13 @@ a mutant. The mutant is itself a protein: its structure, energy and
 normal modes are computed exactly as the wild type’s, the two can be
 compared, and it can be mutated in turn.
 
-Mutations follow the linearly forced ENM of Echave (2008) and Echave &
-Fernández (2010). The model has no amino acids: mutating a site perturbs
-the rest lengths of the springs connected to it, and the structure
-relaxes to a new equilibrium.
+By default, mutations follow the linearly forced ENM of Echave (2008)
+and Echave & Fernández (2010). The model has no amino acids: mutating a
+site perturbs the rest lengths of the springs connected to it, and the
+structure relaxes to a new equilibrium. A second mutational model, a
+generalized ENM (`mut_model = "genm"` in `set_enm()`), lets the force
+constants follow the rest lengths and finds each mutant’s structure as
+the minimum of its energy; see `vignette("genm")`.
 
 ## Installation
 
