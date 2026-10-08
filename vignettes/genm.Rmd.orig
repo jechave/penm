@@ -54,12 +54,11 @@ library(penm)
 library(ggplot2)
 ```
 
-The functions of the generalized model are not exported yet, while their
-interface settles. Until they are, they have to be fetched from inside the
-package:
+The wild type is built with `set_enm()`, like any `prot`. The functions that
+mutate it are not exported yet, while their interface settles. Until they are,
+they have to be fetched from inside the package:
 
 ```{r internals}
-build_enm_from_pdb  <- penm:::build_enm_from_pdb
 genm_mutate         <- penm:::genm_mutate
 set_enm_nma         <- penm:::set_enm_nma
 genm_superpose_prot <- penm:::genm_superpose_prot
@@ -85,9 +84,9 @@ run_in_parallel <- function(x, f) {
 
 ## The wild type
 
-`build_enm_from_pdb()` makes the wild type from a structure. It puts a spring
-between every pair of residues closer than `d_max_pairs`, and every site starts
-with allele 0, the residue in the pdb. The last four arguments define
+`set_enm()` with `mut_model = "genm"` makes the wild type from a structure. It
+puts a spring between every pair of residues closer than `d_max_graph`, and every
+site starts with allele 0, the residue in the pdb. The last four arguments define
 what a mutation does: each site has `n_alleles` alleles, and each allele other
 than 0 shifts the $l_{ij}$ of its site's springs by normal draws with standard
 deviation `mut_dl_sigma` (in Å). Springs between sites fewer than `mut_sd_min`
@@ -100,8 +99,9 @@ structure, so that structure is the minimum, and the wild type has it, its
 Hessian and its normal modes.
 
 ```{r wild-type}
-wt <- build_enm_from_pdb(
-  pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, d_max_pairs = 14,
+wt <- set_enm(
+  pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+  mut_model = "genm", d_max_graph = 14,
   ensemble = 1, n_alleles = 10, mut_dl_sigma = 0.3, mut_sd_min = 2
 )
 names(wt)

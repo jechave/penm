@@ -80,14 +80,14 @@ test_that("kij_reach dispatches on each element of sdij", {
 })
 
 test_that("smoothed kij are half the contact value at the cutoff and force i,i+1", {
-  # k * 1/2 [1 - tanh((d - d_max) / w)]
-  expect_equal(penm:::kij_anm_smooth(c(10, 12), c(4, 4), d_max = 10, w = 1, k = 2),
+  # k * 1/2 [1 - tanh((d - d_max) / d_max_width)]
+  expect_equal(penm:::kij_anm_smooth(c(10, 12), c(4, 4), d_max = 10, d_max_width = 1, k = 2),
                c(1, 1 - tanh(2)))
-  expect_equal(penm:::kij_anm_smooth(c(20, 20), c(1, -1), d_max = 10, w = 1, k = 2), c(2, 2))
-  expect_equal(penm:::kij_ming_wall_smooth(c(10.5, 10.5 - 0.5), c(4, 4), w = 0.5),
+  expect_equal(penm:::kij_anm_smooth(c(20, 20), c(1, -1), d_max = 10, d_max_width = 1, k = 2), c(2, 2))
+  expect_equal(penm:::kij_ming_wall_smooth(c(10.5, 10.5 - 0.5), c(4, 4), d_max_width = 0.5),
                4.5 * c(0.5, 0.5 * (1 + tanh(1))))
-  expect_equal(penm:::kij_ming_wall_smooth(20, 1, w = 1), 42 * 4.5)
-  expect_error(penm:::kij_anm_smooth(5, 4), "\"w\" is missing")
+  expect_equal(penm:::kij_ming_wall_smooth(20, 1, d_max_width = 1), 42 * 4.5)
+  expect_error(penm:::kij_anm_smooth(5, 4), "\"d_max_width\" is missing")
 })
 
 test_that("distribution measures are degenerate on identical inputs", {

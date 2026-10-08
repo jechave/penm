@@ -7,10 +7,9 @@ load(test_path("fixtures", "pdb_2acy_A.rda"))
 load(test_path("fixtures", "delta_expected.rda"))
 load(test_path("fixtures", "prot_expected.rda"))
 
-wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
-mut <- get_mutant_site(wt, site_mut = 80, mutation = 1,
-                       mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1,
-                       ensemble = 1L)
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+              mut_dl_sigma = 0.3, mut_sd_min = 1, ensemble = 1L)
+mut <- get_mutant_site(wt, site_mut = 80, mutation = 1)
 
 pdb_site_active <- c(23, 41)
 
@@ -133,9 +132,7 @@ test_that("dr2i and dr2n are the same displacement in two bases", {
 test_that("mutation = 0 leaves every response at zero", {
   # get_mutant_site() returns wt unmutated when mutation is 0, so every
   # wt-vs-mutant difference must vanish.
-  mut0 <- get_mutant_site(wt, site_mut = 80, mutation = 0,
-                          mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1,
-                          ensemble = 1L)
+  mut0 <- get_mutant_site(wt, site_mut = 80, mutation = 0)
   nsites <- get_nsites(wt)
   nmodes <- length(get_msf_mode(wt))
   expect_equal(delta_structure_dr2i(wt, mut0), rep(0, nsites))

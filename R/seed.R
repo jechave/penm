@@ -75,7 +75,7 @@ mut_seed <- function(ensemble, site_mut, mutation) {
   # second slot was a second name for one axis. Independent ensembles come from
   # two different values of ensemble.
 
-  # Checked here as well as at the get_mutant_site() boundary: a direct penm:::
+  # Checked here as well as at the set_enm() boundary: a direct penm:::
   # caller reaches this function without passing through it.
   check_ensemble(ensemble)
   key <- paste(ensemble, site_mut, mutation, sep = "-")

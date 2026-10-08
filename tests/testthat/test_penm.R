@@ -9,7 +9,8 @@ test_that("set_enm gets wt ok", {
 
 test_that("get_mutant_site gets mut_lf", {
   expect_equal(
-    get_mutant_site(wt, site_mut = 80, mutation = 1,
-                    mut_model = "lfenm", mut_sd_min = 1, mut_dl_sigma = 0.3),
+    get_mutant_site(set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+                            mut_dl_sigma = 0.3, mut_sd_min = 1),
+                    site_mut = 80, mutation = 1),
     mut_lf)
 })

@@ -4,15 +4,7 @@
 \alias{get_mutant_site}
 \title{Get a single-point mutant}
 \usage{
-get_mutant_site(
-  wt,
-  site_mut,
-  mutation = 0,
-  mut_model = "lfenm",
-  mut_dl_sigma = 0.3,
-  mut_sd_min = 2,
-  ensemble = 1L
-)
+get_mutant_site(wt, site_mut, mutation = 0)
 }
 \arguments{
 \item{wt}{The protein \code{prot} to mutate}
@@ -20,17 +12,6 @@ get_mutant_site(
 \item{site_mut}{The site to mutate (not the pdb_site, but sequential)}
 
 \item{mutation}{An integer, if 0, return \code{wt} without mutating}
-
-\item{mut_model}{A string specifying mutational model; currently only "lfenm"}
-
-\item{mut_dl_sigma}{The standard deviation of a normal distribution from which edge-length perturbation is picked.}
-
-\item{mut_sd_min}{An integer, only edges with \code{sdij >= mut_sd_min} are mutated}
-
-\item{ensemble}{An integer naming which realization of the mutational process
-the mutant belongs to. With \code{ensemble} fixed, \code{(site_mut, mutation)}
-names one specific, reproducible set of contact perturbations. Hold it
-constant across a scan or a trajectory; see \code{?penm_ensemble}.}
 }
 \value{
 A mutated protein object
@@ -39,6 +20,10 @@ A mutated protein object
 Returns a mutant given a wt and a site to mutate (site_mut)
 }
 \details{
+How the mutant is made — the mutational model and its parameters, and the
+\code{ensemble} — is part of \code{wt}: it was set by [set_enm()], and the
+mutant inherits it, so that it can be mutated in turn the same way.
+
 The mutation is a set of random perturbations of the contacts of
 \code{site_mut}; there are no amino acids in this model, and no finite set
 of mutations to draw from. Which perturbations a given mutant gets is fixed
@@ -47,18 +32,17 @@ what that means and when \code{ensemble} may be changed.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5)
-mut <- get_mutant_site(wt, site_mut = 11, mutation = 1,
-                       mut_model = "lfenm", ensemble = 7)
+              d_max = 10.5, ensemble = 7)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
 
 # mutation = 0 returns wt unchanged
 identical(get_mutant_site(wt, site_mut = 11, mutation = 0), wt)
 
 }
 \seealso{
-[penm_ensemble] for what `ensemble` means and when to change it;
-  [set_enm()] to build the `wt` argument; [delta_structure_by_site],
-  [delta_motion_by_site] and [delta_energy] to measure the resulting
-  wild-type-vs-mutant differences.
+[set_enm()] to build the `wt` argument and choose how it mutates;
+  [penm_ensemble] for what `ensemble` means and when to change it;
+  [delta_structure_by_site], [delta_motion_by_site] and [delta_energy] to
+  measure the resulting wild-type-vs-mutant differences.
 }
 \concept{enm mutating functions}

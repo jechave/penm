@@ -47,3 +47,48 @@ test_that("set_enm stops on a network with negative springs", {
   expect_error(set_enm(pdb_2acy_A, node = "sc", model = "hnm", d_max = 10.5),
                "negative eigenvalue")
 })
+
+test_that("set_enm stores how the protein mutates, with defaults", {
+  wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
+  expect_identical(get_enm_param(wt), list(
+    node = "ca", model = "ming_wall", d_max = 10.5, d_max_graph = 10.5, kij_par = list(),
+    mut_model = "lfenm", ensemble = 1L, n_alleles = 10L, mut_dl_sigma = 0.3, mut_sd_min = 2L
+  ))
+
+  # the mutation parameters reach the mutant: mut_sd_min = 1 perturbs the
+  # i,i+1 bonds as well, which the default leaves alone
+  wt_1 <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, mut_sd_min = 1)
+  bonds <- get_graph(wt)$sdij == 1
+  bonds_changed <- function(p) sum(get_mutant_site(p, 80, 1)$graph$lij[bonds] != p$graph$lij[bonds])
+  expect_equal(bonds_changed(wt), 0)
+  expect_equal(bonds_changed(wt_1), 2)
+
+  # and so does mut_dl_sigma: the same draws, scaled
+  wt_s <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, mut_dl_sigma = 0.6)
+  dlij <- function(p) get_mutant_site(p, 80, 1)$graph$lij - p$graph$lij
+  expect_equal(dlij(wt_s), 2 * dlij(wt))
+})
+
+test_that("set_enm passes further parameters to the spring-constant function", {
+  # lfenm with a smoothed cutoff: kij is k(dij) of the smooth function
+  wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall_smooth", d_max = 10.5, d_max_width = 1)
+  graph <- get_graph(wt)
+  expect_identical(get_enm_param(wt)$kij_par, list(d_max_width = 1))
+  expect_equal(graph$kij, penm:::kij_ming_wall_smooth(graph$dij, graph$sdij, d_max = 10.5, d_max_width = 1))
+  expect_true(any(graph$kij != penm:::kij_ming_wall(graph$dij, graph$sdij, d_max = 10.5)))
+})
+
+test_that("set_enm validates its arguments", {
+  b <- function(...) set_enm(pdb_2acy_A, node = "ca", d_max = 10.5, ...)
+  expect_error(b(model = "ming_wall", mut_model = "nope"), "mut_model must be")
+  expect_error(b(model = "ming_wall", d_max_graph = 14), "must equal d_max")
+  expect_error(b(model = "ming_wall", d_max_graph = 9), "must not be smaller")
+  expect_error(b(model = "ming_wall", wdth = 1), "does not take parameter")
+  expect_error(b(model = "ming_wall", 1), "must be named")
+  expect_error(b(model = "ming_wall_smooth"), "\"d_max_width\" is missing")
+  expect_error(b(model = "no_such_model"), "kij_no_such_model")
+  expect_error(b(model = "ming_wall", ensemble = 1.5), "ensemble")
+  expect_error(b(model = "ming_wall", n_alleles = 1), "n_alleles")
+  expect_error(b(model = "ming_wall", mut_dl_sigma = 0), "mut_dl_sigma")
+  expect_error(b(model = "ming_wall", mut_sd_min = 0), "mut_sd_min")
+})

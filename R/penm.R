@@ -5,17 +5,14 @@
 #' @param wt The protein \code{prot} to mutate
 #' @param site_mut The site to mutate (not the pdb_site, but sequential)
 #' @param mutation An integer, if 0, return \code{wt} without mutating
-#' @param mut_model A string specifying mutational model; currently only "lfenm"
-#' @param mut_dl_sigma The standard deviation of a normal distribution from which edge-length perturbation is picked.
-#' @param mut_sd_min An integer, only edges with \code{sdij >= mut_sd_min} are mutated
-#' @param ensemble An integer naming which realization of the mutational process
-#'   the mutant belongs to. With \code{ensemble} fixed, \code{(site_mut, mutation)}
-#'   names one specific, reproducible set of contact perturbations. Hold it
-#'   constant across a scan or a trajectory; see \code{?penm_ensemble}.
 #'
 #' @return A mutated protein object
 #'
 #' @details
+#' How the mutant is made — the mutational model and its parameters, and the
+#' \code{ensemble} — is part of \code{wt}: it was set by [set_enm()], and the
+#' mutant inherits it, so that it can be mutated in turn the same way.
+#'
 #' The mutation is a set of random perturbations of the contacts of
 #' \code{site_mut}; there are no amino acids in this model, and no finite set
 #' of mutations to draw from. Which perturbations a given mutant gets is fixed
@@ -24,36 +21,33 @@
 #'
 #' @export
 #'
-#' @seealso [penm_ensemble] for what `ensemble` means and when to change it;
-#'   [set_enm()] to build the `wt` argument; [delta_structure_by_site],
-#'   [delta_motion_by_site] and [delta_energy] to measure the resulting
-#'   wild-type-vs-mutant differences.
+#' @seealso [set_enm()] to build the `wt` argument and choose how it mutates;
+#'   [penm_ensemble] for what `ensemble` means and when to change it;
+#'   [delta_structure_by_site], [delta_motion_by_site] and [delta_energy] to
+#'   measure the resulting wild-type-vs-mutant differences.
 #'
 #' @examples
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-#'               d_max = 10.5)
-#' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1,
-#'                        mut_model = "lfenm", ensemble = 7)
+#'               d_max = 10.5, ensemble = 7)
+#' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
 #'
 #' # mutation = 0 returns wt unchanged
 #' identical(get_mutant_site(wt, site_mut = 11, mutation = 0), wt)
 #'
 #' @family enm mutating functions
 #'
-get_mutant_site <- function(wt, site_mut, mutation = 0, mut_model = "lfenm", mut_dl_sigma = .3, mut_sd_min = 2, ensemble = 1L) {
+get_mutant_site <- function(wt, site_mut, mutation = 0) {
+  param <- get_enm_param(wt)
+  if (is.null(param$mut_model)) {
+    stop("wt has no mut_model: it was built by an earlier version of penm. Rebuild it with set_enm().")
+  }
 
-  # Checked here as well as inside mut_seed(): this is the user-facing
-  # boundary, so the error should name the argument the user passed and fire
-  # before any work -- including on the mutation = 0 path, which returns early
-  # and never reaches mut_seed().
-  check_ensemble(ensemble)
-
-  if (mut_model == "lfenm") {
-    mut <- get_mutant_site_lfenm(wt, site_mut, mutation, mut_dl_sigma, mut_sd_min, ensemble)
+  if (param$mut_model == "lfenm") {
+    mut <- get_mutant_site_lfenm(wt, site_mut, mutation, param$mut_dl_sigma, param$mut_sd_min, param$ensemble)
     return(mut)
   }
 
-  stop(paste("Error in get_mutant_site,  undefined mut_model:", mut_model))
+  stop("get_mutant_site does not support mut_model = \"", param$mut_model, "\" yet")
 
 }
 

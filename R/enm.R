@@ -9,20 +9,48 @@
 #' parameters, and normal modes. It is the entry point of the package: everything
 #' else takes the `prot` it returns.
 #'
-#' All four arguments are required — there are no defaults.
+#' The protein also carries how it mutates: the mutational model and its
+#' parameters are stored with it, and [get_mutant_site()] uses them. A mutant
+#' inherits them, so that it can be mutated in turn the same way.
+#'
+#' `pdb`, `node`, `model` and `d_max` are required. The other arguments have
+#' defaults.
 #'
 #' @param pdb   pdb object obtained using [bio3d::read.pdb()]
 #' @param node  how network nodes are built: `"ca"` (alpha carbons), `"sc"` (side
 #'   chains), or `"cb"` (beta carbons). The long forms `"calpha"`, `"side_chain"`
 #'   and `"beta"` are accepted as synonyms.
 #' @param model ENM variant, one of `"anm"`, `"ming_wall"`, `"hnm"`, `"hnm0"`,
-#'   `"pfanm"`, `"reach"`. These select the spring-constant function applied to each
-#'   contact.
+#'   `"pfanm"`, `"reach"`, `"anm_smooth"`, `"ming_wall_smooth"`. These select the
+#'   spring-constant function applied to each contact.
 #' @param d_max distance cutoff (Å) used to define enm contacts
+#' @param ... further parameters of the spring-constant function, by name; for
+#'   example `d_max_width`, which `"anm_smooth"` and `"ming_wall_smooth"` require:
+#'   the width (Å) of the switch from contact to no contact around `d_max`.
+#' @param mut_model the mutational model, `"lfenm"` or `"genm"`. In `"lfenm"` a
+#'   mutation perturbs the equilibrium lengths of a site's contacts, and the
+#'   mutant's structure is the wild type's linear response to the resulting
+#'   force. In `"genm"` each site carries an allele, the equilibrium lengths
+#'   depend on the alleles, the spring constants on the equilibrium lengths,
+#'   and a mutant's structure is the minimum of its energy.
+#' @param d_max_graph distance (Å) in the pdb within which a pair of nodes
+#'   gets an edge (pairs adjacent in sequence always get one). For `"lfenm"` it
+#'   must equal `d_max`. For `"genm"` it must reach out to where the spring
+#'   constant is negligible, so that pairs that mutations bring closer can
+#'   become contacts; a warning is given when it does not.
+#' @param ensemble an integer naming which realization of the mutational
+#'   process the protein's mutants belong to; see `?penm_ensemble`.
+#' @param n_alleles for `"genm"`, the number of alleles per site, including the
+#'   pdb's (allele 0). No effect for `"lfenm"`.
+#' @param mut_dl_sigma the standard deviation (Å) of the change a mutation makes
+#'   to an equilibrium length.
+#' @param mut_sd_min mutations leave alone the edges between sites less than
+#'   `mut_sd_min` apart in sequence.
 #'
 #' @returns an object of class `prot`, which is a list
-#'   `lst(param, nodes, graph, kmat, nma, internal)`. `internal` holds what
-#'   penm needs for its own computations and is not meant to be read.
+#'   `lst(param, nodes, graph, kmat, nma, internal)`. `param` holds the
+#'   arguments other than `pdb`. `internal` holds what penm needs for its own
+#'   computations and is not meant to be read.
 #'
 #' @export
 #'
@@ -41,15 +69,37 @@
 #' wt_sc <- set_enm(pdb_2acy_A, node = "sc", model = "anm",
 #'                  d_max = 12.5)
 #' get_nsites(wt_sc)
-set_enm <- function(pdb, node, model, d_max) {
+#'
+#' # a smoothed cutoff, and the mutational parameters set explicitly
+#' wt_smooth <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall_smooth",
+#'                      d_max = 10.5, d_max_width = 1, ensemble = 3,
+#'                      mut_dl_sigma = 0.2, mut_sd_min = 3)
+#' get_enm_param(wt_smooth)$mut_dl_sigma
+set_enm <- function(pdb, node, model, d_max, ..., mut_model = "lfenm",
+                    d_max_graph = d_max, ensemble = 1L, n_alleles = 10L,
+                    mut_dl_sigma = 0.3, mut_sd_min = 2L) {
 
   prot <- create_enm() %>%
-    set_enm_param(node = node, model = model, d_max = d_max) %>%
-    set_enm_nodes(pdb = pdb) %>%
-    set_enm_graph() %>%
-    set_enm_eij() %>%
-    set_enm_kmat() %>%
-    set_enm_nma()
+    set_enm_param(node = node, model = model, d_max = d_max, kij_par = list(...),
+                  mut_model = mut_model, d_max_graph = d_max_graph,
+                  ensemble = ensemble, n_alleles = n_alleles,
+                  mut_dl_sigma = mut_dl_sigma, mut_sd_min = mut_sd_min) %>%
+    set_enm_nodes(pdb = pdb)
+
+  if (mut_model == "lfenm") {
+    prot <- prot %>%
+      set_enm_graph() %>%
+      set_enm_eij() %>%
+      set_enm_kmat() %>%
+      set_enm_nma()
+  }
+  if (mut_model == "genm") {
+    prot <- prot %>%
+      set_enm_sequence() %>%
+      set_genm_graph() %>%
+      set_genm_kmat() %>%
+      set_enm_nma()
+  }
 
   prot
 }
@@ -71,10 +121,36 @@ create_enm <- function() {
 
 #' Set param of prot object
 #'
+#' Checks the parameters, and stores them. See [set_enm()] for their meaning.
+#'
 #' @noRd
 #'
-set_enm_param <- function(prot, node, model, d_max) {
-  prot$param <- lst(node, model, d_max)
+set_enm_param <- function(prot, node, model, d_max, kij_par, mut_model, d_max_graph,
+                          ensemble, n_alleles, mut_dl_sigma, mut_sd_min) {
+  if (!(mut_model %in% c("lfenm", "genm"))) {
+    stop("mut_model must be \"lfenm\" or \"genm\", not \"", mut_model, "\"")
+  }
+  if (d_max_graph < d_max) stop("d_max_graph must not be smaller than d_max")
+  if (mut_model == "lfenm" && d_max_graph != d_max) {
+    stop("for mut_model = \"lfenm\", d_max_graph must equal d_max")
+  }
+  check_ensemble(ensemble)
+  stopifnot(n_alleles >= 2, mut_dl_sigma > 0, mut_sd_min >= 1)
+
+  # the spring-constant function, and the further parameters it is given
+  kij_fun <- match.fun(paste0("kij_", model))
+  if (length(kij_par) > 0 && (is.null(names(kij_par)) || any(names(kij_par) == ""))) {
+    stop("parameters in ... must be named")
+  }
+  unknown <- setdiff(names(kij_par), names(formals(kij_fun)))
+  if (length(unknown) > 0) {
+    stop("kij_", model, " does not take parameter(s): ", paste(unknown, collapse = ", "))
+  }
+
+  prot$param <- lst(node, model, d_max, d_max_graph, kij_par, mut_model,
+                    ensemble = as.integer(ensemble),
+                    n_alleles = as.integer(n_alleles), mut_dl_sigma,
+                    mut_sd_min = as.integer(mut_sd_min))
   prot
 }
 
@@ -89,12 +165,23 @@ set_enm_nodes <- function(prot, pdb) {
 }
 
 
+#' Set the sequence of a prot object: allele 0, the pdb's residue, at every site
+#'
+#' @noRd
+#'
+set_enm_sequence <- function(prot) {
+  prot$nodes$sequence <- integer(get_nsites(prot))
+  prot
+}
+
+
 #' Set graph of prot object
 #'
 #' @noRd
 #'
 set_enm_graph <- function(prot) {
-  prot$graph <- calculate_enm_graph(get_xyz(prot), get_pdb_site(prot), get_enm_model(prot), get_d_max(prot))
+  prot$graph <- calculate_enm_graph(get_xyz(prot), get_pdb_site(prot), get_enm_model(prot), get_d_max(prot),
+                                    get_enm_param(prot)$kij_par)
   prot
 }
 
@@ -165,17 +252,18 @@ calculate_enm_nodes <- function(pdb, node) {
 #' @param model  character variable specifying the ENM model variant, one of
 #'     \code{anm, ming_wall, hnm, hnm0, pfanm, reach}.
 #' @param d_max distance-cutoff to define network contacts
+#' @param kij_par further named parameters of the spring-constant function
 #' @return a tibble that contains the graph representation of the network
 #'
 #' @examples
 #' \dontrun{
-#'  calculate_enm_graph(xyz, pdb_site, model, d_max)
+#'  calculate_enm_graph(xyz, pdb_site, model, d_max, kij_par = list())
 #' }
 #'
 #'@family enm builders
 #' @noRd
 #'
-calculate_enm_graph <- function(xyz, pdb_site, model, d_max, ...) {
+calculate_enm_graph <- function(xyz, pdb_site, model, d_max, kij_par) {
     # Calculate (relaxed) enm graph from xyz
     # Returns graph for the relaxed case
 
@@ -186,7 +274,7 @@ calculate_enm_graph <- function(xyz, pdb_site, model, d_max, ...) {
 
     # set function to calculate i-j spring constants
     kij_fun <- match.fun(paste0("kij_", model))
-    kij_par <- lst(d_max = d_max)
+    kij_par <- c(lst(d_max = d_max), kij_par)
 
     site <- seq(nsites)
     # calculate graph

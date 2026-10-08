@@ -59,7 +59,7 @@ chain A) bundled with the package.
 
 ```{r build}
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5)
+              d_max = 10.5, ensemble = 1)
 
 get_nsites(wt)
 get_nmodes(wt)
@@ -135,10 +135,12 @@ enm_v_min(wt)
 ## Mutating
 
 `get_mutant_site()` perturbs the springs of one site and relaxes the structure,
-returning a network of the same kind as its input:
+returning a network of the same kind as its input. How it does so was set when
+`wt` was built: `set_enm()` stores the mutational model and its parameters in
+the `prot`, and the mutant inherits them.
 
 ```{r mutate}
-mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 1)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
 
 c(wt = get_nsites(wt),  mut = get_nsites(mut))
 c(wt = enm_v_min(wt),   mut = enm_v_min(mut))
@@ -157,8 +159,9 @@ which(get_pdb_site(wt) == 11)
 
 The model has no amino acids, so a mutation is not a substitution of one residue
 type for another: it is a random shift of the rest lengths $l_{ij}$ at the
-mutated site, drawn with standard deviation `mut_dl_sigma` (default 0.3 Å).
-`mut_sd_min` (default 2) excludes springs between residues close in sequence.
+mutated site, drawn with standard deviation `mut_dl_sigma` (a `set_enm()`
+argument, default 0.3 Å). `mut_sd_min` (default 2) excludes springs between
+residues close in sequence.
 Shifting the rest lengths is what leaves the relaxed structure strained.
 
 ### Identifying a mutant
@@ -173,15 +176,16 @@ mutant: these calls are reproducible, not random from call to call.
 
 `mutation` and `ensemble` differ in scope. Vary `mutation` for replicates within
 one study; change `ensemble` to repeat an entire study — every site, every
-replicate — as an independent realization. Hold `ensemble` fixed across a scan or
-a trajectory. `?penm_ensemble` is the full account.
+replicate — as an independent realization. `ensemble` is set by `set_enm()`, and
+every mutant inherits it, so it is held fixed across a scan or a trajectory.
+`?penm_ensemble` is the full account.
 
 Replicates at one site show how wide the distribution of mutational effects is:
 
 ```{r replicates}
 ddg <- numeric(5)
 for (m in 1:5) {
-  mut_m <- get_mutant_site(wt, site_mut = 11, mutation = m, ensemble = 1)
+  mut_m <- get_mutant_site(wt, site_mut = 11, mutation = m)
   ddg[m] <- ddg_dv(wt, mut_m)
 }
 ddg
@@ -260,7 +264,7 @@ counterparts.
 
 ## What the perturbation touches
 
-Under the LFENM — `get_mutant_site()`'s default `mut_model = "lfenm"` — the
+Under the LFENM — `set_enm()`'s default `mut_model = "lfenm"` — the
 perturbation is linear: it shifts rest lengths and moves the equilibrium
 coordinates, but leaves $\mathbf{K}$ unchanged. The mutant therefore has the same
 normal modes and the same eigenvalues as the wild type:
@@ -300,7 +304,7 @@ dr2 <- matrix(0, length(sites), length(sites))   # [responding site, mutated sit
 for (s in sites) {
   acc <- numeric(length(sites))
   for (m in 1:n_mut) {
-    mut_s <- get_mutant_site(wt, site_mut = s, mutation = m, ensemble = 1)
+    mut_s <- get_mutant_site(wt, site_mut = s, mutation = m)
     acc <- acc + delta_structure_dr2i(wt, mut_s)
   }
   dr2[, s] <- acc / n_mut
@@ -365,7 +369,7 @@ traj <- tibble::tibble(gen = 1:n_gen, v_min = NA_real_, dr2 = NA_real_)
 
 for (g in 1:n_gen) {
   site_g <- sample(get_site(wt), 1)
-  p <- get_mutant_site(p, site_mut = site_g, mutation = g, ensemble = 1)
+  p <- get_mutant_site(p, site_mut = site_g, mutation = g)
 
   traj$v_min[g] <- enm_v_min(p)                      # strain carried by this generation
   traj$dr2[g]   <- sum(delta_structure_dr2i(wt, p))  # divergence from the original
@@ -392,8 +396,8 @@ generation to generation.
 Only the starting network is unstrained. Every later generation acts as the wild
 type of the next comparison while itself carrying strain.
 
-Keep `ensemble` fixed along a trajectory so the generations belong to one
-realization.
+Each generation inherits `ensemble` from the one before, so the whole trajectory
+belongs to one realization.
 
 ## Where to go next
 

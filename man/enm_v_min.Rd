@@ -23,8 +23,8 @@ mutant.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5)
-mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
+              d_max = 10.5, ensemble = 7)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
 
 enm_v_min(wt)                   # 0: a network fresh from set_enm() is unstrained
 enm_v_min(mut)                  # positive: the mutation has strained it
@@ -34,7 +34,7 @@ enm_v_min(mut)                  # positive: the mutation has strained it
 # freshly built prot, not of "wild types".
 p <- wt
 for (gen in 1:3) {
-  p <- get_mutant_site(p, site_mut = 10 * gen, mutation = 1, ensemble = 7)
+  p <- get_mutant_site(p, site_mut = 10 * gen, mutation = 1)
   print(enm_v_min(p))
 }
 

@@ -34,6 +34,10 @@ realizations.
 A mutational scan, an evolutionary trajectory, a set of results compared
 against each other — all must run under a single \code{ensemble}.
 
+[set_enm()] stores \code{ensemble} in the protein it builds, and every
+mutant inherits it, so a scan or a trajectory started from one wild type
+holds it fixed by construction.
+
 Varying it partway through is not a way of getting more randomness. It
 switches realization, so that mutant \code{(80, 3)} early in the run and
 mutant \code{(80, 3)} later are different mutations wearing the same name.
@@ -70,7 +74,7 @@ Any integer will do; no realization is better than another. What matters is
 that the value is recorded alongside the results — without it they cannot be
 regenerated, and a mutant identified as \code{(80, 3)} means nothing.
 
-\code{get_mutant_site()} defaults to \code{ensemble = 1L}, the first
+\code{set_enm()} defaults to \code{ensemble = 1L}, the first
 realization, so that examples and casual exploration work. Pass it
 explicitly in analysis code, so the realization is recorded in your script
 rather than in whichever version of penm happened to be installed.
@@ -93,24 +97,27 @@ mutants can be generated in any order.
 }
 
 \examples{
-wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5)
+wt_1 <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+                d_max = 10.5, ensemble = 1L)
+wt_2 <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+                d_max = 10.5, ensemble = 2L)
 
 # Same realization, same (site, mutation): the same mutation, twice.
-a <- get_mutant_site(wt, site_mut = 80, mutation = 3, ensemble = 1L)
-b <- get_mutant_site(wt, site_mut = 80, mutation = 3, ensemble = 1L)
+a <- get_mutant_site(wt_1, site_mut = 80, mutation = 3)
+b <- get_mutant_site(wt_1, site_mut = 80, mutation = 3)
 identical(a$graph$lij, b$graph$lij)
 
 # A different realization: "mutation 3 at site 80" is now something else.
-c <- get_mutant_site(wt, site_mut = 80, mutation = 3, ensemble = 2L)
+c <- get_mutant_site(wt_2, site_mut = 80, mutation = 3)
 identical(a$graph$lij, c$graph$lij)
 
 # ... but it perturbs the same contacts. Which edges are touched is a
 # property of the site, not of the realization.
-identical(which(a$graph$lij != wt$graph$lij),
-          which(c$graph$lij != wt$graph$lij))
+identical(which(a$graph$lij != wt_1$graph$lij),
+          which(c$graph$lij != wt_2$graph$lij))
 
 }
 \seealso{
-[get_mutant_site()], which takes the `ensemble` argument.
+[set_enm()], which takes the `ensemble` argument;
+  [get_mutant_site()], whose mutants inherit it.
 }

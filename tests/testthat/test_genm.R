@@ -4,7 +4,6 @@
 # Where two quantities are compared, they are reached by different routes, so
 # that the comparison is not equal by construction.
 
-build_enm_from_pdb    <- penm:::build_enm_from_pdb
 genm_mutate           <- penm:::genm_mutate
 genm_allele_delta_lij <- penm:::genm_allele_delta_lij
 genm_kij              <- penm:::genm_kij
@@ -18,8 +17,8 @@ dij_edge              <- penm:::dij_edge
 
 load(test_path("fixtures", "pdb_2acy_A.rda"))
 
-wt <- build_enm_from_pdb(pdb_2acy_A, node = "calpha", model = "ming_wall",
-                         d_max = 10.5, d_max_pairs = 14)
+wt <- set_enm(pdb_2acy_A, node = "calpha", model = "ming_wall", d_max = 10.5,
+              mut_model = "genm", d_max_graph = 14)
 xyz_pdb <- penm:::calculate_enm_nodes(pdb_2acy_A, "ca")$xyz
 nsites <- get_nsites(wt)
 
@@ -244,8 +243,8 @@ test_that("allele 0 changes nothing, and other alleles change exactly the edges 
   expect_gt(length(changed), 10)
 
   # mut_sd_min = 1 perturbs the i,i+1 bonds as well
-  wt_1 <- build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
-                             d_max = 10.5, d_max_pairs = 14, mut_sd_min = 1)
+  wt_1 <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+                  mut_model = "genm", d_max_graph = 14, mut_sd_min = 1)
   changed_1 <- which(genm_mutate(wt_1, site_a, 3L)$graph$lij != wt_1$graph$lij)
   expect_setequal(changed_1, site_edges(wt_1, site_a)$row)
 })
@@ -255,8 +254,8 @@ test_that("an allele's draw depends on (ensemble, site, allele), and leaves the 
   expect_identical(genm_allele_delta_lij(wt, site_a, 3L), d1)
   expect_false(isTRUE(all.equal(genm_allele_delta_lij(wt, site_a, 4L), d1)))
   expect_false(isTRUE(all.equal(genm_allele_delta_lij(wt, site_b, 3L), d1)))
-  wt_2 <- build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
-                             d_max = 10.5, d_max_pairs = 14, ensemble = 2L)
+  wt_2 <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+                  mut_model = "genm", d_max_graph = 14, ensemble = 2L)
   expect_false(isTRUE(all.equal(genm_allele_delta_lij(wt_2, site_a, 3L), d1)))
   # sd of the draws is mut_dl_sigma (0.3), loosely: nsites draws
   expect_gt(sd(d1), 0.2)
@@ -281,8 +280,8 @@ test_that("an allele's change to an edge does not depend on which other edges ex
   expect_gt(sum(narrow$change[perturbed] != 0), 10)
 
   # more edges: site_a gains partners, and the ones it had keep their change
-  wide <- change_by_partner(build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
-                                               d_max = 10.5, d_max_pairs = 16))
+  wide <- change_by_partner(set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+                                    mut_model = "genm", d_max_graph = 16))
   expect_gt(nrow(wide), nrow(narrow))
   same_edge_in_wide <- match(narrow$partner, wide$partner)
   expect_false(anyNA(same_edge_in_wide))
@@ -290,9 +289,8 @@ test_that("an allele's change to an edge does not depend on which other edges ex
 
   # mut_sd_min = 1 perturbs the i,i+1 bonds too; the edges both perturb keep
   # their change
-  all_perturbed <- change_by_partner(build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
-                                                        d_max = 10.5, d_max_pairs = 14,
-                                                        mut_sd_min = 1))
+  all_perturbed <- change_by_partner(set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+                                             mut_model = "genm", d_max_graph = 14, mut_sd_min = 1))
   expect_identical(all_perturbed$partner, narrow$partner)
   expect_identical(all_perturbed$change[perturbed], narrow$change[perturbed])
 })
@@ -306,12 +304,14 @@ test_that("genm_mutate validates its input", {
   expect_error(genm_mutate(wt, nsites + 1, 1L), "site must be")
   expect_error(genm_mutate(wt, 1.5, 1L), "site must be")
   # a draw so wide that some length would become negative
-  wide <- build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
-                             d_max = 10.5, d_max_pairs = 14, mut_dl_sigma = 50)
+  wide <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+                  mut_model = "genm", d_max_graph = 14, mut_dl_sigma = 50)
   expect_error(genm_mutate(wide, site_a, 3L), "<= 0")
   # a prot built for lfenm
   lfenm_wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
   expect_error(genm_mutate(lfenm_wt, site_a, 3L), "mut_model")
+  # and get_mutant_site does not mutate a genm prot yet
+  expect_error(get_mutant_site(wt, site_a, 3L), "does not support")
 })
 
 
@@ -342,22 +342,22 @@ test_that("a negative k is rejected", {
   expect_no_error(genm_kij(param, c(5, 3), c(5, 5)))
 })
 
-test_that("build_enm_from_pdb validates the model, its parameters and the mutational process", {
-  b <- function(...) build_enm_from_pdb(pdb_2acy_A, node = "ca", d_max = 10.5, d_max_pairs = 14, ...)
-  expect_error(b(model = "no_such_model"), "kij_no_such_model")
-  expect_error(b(model = "ming_wall", wdth = 1), "does not take parameter")
-  expect_error(b(model = "ming_wall", 1), "must be named")
-  expect_error(b(model = "ming_wall_smooth"), "\"w\" is missing")
-  expect_error(build_enm_from_pdb(pdb_2acy_A, node = "ca", model = "ming_wall",
-                                  d_max = 10.5, d_max_pairs = 9), "must not be smaller")
-  expect_identical(b(model = "ming_wall_smooth", w = 1)$param$kij_par, list(w = 1))
-  expect_error(b(model = "ming_wall", ensemble = NA), "ensemble")
-  expect_error(b(model = "ming_wall", n_alleles = 1), "n_alleles")
-  expect_error(b(model = "ming_wall", mut_dl_sigma = 0), "mut_dl_sigma")
-  expect_error(b(model = "ming_wall", mut_sd_min = 0), "mut_sd_min")
+test_that("set_enm validates the model, its parameters and the mutational process, for genm", {
+  b <- function(...) set_enm(pdb_2acy_A, node = "ca", d_max = 10.5, mut_model = "genm", ...)
+  expect_error(b(model = "no_such_model", d_max_graph = 14), "kij_no_such_model")
+  expect_error(b(model = "ming_wall", d_max_graph = 14, wdth = 1), "does not take parameter")
+  expect_error(b(model = "ming_wall", d_max_graph = 14, 1), "must be named")
+  expect_error(b(model = "ming_wall_smooth", d_max_graph = 14), "\"d_max_width\" is missing")
+  expect_error(b(model = "ming_wall", d_max_graph = 9), "must not be smaller")
+  expect_identical(b(model = "ming_wall_smooth", d_max_graph = 14, d_max_width = 1)$param$kij_par,
+                   list(d_max_width = 1))
+  expect_error(b(model = "ming_wall", d_max_graph = 14, ensemble = NA), "ensemble")
+  expect_error(b(model = "ming_wall", d_max_graph = 14, n_alleles = 1), "n_alleles")
+  expect_error(b(model = "ming_wall", d_max_graph = 14, mut_dl_sigma = 0), "mut_dl_sigma")
+  expect_error(b(model = "ming_wall", d_max_graph = 14, mut_sd_min = 0), "mut_sd_min")
 })
 
-test_that("there is an edge for every pair within d_max_pairs and every i,i+1 pair", {
+test_that("there is an edge for every pair within d_max_graph and every i,i+1 pair", {
   x <- matrix(xyz_pdb, 3)
   d <- as.matrix(dist(t(x)))
   bonded <- abs(outer(get_pdb_site(wt), get_pdb_site(wt), "-")) == 1
@@ -375,12 +375,12 @@ test_that("there is an edge for every pair within d_max_pairs and every i,i+1 pa
   expect_true(all(wt$graph$sdij[key %in% paste(ij[, 1], ij[, 2])] == 1))
 })
 
-test_that("d_max_pairs warns when the truncation is a hard cutoff", {
-  b <- function(...) build_enm_from_pdb(pdb_2acy_A, node = "ca", d_max = 10.5, d_max_pairs = 14, ...)
+test_that("d_max_graph warns when the truncation is a hard cutoff", {
+  b <- function(...) set_enm(pdb_2acy_A, node = "ca", d_max = 10.5, mut_model = "genm", d_max_graph = 14, ...)
   expect_warning(b(model = "pfanm"), "hard cutoff")
   expect_warning(b(model = "hnm0"), "hard cutoff")
   expect_no_warning(b(model = "ming_wall"))
-  expect_no_warning(b(model = "ming_wall_smooth", w = 1))
+  expect_no_warning(b(model = "ming_wall_smooth", d_max_width = 1))
 })
 
 

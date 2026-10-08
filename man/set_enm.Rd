@@ -4,7 +4,19 @@
 \alias{set_enm}
 \title{Set up 'prot' object}
 \usage{
-set_enm(pdb, node, model, d_max)
+set_enm(
+  pdb,
+  node,
+  model,
+  d_max,
+  ...,
+  mut_model = "lfenm",
+  d_max_graph = d_max,
+  ensemble = 1L,
+  n_alleles = 10L,
+  mut_dl_sigma = 0.3,
+  mut_sd_min = 2L
+)
 }
 \arguments{
 \item{pdb}{pdb object obtained using [bio3d::read.pdb()]}
@@ -14,22 +26,57 @@ chains), or `"cb"` (beta carbons). The long forms `"calpha"`, `"side_chain"`
 and `"beta"` are accepted as synonyms.}
 
 \item{model}{ENM variant, one of `"anm"`, `"ming_wall"`, `"hnm"`, `"hnm0"`,
-`"pfanm"`, `"reach"`. These select the spring-constant function applied to each
-contact.}
+`"pfanm"`, `"reach"`, `"anm_smooth"`, `"ming_wall_smooth"`. These select the
+spring-constant function applied to each contact.}
 
 \item{d_max}{distance cutoff (Å) used to define enm contacts}
+
+\item{...}{further parameters of the spring-constant function, by name; for
+example `d_max_width`, which `"anm_smooth"` and `"ming_wall_smooth"` require:
+the width (Å) of the switch from contact to no contact around `d_max`.}
+
+\item{mut_model}{the mutational model, `"lfenm"` or `"genm"`. In `"lfenm"` a
+mutation perturbs the equilibrium lengths of a site's contacts, and the
+mutant's structure is the wild type's linear response to the resulting
+force. In `"genm"` each site carries an allele, the equilibrium lengths
+depend on the alleles, the spring constants on the equilibrium lengths,
+and a mutant's structure is the minimum of its energy.}
+
+\item{d_max_graph}{distance (Å) in the pdb within which a pair of nodes
+gets an edge (pairs adjacent in sequence always get one). For `"lfenm"` it
+must equal `d_max`. For `"genm"` it must reach out to where the spring
+constant is negligible, so that pairs that mutations bring closer can
+become contacts; a warning is given when it does not.}
+
+\item{ensemble}{an integer naming which realization of the mutational
+process the protein's mutants belong to; see `?penm_ensemble`.}
+
+\item{n_alleles}{for `"genm"`, the number of alleles per site, including the
+pdb's (allele 0). No effect for `"lfenm"`.}
+
+\item{mut_dl_sigma}{the standard deviation (Å) of the change a mutation makes
+to an equilibrium length.}
+
+\item{mut_sd_min}{mutations leave alone the edges between sites less than
+`mut_sd_min` apart in sequence.}
 }
 \value{
 an object of class `prot`, which is a list
-  `lst(param, nodes, graph, kmat, nma, internal)`. `internal` holds what
-  penm needs for its own computations and is not meant to be read.
+  `lst(param, nodes, graph, kmat, nma, internal)`. `param` holds the
+  arguments other than `pdb`. `internal` holds what penm needs for its own
+  computations and is not meant to be read.
 }
 \description{
 `set_enm` sets up a `prot` object containing information on ENM structure,
 parameters, and normal modes. It is the entry point of the package: everything
 else takes the `prot` it returns.
 
-All four arguments are required — there are no defaults.
+The protein also carries how it mutates: the mutational model and its
+parameters are stored with it, and [get_mutant_site()] uses them. A mutant
+inherits them, so that it can be mutated in turn the same way.
+
+`pdb`, `node`, `model` and `d_max` are required. The other arguments have
+defaults.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
@@ -41,6 +88,12 @@ get_nmodes(wt)
 wt_sc <- set_enm(pdb_2acy_A, node = "sc", model = "anm",
                  d_max = 12.5)
 get_nsites(wt_sc)
+
+# a smoothed cutoff, and the mutational parameters set explicitly
+wt_smooth <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall_smooth",
+                     d_max = 10.5, d_max_width = 1, ensemble = 3,
+                     mut_dl_sigma = 0.2, mut_sd_min = 3)
+get_enm_param(wt_smooth)$mut_dl_sigma
 }
 \seealso{
 [get_mutant_site()] to perturb the result;

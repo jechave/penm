@@ -20,13 +20,11 @@ library(testthat)  # for test_path()
 ## ----------------------------------------------------------------------------------------------------------------------
 load(test_path("fixtures", "pdb_2acy_A.rda"))
 
-wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
-
-# ensemble passed explicitly: the other refresh scripts rely on get_mutant_site()'s
+# ensemble passed explicitly: the other refresh scripts rely on set_enm()'s
 # default, so their fixtures would move if that default ever changed.
-mut <- get_mutant_site(wt, site_mut = 80, mutation = 1,
-                       mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1,
-                       ensemble = 1L)
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+              mut_dl_sigma = 0.3, mut_sd_min = 1, ensemble = 1L)
+mut <- get_mutant_site(wt, site_mut = 80, mutation = 1)
 
 # acylphosphatase catalytic pair, present in this structure at these numbers
 # (index 23 = R, index 41 = N). Without an active site, ddgact_* return NA.

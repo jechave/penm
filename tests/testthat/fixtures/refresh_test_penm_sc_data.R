@@ -16,8 +16,10 @@ save(wt_sc, file = test_path("fixtures", "wt_sc.rda"))
 
 ## ----------------------------------------------------------------------------------------------------------------------
 
-mut_sc_lf  <- get_mutant_site(wt_sc, site_mut = 80, mutation = 1,
-                           mut_model = "lfenm", mut_dl_sigma = 0.3, mut_sd_min = 1)
+# the mutant's parameters are the wild type's: a wt that perturbs i,i+2 edges too
+wt_sc_sd1 <- set_enm(pdb_2acy_A, node = "sc", model = "ming_wall", d_max = 10.5,
+                     mut_dl_sigma = 0.3, mut_sd_min = 1)
+mut_sc_lf  <- get_mutant_site(wt_sc_sd1, site_mut = 80, mutation = 1)
 
 save(mut_sc_lf, file = test_path("fixtures", "mut_sc_lf.rda"))
 

@@ -17,74 +17,55 @@
 
 
 # The wild type ----------------------------------------------------------------
+#
+# set_enm(..., mut_model = "genm") builds it with these steps. Every site
+# starts at allele 0, so lij = l0ij: every edge is at its rest length in the
+# pdb structure, which is therefore the minimum, and kmat and the normal modes
+# are computed there.
 
-#' Build a generalized ENM from a pdb structure
-#'
-#' One edge for every pair of nodes closer than `d_max_pairs` in the pdb, and
-#' one for every i,i+1 pair. `l0ij` is the edge's length in the pdb. Every site
-#' starts at allele 0, so `lij = l0ij`, and `kij = k(lij)`. Every edge is then
-#' at its rest length in the pdb structure, which is therefore the minimum;
-#' kmat and the normal modes are computed there.
-#'
-#' `d_max_pairs` is not the contact cutoff: it must reach out to where `k` is
-#' negligible, so that an edge whose `lij` shortens past `d_max` can become a
-#' contact. A warning is given when it does not (see
-#' [genm_check_d_max_pairs()]).
-#'
-#' @param pdb pdb object obtained using [bio3d::read.pdb()]
-#' @param node `"ca"`, `"sc"` or `"cb"`
-#' @param model name of a `kij_*` function, e.g. `"ming_wall"`
-#' @param d_max cutoff passed to the `kij_*` function
-#' @param d_max_pairs distance (A) in the pdb within which a pair of nodes gets
-#'   an edge
-#' @param ... further named parameters of the `kij_*` function, e.g. `w`
-#' @param ensemble which realization of the mutational process the alleles
-#'   refer to; see `?penm_ensemble`
-#' @param n_alleles number of alleles per site, including the pdb's (allele 0)
-#' @param mut_dl_sigma standard deviation of the change an allele makes to
-#'   `lij`
-#' @param mut_sd_min edges joining sites less than `mut_sd_min` apart in
-#'   sequence are not changed by mutations
-#'
-#' @returns a `prot`. Compared with one from [set_enm()], `param` has the
-#'   genm parameters and `mut_model = "genm"`, `nodes` has the `sequence` of
-#'   alleles, and `graph` has `l0ij` and an edge for every pair within
-#'   `d_max_pairs`, `kij = 0` included.
+#' Set the graph of a genm prot
 #'
 #' @noRd
 #'
-build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
-                               ensemble = 1L, n_alleles = 10L,
-                               mut_dl_sigma = 0.3, mut_sd_min = 2L) {
-  if (d_max_pairs < d_max) stop("d_max_pairs must not be smaller than d_max")
-  check_ensemble(ensemble)
-  stopifnot(n_alleles >= 2, mut_dl_sigma > 0, mut_sd_min >= 1)
+set_genm_graph <- function(prot) {
+  prot$graph <- calculate_genm_graph(get_xyz(prot), get_pdb_site(prot), get_enm_param(prot))
+  genm_check_d_max_graph(prot)
+  prot
+}
 
-  kij_fun <- match.fun(paste0("kij_", model))
-  kij_par <- list(...)
-  if (length(kij_par) > 0 && (is.null(names(kij_par)) || any(names(kij_par) == ""))) {
-    stop("parameters in ... must be named")
-  }
-  unknown <- setdiff(names(kij_par), names(formals(kij_fun)))
-  if (length(unknown) > 0) {
-    stop("kij_", model, " does not take parameter(s): ", paste(unknown, collapse = ", "))
-  }
 
-  prot <- create_enm()
-  prot$param <- list(node = node, model = model, d_max = d_max,
-                     d_max_pairs = d_max_pairs, kij_par = kij_par,
-                     mut_model = "genm",
-                     ensemble = ensemble, n_alleles = as.integer(n_alleles),
-                     mut_dl_sigma = mut_dl_sigma, mut_sd_min = as.integer(mut_sd_min))
-  prot <- set_enm_nodes(prot, pdb)
-  nsites <- get_nsites(prot)
-  xyz <- get_xyz(prot)
-  prot$nodes$sequence <- integer(nsites)
+#' Set the kmat of a genm prot
+#'
+#' @noRd
+#'
+set_genm_kmat <- function(prot) {
+  graph <- get_graph(prot)
+  # edges with k = 0 contribute nothing to kmat
+  graph <- graph[graph$kij > 0, ]
+  prot$kmat <- genm_kmat(get_xyz(prot), graph, get_nsites(prot))
+  prot
+}
 
-  # edges: every pair within d_max_pairs in the pdb, and every i,i+1 pair
+
+#' Calculate the graph of a genm prot
+#'
+#' One edge for every pair of nodes closer than `d_max_graph` in the pdb, and
+#' one for every i,i+1 pair. `l0ij` is the edge's length in the pdb. Every site
+#' is at allele 0, so `lij = l0ij`, and `kij = k(lij)`.
+#'
+#' @param xyz coordinates of the pdb structure, a vector of length `3 * nsites`
+#' @param pdb_site the pdb numbering of the sites
+#' @param param the `param` list of the prot
+#'
+#' @returns a tibble `(edge, i, j, v0ij, sdij, l0ij, lij, kij, dij)`
+#'
+#' @noRd
+#'
+calculate_genm_graph <- function(xyz, pdb_site, param) {
+  # edges: every pair within d_max_graph in the pdb, and every i,i+1 pair
   distance <- as.matrix(stats::dist(t(matrix(xyz, nrow = 3))))
-  sequence_distance <- abs(outer(get_pdb_site(prot), get_pdb_site(prot), "-"))
-  is_edge <- upper.tri(distance) & (distance <= d_max_pairs | sequence_distance == 1)
+  sequence_distance <- abs(outer(pdb_site, pdb_site, "-"))
+  is_edge <- upper.tri(distance) & (distance <= param$d_max_graph | sequence_distance == 1)
   edges <- which(is_edge, arr.ind = TRUE)
   edges <- edges[order(edges[, 1], edges[, 2]), , drop = FALSE]
   i <- unname(edges[, 1])
@@ -95,20 +76,13 @@ build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
     i = i,
     j = j,
     v0ij = 0,
-    sdij = sdij_edge(get_pdb_site(prot), i, j),
+    sdij = sdij_edge(pdb_site, i, j),
     l0ij = dij_edge(xyz, i, j)
   )
   graph$lij <- graph$l0ij
-  graph$kij <- genm_kij(prot$param, graph$lij, graph$sdij)
+  graph$kij <- genm_kij(param, graph$lij, graph$sdij)
   graph$dij <- graph$l0ij
-  prot$graph <- graph
-  genm_check_d_max_pairs(prot)
-
-  # edges with k = 0 contribute nothing to kmat
-  graph <- graph[graph$kij > 0, ]
-  prot$kmat <- genm_kmat(xyz, graph, nsites)
-  prot <- set_enm_nma(prot)
-  prot
+  graph
 }
 
 
@@ -238,10 +212,10 @@ genm_kij <- function(param, lij, sdij) {
 }
 
 
-#' Warn when d_max_pairs truncates k
+#' Warn when d_max_graph truncates k
 #'
-#' Pairs farther apart than `d_max_pairs` in the pdb get no edge, so they can
-#' never become contacts. Warns when `k(d_max_pairs)`, for a pair far apart in
+#' Pairs farther apart than `d_max_graph` in the pdb get no edge, so they can
+#' never become contacts. Warns when `k(d_max_graph)`, for a pair far apart in
 #' sequence, is more than `ratio_max` of the largest `k` among edges more than
 #' three apart in sequence.
 #'
@@ -250,15 +224,15 @@ genm_kij <- function(param, lij, sdij) {
 #'
 #' @noRd
 #'
-genm_check_d_max_pairs <- function(prot, ratio_max = 0.01) {
+genm_check_d_max_graph <- function(prot, ratio_max = 0.01) {
   param <- prot$param
   far_in_sequence <- 1e6
-  k_far <- genm_kij(param, param$d_max_pairs, sdij = far_in_sequence)
+  k_far <- genm_kij(param, param$d_max_graph, sdij = far_in_sequence)
   k_near <- max(prot$graph$kij[prot$graph$sdij > 3])
   if (k_far > ratio_max * k_near) {
-    warning("k(d_max_pairs = ", param$d_max_pairs, ") is ", signif(k_far / k_near, 2),
+    warning("k(d_max_graph = ", param$d_max_graph, ") is ", signif(k_far / k_near, 2),
             " of the largest non-bonded k for model '", param$model, "'. ",
-            "Pairs beyond d_max_pairs get no edge, so the truncation acts as a hard ",
+            "Pairs beyond d_max_graph get no edge, so the truncation acts as a hard ",
             "cutoff and no contact can form beyond it.", call. = FALSE)
   }
   invisible(prot)

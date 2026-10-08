@@ -96,15 +96,17 @@ kij_reach <- function(dij, sdij, same_chain = TRUE, ...) {
 #' Calculate kij for the ANM with a smoothed cutoff
 #'
 #' As [kij_anm()], with the step at `d_max` replaced by
-#' \eqn{\frac12 [1 - \tanh((d - d_{max}) / w)]}, so `kij = k/2` at the cutoff.
+#' \eqn{\frac12 [1 - \tanh((d - d_{max}) / d_{max\_width})]}, so `kij = k/2` at the
+#' cutoff, and `k` falls from its full value to 0 over about `d_max +/- 2 d_max_width`.
 #' i,i+1 contacts are forced to `k` regardless of distance, as in `kij_anm`.
 #'
-#' @param w width of the switching region; no default
+#' @param d_max_width width (A) of the switch from contact to no contact around
+#'   `d_max`; no default
 #'
 #' @noRd
 #'
-kij_anm_smooth <- function(dij, sdij, d_max = 10, w, k = 1, ...) {
-  kij <- k * 0.5 * (1 - tanh((dij - d_max) / w))
+kij_anm_smooth <- function(dij, sdij, d_max = 10, d_max_width, k = 1, ...) {
+  kij <- k * 0.5 * (1 - tanh((dij - d_max) / d_max_width))
   kij[abs(sdij) == 1] <- k
   kij
 }
@@ -113,15 +115,17 @@ kij_anm_smooth <- function(dij, sdij, d_max = 10, w, k = 1, ...) {
 #' Calculate kij for model by Ming and Wall (2005) with a smoothed cutoff
 #'
 #' As [kij_ming_wall()], with the step at `d_max` replaced by
-#' \eqn{\frac12 [1 - \tanh((d - d_{max}) / w)]}, so `kij = k/2` at the cutoff.
+#' \eqn{\frac12 [1 - \tanh((d - d_{max}) / d_{max\_width})]}, so `kij = k/2` at the
+#' cutoff, and `k` falls from its full value to 0 over about `d_max +/- 2 d_max_width`.
 #' i,i+1 contacts get `a * k` regardless of distance, as in `kij_ming_wall`.
 #'
-#' @param w width of the switching region; no default
+#' @param d_max_width width (A) of the switch from contact to no contact around
+#'   `d_max`; no default
 #'
 #' @noRd
 #'
-kij_ming_wall_smooth <- function(dij, sdij, d_max = 10.5, w, k = 4.5, a = 42, ...) {
-  kij <- k * 0.5 * (1 - tanh((dij - d_max) / w))
+kij_ming_wall_smooth <- function(dij, sdij, d_max = 10.5, d_max_width, k = 4.5, a = 42, ...) {
+  kij <- k * 0.5 * (1 - tanh((dij - d_max) / d_max_width))
   kij[abs(sdij) == 1] <- a * k
   kij
 }

@@ -34,8 +34,8 @@ A vector of size \code{nmodes} with the contribution of each normal mode
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5)
-mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
+              d_max = 10.5, ensemble = 7)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
 
 dr2n <- delta_structure_dr2n(wt, mut)
 length(dr2n)                        # one value per mode

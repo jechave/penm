@@ -41,8 +41,8 @@ the proteins'  \code{cmat}, and normal modes (Principal components) are assumed 
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5)
-mut <- get_mutant_site(wt, site_mut = 11, mutation = 1, ensemble = 7)
+              d_max = 10.5, ensemble = 7)
+mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
 
 dmsfi <- delta_motion_dmsfi(wt, mut)
 length(dmsfi)                       # one value per site
