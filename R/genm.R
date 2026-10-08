@@ -12,18 +12,19 @@
 #
 # with its kmat (the Hessian of V there) and normal modes.
 #
-# Two objects:
-#   - "genm": the parameters (build_enm_from_pdb, genm_mutate)
-#   - "genm_prot": the protein they imply (prot_from_enm, genm_add_nma)
+# A genm protein is a prot, with mut_model = "genm" in its param, the sequence
+# in its nodes, and l0ij in its graph.
 
 
-# Parameters -------------------------------------------------------------------
+# The wild type ----------------------------------------------------------------
 
 #' Build a generalized ENM from a pdb structure
 #'
 #' One edge for every pair of nodes closer than `d_max_pairs` in the pdb, and
 #' one for every i,i+1 pair. `l0ij` is the edge's length in the pdb. Every site
-#' starts at allele 0, so `lij = l0ij`, and `kij = k(lij)`.
+#' starts at allele 0, so `lij = l0ij`, and `kij = k(lij)`. Every edge is then
+#' at its rest length in the pdb structure, which is therefore the minimum;
+#' kmat and the normal modes are computed there.
 #'
 #' `d_max_pairs` is not the contact cutoff: it must reach out to where `k` is
 #' negligible, so that an edge whose `lij` shortens past `d_max` can become a
@@ -45,8 +46,10 @@
 #' @param mut_sd_min edges joining sites less than `mut_sd_min` apart in
 #'   sequence are not changed by mutations
 #'
-#' @returns an object of class `"genm"`: `list(param, nodes, sequence, graph)`,
-#'   with `graph` a tibble `(i, j, sdij, l0ij, lij, kij)`
+#' @returns a `prot`. Compared with one from [set_enm()], `param` has the
+#'   genm parameters and `mut_model = "genm"`, `nodes` has the `sequence` of
+#'   alleles, and `graph` has `l0ij` and an edge for every pair within
+#'   `d_max_pairs`, `kij = 0` included.
 #'
 #' @noRd
 #'
@@ -67,17 +70,20 @@ build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
     stop("kij_", model, " does not take parameter(s): ", paste(unknown, collapse = ", "))
   }
 
-  param <- list(node = node, model = model, d_max = d_max,
-                d_max_pairs = d_max_pairs, kij_par = kij_par,
-                ensemble = ensemble, n_alleles = as.integer(n_alleles),
-                mut_dl_sigma = mut_dl_sigma, mut_sd_min = as.integer(mut_sd_min))
-
-  nodes <- calculate_enm_nodes(pdb, node)
-  nsites <- nodes$nsites
+  prot <- create_enm()
+  prot$param <- list(node = node, model = model, d_max = d_max,
+                     d_max_pairs = d_max_pairs, kij_par = kij_par,
+                     mut_model = "genm",
+                     ensemble = ensemble, n_alleles = as.integer(n_alleles),
+                     mut_dl_sigma = mut_dl_sigma, mut_sd_min = as.integer(mut_sd_min))
+  prot <- set_enm_nodes(prot, pdb)
+  nsites <- get_nsites(prot)
+  xyz <- get_xyz(prot)
+  prot$nodes$sequence <- integer(nsites)
 
   # edges: every pair within d_max_pairs in the pdb, and every i,i+1 pair
-  distance <- as.matrix(stats::dist(t(matrix(nodes$xyz, nrow = 3))))
-  sequence_distance <- abs(outer(nodes$pdb_site, nodes$pdb_site, "-"))
+  distance <- as.matrix(stats::dist(t(matrix(xyz, nrow = 3))))
+  sequence_distance <- abs(outer(get_pdb_site(prot), get_pdb_site(prot), "-"))
   is_edge <- upper.tri(distance) & (distance <= d_max_pairs | sequence_distance == 1)
   edges <- which(is_edge, arr.ind = TRUE)
   edges <- edges[order(edges[, 1], edges[, 2]), , drop = FALSE]
@@ -85,63 +91,72 @@ build_enm_from_pdb <- function(pdb, node, model, d_max, d_max_pairs, ...,
   j <- unname(edges[, 2])
 
   graph <- tibble(
+    edge = paste(i, j, sep = "-"),
     i = i,
     j = j,
-    sdij = sdij_edge(nodes$pdb_site, i, j),
-    l0ij = dij_edge(nodes$xyz, i, j)
+    v0ij = 0,
+    sdij = sdij_edge(get_pdb_site(prot), i, j),
+    l0ij = dij_edge(xyz, i, j)
   )
   graph$lij <- graph$l0ij
-  graph$kij <- genm_kij(param, graph$lij, graph$sdij)
+  graph$kij <- genm_kij(prot$param, graph$lij, graph$sdij)
+  graph$dij <- graph$l0ij
+  prot$graph <- graph
+  genm_check_d_max_pairs(prot)
 
-  enm <- list(
-    param = param,
-    nodes = list(nsites = nsites, site = nodes$site,
-                 pdb_site = nodes$pdb_site, bfactor = nodes$bfactor),
-    sequence = integer(nsites),
-    graph = graph
-  )
-  class(enm) <- c("genm", "list")
-
-  genm_check_d_max_pairs(enm)
-  enm
+  # edges with k = 0 contribute nothing to kmat
+  graph <- graph[graph$kij > 0, ]
+  prot$kmat <- genm_kmat(xyz, graph, nsites)
+  prot <- set_enm_nma(prot)
+  prot
 }
 
 
-#' Mutate a site of a generalized ENM
+# Mutations --------------------------------------------------------------------
+
+#' Mutate a site of a genm protein
 #'
-#' Sets the allele at `site` and recomputes `lij` and `kij`. Mutating back to
-#' an earlier allele restores the earlier parameters exactly.
+#' Sets the allele at `site`, recomputes `lij` and `kij`, and finds the new
+#' minimum with [genm_minimize()], starting from the protein's structure.
+#' Mutating back to an earlier allele restores the earlier parameters exactly.
 #'
-#' @param enm a `"genm"` object
+#' The mutant has no normal modes (`nma` is `NA`): add them with
+#' [set_enm_nma()] when they are needed.
+#'
+#' @param prot a genm `prot`
 #' @param site the site to mutate (sequential index, not pdb numbering)
 #' @param allele the new allele, in `0 .. n_alleles - 1`, different from the
 #'   current one
 #'
-#' @returns the mutant `"genm"` object
+#' @returns the mutant `prot`
 #'
 #' @noRd
 #'
-genm_mutate <- function(enm, site, allele) {
-  stopifnot(inherits(enm, "genm"))
-  if (!(site %in% seq_len(enm$nodes$nsites))) {
-    stop("site must be one of 1..", enm$nodes$nsites)
+genm_mutate <- function(prot, site, allele) {
+  if (!identical(get_enm_param(prot)$mut_model, "genm")) {
+    stop("prot was not built for mut_model = \"genm\"")
   }
-  if (!(allele %in% 0:(enm$param$n_alleles - 1))) {
-    stop("allele must be one of 0..", enm$param$n_alleles - 1)
+  nsites <- get_nsites(prot)
+  n_alleles <- get_enm_param(prot)$n_alleles
+  if (!(site %in% seq_len(nsites))) {
+    stop("site must be one of 1..", nsites)
   }
-  if (allele == enm$sequence[site]) {
+  if (!(allele %in% 0:(n_alleles - 1))) {
+    stop("allele must be one of 0..", n_alleles - 1)
+  }
+  if (allele == prot$nodes$sequence[site]) {
     stop("site ", site, " already has allele ", allele, ": nothing to mutate")
   }
 
-  enm$sequence[site] <- as.integer(allele)
-  lij <- genm_lij(enm)
+  prot$nodes$sequence[site] <- as.integer(allele)
+  lij <- genm_lij(prot)
   if (any(lij <= 0)) {
     stop("allele ", allele, " at site ", site, " would make ", sum(lij <= 0),
          " equilibrium length(s) <= 0")
   }
-  enm$graph$lij <- lij
-  enm$graph$kij <- genm_kij(enm$param, enm$graph$lij, enm$graph$sdij)
-  enm
+  prot$graph$lij <- lij
+  prot$graph$kij <- genm_kij(prot$param, prot$graph$lij, prot$graph$sdij)
+  genm_minimize(prot)
 }
 
 
@@ -152,20 +167,21 @@ genm_mutate <- function(enm, site, allele) {
 #' `sdij >= mut_sd_min`, and 0 for the others. Computed from `l0ij` and the
 #' sequence only, so equal sequences give identical lengths.
 #'
-#' @param enm a `"genm"` object
+#' @param prot a genm `prot`
 #'
 #' @returns `lij`, one per edge
 #'
 #' @noRd
 #'
-genm_lij <- function(enm) {
-  graph <- enm$graph
-  perturbed <- graph$sdij >= enm$param$mut_sd_min
+genm_lij <- function(prot) {
+  graph <- prot$graph
+  sequence <- prot$nodes$sequence
+  perturbed <- graph$sdij >= prot$param$mut_sd_min
   delta_from_i <- numeric(nrow(graph))
   delta_from_j <- numeric(nrow(graph))
 
-  for (site in which(enm$sequence != 0)) {
-    delta_lij <- genm_allele_delta_lij(enm, site, enm$sequence[site])
+  for (site in which(sequence != 0)) {
+    delta_lij <- genm_allele_delta_lij(prot, site, sequence[site])
     site_is_i <- perturbed & graph$i == site
     site_is_j <- perturbed & graph$j == site
     delta_from_i[site_is_i] <- delta_lij[graph$j[site_is_i]]
@@ -184,7 +200,7 @@ genm_lij <- function(enm) {
 #' is the change to the edge between `site` and site `k` (element `site` itself
 #' is not used). Allele 0 changes nothing.
 #'
-#' @param enm a `"genm"` object
+#' @param prot a genm `prot`
 #' @param site sequential site index
 #' @param allele an allele in `0 .. n_alleles - 1`
 #'
@@ -192,17 +208,17 @@ genm_lij <- function(enm) {
 #'
 #' @noRd
 #'
-genm_allele_delta_lij <- function(enm, site, allele) {
-  nsites <- enm$nodes$nsites
+genm_allele_delta_lij <- function(prot, site, allele) {
+  nsites <- get_nsites(prot)
   if (allele == 0) return(numeric(nsites))
-  seed <- mut_seed(enm$param$ensemble, site, allele)
-  with_mut_seed(seed, stats::rnorm(nsites, mean = 0, sd = enm$param$mut_dl_sigma))
+  seed <- mut_seed(prot$param$ensemble, site, allele)
+  with_mut_seed(seed, stats::rnorm(nsites, mean = 0, sd = prot$param$mut_dl_sigma))
 }
 
 
 #' Evaluate kij = k(lij)
 #'
-#' @param param the `param` list of a `"genm"` object
+#' @param param the `param` list of a genm `prot`
 #' @param lij equilibrium lengths
 #' @param sdij sequence separations
 #'
@@ -229,53 +245,50 @@ genm_kij <- function(param, lij, sdij) {
 #' sequence, is more than `ratio_max` of the largest `k` among edges more than
 #' three apart in sequence.
 #'
-#' @param enm a `"genm"` object
+#' @param prot a genm `prot`
 #' @param ratio_max largest acceptable ratio
 #'
 #' @noRd
 #'
-genm_check_d_max_pairs <- function(enm, ratio_max = 0.01) {
-  param <- enm$param
+genm_check_d_max_pairs <- function(prot, ratio_max = 0.01) {
+  param <- prot$param
   far_in_sequence <- 1e6
   k_far <- genm_kij(param, param$d_max_pairs, sdij = far_in_sequence)
-  k_near <- max(enm$graph$kij[enm$graph$sdij > 3])
+  k_near <- max(prot$graph$kij[prot$graph$sdij > 3])
   if (k_far > ratio_max * k_near) {
     warning("k(d_max_pairs = ", param$d_max_pairs, ") is ", signif(k_far / k_near, 2),
             " of the largest non-bonded k for model '", param$model, "'. ",
             "Pairs beyond d_max_pairs get no edge, so the truncation acts as a hard ",
             "cutoff and no contact can form beyond it.", call. = FALSE)
   }
-  invisible(enm)
+  invisible(prot)
 }
 
 
-# Protein ----------------------------------------------------------------------
+# The minimum ------------------------------------------------------------------
 
-#' Build the protein implied by a generalized ENM
+#' Move a genm protein to the minimum of its V
 #'
-#' Minimises V starting from `xyz_seed`, superposes the minimum onto
-#' `xyz_seed`, and computes kmat there. Errors if the minimisation does not
-#' converge, or ends somewhere that is not a minimum. `nma` is left `NA`: add
-#' the modes with [genm_add_nma()].
+#' Minimises V starting from the protein's structure, superposes the minimum
+#' onto that structure, and computes `dij` and kmat there. Errors if the
+#' minimisation does not converge, or ends somewhere that is not a minimum.
+#' `nma` is set to `NA`: the modes of the old structure no longer apply.
 #'
-#' @param enm a `"genm"` object
-#' @param xyz_seed starting coordinates, a vector of length `3 * nsites`
+#' @param prot a genm `prot`, whose `lij` and `kij` may have changed since its
+#'   structure was computed
 #' @param gtol convergence threshold on the largest force component
 #' @param max_iter maximum number of steps
 #'
-#' @returns an object of class `"genm_prot"`:
-#'   `list(enm, nodes, v_min, kmat, nma, minimization)`
+#' @returns `prot` at its minimum
 #'
 #' @noRd
 #'
-prot_from_enm <- function(enm, xyz_seed, gtol = 1e-10, max_iter = 100) {
-  stopifnot(inherits(enm, "genm"))
-  nsites <- enm$nodes$nsites
-  xyz_seed <- as.vector(xyz_seed)
-  if (length(xyz_seed) != 3 * nsites) stop("xyz_seed must have length 3 * nsites = ", 3 * nsites)
+genm_minimize <- function(prot, gtol = 1e-10, max_iter = 100) {
+  nsites <- get_nsites(prot)
+  xyz_seed <- get_xyz(prot)
 
   # edges with k = 0 contribute nothing to V, its gradient or kmat
-  graph <- enm$graph[enm$graph$kij > 0, ]
+  graph <- prot$graph[prot$graph$kij > 0, ]
 
   xyz <- xyz_seed
   iter <- 0
@@ -312,39 +325,21 @@ prot_from_enm <- function(enm, xyz_seed, gtol = 1e-10, max_iter = 100) {
   cholesky <- tryCatch(chol(genm_kmat_without_rigid_motion(kmat, xyz)), error = function(e) NULL)
   if (is.null(cholesky)) stop("the minimisation ended at a point that is not a minimum")
 
-  prot <- list(
-    enm = enm,
-    nodes = c(enm$nodes, list(xyz = xyz)),
-    v_min = genm_v_xyz(xyz, graph),
-    kmat = kmat,
-    nma = NA,
-    minimization = list(iter = iter, force_max = max(abs(force)))
-  )
-  class(prot) <- c("genm_prot", "list")
+  prot$nodes$xyz <- xyz
+  prot$graph$dij <- dij_edge(xyz, prot$graph$i, prot$graph$j)
+  prot$kmat <- kmat
+  prot$nma <- NA
+  prot$internal$minimization <- list(iter = iter, force_max = max(abs(force)))
   prot
 }
 
 
-#' Add normal modes to a genm_prot
+#' Superpose a genm protein onto target coordinates
 #'
-#' @param prot a `"genm_prot"` object
-#' @returns `prot`, with `nma` from [calculate_enm_nma()]
+#' Rotates and translates the protein onto `target`, and recomputes `dij`,
+#' kmat, and the modes if it has them, in the new orientation.
 #'
-#' @noRd
-#'
-genm_add_nma <- function(prot) {
-  stopifnot(inherits(prot, "genm_prot"))
-  prot$nma <- calculate_enm_nma(prot$kmat)
-  prot
-}
-
-
-#' Superpose a genm_prot onto target coordinates
-#'
-#' Rotates and translates the protein onto `target`, and recomputes kmat, and
-#' the modes if it has them, in the new orientation.
-#'
-#' @param prot a `"genm_prot"` object
+#' @param prot a genm `prot`
 #' @param target coordinates, a vector of length `3 * nsites`
 #'
 #' @returns `prot`, superposed onto `target`
@@ -352,17 +347,17 @@ genm_add_nma <- function(prot) {
 #' @noRd
 #'
 genm_superpose_prot <- function(prot, target) {
-  stopifnot(inherits(prot, "genm_prot"))
-  nsites <- prot$enm$nodes$nsites
+  nsites <- get_nsites(prot)
   target <- as.vector(target)
   if (length(target) != 3 * nsites) stop("target must have length 3 * nsites = ", 3 * nsites)
 
   all_coordinates <- seq_along(target)
-  xyz <- as.vector(bio3d::fit.xyz(fixed = target, mobile = prot$nodes$xyz,
+  xyz <- as.vector(bio3d::fit.xyz(fixed = target, mobile = get_xyz(prot),
                                   fixed.inds = all_coordinates,
                                   mobile.inds = all_coordinates))
-  graph <- prot$enm$graph[prot$enm$graph$kij > 0, ]
+  graph <- prot$graph[prot$graph$kij > 0, ]
   prot$nodes$xyz <- xyz
+  prot$graph$dij <- dij_edge(xyz, prot$graph$i, prot$graph$j)
   prot$kmat <- genm_kmat(xyz, graph, nsites)
   has_modes <- !identical(prot$nma, NA)
   if (has_modes) prot$nma <- calculate_enm_nma(prot$kmat)

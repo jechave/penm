@@ -158,7 +158,11 @@ get_graph <- function(prot) prot$graph
 #'
 #' @noRd
 #'
-get_eij <- function(prot) prot$internal$eij
+get_eij <- function(prot) {
+  eij <- prot$internal$eij
+  if (is.null(eij)) stop("prot has no eij: only a prot from set_enm(), or an lfenm mutant of one, has them")
+  eij
+}
 
 
 #' @rdname get_prot_property

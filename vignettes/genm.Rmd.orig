@@ -37,14 +37,10 @@ The springs' parameters depend on the protein's sequence. Each site carries an
 allele, and a mutation changes the allele at one site, which changes the
 $l_{ij}$ of that site's springs.
 
-Two kinds of object carry this:
-
-- an **enm** holds the parameters: the springs with their $l_{ij}$ and
-  $k_{ij}$, the sequence of alleles, and the settings of the model. It has no
-  structure.
-- a **prot** is the protein those parameters imply: its enm, the minimum-energy
-  structure, the minimum energy, the Hessian, and (when asked for) the normal
-  modes.
+A protein is a `prot`, as in the rest of penm: the settings of the model, the
+nodes with their sequence of alleles and their minimum-energy structure, the
+springs with their $l_{ij}$ and $k_{ij}$, the Hessian, and (when asked for) the
+normal modes.
 
 This vignette uses the model in two ways: a complete scan of single-point
 mutations, and a star tree of independent evolutionary trajectories. Both
@@ -65,17 +61,33 @@ package:
 ```{r internals}
 build_enm_from_pdb  <- penm:::build_enm_from_pdb
 genm_mutate         <- penm:::genm_mutate
-prot_from_enm       <- penm:::prot_from_enm
-genm_add_nma        <- penm:::genm_add_nma
+set_enm_nma         <- penm:::set_enm_nma
 genm_superpose_prot <- penm:::genm_superpose_prot
-calculate_enm_nodes <- penm:::calculate_enm_nodes
+```
+
+The mutants of the scan, and the trajectories of the tree, are independent of
+each other, so they are computed in parallel, with `mclapply()` from R's
+`parallel` package. `mclapply()` forks the R process, which Windows cannot do:
+there, set `n_cores <- 1`.
+
+```{r parallel}
+n_cores <- parallel::detectCores()
+
+# apply f to each element of x, on n_cores cores. mclapply() returns an error
+# in one element as that element's value, without stopping: stop here instead.
+run_in_parallel <- function(x, f) {
+  results <- parallel::mclapply(x, f, mc.cores = n_cores)
+  failed <- vapply(results, inherits, logical(1), what = "try-error")
+  if (any(failed)) stop(results[[which(failed)[1]]])
+  results
+}
 ```
 
 ## The wild type
 
-`build_enm_from_pdb()` makes the wild type's enm from a structure. It puts a
-spring between every pair of residues closer than `d_max_pairs`, and every site
-starts with allele 0, the residue in the pdb. The last four arguments define
+`build_enm_from_pdb()` makes the wild type from a structure. It puts a spring
+between every pair of residues closer than `d_max_pairs`, and every site starts
+with allele 0, the residue in the pdb. The last four arguments define
 what a mutation does: each site has `n_alleles` alleles, and each allele other
 than 0 shifts the $l_{ij}$ of its site's springs by normal draws with standard
 deviation `mut_dl_sigma` (in Å). Springs between sites fewer than `mut_sd_min`
@@ -83,31 +95,22 @@ apart in sequence are left alone, so with `mut_sd_min = 2` the bonds between
 sequence neighbours never change. Which draw an allele gets is fixed by
 `(ensemble, site, allele)`; see `?penm_ensemble`.
 
-```{r wild-type-enm}
-wt_enm <- build_enm_from_pdb(
+With every allele at 0, every spring is at its rest length in the pdb
+structure, so that structure is the minimum, and the wild type has it, its
+Hessian and its normal modes.
+
+```{r wild-type}
+wt <- build_enm_from_pdb(
   pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5, d_max_pairs = 14,
   ensemble = 1, n_alleles = 10, mut_dl_sigma = 0.3, mut_sd_min = 2
 )
-names(wt_enm)
-```
-
-`prot_from_enm()` makes the protein: it minimises the potential, starting from
-the coordinates it is given. For the wild type the natural start is the pdb
-structure itself. `genm_add_nma()` then adds the normal modes.
-
-```{r wild-type-prot}
-xyz_pdb <- calculate_enm_nodes(pdb_2acy_A, "ca")$xyz
-
-wt <- prot_from_enm(wt_enm, xyz_seed = xyz_pdb)
-wt <- genm_add_nma(wt)
 names(wt)
 ```
 
-With every allele at 0, every spring is at its rest length in the pdb
-structure, so the minimum energy is zero:
+The minimum energy is zero:
 
 ```{r wild-type-vmin}
-wt$v_min
+enm_v_min(wt)
 ```
 
 Some quantities used throughout:
@@ -115,10 +118,15 @@ Some quantities used throughout:
 ```{r wild-type-sizes}
 sites   <- get_site(wt)               # 1 .. number of sites
 modes   <- get_mode(wt)               # 1 .. number of normal modes, softest first
-alleles <- 0:(wt_enm$param$n_alleles - 1)
+alleles <- 0:(get_enm_param(wt)$n_alleles - 1)
 
-c(sites = length(sites), modes = length(modes), springs = nrow(wt_enm$graph))
+c(sites = length(sites), modes = length(modes), springs = nrow(wt$graph))
 ```
+
+`genm_mutate()` changes the allele at a site and minimises the potential,
+starting from the structure of the protein it mutates. The mutant has no normal
+modes: they are costly, and a long trajectory does not need them at every step.
+`set_enm_nma()` adds them.
 
 ## What is measured
 
@@ -150,28 +158,27 @@ the wild-type structure, gets its normal modes, and is compared with the wild
 type.
 
 ```{r scan}
-n_mutants <- length(sites) * (length(alleles) - 1)
+# every (site, allele) pair, except the wild type's own allele at each site
+mutations <- expand.grid(allele = alleles, site = sites)
+mutations <- mutations[mutations$allele != wt$nodes$sequence[mutations$site], ]
+nrow(mutations)
 
-scan_dr2i  <- matrix(NA_real_, nrow = n_mutants, ncol = length(sites))
-scan_dmsfi <- matrix(NA_real_, nrow = n_mutants, ncol = length(sites))
-scan_dr2n  <- matrix(NA_real_, nrow = n_mutants, ncol = length(modes))
-scan_dmsfn <- matrix(NA_real_, nrow = n_mutants, ncol = length(modes))
-
-row <- 0
-for (site in sites) {
-  for (allele in setdiff(alleles, wt_enm$sequence[site])) {
-    mutant_enm <- genm_mutate(wt_enm, site, allele)
-    mutant <- prot_from_enm(mutant_enm, xyz_seed = get_xyz(wt))
-    mutant <- genm_add_nma(mutant)
-
-    row <- row + 1
-    scan_dr2i[row, ]  <- delta_structure_dr2i(wt, mutant)
-    scan_dr2n[row, ]  <- delta_structure_dr2n(wt, mutant)
-    scan_dmsfi[row, ] <- delta_motion_dmsfi(wt, mutant)
-    scan_dmsfn[row, ] <- delta_motion_dmsfn(wt, mutant)
-  }
+compare_mutant <- function(row) {
+  mutant <- genm_mutate(wt, mutations$site[row], mutations$allele[row])
+  mutant <- set_enm_nma(mutant)
+  list(
+    dr2i  = delta_structure_dr2i(wt, mutant),
+    dr2n  = delta_structure_dr2n(wt, mutant),
+    dmsfi = delta_motion_dmsfi(wt, mutant),
+    dmsfn = delta_motion_dmsfn(wt, mutant)
+  )
 }
-row
+scan <- run_in_parallel(seq_len(nrow(mutations)), compare_mutant)
+
+scan_dr2i  <- do.call(rbind, lapply(scan, function(mutant) mutant$dr2i))
+scan_dr2n  <- do.call(rbind, lapply(scan, function(mutant) mutant$dr2n))
+scan_dmsfi <- do.call(rbind, lapply(scan, function(mutant) mutant$dmsfi))
+scan_dmsfn <- do.call(rbind, lapply(scan, function(mutant) mutant$dmsfn))
 ```
 
 Each row of these matrices is one mutant, and each column a site or a mode. The
@@ -221,7 +228,7 @@ plot_profiles(profile_table(scan_profile),
 ```
 
 ```{r bonds, include = FALSE}
-n_bonds <- sum(wt_enm$graph$sdij == 1)
+n_bonds <- sum(wt$graph$sdij == 1)
 ```
 
 Modes are numbered from the softest. The structural mode profile drops sharply
@@ -239,33 +246,34 @@ several trajectories independently from the same wild type gives a star tree:
 the wild type at the root, and one tip per trajectory.
 
 ```{r trajectories}
-n_trajectories <- 20
-n_steps <- 50
+n_trajectories <- 10
+n_steps <- 10
 
 # one element of x, at random; sample(x, 1) would misbehave if x had length 1
 pick_one <- function(x) x[sample.int(length(x), 1)]
 
-set.seed(1)
-tips <- vector("list", n_trajectories)
-for (trajectory in seq_len(n_trajectories)) {
+run_trajectory <- function(trajectory) {
+  # each trajectory has its own seed, so that its result does not depend on
+  # which core runs it
+  set.seed(trajectory)
   protein <- wt
   for (step in seq_len(n_steps)) {
     site <- pick_one(sites)
-    allele <- pick_one(setdiff(alleles, protein$enm$sequence[site]))
-    mutant_enm <- genm_mutate(protein$enm, site, allele)
-    protein <- prot_from_enm(mutant_enm, xyz_seed = get_xyz(protein))
+    allele <- pick_one(setdiff(alleles, protein$nodes$sequence[site]))
+    protein <- genm_mutate(protein, site, allele)
   }
-  tips[[trajectory]] <- protein
+  protein
 }
+tips <- run_in_parallel(seq_len(n_trajectories), run_trajectory)
 ```
 
 A site can be hit more than once along a trajectory, and a later mutation can
 take it back to an allele it had before, the wild type's included. So after
 `r n_steps` mutations, the number of sites at which a tip differs from the wild
-type is smaller:
+type can be smaller:
 
 ```{r tip-divergence}
-sites_changed <- sapply(tips, function(tip) sum(tip$enm$sequence != wt_enm$sequence))
+sites_changed <- sapply(tips, function(tip) sum(tip$nodes$sequence != wt$nodes$sequence))
 summary(sites_changed)
 ```
 
@@ -276,7 +284,7 @@ only they need normal modes, added afterwards:
 
 ```{r tips-aligned}
 aligned_tips <- lapply(tips, genm_superpose_prot, target = get_xyz(wt))
-aligned_tips <- lapply(aligned_tips, genm_add_nma)
+aligned_tips <- lapply(aligned_tips, set_enm_nma)
 ```
 
 The profiles compare **tips with each other**, not with the wild type: they
