@@ -23,12 +23,16 @@ wt_alleles <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5
 test_that("get_mutant_site validates the site and the allele", {
   expect_error(get_mutant_site(wt_alleles, 0, 1), "site_mut must be")
   expect_error(get_mutant_site(wt_alleles, get_nsites(wt_alleles) + 1, 1), "site_mut must be")
-  expect_error(get_mutant_site(wt_alleles, 80, 10), "mutation must be an allele")
-  expect_error(get_mutant_site(wt_alleles, 80, -1), "mutation must be an allele")
-  expect_error(get_mutant_site(wt_alleles, 80, 1.5), "mutation must be an allele")
+  expect_error(get_mutant_site(wt_alleles, 80, 10), "mutation must be a letter")
+  expect_error(get_mutant_site(wt_alleles, 80, -1), "mutation must be a letter")
+  expect_error(get_mutant_site(wt_alleles, 80, 1.5), "mutation must be a letter")
   no_sequence <- wt_alleles
   no_sequence$nodes$sequence <- NULL
   expect_error(get_mutant_site(no_sequence, 80, 1), "Rebuild it with set_enm")
+  # a prot from 0.4.0, where alphabet_size was n_alleles
+  from_0.4.0 <- wt_alleles
+  names(from_0.4.0$param)[names(from_0.4.0$param) == "alphabet_size"] <- "n_alleles"
+  expect_error(get_mutant_site(from_0.4.0, 80, 1), "Rebuild it with set_enm")
 })
 
 test_that("a mutant's xyz is a vector of length 3 * nsites, like the wild type's", {

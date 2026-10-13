@@ -31,13 +31,13 @@ the proteins'  \code{cmat}, and normal modes (Principal components) are assumed 
 \details{
 (This version works only for wt and mut with no indels)
 
-`delta_motion_dmsfi` returns site-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_i^2}
+\code{delta_motion_dmsfi} returns site-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_i^2}
 
-`delta_motion_dbhati` returns site-dependent profile of dbhat distances
+\code{delta_motion_dbhati} returns site-dependent profile of dbhat distances
 
-`delta_motion_rwsipi` returns site-dependent profile of rwsip similarity
+\code{delta_motion_rwsipi} returns site-dependent profile of rwsip similarity
 
-`delta_motion_dhi` returns site-dependent profile of dh similarity
+\code{delta_motion_dhi} returns site-dependent profile of dh similarity
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
@@ -55,7 +55,7 @@ range(dmsfi)
 
 }
 \seealso{
-[delta_motion_by_mode] for the same comparisons resolved by normal mode
-  rather than by site. [delta_structure_by_site] compares structure rather than
-  motion. [get_mutant_site()] produces the `mut` argument; [set_enm()] the `wt`.
+\link{delta_motion_by_mode} for the same comparisons resolved by normal mode
+rather than by site. \link{delta_structure_by_site} compares structure rather than
+motion. \code{\link[=get_mutant_site]{get_mutant_site()}} produces the \code{mut} argument; \code{\link[=set_enm]{set_enm()}} the \code{wt}.
 }

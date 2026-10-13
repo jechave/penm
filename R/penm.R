@@ -4,9 +4,9 @@
 #'
 #' @param wt The protein \code{prot} to mutate
 #' @param site_mut The site to mutate (not the pdb_site, but sequential)
-#' @param mutation The allele \code{site_mut} is given: an integer from 0 to
-#'   \code{n_alleles - 1} (see [set_enm()]). Allele 0 is the pdb's residue. If
-#'   the site already has this allele, \code{wt} is returned unchanged.
+#' @param mutation The letter \code{site_mut} is given: an integer from 0 to
+#'   \code{alphabet_size - 1} (see [set_enm()]). Letter 0 is the pdb's residue.
+#'   If the site already has this letter, \code{wt} is returned unchanged.
 #'
 #' @return A mutated protein object
 #'
@@ -15,12 +15,12 @@
 #' \code{ensemble} — is part of \code{wt}: it was set by [set_enm()], and the
 #' mutant inherits it, so that it can be mutated in turn the same way.
 #'
-#' Each site carries an allele. There are no amino acids in this model: what an
-#' allele does is a set of random perturbations of the equilibrium lengths of
-#' the site's contacts, fixed by \code{(ensemble, site_mut, mutation)} — see
-#' \code{?penm_ensemble} for what that means and when \code{ensemble} may be
-#' changed. The equilibrium lengths depend only on the alleles, so mutating a
-#' site back to an earlier allele restores its earlier lengths.
+#' Each site carries a letter of the model's alphabet, and a mutation changes
+#' it. What a letter does to the equilibrium lengths of its site's springs is
+#' random, fixed by \code{(ensemble, site_mut, mutation)}: see Details in
+#' [set_enm()], and \code{?penm_ensemble} for what \code{ensemble} means and
+#' when it may be changed. The equilibrium lengths depend only on the letters,
+#' so mutating a site back to an earlier letter restores its earlier lengths.
 #'
 #' The two mutational models (see `mut_model` in [set_enm()]) make the mutant's
 #' structure differently. In `"lfenm"` it is the linear response to the force
@@ -42,7 +42,7 @@
 #'               d_max = 10.5, ensemble = 7)
 #' mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
 #'
-#' # the allele a site already has returns the protein unchanged
+#' # the letter a site already has returns the protein unchanged
 #' identical(get_mutant_site(wt, site_mut = 11, mutation = 0), wt)
 #'
 #' # mutating back restores the wild type's equilibrium lengths
@@ -59,15 +59,15 @@
 #'
 get_mutant_site <- function(wt, site_mut, mutation = 0) {
   param <- get_enm_param(wt)
-  if (is.null(param$mut_model) || is.null(wt$nodes$sequence)) {
-    stop("wt has no mut_model or no sequence: it was built by an earlier version of penm. Rebuild it with set_enm().")
+  if (is.null(param$mut_model) || is.null(param$alphabet_size) || is.null(wt$nodes$sequence)) {
+    stop("wt lacks mut_model, alphabet_size or sequence: it was built by an earlier version of penm. Rebuild it with set_enm().")
   }
   nsites <- get_nsites(wt)
   if (!(site_mut %in% seq_len(nsites))) {
     stop("site_mut must be one of 1..", nsites)
   }
-  if (!(mutation %in% 0:(param$n_alleles - 1))) {
-    stop("mutation must be an allele, one of 0..", param$n_alleles - 1)
+  if (!(mutation %in% 0:(param$alphabet_size - 1))) {
+    stop("mutation must be a letter of the alphabet, one of 0..", param$alphabet_size - 1)
   }
   if (mutation == wt$nodes$sequence[site_mut]) {
     # the protein with this allele at site_mut is wt itself
@@ -122,7 +122,7 @@ get_mutant_site_lfenm <- function(wt, site_mut, mutation) {
 #' Equilibrium lengths implied by the sequence
 #'
 #' \eqn{l_{ij} = l^0_{ij} + \delta(i, s_i)_{ij} + \delta(j, s_j)_{ij}} for every
-#' edge, with \eqn{\delta} given by [allele_delta_lij()] for edges with
+#' edge, with \eqn{\delta} given by `allele_delta_lij()` for edges with
 #' `sdij >= mut_sd_min`, and 0 for the others. Computed from `l0ij` and the
 #' sequence only, so equal sequences give identical lengths. Used by both
 #' mutational models.
@@ -163,7 +163,7 @@ calculate_lij <- function(prot) {
 #'
 #' @param prot a `prot`
 #' @param site sequential site index
-#' @param allele an allele in `0 .. n_alleles - 1`
+#' @param allele a letter, in `0 .. alphabet_size - 1`
 #'
 #' @returns a vector of length `nsites`
 #'

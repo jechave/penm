@@ -1,3 +1,29 @@
+# penm 0.5.0
+
+## Breaking changes
+
+* `set_enm()`'s `n_alleles` is renamed `alphabet_size`, and so is the entry in
+  a protein's `param`: it is the size of the model's sequence alphabet, the
+  number of letters a site can carry. Results do not change. A `prot` built by
+  0.4.0 is rejected by `get_mutant_site()`: rebuild it with `set_enm()`.
+
+## Documentation
+
+* `?set_enm` has a Details section on sequences and mutations: what a letter
+  does to the spring lengths, and that letter 0, the pdb's residue, is the
+  reference. A mutation from it changes a spring's length with standard
+  deviation `mut_dl_sigma`; a mutation between two other letters, with standard
+  deviation `mut_dl_sigma` times the square root of 2.
+* `mut_dl_sigma` is defined correctly: the spread of a letter's shift relative
+  to the pdb's length, not of any mutation's change.
+* `?set_enm` describes the fields of the returned `prot`; `?get_prot_property`
+  says that the mode accessors need normal modes, which a genm mutant gets from
+  `set_enm_nma()`.
+* User-facing text calls a site's value a letter, not an allele.
+* The help pages render their markdown. Roxygen's markdown support was never
+  turned on, so code, links and emphasis showed as literal backticks, square
+  brackets and asterisks in every page written with them.
+
 # penm 0.4.0
 
 ## Breaking changes

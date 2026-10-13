@@ -95,7 +95,7 @@ kij_reach <- function(dij, sdij, same_chain = TRUE, ...) {
 
 #' Calculate kij for the ANM with a smoothed cutoff
 #'
-#' As [kij_anm()], with the step at `d_max` replaced by
+#' As `kij_anm()`, with the step at `d_max` replaced by
 #' \eqn{\frac12 [1 - \tanh((d - d_{max}) / d_{max\_width})]}, so `kij = k/2` at the
 #' cutoff, and `k` falls from its full value to 0 over about `d_max +/- 2 d_max_width`.
 #' i,i+1 contacts are forced to `k` regardless of distance, as in `kij_anm`.
@@ -114,7 +114,7 @@ kij_anm_smooth <- function(dij, sdij, d_max = 10, d_max_width, k = 1, ...) {
 
 #' Calculate kij for model by Ming and Wall (2005) with a smoothed cutoff
 #'
-#' As [kij_ming_wall()], with the step at `d_max` replaced by
+#' As `kij_ming_wall()`, with the step at `d_max` replaced by
 #' \eqn{\frac12 [1 - \tanh((d - d_{max}) / d_{max\_width})]}, so `kij = k/2` at the
 #' cutoff, and `k` falls from its full value to 0 over about `d_max +/- 2 d_max_width`.
 #' i,i+1 contacts get `a * k` regardless of distance, as in `kij_ming_wall`.

@@ -38,15 +38,15 @@ A (scalar) energy difference between mutant and wild type.
 Calculate energy differences between a mutant and wild type
 }
 \details{
-`ddg_dv` calculates the minimum-energy difference between \code{mut} and \code{wt}
+\code{ddg_dv} calculates the minimum-energy difference between \code{mut} and \code{wt}
 
-`ddg_tds` calculates the entropic free energy difference between \code{mut} and \code{wt}
+\code{ddg_tds} calculates the entropic free energy difference between \code{mut} and \code{wt}
 
-`delta_energy_dvs` calculates the ideal-conformation stress-energy difference between \code{mut} and \code{wt}
+\code{delta_energy_dvs} calculates the ideal-conformation stress-energy difference between \code{mut} and \code{wt}
 
-`ddgact_dv` calculates the energy contribution to the change in activation energy between \code{mut} and \code{wt}
+\code{ddgact_dv} calculates the energy contribution to the change in activation energy between \code{mut} and \code{wt}
 
-`ddgact_tds` calculates the entropy contribution to the change in activation energy between \code{mut} and \code{wt}
+\code{ddgact_tds} calculates the entropy contribution to the change in activation energy between \code{mut} and \code{wt}
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
@@ -62,7 +62,7 @@ ddg_tds(wt, mut)
 
 }
 \seealso{
-[delta_structure_by_site] and [delta_motion_by_site] for per-site
-  profiles rather than scalars. [get_mutant_site()] produces the `mut` argument;
-  [set_enm()] the `wt`.
+\link{delta_structure_by_site} and \link{delta_motion_by_site} for per-site
+profiles rather than scalars. \code{\link[=get_mutant_site]{get_mutant_site()}} produces the \code{mut} argument;
+\code{\link[=set_enm]{set_enm()}} the \code{wt}.
 }

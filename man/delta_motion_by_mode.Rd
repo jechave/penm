@@ -31,15 +31,15 @@ the proteins'  \code{cmat}, and normal modes (Principal components) are assumed 
 \details{
 (This version works only for wt and mut with no indels)
 
-`delta_motion_dmsfn` returns mode-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_n^2}.
+\code{delta_motion_dmsfn} returns mode-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_n^2}.
 This version calculates fluctuations along normal modes of wt, it's independent of possible assignment issues.
 
-`delta_motion_dhn` returns mode-dependent profile of entropy differences \eqn{\delta H_n}
+\code{delta_motion_dhn} returns mode-dependent profile of entropy differences \eqn{\delta H_n}
 This version calculates fluctuations along normal modes of wt, it's independent of possible assignment issues.
 
-`delta_motion_rwsipn` returns mode-dependent profile of rwsip similarity
+\code{delta_motion_rwsipn} returns mode-dependent profile of rwsip similarity
 
-`delta_motion_nhn` returns mode-dependent profile of mode conservation  measure \eqn{nH_n}
+\code{delta_motion_nhn} returns mode-dependent profile of mode conservation  measure \eqn{nH_n}
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
@@ -55,7 +55,7 @@ range(dmsfn)
 
 }
 \seealso{
-[delta_motion_by_site] for the same comparisons resolved by site rather
-  than by mode. [delta_structure_by_mode] compares structure rather than motion.
-  [get_mutant_site()] produces the `mut` argument; [set_enm()] the `wt`.
+\link{delta_motion_by_site} for the same comparisons resolved by site rather
+than by mode. \link{delta_structure_by_mode} compares structure rather than motion.
+\code{\link[=get_mutant_site]{get_mutant_site()}} produces the \code{mut} argument; \code{\link[=set_enm]{set_enm()}} the \code{wt}.
 }

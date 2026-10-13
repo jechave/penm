@@ -9,6 +9,11 @@
 #' `get_bfactor`, `get_xyz`), and the network and its normal modes (`get_kmat`,
 #' `get_cmat`, `get_mode`, `get_evalue`, `get_umat`, `get_nmodes`).
 #'
+#' The mode accessors (`get_mode`, `get_evalue`, `get_umat`, `get_cmat`,
+#' `get_nmodes`) need the protein's normal modes. A genm mutant from
+#' [get_mutant_site()] has none until [set_enm_nma()] adds them; on such a
+#' protein they stop with an error saying so.
+#'
 #' Prefer them over reaching into the list directly: a `prot` also carries
 #' derived components that `penm` maintains for speed, whose internal consistency
 #' is the package's business, and whose layout may change. The accessors are the

@@ -133,7 +133,7 @@ dactive.xyz <- function(xyz, site_active) {
 #' Set of indices of the 3N-long xyz vector that corresponds to a set of sites
 #'
 #' @param site is a vector of sites
-#' @returns a vector of indices such that xyz[xyz_indices_site(site)] are the xyz coorinates of site
+#' @returns a vector of indices such that `xyz[xyz_indices_site(site)]` are the xyz coordinates of site
 #'
 #' @noRd
 #'

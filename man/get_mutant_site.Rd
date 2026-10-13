@@ -11,9 +11,9 @@ get_mutant_site(wt, site_mut, mutation = 0)
 
 \item{site_mut}{The site to mutate (not the pdb_site, but sequential)}
 
-\item{mutation}{The allele \code{site_mut} is given: an integer from 0 to
-\code{n_alleles - 1} (see [set_enm()]). Allele 0 is the pdb's residue. If
-the site already has this allele, \code{wt} is returned unchanged.}
+\item{mutation}{The letter \code{site_mut} is given: an integer from 0 to
+\code{alphabet_size - 1} (see \code{\link[=set_enm]{set_enm()}}). Letter 0 is the pdb's residue.
+If the site already has this letter, \code{wt} is returned unchanged.}
 }
 \value{
 A mutated protein object
@@ -23,30 +23,30 @@ Returns a mutant given a wt and a site to mutate (site_mut)
 }
 \details{
 How the mutant is made — the mutational model and its parameters, and the
-\code{ensemble} — is part of \code{wt}: it was set by [set_enm()], and the
+\code{ensemble} — is part of \code{wt}: it was set by \code{\link[=set_enm]{set_enm()}}, and the
 mutant inherits it, so that it can be mutated in turn the same way.
 
-Each site carries an allele. There are no amino acids in this model: what an
-allele does is a set of random perturbations of the equilibrium lengths of
-the site's contacts, fixed by \code{(ensemble, site_mut, mutation)} — see
-\code{?penm_ensemble} for what that means and when \code{ensemble} may be
-changed. The equilibrium lengths depend only on the alleles, so mutating a
-site back to an earlier allele restores its earlier lengths.
+Each site carries a letter of the model's alphabet, and a mutation changes
+it. What a letter does to the equilibrium lengths of its site's springs is
+random, fixed by \code{(ensemble, site_mut, mutation)}: see Details in
+\code{\link[=set_enm]{set_enm()}}, and \code{?penm_ensemble} for what \code{ensemble} means and
+when it may be changed. The equilibrium lengths depend only on the letters,
+so mutating a site back to an earlier letter restores its earlier lengths.
 
-The two mutational models (see `mut_model` in [set_enm()]) make the mutant's
-structure differently. In `"lfenm"` it is the linear response to the force
+The two mutational models (see \code{mut_model} in \code{\link[=set_enm]{set_enm()}}) make the mutant's
+structure differently. In \code{"lfenm"} it is the linear response to the force
 the changed lengths exert; the mutant keeps the network matrix and normal
-modes of the protein `set_enm()` built. In `"genm"` the spring constants
+modes of the protein \code{set_enm()} built. In \code{"genm"} the spring constants
 follow the lengths, and the structure is the minimum of the mutant's energy,
-found starting from `wt`'s structure and superposed onto it. A genm mutant
-is returned without normal modes; add them with [set_enm_nma()] when needed.
+found starting from \code{wt}'s structure and superposed onto it. A genm mutant
+is returned without normal modes; add them with \code{\link[=set_enm_nma]{set_enm_nma()}} when needed.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
               d_max = 10.5, ensemble = 7)
 mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
 
-# the allele a site already has returns the protein unchanged
+# the letter a site already has returns the protein unchanged
 identical(get_mutant_site(wt, site_mut = 11, mutation = 0), wt)
 
 # mutating back restores the wild type's equilibrium lengths
@@ -61,9 +61,9 @@ ddg_tds(wt_genm, mut_genm)
 
 }
 \seealso{
-[set_enm()] to build the `wt` argument and choose how it mutates;
-  [penm_ensemble] for what `ensemble` means and when to change it;
-  [delta_structure_by_site], [delta_motion_by_site] and [delta_energy] to
-  measure the resulting wild-type-vs-mutant differences.
+\code{\link[=set_enm]{set_enm()}} to build the \code{wt} argument and choose how it mutates;
+\link{penm_ensemble} for what \code{ensemble} means and when to change it;
+\link{delta_structure_by_site}, \link{delta_motion_by_site} and \link{delta_energy} to
+measure the resulting wild-type-vs-mutant differences.
 }
 \concept{enm mutating functions}

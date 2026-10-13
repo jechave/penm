@@ -2,13 +2,13 @@
 % Please edit documentation in R/penm-ensemble.R
 \name{penm_ensemble}
 \alias{penm_ensemble}
-\title{What `ensemble` means, and when to change it}
+\title{What \code{ensemble} means, and when to change it}
 \description{
-There are no amino acids in penm's mutational models. Each site carries an
-allele, from 0 (the pdb's residue) to \code{n_alleles - 1}, and what an
-allele does is a set of random perturbations of the equilibrium lengths of
-that site's contacts — not the substitution of one residue type for another.
-Nothing in the model says which amino acid an allele *is*.
+Each site carries a letter of the model's alphabet, from 0 (the pdb's
+residue) to \code{alphabet_size - 1}. A letter has no chemical identity:
+what it does is a set of random shifts of the equilibrium lengths of its
+site's springs (see Details in \code{\link[=set_enm]{set_enm()}}). Nothing in the model says which
+amino acid a letter \emph{is}.
 
 That leaves a gap. A real substitution has an identity: measuring the same
 one twice must give the same answer. \code{ensemble} is what fills it.
@@ -17,12 +17,12 @@ perturbations completely — with \code{ensemble} held fixed, "mutation 3 at
 site 80" always means the same set of contact perturbations, in every
 session and every script.
 
-So \code{ensemble} names **which realization of the mutational process** you
+So \code{ensemble} names \strong{which realization of the mutational process} you
 are working in. Changing it does not add randomness or draw again: it moves
 you to a different realization, in which "mutation 3 at site 80" is a
 different mutation.
 
-Note what the realization does *not* control. Which contacts a mutation
+Note what the realization does \emph{not} control. Which contacts a mutation
 perturbs is fixed by the site and by \code{mut_sd_min} — it is a property of
 the contact map. Only the magnitudes of the perturbations vary between
 realizations.
@@ -33,7 +33,7 @@ realizations.
 A mutational scan, an evolutionary trajectory, a set of results compared
 against each other — all must run under a single \code{ensemble}.
 
-[set_enm()] stores \code{ensemble} in the protein it builds, and every
+\code{\link[=set_enm]{set_enm()}} stores \code{ensemble} in the protein it builds, and every
 mutant inherits it, so a scan or a trajectory started from one wild type
 holds it fixed by construction.
 
@@ -57,13 +57,13 @@ mutants drawn under different \code{ensemble} values share a random stream,
 including for adjacent values such as 1 and 2.
 }
 
-\section{How many alleles there are does not matter}{
+\section{The size of the alphabet does not matter}{
 
 
-The key never mentions \code{n_alleles}, so with \code{n_alleles = 51} the
-first ten alleles at each site are the same ten alleles as with
-\code{n_alleles = 11}. A scan can be extended without invalidating what you
-already have.
+The key never mentions \code{alphabet_size}, so with
+\code{alphabet_size = 51} the first ten letters at each site are the same
+ten letters as with \code{alphabet_size = 11}. A scan can be extended
+without invalidating what you already have.
 }
 
 \section{Choosing a value}{
@@ -90,8 +90,8 @@ seed is derived from it.
 Hashing, rather than arithmetic, is what keeps distinct mutants distinct. An
 arithmetic key such as \code{seed + site_mut * mutation} maps every divisor
 pair of the same product onto one stream, which silently made thousands of
-mutants in a scan copies of each other. Drawing each allele from its own
-hashed stream is also why a scan does not depend on \code{n_alleles}, and why
+mutants in a scan copies of each other. Drawing each letter from its own
+hashed stream is also why a scan does not depend on \code{alphabet_size}, and why
 mutants can be generated in any order.
 }
 
@@ -117,6 +117,6 @@ identical(which(a$graph$lij != wt_1$graph$lij),
 
 }
 \seealso{
-[set_enm()], which takes the `ensemble` argument;
-  [get_mutant_site()], whose mutants inherit it.
+\code{\link[=set_enm]{set_enm()}}, which takes the \code{ensemble} argument;
+\code{\link[=get_mutant_site]{get_mutant_site()}}, whose mutants inherit it.
 }

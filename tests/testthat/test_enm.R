@@ -52,7 +52,7 @@ test_that("set_enm stores how the protein mutates, with defaults", {
   wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
   expect_identical(get_enm_param(wt), list(
     node = "ca", model = "ming_wall", d_max = 10.5, d_max_graph = 10.5, kij_par = list(),
-    mut_model = "lfenm", ensemble = 1L, n_alleles = 10L, mut_dl_sigma = 0.3, mut_sd_min = 2L
+    mut_model = "lfenm", ensemble = 1L, alphabet_size = 10L, mut_dl_sigma = 0.3, mut_sd_min = 2L
   ))
 
   # the mutation parameters reach the mutant: mut_sd_min = 1 perturbs the
@@ -88,7 +88,7 @@ test_that("set_enm validates its arguments", {
   expect_error(b(model = "ming_wall_smooth"), "\"d_max_width\" is missing")
   expect_error(b(model = "no_such_model"), "kij_no_such_model")
   expect_error(b(model = "ming_wall", ensemble = 1.5), "ensemble")
-  expect_error(b(model = "ming_wall", n_alleles = 1), "n_alleles")
+  expect_error(b(model = "ming_wall", alphabet_size = 1), "alphabet_size")
   expect_error(b(model = "ming_wall", mut_dl_sigma = 0), "mut_dl_sigma")
   expect_error(b(model = "ming_wall", mut_sd_min = 0), "mut_sd_min")
 })

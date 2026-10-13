@@ -13,73 +13,104 @@ set_enm(
   mut_model = "lfenm",
   d_max_graph = d_max,
   ensemble = 1L,
-  n_alleles = 10L,
+  alphabet_size = 10L,
   mut_dl_sigma = 0.3,
   mut_sd_min = 2L
 )
 }
 \arguments{
-\item{pdb}{pdb object obtained using [bio3d::read.pdb()]}
+\item{pdb}{pdb object obtained using \code{\link[bio3d:read.pdb]{bio3d::read.pdb()}}}
 
-\item{node}{how network nodes are built: `"ca"` (alpha carbons), `"sc"` (side
-chains), or `"cb"` (beta carbons). The long forms `"calpha"`, `"side_chain"`
-and `"beta"` are accepted as synonyms.}
+\item{node}{how network nodes are built: \code{"ca"} (alpha carbons), \code{"sc"} (side
+chains), or \code{"cb"} (beta carbons). The long forms \code{"calpha"}, \code{"side_chain"}
+and \code{"beta"} are accepted as synonyms.}
 
-\item{model}{ENM variant, one of `"anm"`, `"ming_wall"`, `"hnm"`, `"hnm0"`,
-`"pfanm"`, `"reach"`, `"anm_smooth"`, `"ming_wall_smooth"`. These select the
+\item{model}{ENM variant, one of \code{"anm"}, \code{"ming_wall"}, \code{"hnm"}, \code{"hnm0"},
+\code{"pfanm"}, \code{"reach"}, \code{"anm_smooth"}, \code{"ming_wall_smooth"}. These select the
 spring-constant function applied to each contact.}
 
 \item{d_max}{distance cutoff (Å) used to define enm contacts}
 
 \item{...}{further parameters of the spring-constant function, by name; for
-example `d_max_width`, which `"anm_smooth"` and `"ming_wall_smooth"` require:
-the width (Å) of the switch from contact to no contact around `d_max`.}
+example \code{d_max_width}, which \code{"anm_smooth"} and \code{"ming_wall_smooth"} require:
+the width (Å) of the switch from contact to no contact around \code{d_max}.}
 
-\item{mut_model}{the mutational model, `"lfenm"` or `"genm"`. In both, each
-site carries an allele, and the equilibrium lengths of the edges depend on
-the alleles of the sites they join; a mutation changes the allele at one
-site. In `"lfenm"` the spring constants do not change, and the mutant's
-structure is the linear response to the resulting force. In `"genm"` the
+\item{mut_model}{the mutational model, \code{"lfenm"} or \code{"genm"}. In both, a
+mutation changes the letter at one site, which changes the equilibrium
+lengths of the site's springs (see Details). In \code{"lfenm"} the spring
+constants do not change, and the mutant's
+structure is the linear response to the resulting force. In \code{"genm"} the
 spring constants depend on the equilibrium lengths, and a mutant's
 structure is the minimum of its energy.}
 
 \item{d_max_graph}{distance (Å) in the pdb within which a pair of nodes
-gets an edge (pairs adjacent in sequence always get one). For `"lfenm"` it
-must equal `d_max`. For `"genm"` it must reach out to where the spring
+gets an edge (pairs adjacent in sequence always get one). For \code{"lfenm"} it
+must equal \code{d_max}. For \code{"genm"} it must reach out to where the spring
 constant is negligible, so that pairs that mutations bring closer can
 become contacts; a warning is given when it does not.}
 
 \item{ensemble}{an integer naming which realization of the mutational
-process the protein's mutants belong to; see `?penm_ensemble`.}
+process the protein's mutants belong to; see \code{?penm_ensemble}.}
 
-\item{n_alleles}{the number of alleles per site, including the pdb's
-(allele 0). One ensemble offers `n_alleles - 1` mutations at each site; a
-profile averaged over the mutations at one site may need more than the
-default gives, or several ensembles.}
+\item{alphabet_size}{the size of the model's sequence alphabet: the number
+of letters each site can carry, numbered 0 to \code{alphabet_size - 1}. Letter
+0 is the residue in the pdb. See Details.}
 
-\item{mut_dl_sigma}{the standard deviation (Å) of the change a mutation makes
-to an equilibrium length.}
+\item{mut_dl_sigma}{the standard deviation (Å) of the shift a letter other
+than 0 makes to each of its site's spring lengths, relative to the pdb's
+length. See Details.}
 
-\item{mut_sd_min}{mutations leave alone the edges between sites less than
-`mut_sd_min` apart in sequence.}
+\item{mut_sd_min}{springs between sites fewer than \code{mut_sd_min} apart in
+sequence are not changed by mutations.}
 }
 \value{
-an object of class `prot`, which is a list
-  `lst(param, nodes, graph, kmat, nma, internal)`. `param` holds the
-  arguments other than `pdb`. `internal` holds what penm needs for its own
-  computations and is not meant to be read.
+an object of class \code{prot}, which is a list
+\code{lst(param, nodes, graph, kmat, nma, internal)}. \code{param} holds the
+arguments other than \code{pdb}, with those given in \code{...} under \code{kij_par}.
+\code{nodes} holds the sites, their coordinates and their \code{sequence} of
+letters. \code{graph} has one row per spring, with its pdb length \code{l0ij},
+equilibrium length \code{lij}, spring constant \code{kij} and current length \code{dij}.
+\code{kmat} is the network matrix and \code{nma} its normal modes. \code{internal} holds
+what penm needs for its own computations and is not meant to be read.
 }
 \description{
-`set_enm` sets up a `prot` object containing information on ENM structure,
+\code{set_enm} sets up a \code{prot} object containing information on ENM structure,
 parameters, and normal modes. It is the entry point of the package: everything
-else takes the `prot` it returns.
+else takes the \code{prot} it returns.
 
 The protein also carries how it mutates: the mutational model and its
-parameters are stored with it, and [get_mutant_site()] uses them. A mutant
+parameters are stored with it, and \code{\link[=get_mutant_site]{get_mutant_site()}} uses them. A mutant
 inherits them, so that it can be mutated in turn the same way.
 
-`pdb`, `node`, `model` and `d_max` are required. The other arguments have
+\code{pdb}, \code{node}, \code{model} and \code{d_max} are required. The other arguments have
 defaults.
+}
+\details{
+\strong{Sequences and mutations.} Each site carries a letter of an alphabet of
+\code{alphabet_size} letters, numbered 0 to \code{alphabet_size - 1}. In the protein
+\code{set_enm()} builds, every site carries letter 0: the residue in the pdb, the
+one the structure is relaxed for. Its springs have the lengths of the pdb,
+\eqn{l^0_{ij}}{l0_ij}.
+
+Every other letter \eqn{a}{a} at site \eqn{i}{i} shifts the equilibrium
+length of each of the site's springs, to each site \eqn{j}{j}, by an amount
+\eqn{\delta_{ij}(a)}{delta_ij(a)}, normal with mean 0 and standard deviation
+\code{mut_dl_sigma}. Each amount is drawn once, fixed by \code{ensemble}, the site and
+the letter (see \code{?penm_ensemble}). Letter 0 shifts nothing. A spring's
+equilibrium length is
+\deqn{l_{ij} = l^0_{ij} + \delta_{ij}(s_i) + \delta_{ji}(s_j),}{l_ij = l0_ij + delta_ij(s_i) + delta_ji(s_j),}
+with \eqn{s_i}{s_i} and \eqn{s_j}{s_j} the letters at its two ends. Springs
+between sites fewer than \code{mut_sd_min} apart in sequence keep
+\eqn{l^0_{ij}}{l0_ij}.
+
+A mutation changes the letter at one site. From the pdb's letter to another,
+it changes each of the site's spring lengths by a normal amount with standard
+deviation \code{mut_dl_sigma}; between two other letters, by the difference of
+two such amounts, with standard deviation \eqn{\sqrt{2}}{sqrt(2)} times
+\code{mut_dl_sigma}. The
+lengths depend only on the letters, so mutating a site back restores its
+earlier lengths. Letters are labels within a site: the same letter at two
+sites has unrelated effects.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
@@ -99,8 +130,8 @@ wt_smooth <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall_smooth",
 get_enm_param(wt_smooth)$mut_dl_sigma
 }
 \seealso{
-[get_mutant_site()] to perturb the result;
-  [get_prot_property] for the accessors that read a `prot`;
-  [delta_structure_by_site], [delta_motion_by_site] and [delta_energy] for the
-  wild-type-vs-mutant comparisons.
+\code{\link[=get_mutant_site]{get_mutant_site()}} to perturb the result;
+\link{get_prot_property} for the accessors that read a \code{prot};
+\link{delta_structure_by_site}, \link{delta_motion_by_site} and \link{delta_energy} for the
+wild-type-vs-mutant comparisons.
 }

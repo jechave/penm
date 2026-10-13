@@ -41,14 +41,14 @@ get_cmat(prot)
 get_nmodes(prot)
 }
 \arguments{
-\item{prot}{A protein with its associated ENM model, obtained using `set_enm`}
+\item{prot}{A protein with its associated ENM model, obtained using \code{set_enm}}
 }
 \value{
 \code{get_enm_param}: list of ENM parameters
 
 \code{get_nsites}: number of sites (ENM nodes)
 
-\code{get_site}: site indexes, from `1` to `nsites`
+\code{get_site}: site indexes, from \code{1} to \code{nsites}
 
 \code{get_pdb_site}: site indexes, pdb numeration (resno)
 
@@ -69,15 +69,20 @@ get_nmodes(prot)
 \code{get_nmodes}: the number of normal modes
 }
 \description{
-These accessors are the supported way to read a `prot` object built by
-[set_enm()]. They fall into three groups: the model parameters (`get_enm_param`),
-the nodes and their geometry (`get_nsites`, `get_site`, `get_pdb_site`,
-`get_bfactor`, `get_xyz`), and the network and its normal modes (`get_kmat`,
-`get_cmat`, `get_mode`, `get_evalue`, `get_umat`, `get_nmodes`).
+These accessors are the supported way to read a \code{prot} object built by
+\code{\link[=set_enm]{set_enm()}}. They fall into three groups: the model parameters (\code{get_enm_param}),
+the nodes and their geometry (\code{get_nsites}, \code{get_site}, \code{get_pdb_site},
+\code{get_bfactor}, \code{get_xyz}), and the network and its normal modes (\code{get_kmat},
+\code{get_cmat}, \code{get_mode}, \code{get_evalue}, \code{get_umat}, \code{get_nmodes}).
 }
 \details{
-Prefer them over reaching into the list directly: a `prot` also carries
-derived components that `penm` maintains for speed, whose internal consistency
+The mode accessors (\code{get_mode}, \code{get_evalue}, \code{get_umat}, \code{get_cmat},
+\code{get_nmodes}) need the protein's normal modes. A genm mutant from
+\code{\link[=get_mutant_site]{get_mutant_site()}} has none until \code{\link[=set_enm_nma]{set_enm_nma()}} adds them; on such a
+protein they stop with an error saying so.
+
+Prefer them over reaching into the list directly: a \code{prot} also carries
+derived components that \code{penm} maintains for speed, whose internal consistency
 is the package's business, and whose layout may change. The accessors are the
 interface; the list structure is not.
 }
@@ -102,5 +107,5 @@ dim(get_umat(wt))
 
 }
 \seealso{
-[set_enm()], which builds the `prot` these read.
+\code{\link[=set_enm]{set_enm()}}, which builds the \code{prot} these read.
 }

@@ -7,23 +7,23 @@
 set_enm_nma(prot)
 }
 \arguments{
-\item{prot}{a `prot`, with or without normal modes}
+\item{prot}{a \code{prot}, with or without normal modes}
 }
 \value{
-`prot`, with its normal modes
+\code{prot}, with its normal modes
 }
 \description{
-Computes the normal modes of a protein from its network matrix (`kmat`):
+Computes the normal modes of a protein from its network matrix (\code{kmat}):
 eigenvalues, eigenvectors and covariance matrix, as the mode accessors
-([get_prot_property]) and the measures built on them read them.
+(\link{get_prot_property}) and the measures built on them read them.
 }
 \details{
-A protein from [set_enm()] has its modes, and so does an lfenm mutant, which
-inherits them. A genm mutant from [get_mutant_site()] does not: its modes
+A protein from \code{\link[=set_enm]{set_enm()}} has its modes, and so does an lfenm mutant, which
+inherits them. A genm mutant from \code{\link[=get_mutant_site]{get_mutant_site()}} does not: its modes
 cost an eigendecomposition, which a long trajectory need not pay at every
-step. Call `set_enm_nma()` on the proteins whose modes you need.
+step. Call \code{set_enm_nma()} on the proteins whose modes you need.
 
-If the protein already has modes, they are recomputed from `kmat`, which
+If the protein already has modes, they are recomputed from \code{kmat}, which
 gives the same modes.
 }
 \examples{
@@ -34,5 +34,5 @@ mut <- set_enm_nma(mut)
 get_nmodes(mut)
 }
 \seealso{
-[get_mutant_site()]; [get_prot_property] for the mode accessors.
+\code{\link[=get_mutant_site]{get_mutant_site()}}; \link{get_prot_property} for the mode accessors.
 }

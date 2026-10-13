@@ -1,11 +1,11 @@
 #' What `ensemble` means, and when to change it
 #'
 #' @description
-#' There are no amino acids in penm's mutational models. Each site carries an
-#' allele, from 0 (the pdb's residue) to \code{n_alleles - 1}, and what an
-#' allele does is a set of random perturbations of the equilibrium lengths of
-#' that site's contacts — not the substitution of one residue type for another.
-#' Nothing in the model says which amino acid an allele *is*.
+#' Each site carries a letter of the model's alphabet, from 0 (the pdb's
+#' residue) to \code{alphabet_size - 1}. A letter has no chemical identity:
+#' what it does is a set of random shifts of the equilibrium lengths of its
+#' site's springs (see Details in [set_enm()]). Nothing in the model says which
+#' amino acid a letter *is*.
 #'
 #' That leaves a gap. A real substitution has an identity: measuring the same
 #' one twice must give the same answer. \code{ensemble} is what fills it.
@@ -50,12 +50,12 @@
 #' mutants drawn under different \code{ensemble} values share a random stream,
 #' including for adjacent values such as 1 and 2.
 #'
-#' @section How many alleles there are does not matter:
+#' @section The size of the alphabet does not matter:
 #'
-#' The key never mentions \code{n_alleles}, so with \code{n_alleles = 51} the
-#' first ten alleles at each site are the same ten alleles as with
-#' \code{n_alleles = 11}. A scan can be extended without invalidating what you
-#' already have.
+#' The key never mentions \code{alphabet_size}, so with
+#' \code{alphabet_size = 51} the first ten letters at each site are the same
+#' ten letters as with \code{alphabet_size = 11}. A scan can be extended
+#' without invalidating what you already have.
 #'
 #' @section Choosing a value:
 #'
@@ -78,8 +78,8 @@
 #' Hashing, rather than arithmetic, is what keeps distinct mutants distinct. An
 #' arithmetic key such as \code{seed + site_mut * mutation} maps every divisor
 #' pair of the same product onto one stream, which silently made thousands of
-#' mutants in a scan copies of each other. Drawing each allele from its own
-#' hashed stream is also why a scan does not depend on \code{n_alleles}, and why
+#' mutants in a scan copies of each other. Drawing each letter from its own
+#' hashed stream is also why a scan does not depend on \code{alphabet_size}, and why
 #' mutants can be generated in any order.
 #'
 #' @seealso [set_enm()], which takes the `ensemble` argument;

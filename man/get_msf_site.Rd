@@ -27,7 +27,7 @@ all.equal(msf, diag(get_reduced_cmat(wt)))
 
 }
 \seealso{
-[get_msf_mode()] for the same fluctuations resolved by mode instead.
+\code{\link[=get_msf_mode]{get_msf_mode()}} for the same fluctuations resolved by mode instead.
 
 Other site profiles:
 \code{\link[=get_cn]{get_cn()}},

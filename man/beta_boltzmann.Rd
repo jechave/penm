@@ -16,7 +16,7 @@ a scalar, \eqn{1 / (RT)}, in mol/kcal
 }
 \description{
 The default inverse temperature used by the entropic energy functions
-([ddg_tds()], [ddgact_tds()], [dgact_tds()]).
+(\code{\link[=ddg_tds]{ddg_tds()}}, \code{\link[=ddgact_tds]{ddgact_tds()}}, \code{\link[=dgact_tds]{dgact_tds()}}).
 }
 \examples{
 beta_boltzmann()              # 298 K

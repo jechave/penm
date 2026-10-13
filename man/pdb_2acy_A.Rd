@@ -5,20 +5,20 @@
 \alias{pdb_2acy_A}
 \title{Acylphosphatase structure (PDB 2ACY, chain A)}
 \format{
-A `pdb` object (class `c("pdb", "sse")`) as returned by
-  [bio3d::read.pdb()], a list with components `atom`, `xyz`, `helix`, `sheet`,
-  `calpha` and `call`. It holds 870 atoms over 98 residues, all in chain A.
+A \code{pdb} object (class \code{c("pdb", "sse")}) as returned by
+\code{\link[bio3d:read.pdb]{bio3d::read.pdb()}}, a list with components \code{atom}, \code{xyz}, \code{helix}, \code{sheet},
+\code{calpha} and \code{call}. It holds 870 atoms over 98 residues, all in chain A.
 }
 \source{
 Protein Data Bank entry
-  [2ACY](https://www.rcsb.org/structure/2ACY), chain A.
+\href{https://www.rcsb.org/structure/2ACY}{2ACY}, chain A.
 }
 \usage{
 pdb_2acy_A
 }
 \description{
 The crystal structure of bovine common-type acylphosphatase, chain A, as read by
-[bio3d::read.pdb()]. Supplied so that the examples throughout `penm` can be run
+\code{\link[bio3d:read.pdb]{bio3d::read.pdb()}}. Supplied so that the examples throughout \code{penm} can be run
 without downloading anything.
 }
 \details{

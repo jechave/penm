@@ -91,7 +91,7 @@ calculate_genm_graph <- function(xyz, pdb_site, param) {
 #' Get a single-point mutant using genm model
 #'
 #' Gives `site_mut` the allele `mutation`, recomputes `lij` and `kij`, and finds
-#' the new minimum with [genm_minimize()], starting from the protein's
+#' the new minimum with `genm_minimize()`, starting from the protein's
 #' structure. Mutating back to an earlier allele restores the earlier
 #' parameters exactly.
 #'
@@ -244,7 +244,7 @@ genm_minimize <- function(prot, gtol = 1e-10, max_iter = 100) {
 
 #' V at a conformation
 #'
-#' [v_dij()] with the edge lengths of `xyz`.
+#' `v_dij()` with the edge lengths of `xyz`.
 #'
 #' @param xyz coordinates, a vector of length `3 * nsites`
 #' @param graph tibble with columns `i, j, lij, kij`

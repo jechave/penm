@@ -14,8 +14,8 @@ a matrix of size nsites x nmodes with the msf of each site contributed by each m
 }
 \description{
 Splits the mean-square fluctuation of each site into the contribution of each
-normal mode. Summing over modes recovers [get_msf_site()]; summing over sites
-recovers [get_msf_mode()].
+normal mode. Summing over modes recovers \code{\link[=get_msf_site]{get_msf_site()}}; summing over sites
+recovers \code{\link[=get_msf_mode]{get_msf_mode()}}.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",

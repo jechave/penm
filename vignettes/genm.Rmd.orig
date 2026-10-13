@@ -34,11 +34,11 @@ the distance between the two residues, and its dynamics follow from the Hessian
 of $V$ at that minimum.
 
 The springs' parameters depend on the protein's sequence. Each site carries an
-allele, and a mutation changes the allele at one site, which changes the
+letter, and a mutation changes the letter at one site, which changes the
 $l_{ij}$ of that site's springs.
 
 A protein is a `prot`, as in the rest of penm: the settings of the model, the
-nodes with their sequence of alleles and their minimum-energy structure, the
+nodes with their sequence of letters and their minimum-energy structure, the
 springs with their $l_{ij}$ and $k_{ij}$, the Hessian, and (when asked for) the
 normal modes.
 
@@ -79,15 +79,16 @@ run_in_parallel <- function(x, f) {
 
 `set_enm()` with `mut_model = "genm"` makes the wild type from a structure. It
 puts a spring between every pair of residues closer than `d_max_graph`, and every
-site starts with allele 0, the residue in the pdb. The last four arguments define
-what a mutation does: each site has `n_alleles` alleles, and each allele other
-than 0 shifts the $l_{ij}$ of its site's springs by normal draws with standard
-deviation `mut_dl_sigma` (in Å). Springs between sites fewer than `mut_sd_min`
-apart in sequence are left alone, so with `mut_sd_min = 2` the bonds between
-sequence neighbours never change. Which draw an allele gets is fixed by
-`(ensemble, site, allele)`; see `?penm_ensemble`.
+site starts with letter 0, the residue in the pdb. The last four arguments define
+what a mutation does: each site carries a letter of an alphabet of
+`alphabet_size` letters, and each letter other than 0 shifts the $l_{ij}$ of its
+site's springs by normal draws with standard deviation `mut_dl_sigma` (in Å).
+Springs between sites fewer than `mut_sd_min` apart in sequence are left alone,
+so with `mut_sd_min = 2` the bonds between sequence neighbours never change.
+Which draw a letter gets is fixed by `(ensemble, site, letter)`; see
+`?penm_ensemble`, and `?set_enm` for the details.
 
-With every allele at 0, every spring is at its rest length in the pdb
+With every letter at 0, every spring is at its rest length in the pdb
 structure, so that structure is the minimum, and the wild type has it, its
 Hessian and its normal modes.
 
@@ -95,7 +96,7 @@ Hessian and its normal modes.
 wt <- set_enm(
   pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
   mut_model = "genm", d_max_graph = 14,
-  ensemble = 1, n_alleles = 10, mut_dl_sigma = 0.3, mut_sd_min = 2
+  ensemble = 1, alphabet_size = 10, mut_dl_sigma = 0.3, mut_sd_min = 2
 )
 names(wt)
 ```
@@ -111,12 +112,12 @@ Some quantities used throughout:
 ```{r wild-type-sizes}
 sites   <- get_site(wt)               # 1 .. number of sites
 modes   <- get_mode(wt)               # 1 .. number of normal modes, softest first
-alleles <- 0:(get_enm_param(wt)$n_alleles - 1)
+alphabet <- 0:(get_enm_param(wt)$alphabet_size - 1)
 
 c(sites = length(sites), modes = length(modes), springs = nrow(wt$graph))
 ```
 
-`get_mutant_site()` changes the allele at a site and minimises the potential,
+`get_mutant_site()` changes the letter at a site and minimises the potential,
 starting from the structure of the protein it mutates. The mutant has no normal
 modes: they are costly, and a long trajectory does not need them at every step.
 `set_enm_nma()` adds them.
@@ -146,18 +147,18 @@ that all of them share one basis.
 ## A complete single-point scan
 
 A complete scan makes every single-point mutant of the wild type: at each site,
-every allele other than the wild type's. Each mutant is minimised starting from
+every letter other than the wild type's. Each mutant is minimised starting from
 the wild-type structure, gets its normal modes, and is compared with the wild
 type.
 
 ```{r scan}
-# every (site, allele) pair, except the wild type's own allele at each site
-mutations <- expand.grid(allele = alleles, site = sites)
-mutations <- mutations[mutations$allele != wt$nodes$sequence[mutations$site], ]
+# every (site, letter) pair, except the wild type's own letter at each site
+mutations <- expand.grid(letter = alphabet, site = sites)
+mutations <- mutations[mutations$letter != wt$nodes$sequence[mutations$site], ]
 nrow(mutations)
 
 compare_mutant <- function(row) {
-  mutant <- get_mutant_site(wt, mutations$site[row], mutations$allele[row])
+  mutant <- get_mutant_site(wt, mutations$site[row], mutations$letter[row])
   mutant <- set_enm_nma(mutant)
   list(
     dr2i  = delta_structure_dr2i(wt, mutant),
@@ -233,7 +234,7 @@ rest), and the ones mutations leave alone (`mut_sd_min = 2`).
 ## A star tree
 
 A trajectory starts from the wild type and accumulates mutations. At each step
-a site is chosen at random and given a new allele, chosen at random among the
+a site is chosen at random and given a new letter, chosen at random among the
 others, and the structure is minimised starting from the previous one. Running
 several trajectories independently from the same wild type gives a star tree:
 the wild type at the root, and one tip per trajectory.
@@ -252,8 +253,8 @@ run_trajectory <- function(trajectory) {
   protein <- wt
   for (step in seq_len(n_steps)) {
     site <- pick_one(sites)
-    allele <- pick_one(setdiff(alleles, protein$nodes$sequence[site]))
-    protein <- get_mutant_site(protein, site, allele)
+    letter <- pick_one(setdiff(alphabet, protein$nodes$sequence[site]))
+    protein <- get_mutant_site(protein, site, letter)
   }
   protein
 }
@@ -261,7 +262,7 @@ tips <- run_in_parallel(seq_len(n_trajectories), run_trajectory)
 ```
 
 A site can be hit more than once along a trajectory, and a later mutation can
-take it back to an allele it had before, the wild type's included. So after
+take it back to a letter it had before, the wild type's included. So after
 `r n_steps` mutations, the number of sites at which a tip differs from the wild
 type can be smaller:
 

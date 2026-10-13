@@ -16,7 +16,7 @@ If \code{NA} (the default), the function returns \code{NA}.}
 }
 \value{
 A scalar, the internal-energy contribution to the activation free energy,
-  or \code{NA} if \code{pdb_site_active} is \code{NA}.
+or \code{NA} if \code{pdb_site_active} is \code{NA}.
 }
 \description{
 Calculates the energy cost of deforming the active site of \code{prot} into the

@@ -27,6 +27,6 @@ head(sort(msf_n, decreasing = TRUE))
 
 }
 \seealso{
-[get_msf_site()] for the same fluctuations resolved by site instead.
+\code{\link[=get_msf_site]{get_msf_site()}} for the same fluctuations resolved by site instead.
 }
 \concept{mode profiles}

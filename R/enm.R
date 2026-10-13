@@ -16,6 +16,33 @@
 #' `pdb`, `node`, `model` and `d_max` are required. The other arguments have
 #' defaults.
 #'
+#' @details
+#' **Sequences and mutations.** Each site carries a letter of an alphabet of
+#' `alphabet_size` letters, numbered 0 to `alphabet_size - 1`. In the protein
+#' `set_enm()` builds, every site carries letter 0: the residue in the pdb, the
+#' one the structure is relaxed for. Its springs have the lengths of the pdb,
+#' \eqn{l^0_{ij}}{l0_ij}.
+#'
+#' Every other letter \eqn{a}{a} at site \eqn{i}{i} shifts the equilibrium
+#' length of each of the site's springs, to each site \eqn{j}{j}, by an amount
+#' \eqn{\delta_{ij}(a)}{delta_ij(a)}, normal with mean 0 and standard deviation
+#' `mut_dl_sigma`. Each amount is drawn once, fixed by `ensemble`, the site and
+#' the letter (see `?penm_ensemble`). Letter 0 shifts nothing. A spring's
+#' equilibrium length is
+#' \deqn{l_{ij} = l^0_{ij} + \delta_{ij}(s_i) + \delta_{ji}(s_j),}{l_ij = l0_ij + delta_ij(s_i) + delta_ji(s_j),}
+#' with \eqn{s_i}{s_i} and \eqn{s_j}{s_j} the letters at its two ends. Springs
+#' between sites fewer than `mut_sd_min` apart in sequence keep
+#' \eqn{l^0_{ij}}{l0_ij}.
+#'
+#' A mutation changes the letter at one site. From the pdb's letter to another,
+#' it changes each of the site's spring lengths by a normal amount with standard
+#' deviation `mut_dl_sigma`; between two other letters, by the difference of
+#' two such amounts, with standard deviation \eqn{\sqrt{2}}{sqrt(2)} times
+#' `mut_dl_sigma`. The
+#' lengths depend only on the letters, so mutating a site back restores its
+#' earlier lengths. Letters are labels within a site: the same letter at two
+#' sites has unrelated effects.
+#'
 #' @param pdb   pdb object obtained using [bio3d::read.pdb()]
 #' @param node  how network nodes are built: `"ca"` (alpha carbons), `"sc"` (side
 #'   chains), or `"cb"` (beta carbons). The long forms `"calpha"`, `"side_chain"`
@@ -27,10 +54,10 @@
 #' @param ... further parameters of the spring-constant function, by name; for
 #'   example `d_max_width`, which `"anm_smooth"` and `"ming_wall_smooth"` require:
 #'   the width (Å) of the switch from contact to no contact around `d_max`.
-#' @param mut_model the mutational model, `"lfenm"` or `"genm"`. In both, each
-#'   site carries an allele, and the equilibrium lengths of the edges depend on
-#'   the alleles of the sites they join; a mutation changes the allele at one
-#'   site. In `"lfenm"` the spring constants do not change, and the mutant's
+#' @param mut_model the mutational model, `"lfenm"` or `"genm"`. In both, a
+#'   mutation changes the letter at one site, which changes the equilibrium
+#'   lengths of the site's springs (see Details). In `"lfenm"` the spring
+#'   constants do not change, and the mutant's
 #'   structure is the linear response to the resulting force. In `"genm"` the
 #'   spring constants depend on the equilibrium lengths, and a mutant's
 #'   structure is the minimum of its energy.
@@ -41,19 +68,23 @@
 #'   become contacts; a warning is given when it does not.
 #' @param ensemble an integer naming which realization of the mutational
 #'   process the protein's mutants belong to; see `?penm_ensemble`.
-#' @param n_alleles the number of alleles per site, including the pdb's
-#'   (allele 0). One ensemble offers `n_alleles - 1` mutations at each site; a
-#'   profile averaged over the mutations at one site may need more than the
-#'   default gives, or several ensembles.
-#' @param mut_dl_sigma the standard deviation (Å) of the change a mutation makes
-#'   to an equilibrium length.
-#' @param mut_sd_min mutations leave alone the edges between sites less than
-#'   `mut_sd_min` apart in sequence.
+#' @param alphabet_size the size of the model's sequence alphabet: the number
+#'   of letters each site can carry, numbered 0 to `alphabet_size - 1`. Letter
+#'   0 is the residue in the pdb. See Details.
+#' @param mut_dl_sigma the standard deviation (Å) of the shift a letter other
+#'   than 0 makes to each of its site's spring lengths, relative to the pdb's
+#'   length. See Details.
+#' @param mut_sd_min springs between sites fewer than `mut_sd_min` apart in
+#'   sequence are not changed by mutations.
 #'
 #' @returns an object of class `prot`, which is a list
 #'   `lst(param, nodes, graph, kmat, nma, internal)`. `param` holds the
-#'   arguments other than `pdb`. `internal` holds what penm needs for its own
-#'   computations and is not meant to be read.
+#'   arguments other than `pdb`, with those given in `...` under `kij_par`.
+#'   `nodes` holds the sites, their coordinates and their `sequence` of
+#'   letters. `graph` has one row per spring, with its pdb length `l0ij`,
+#'   equilibrium length `lij`, spring constant `kij` and current length `dij`.
+#'   `kmat` is the network matrix and `nma` its normal modes. `internal` holds
+#'   what penm needs for its own computations and is not meant to be read.
 #'
 #' @export
 #'
@@ -79,13 +110,13 @@
 #'                      mut_dl_sigma = 0.2, mut_sd_min = 3)
 #' get_enm_param(wt_smooth)$mut_dl_sigma
 set_enm <- function(pdb, node, model, d_max, ..., mut_model = "lfenm",
-                    d_max_graph = d_max, ensemble = 1L, n_alleles = 10L,
+                    d_max_graph = d_max, ensemble = 1L, alphabet_size = 10L,
                     mut_dl_sigma = 0.3, mut_sd_min = 2L) {
 
   prot <- create_enm() %>%
     set_enm_param(node = node, model = model, d_max = d_max, kij_par = list(...),
                   mut_model = mut_model, d_max_graph = d_max_graph,
-                  ensemble = ensemble, n_alleles = n_alleles,
+                  ensemble = ensemble, alphabet_size = alphabet_size,
                   mut_dl_sigma = mut_dl_sigma, mut_sd_min = mut_sd_min) %>%
     set_enm_nodes(pdb = pdb)
 
@@ -130,7 +161,7 @@ create_enm <- function() {
 #' @noRd
 #'
 set_enm_param <- function(prot, node, model, d_max, kij_par, mut_model, d_max_graph,
-                          ensemble, n_alleles, mut_dl_sigma, mut_sd_min) {
+                          ensemble, alphabet_size, mut_dl_sigma, mut_sd_min) {
   if (!(mut_model %in% c("lfenm", "genm"))) {
     stop("mut_model must be \"lfenm\" or \"genm\", not \"", mut_model, "\"")
   }
@@ -139,7 +170,7 @@ set_enm_param <- function(prot, node, model, d_max, kij_par, mut_model, d_max_gr
     stop("for mut_model = \"lfenm\", d_max_graph must equal d_max")
   }
   check_ensemble(ensemble)
-  stopifnot(n_alleles >= 2, mut_dl_sigma > 0, mut_sd_min >= 1)
+  stopifnot(alphabet_size >= 2, mut_dl_sigma > 0, mut_sd_min >= 1)
 
   # the spring-constant function, and the further parameters it is given
   kij_fun <- match.fun(paste0("kij_", model))
@@ -153,7 +184,7 @@ set_enm_param <- function(prot, node, model, d_max, kij_par, mut_model, d_max_gr
 
   prot$param <- lst(node, model, d_max, d_max_graph, kij_par, mut_model,
                     ensemble = as.integer(ensemble),
-                    n_alleles = as.integer(n_alleles), mut_dl_sigma,
+                    alphabet_size = as.integer(alphabet_size), mut_dl_sigma,
                     mut_sd_min = as.integer(mut_sd_min))
   prot
 }
@@ -169,7 +200,7 @@ set_enm_nodes <- function(prot, pdb) {
 }
 
 
-#' Set the sequence of a prot object: allele 0, the pdb's residue, at every site
+#' Set the sequence of a prot object: letter 0, the pdb's residue, at every site
 #'
 #' @noRd
 #'

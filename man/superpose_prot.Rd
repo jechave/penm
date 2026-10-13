@@ -7,27 +7,27 @@
 superpose_prot(prot, fixed)
 }
 \arguments{
-\item{prot}{a `prot`, of either mutational model, with or without normal
+\item{prot}{a \code{prot}, of either mutational model, with or without normal
 modes}
 
-\item{fixed}{coordinates to superpose `prot` onto: a vector of length
-`3 * nsites`, as returned by [get_xyz()]}
+\item{fixed}{coordinates to superpose \code{prot} onto: a vector of length
+\code{3 * nsites}, as returned by \code{\link[=get_xyz]{get_xyz()}}}
 }
 \value{
-`prot`, superposed onto `fixed`
+\code{prot}, superposed onto \code{fixed}
 }
 \description{
-Rotates and translates a protein so that its structure best fits `fixed`, in
-the least-squares sense, with [bio3d::fit.xyz()]. Everything else that
+Rotates and translates a protein so that its structure best fits \code{fixed}, in
+the least-squares sense, with \code{\link[bio3d:fit.xyz]{bio3d::fit.xyz()}}. Everything else that
 depends on the protein's orientation is rotated with it: the network matrix
-(`kmat`), the normal modes, and the edge directions an lfenm protein keeps for
+(\code{kmat}), the normal modes, and the edge directions an lfenm protein keeps for
 its mutations. What does not depend on orientation, such as the edge lengths
 and spring constants, the eigenvalues and the energy, is unchanged.
 }
 \details{
-Comparing two proteins site by site, with `delta_structure_dr2i()` for
+Comparing two proteins site by site, with \code{delta_structure_dr2i()} for
 example, needs them in the same orientation. An lfenm mutant is always in the
-orientation of the protein `set_enm()` built. A genm mutant is superposed
+orientation of the protein \code{set_enm()} built. A genm mutant is superposed
 onto the protein it was made from, so along a trajectory its orientation can
 drift; superposing the tips of independent trajectories onto the wild type
 puts them back in one orientation.
@@ -46,6 +46,6 @@ sum(delta_structure_dr2i(wt, tip))
 
 }
 \seealso{
-[get_mutant_site()], whose genm mutants this is most useful for;
-  [set_enm_nma()].
+\code{\link[=get_mutant_site]{get_mutant_site()}}, whose genm mutants this is most useful for;
+\code{\link[=set_enm_nma]{set_enm_nma()}}.
 }

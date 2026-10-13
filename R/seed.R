@@ -46,7 +46,7 @@ check_ensemble <- function(ensemble) {
 #'
 #' @param ensemble An integer naming the realization (see \code{?penm_ensemble}).
 #' @param site_mut The mutated site (sequential index, not pdb_site).
-#' @param mutation The mutation index at that site.
+#' @param mutation The letter the site is given (see Details in set_enm()).
 #'
 #' @return An integer seed suitable for \code{set.seed()}.
 #'

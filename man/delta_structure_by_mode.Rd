@@ -20,17 +20,17 @@ delta_structure_df2n(wt, mut)
 }
 \value{
 A vector of size \code{nmodes} with the contribution of each normal mode
-  to the given property.
+to the given property.
 }
 \description{
 (This version works only for wt and mut with no indels)
 }
 \details{
-`delta_structure_dr2n` calculates the square of the mode-contributions to \eqn{\delta \mathbf{r} = \mathbf{C}\mathbf{f}}
+\code{delta_structure_dr2n} calculates the square of the mode-contributions to \eqn{\delta \mathbf{r} = \mathbf{C}\mathbf{f}}
 
-`delta_structure_de2n` calculates the square of the mode-contributions to \eqn{\delta \mathbf{e} = \mathbf{C}^{1/2}\mathbf{f}}
+\code{delta_structure_de2n} calculates the square of the mode-contributions to \eqn{\delta \mathbf{e} = \mathbf{C}^{1/2}\mathbf{f}}
 
-`delta_structure_df2n` calculates the square of the mode-contributions to the force vector \eqn{\mathbf{f}}
+\code{delta_structure_df2n} calculates the square of the mode-contributions to the force vector \eqn{\mathbf{f}}
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
@@ -43,8 +43,8 @@ sum(dr2n)                           # matches sum(delta_structure_dr2i(wt, mut))
 
 }
 \seealso{
-[delta_structure_by_site] for the same differences resolved by site
-  rather than by mode — `dr2i` and `dr2n` are the same displacement in two bases
-  and sum to the same total. [get_mutant_site()] produces the `mut` argument;
-  [set_enm()] the `wt`.
+\link{delta_structure_by_site} for the same differences resolved by site
+rather than by mode — \code{dr2i} and \code{dr2n} are the same displacement in two bases
+and sum to the same total. \code{\link[=get_mutant_site]{get_mutant_site()}} produces the \code{mut} argument;
+\code{\link[=set_enm]{set_enm()}} the \code{wt}.
 }

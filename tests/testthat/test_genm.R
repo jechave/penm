@@ -293,9 +293,9 @@ test_that("an allele's change to an edge does not depend on which other edges ex
 })
 
 test_that("get_mutant_site validates its input for a genm prot", {
-  expect_error(get_mutant_site(wt, site_a, 10L), "mutation must be an allele")
-  expect_error(get_mutant_site(wt, site_a, -1L), "mutation must be an allele")
-  expect_error(get_mutant_site(wt, site_a, 1.5), "mutation must be an allele")
+  expect_error(get_mutant_site(wt, site_a, 10L), "mutation must be a letter")
+  expect_error(get_mutant_site(wt, site_a, -1L), "mutation must be a letter")
+  expect_error(get_mutant_site(wt, site_a, 1.5), "mutation must be a letter")
   expect_error(get_mutant_site(wt, nsites + 1, 1L), "site_mut must be")
   expect_error(get_mutant_site(wt, 1.5, 1L), "site_mut must be")
   # a draw so wide that some length would become negative
@@ -347,7 +347,7 @@ test_that("set_enm validates the model, its parameters and the mutational proces
   expect_identical(b(model = "ming_wall_smooth", d_max_graph = 14, d_max_width = 1)$param$kij_par,
                    list(d_max_width = 1))
   expect_error(b(model = "ming_wall", d_max_graph = 14, ensemble = NA), "ensemble")
-  expect_error(b(model = "ming_wall", d_max_graph = 14, n_alleles = 1), "n_alleles")
+  expect_error(b(model = "ming_wall", d_max_graph = 14, alphabet_size = 1), "alphabet_size")
   expect_error(b(model = "ming_wall", d_max_graph = 14, mut_dl_sigma = 0), "mut_dl_sigma")
   expect_error(b(model = "ming_wall", d_max_graph = 14, mut_sd_min = 0), "mut_sd_min")
 })
