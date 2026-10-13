@@ -44,3 +44,8 @@
 #'  variation. \emph{Proteins} \strong{78}(1), 173--180. \doi{10.1002/prot.22553}
 #'
 "_PACKAGE"
+
+
+# Column names used unquoted inside dplyr verbs (calculate_enm_graph, get_mlms).
+# Declared so that R CMD check does not take them for undefined variables.
+utils::globalVariables(c("dij", "edge", "i", "j", "kij", "l0ij", "lij", "mlms", "sdij", "v0ij"))

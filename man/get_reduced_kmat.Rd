@@ -10,7 +10,7 @@ get_reduced_kmat(prot)
 \item{prot}{is a protein object obtained using set_enm()}
 }
 \value{
-a matrix of size nsites x nsites \eqn{K_{ij} = Tr(\mathbf{K}_{ij})}
+a matrix of size nsites x nsites \eqn{K_{ij} = Tr(\mathbf{K}_{ij})}{K_ij = Tr(K_ij)}
 }
 \description{
 Calculates the reduced K matrix (size nsites x nsites)

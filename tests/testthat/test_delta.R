@@ -144,3 +144,28 @@ test_that("mutation = 0 leaves every response at zero", {
   expect_equal(ddg_dv(wt, mut0), 0)
   expect_equal(delta_energy_dvs(wt, mut0), 0)
 })
+
+test_that("the stress energy takes each spring's length in ideal's conformation, by spring", {
+  # prot and ideal with different sets of springs: an lfenm protein (springs
+  # within d_max = 10.5) against a genm ideal (springs within d_max_graph = 14),
+  # so ideal's graph has springs prot lacks, and they interleave with prot's
+  ideal <- get_mutant_site(set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+                                   mut_model = "genm", d_max_graph = 14),
+                           site_mut = 40, mutation = 2)
+  prot <- mut
+  expect_gt(nrow(get_graph(ideal)), nrow(get_graph(prot)))
+  expect_true(all(get_graph(prot)$edge %in% get_graph(ideal)$edge))
+
+  # independently: each of prot's springs, at its length in ideal's structure
+  g <- get_graph(prot)
+  d_ideal <- penm:::dij_edge(get_xyz(ideal), g$i, g$j)
+  expected <- sum(g$v0ij + 0.5 * g$kij * (d_ideal - g$lij)^2)
+  expect_equal(penm:::calculate_vs(prot, ideal), expected)
+
+  # and the other way round: prot has springs ideal lacks, whose lengths come
+  # from ideal's coordinates
+  g <- get_graph(ideal)
+  d_prot <- penm:::dij_edge(get_xyz(prot), g$i, g$j)
+  expected <- sum(g$v0ij + 0.5 * g$kij * (d_prot - g$lij)^2)
+  expect_equal(penm:::calculate_vs(ideal, prot), expected)
+})

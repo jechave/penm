@@ -2,8 +2,8 @@
 #'
 #' (This version works only for wt and mut with no indels)
 #'
-#' @param wt A protein object with \code{xyz} and \code{enm} defined
-#' @param mut A second protein object  with \code{xyz} defined
+#' @param wt A protein, with normal modes: they are the basis of the profiles
+#' @param mut A second protein
 #' @return A vector of size \code{nmodes} with the contribution of each normal mode
 #'   to the given property.
 #'
@@ -28,7 +28,7 @@ NULL
 
 #' @rdname delta_structure_by_mode
 #'
-#' @details `delta_structure_dr2n` calculates the square of the mode-contributions to \eqn{\delta \mathbf{r} = \mathbf{C}\mathbf{f}}
+#' @details `delta_structure_dr2n` calculates the square of the mode-contributions to \eqn{\delta \mathbf{r} = \mathbf{C}\mathbf{f}}{delta r = C f}
 #'
 #'
 #' @export
@@ -44,7 +44,7 @@ delta_structure_dr2n <- function(wt, mut) {
 
 #' @rdname delta_structure_by_mode
 #'
-#' @details `delta_structure_de2n` calculates the square of the mode-contributions to \eqn{\delta \mathbf{e} = \mathbf{C}^{1/2}\mathbf{f}}
+#' @details `delta_structure_de2n` calculates the square of the mode-contributions to \eqn{\delta \mathbf{e} = \mathbf{C}^{1/2}\mathbf{f}}{delta e = C^(1/2) f}
 #'
 #'
 #' @export
@@ -55,7 +55,7 @@ delta_structure_de2n <- function(wt, mut) {
 
 #' @rdname delta_structure_by_mode
 #'
-#' @details `delta_structure_df2n` calculates the square of the mode-contributions to the force vector \eqn{\mathbf{f}}
+#' @details `delta_structure_df2n` calculates the square of the mode-contributions to the force vector \eqn{\mathbf{f}}{f}
 #'
 #'
 #' @export

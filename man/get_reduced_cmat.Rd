@@ -10,7 +10,7 @@ get_reduced_cmat(prot)
 \item{prot}{is a protein object obtained using set_enm()}
 }
 \value{
-a matrix of size nsites x nsites with \eqn{c_{ij} = < d\mathbf{r}_i . d\mathbf{r}_j >}
+a matrix of size nsites x nsites with \eqn{c_{ij} = < d\mathbf{r}_i . d\mathbf{r}_j >}{c_ij = < dr_i . dr_j >}
 }
 \description{
 Calculates the reduced covariance matrix (size nsites x nsites)

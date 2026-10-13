@@ -7,8 +7,9 @@
 #'
 #' (This version works only for wt and mut with no indels)
 #'
-#' @param wt A protein object with \code{enm} defined
-#' @param mut A second protein object  with \code{enm} defined
+#' @param wt A protein, with normal modes
+#' @param mut A second protein, with normal modes (a genm mutant gets them from
+#'   [set_enm_nma()])
 #'
 #' @return A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.
 #'
@@ -26,9 +27,15 @@
 #'
 #' # Note these are all zero here: "lfenm" perturbs equilibrium edge lengths but
 #' # leaves kmat — and hence cmat and the normal modes — untouched, so the motion
-#' # is unchanged by construction. Use a model that rebuilds the network to see a
-#' # non-zero profile.
+#' # is unchanged by construction.
 #' range(dmsfi)
+#'
+#' # Under "genm" the mutation changes the network, and so the motion.
+#' # A genm mutant needs its normal modes added first.
+#' wt_genm <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+#'                    mut_model = "genm", d_max_graph = 14)
+#' mut_genm <- set_enm_nma(get_mutant_site(wt_genm, site_mut = 11, mutation = 1))
+#' range(delta_motion_dmsfi(wt_genm, mut_genm))
 #'
 #' @name delta_motion_by_site
 #'
@@ -36,7 +43,7 @@ NULL
 
 #' @rdname delta_motion_by_site
 #'
-#' @details `delta_motion_dmsfi` returns site-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_i^2}
+#' @details `delta_motion_dmsfi` returns site-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_i^2}{delta sigma_i^2}
 #'
 #' @export
 #'

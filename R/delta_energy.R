@@ -22,8 +22,8 @@
 #' ddg_dv(wt, mut)      # minimum-energy difference
 #'
 #' # Under "lfenm" the contact map — and so kmat and its spectrum — is unchanged,
-#' # which makes the entropic term exactly zero. It is informative only for
-#' # mutational models that change the network.
+#' # which makes the entropic term exactly zero. Under "genm" the mutation
+#' # changes the network, and the term is not zero (see ?get_mutant_site).
 #' ddg_tds(wt, mut)
 #'
 #' @name delta_energy
@@ -102,7 +102,9 @@ calculate_vs <- function(prot, ideal) {
 
   edge_in_ideal <- g$edge %in% g_ideal$edge
   g$dij_ideal <- NA
-  g$dij_ideal[edge_in_ideal] <- g_ideal$dij
+  # by spring, not by position: ideal may have springs prot lacks
+  row_in_ideal <- match(g$edge[edge_in_ideal], g_ideal$edge)
+  g$dij_ideal[edge_in_ideal] <- g_ideal$dij[row_in_ideal]
   g$dij_ideal[!edge_in_ideal] <- dij_edge(get_xyz(ideal), g$i[!edge_in_ideal], g$j[!edge_in_ideal])
 
   dij <- g$dij_ideal

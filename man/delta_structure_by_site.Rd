@@ -14,9 +14,9 @@ delta_structure_de2i(wt, mut, kmat_sqrt)
 delta_structure_df2i(wt, mut)
 }
 \arguments{
-\item{wt}{A protein object with \code{xyz} defined}
+\item{wt}{A protein}
 
-\item{mut}{A second protein object  with \code{xyz} defined}
+\item{mut}{A second protein}
 
 \item{kmat_sqrt}{The matrix square root of the ENM K matrix, as returned by
 \code{\link{get_kmat_sqrt}}}
@@ -28,11 +28,11 @@ A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property co
 This version works only for wt and mut with no indels
 }
 \details{
-\code{delta_structure_dr2i} returns the square of structural difference vector \eqn{\mathbf{C}\mathbf{f}}
+\code{delta_structure_dr2i} returns the square of structural difference vector \eqn{\mathbf{C}\mathbf{f}}{C f}
 
-\code{delta_structure_de2i} returns the square of deformation energy vector \eqn{\mathbf{C}^{1/2}\mathbf{f}}
+\code{delta_structure_de2i} returns the square of deformation energy vector \eqn{\mathbf{C}^{1/2}\mathbf{f}}{C^(1/2) f}
 
-\code{delta_structure_df2i} returns the square of force vector \eqn{\mathbf{f}}
+\code{delta_structure_df2i} returns the square of force vector \eqn{\mathbf{f}}{f}
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",

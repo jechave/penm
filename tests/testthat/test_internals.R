@@ -114,7 +114,7 @@ test_that("small utilities match their definitions", {
 
 test_that("my_as_xyz reshapes to 3 rows and rejects a bad length", {
   expect_equal(dim(penm:::my_as_xyz(1:6)), c(3L, 2L))
-  expect_error(penm:::my_as_xyz(1:5), "Stopping execution")
+  expect_error(penm:::my_as_xyz(1:5), "length 5, which is not a multiple of 3")
 })
 
 test_that("v_dij is the spring energy 1/2 k (dij - lij)^2 plus v0ij", {

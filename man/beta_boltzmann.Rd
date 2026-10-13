@@ -2,7 +2,7 @@
 % Please edit documentation in R/enm_energy.R
 \name{beta_boltzmann}
 \alias{beta_boltzmann}
-\title{Boltzmann's beta, \eqn{1 / RT}}
+\title{Boltzmann's beta, \eqn{1 / RT}{1 / RT}}
 \usage{
 beta_boltzmann(R = 0.001986, T = 298)
 }
@@ -12,7 +12,7 @@ beta_boltzmann(R = 0.001986, T = 298)
 \item{T}{absolute temperature, in Kelvin}
 }
 \value{
-a scalar, \eqn{1 / (RT)}, in mol/kcal
+a scalar, \eqn{1 / (RT)}{1 / (RT)}, in mol/kcal
 }
 \description{
 The default inverse temperature used by the entropic energy functions

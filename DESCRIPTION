@@ -1,7 +1,7 @@
 Package: penm
 Type: Package
 Title: Build and Perturb Elastic Network Models
-Version: 0.5.0
+Version: 0.5.1
 Authors@R: person("Julian", "Echave",
                   email = "jechave@unsam.edu.ar",
                   role = c("aut", "cre"),
@@ -32,6 +32,7 @@ Imports:
     purrr,
     stats,
     tibble,
-    tidyr
+    tidyr,
+    utils
 Config/roxygen2/version: 8.0.0
 Roxygen: list(markdown = TRUE)

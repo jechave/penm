@@ -44,7 +44,10 @@ get_nmodes(prot)
 \item{prot}{A protein with its associated ENM model, obtained using \code{set_enm}}
 }
 \value{
-\code{get_enm_param}: list of ENM parameters
+\code{get_enm_param}: the list of parameters \code{\link[=set_enm]{set_enm()}} was called
+with: the network's (\code{node}, \code{model}, \code{d_max}, \code{d_max_graph}, and those
+given in \code{...}, as \code{kij_par}) and the mutational model's (\code{mut_model},
+\code{ensemble}, \code{alphabet_size}, \code{mut_dl_sigma}, \code{mut_sd_min})
 
 \code{get_nsites}: number of sites (ENM nodes)
 

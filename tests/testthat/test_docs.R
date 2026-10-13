@@ -22,18 +22,20 @@ rendered_help <- function() {
   }, character(1))
 }
 
-test_that("no help page shows markdown literally", {
+test_that("no help page shows markdown or LaTeX literally", {
   pages <- rendered_help()
   expect_gt(length(pages), 20)
 
   literal <- c(
     backtick = "`",
     bold     = "\\*\\*",
-    link     = "\\[[A-Za-z_.]+(\\(\\))?\\]"
+    link     = "\\[[A-Za-z_.]+(\\(\\))?\\]",
+    # a formula without a plain-text form shows its LaTeX in text help
+    latex    = "\\\\(mathbf|delta|sigma|lambda|sqrt|frac|sum)\\b"
   )
   for (kind in names(literal)) {
     offending <- names(pages)[grepl(literal[[kind]], pages)]
     expect(length(offending) == 0,
-           paste0("literal markdown (", kind, ") in: ", paste(offending, collapse = ", ")))
+           paste0("literal ", kind, " in: ", paste(offending, collapse = ", ")))
   }
 })

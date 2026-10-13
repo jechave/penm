@@ -13,9 +13,7 @@ my_as_xyz <- function(r) {
     dim(r) <- c(3,n)
     r
   } else {
-    print("Error in my_as_xyz: length(r) not multiple of 3")
-    print(paste("length(r):",n3))
-    stop("Stopping execution")
+    stop("xyz has length ", n3, ", which is not a multiple of 3")
   }
 }
 

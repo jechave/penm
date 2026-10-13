@@ -5,8 +5,8 @@
 #' This version works only for wt and mut with no indels
 #'
 #'
-#' @param wt A protein object with \code{xyz} defined
-#' @param mut A second protein object  with \code{xyz} defined
+#' @param wt A protein
+#' @param mut A second protein
 #' @param kmat_sqrt The matrix square root of the ENM K matrix, as returned by
 #'   \code{\link{get_kmat_sqrt}}
 #'
@@ -35,7 +35,7 @@ NULL
 
 #' @rdname delta_structure_by_site
 #'
-#' @details `delta_structure_dr2i` returns the square of structural difference vector \eqn{\mathbf{C}\mathbf{f}}
+#' @details `delta_structure_dr2i` returns the square of structural difference vector \eqn{\mathbf{C}\mathbf{f}}{C f}
 #'
 #' @export
 #'
@@ -48,7 +48,7 @@ delta_structure_dr2i <- function(wt, mut) {
 }
 
 #' @rdname delta_structure_by_site
-#' @details `delta_structure_de2i` returns the square of deformation energy vector \eqn{\mathbf{C}^{1/2}\mathbf{f}}
+#' @details `delta_structure_de2i` returns the square of deformation energy vector \eqn{\mathbf{C}^{1/2}\mathbf{f}}{C^(1/2) f}
 #'
 #' @export
 #'
@@ -64,7 +64,7 @@ delta_structure_de2i <- function(wt, mut, kmat_sqrt) {
 
 
 #' @rdname delta_structure_by_site
-#' @details `delta_structure_df2i` returns the square of force vector \eqn{\mathbf{f}}
+#' @details `delta_structure_df2i` returns the square of force vector \eqn{\mathbf{f}}{f}
 #'
 #' @export
 #'

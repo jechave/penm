@@ -14,9 +14,9 @@ delta_structure_de2n(wt, mut)
 delta_structure_df2n(wt, mut)
 }
 \arguments{
-\item{wt}{A protein object with \code{xyz} and \code{enm} defined}
+\item{wt}{A protein, with normal modes: they are the basis of the profiles}
 
-\item{mut}{A second protein object  with \code{xyz} defined}
+\item{mut}{A second protein}
 }
 \value{
 A vector of size \code{nmodes} with the contribution of each normal mode
@@ -26,11 +26,11 @@ to the given property.
 (This version works only for wt and mut with no indels)
 }
 \details{
-\code{delta_structure_dr2n} calculates the square of the mode-contributions to \eqn{\delta \mathbf{r} = \mathbf{C}\mathbf{f}}
+\code{delta_structure_dr2n} calculates the square of the mode-contributions to \eqn{\delta \mathbf{r} = \mathbf{C}\mathbf{f}}{delta r = C f}
 
-\code{delta_structure_de2n} calculates the square of the mode-contributions to \eqn{\delta \mathbf{e} = \mathbf{C}^{1/2}\mathbf{f}}
+\code{delta_structure_de2n} calculates the square of the mode-contributions to \eqn{\delta \mathbf{e} = \mathbf{C}^{1/2}\mathbf{f}}{delta e = C^(1/2) f}
 
-\code{delta_structure_df2n} calculates the square of the mode-contributions to the force vector \eqn{\mathbf{f}}
+\code{delta_structure_df2n} calculates the square of the mode-contributions to the force vector \eqn{\mathbf{f}}{f}
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",

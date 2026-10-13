@@ -13,8 +13,8 @@ get_kmat_sqrt(prot)
 a matrix of size 3 nsites x 3 nsites, the matrix square root of \code{kmat}
 }
 \description{
-Calculates \eqn{\mathbf{K}^{1/2}} from the eigendecomposition of the network,
-as \eqn{\mathbf{U} \sqrt{\lambda} \mathbf{U}^T}. A general matrix-square-root
+Calculates \eqn{\mathbf{K}^{1/2}}{K^(1/2)} from the eigendecomposition of the network,
+as \eqn{\mathbf{U} \sqrt{\lambda} \mathbf{U}^T}{U sqrt(lambda) U^T}. A general matrix-square-root
 routine is not usable here: \code{kmat} is singular (the six rigid-body modes
 have zero eigenvalue), so building it from the modes is what makes it defined.
 }

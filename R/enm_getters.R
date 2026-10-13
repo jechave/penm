@@ -53,7 +53,10 @@ NULL
 
 #' @rdname get_prot_property
 #'
-#' @return \code{get_enm_param}: list of ENM parameters
+#' @return \code{get_enm_param}: the list of parameters [set_enm()] was called
+#'   with: the network's (`node`, `model`, `d_max`, `d_max_graph`, and those
+#'   given in `...`, as `kij_par`) and the mutational model's (`mut_model`,
+#'   `ensemble`, `alphabet_size`, `mut_dl_sigma`, `mut_sd_min`)
 #'
 #' @export
 #'

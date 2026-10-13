@@ -1,6 +1,7 @@
 #' Gather all imports for package penm
 #'
 #' @importFrom stats rnorm
+#' @importFrom utils globalVariables
 #' @importFrom digest digest
 #' @importFrom magrittr %>%
 #' @importFrom purrr map map2 pmap

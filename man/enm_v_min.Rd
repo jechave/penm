@@ -15,7 +15,7 @@ a scalar: the energy at the minimum-energy conformation
 }
 \description{
 Sums the elastic energy stored in every spring of the network at its current
-conformation, \eqn{\sum_{ij} v0_{ij} + \frac{1}{2} k_{ij} (d_{ij} - l_{ij})^2}.
+conformation, \eqn{\sum_{ij} v0_{ij} + \frac{1}{2} k_{ij} (d_{ij} - l_{ij})^2}{sum_ij [v0_ij + (1/2) k_ij (d_ij - l_ij)^2]}.
 It is zero for a \code{prot} fresh from \code{\link[=set_enm]{set_enm()}}, where each spring's rest
 length \code{lij} is set to its actual length \code{dij}, and positive for any
 perturbed structure — including a wild type that is a previous generation's

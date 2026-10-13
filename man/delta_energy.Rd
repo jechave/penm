@@ -56,8 +56,8 @@ mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
 ddg_dv(wt, mut)      # minimum-energy difference
 
 # Under "lfenm" the contact map — and so kmat and its spectrum — is unchanged,
-# which makes the entropic term exactly zero. It is informative only for
-# mutational models that change the network.
+# which makes the entropic term exactly zero. Under "genm" the mutation
+# changes the network, and the term is not zero (see ?get_mutant_site).
 ddg_tds(wt, mut)
 
 }

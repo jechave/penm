@@ -17,9 +17,10 @@ delta_motion_rwsipn(wt, mut)
 delta_motion_nhn(wt, mut)
 }
 \arguments{
-\item{wt}{A protein object with \code{enm} defined}
+\item{wt}{A protein, with normal modes: they are the basis of the profiles}
 
-\item{mut}{A second protein object  with \code{enm} defined}
+\item{mut}{A second protein, with normal modes (a genm mutant gets them from
+\code{\link[=set_enm_nma]{set_enm_nma()}})}
 }
 \value{
 A vector \code{(x_n)} of size \code{nmodes}, where \code{x_n} is the property compared, for mode n.
@@ -31,15 +32,15 @@ the proteins'  \code{cmat}, and normal modes (Principal components) are assumed 
 \details{
 (This version works only for wt and mut with no indels)
 
-\code{delta_motion_dmsfn} returns mode-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_n^2}.
+\code{delta_motion_dmsfn} returns mode-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_n^2}{delta sigma_n^2}.
 This version calculates fluctuations along normal modes of wt, it's independent of possible assignment issues.
 
-\code{delta_motion_dhn} returns mode-dependent profile of entropy differences \eqn{\delta H_n}
+\code{delta_motion_dhn} returns mode-dependent profile of entropy differences \eqn{\delta H_n}{delta H_n}
 This version calculates fluctuations along normal modes of wt, it's independent of possible assignment issues.
 
 \code{delta_motion_rwsipn} returns mode-dependent profile of rwsip similarity
 
-\code{delta_motion_nhn} returns mode-dependent profile of mode conservation  measure \eqn{nH_n}
+\code{delta_motion_nhn} returns mode-dependent profile of mode conservation  measure \eqn{nH_n}{nH_n}
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
@@ -50,8 +51,14 @@ dmsfn <- delta_motion_dmsfn(wt, mut)
 length(dmsfn)                       # one value per mode
 
 # All zero here: "lfenm" leaves kmat, and so the normal modes, unchanged.
-# A model that rebuilds the network is needed for a non-zero profile.
 range(dmsfn)
+
+# Under "genm" the mutation changes the network, and so the motion.
+# A genm mutant needs its normal modes added first.
+wt_genm <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+                   mut_model = "genm", d_max_graph = 14)
+mut_genm <- set_enm_nma(get_mutant_site(wt_genm, site_mut = 11, mutation = 1))
+range(delta_motion_dmsfn(wt_genm, mut_genm))
 
 }
 \seealso{

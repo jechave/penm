@@ -36,8 +36,8 @@ dgact_tds(mut, wt, active)
 
 # This term is built from the eigenvalue spectrum, not from the conformations.
 # Under "lfenm" a mutation leaves the spectrum untouched, so the two calls
-# agree exactly and the value is the same for any ideal. It is informative
-# only for mutational models that change the network.
+# agree exactly and the value is the same for any ideal. Under "genm" the
+# mutation changes the spectrum, and the two calls differ.
 dgact_tds(wt, wt, active)
 
 }

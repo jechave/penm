@@ -1,3 +1,31 @@
+# penm 0.5.1
+
+## Bug fixes
+
+* `delta_energy_dvs()` gave wrong values when `ideal` has springs that the
+  protein lacks, for example a genm `ideal` against an lfenm protein: it took
+  `ideal`'s spring lengths by position instead of by spring, with only a
+  warning. Proteins with the same springs, such as a wild type and its mutants,
+  give the same values as before.
+
+* A coordinate vector whose length is not a multiple of 3 stops with an error
+  that says so, instead of printing the explanation and stopping with "Stopping
+  execution".
+
+## Documentation
+
+* Formulas in the help pages have plain-text forms, so text help shows them
+  readably instead of as LaTeX.
+* The `delta_*` help pages say which arguments need normal modes, and their
+  examples show the motion and entropy measures under `mut_model = "genm"`.
+* `get_enm_param()` is documented as returning the network's and the
+  mutational model's parameters.
+
+## Other changes
+
+* `R CMD check` no longer notes undefined global variables.
+* Continuous integration uses `actions/checkout` v7.
+
 # penm 0.5.0
 
 ## Breaking changes

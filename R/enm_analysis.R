@@ -220,7 +220,7 @@ get_rho_matrix <- function(prot) {
 #' Calculates the reduced covariance matrix (size nsites x nsites)
 #'
 #' @param prot is a protein object obtained using set_enm()
-#' @returns a matrix of size nsites x nsites with \eqn{c_{ij} = < d\mathbf{r}_i . d\mathbf{r}_j >}
+#' @returns a matrix of size nsites x nsites with \eqn{c_{ij} = < d\mathbf{r}_i . d\mathbf{r}_j >}{c_ij = < dr_i . dr_j >}
 #'
 #' @export
 #'
@@ -246,7 +246,7 @@ get_reduced_cmat <- function(prot) {
 #' Calculates the reduced K matrix (size nsites x nsites)
 #'
 #' @param prot is a protein object obtained using set_enm()
-#' @returns a matrix of size nsites x nsites \eqn{K_{ij} = Tr(\mathbf{K}_{ij})}
+#' @returns a matrix of size nsites x nsites \eqn{K_{ij} = Tr(\mathbf{K}_{ij})}{K_ij = Tr(K_ij)}
 #'
 #' @export
 #'
@@ -345,8 +345,8 @@ get_umat2 <- function(prot) {
 
 #' Calculate the matrix square root of the ENM K matrix
 #'
-#' Calculates \eqn{\mathbf{K}^{1/2}} from the eigendecomposition of the network,
-#' as \eqn{\mathbf{U} \sqrt{\lambda} \mathbf{U}^T}. A general matrix-square-root
+#' Calculates \eqn{\mathbf{K}^{1/2}}{K^(1/2)} from the eigendecomposition of the network,
+#' as \eqn{\mathbf{U} \sqrt{\lambda} \mathbf{U}^T}{U sqrt(lambda) U^T}. A general matrix-square-root
 #' routine is not usable here: \code{kmat} is singular (the six rigid-body modes
 #' have zero eigenvalue), so building it from the modes is what makes it defined.
 #'
@@ -379,9 +379,9 @@ get_kmat_sqrt <- function(prot) {
 
 #' Calculate the matrix square root of the ENM covariance matrix
 #'
-#' Calculates \eqn{\mathbf{C}^{1/2}} from the eigendecomposition of the network,
-#' as \eqn{\mathbf{U} \sqrt{1/\lambda} \mathbf{U}^T}. The dual of
-#' \code{\link{get_kmat_sqrt}}, which uses \eqn{\sqrt{\lambda}} instead.
+#' Calculates \eqn{\mathbf{C}^{1/2}}{C^(1/2)} from the eigendecomposition of the network,
+#' as \eqn{\mathbf{U} \sqrt{1/\lambda} \mathbf{U}^T}{U sqrt(1/lambda) U^T}. The dual of
+#' \code{\link{get_kmat_sqrt}}, which uses \eqn{\sqrt{\lambda}}{sqrt(lambda)} instead.
 #'
 #' @param prot is a protein object obtained using set_enm()
 #' @returns a matrix of size 3 nsites x 3 nsites, the matrix square root of \code{cmat}

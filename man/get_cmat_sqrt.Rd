@@ -13,9 +13,9 @@ get_cmat_sqrt(prot)
 a matrix of size 3 nsites x 3 nsites, the matrix square root of \code{cmat}
 }
 \description{
-Calculates \eqn{\mathbf{C}^{1/2}} from the eigendecomposition of the network,
-as \eqn{\mathbf{U} \sqrt{1/\lambda} \mathbf{U}^T}. The dual of
-\code{\link{get_kmat_sqrt}}, which uses \eqn{\sqrt{\lambda}} instead.
+Calculates \eqn{\mathbf{C}^{1/2}}{C^(1/2)} from the eigendecomposition of the network,
+as \eqn{\mathbf{U} \sqrt{1/\lambda} \mathbf{U}^T}{U sqrt(1/lambda) U^T}. The dual of
+\code{\link{get_kmat_sqrt}}, which uses \eqn{\sqrt{\lambda}}{sqrt(lambda)} instead.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
