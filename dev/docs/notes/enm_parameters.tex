@@ -1,0 +1,227 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+\title{Spring-constant scales and units in elastic network models}
+\author{Notes for penm}
+\date{2026-10-15}
+
+\begin{document}
+
+\maketitle
+
+\section{The question}
+
+In a harmonic network with $k_{ij} = \gamma\,\kappa_{ij}$, where $\gamma$ is an overall
+scale and $\kappa_{ij}$ the model's shape, temperature and stiffness enter only through
+$\beta\gamma$, in \AA$^{-2}$.
+Mode shapes, structural responses $\mathbf{K}^{+}\mathbf{f}$ and differences of
+$\beta T S$ between two networks are independent of both.
+Fluctuations scale as $(\beta\gamma)^{-1}$, $\beta V$ as $\beta\gamma$, and absolute entropic
+terms $\ln(\beta\lambda/2\pi)$ depend on $\beta\gamma$ and on the length unit.
+A free energy that adds an energy to an entropic term therefore needs $\gamma$ in physical
+units, consistent with the units of $\beta$.
+
+These notes record what five papers say about the scale $\gamma$, its units, what it was
+fitted to, and at what temperature.
+
+\section{The papers}
+
+\subsection*{Ming \& Wall 2005 \cite{ming2005}}
+
+Fits C$_\alpha$ networks of trypsinogen to a CHARMM22 all-atom harmonic model (vacuum
+minimisation, Hessian computed in CHARMM).
+Two targets: the Kullback--Leibler divergence $D$ between the C$_\alpha$ distributions,
+and the C$_\alpha$ mean-square displacements (MSDs).
+The optimal $\gamma$ for a given network follows in closed form from $D$ (their eq.~10).
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+model & target & $\gamma$ (kcal/mol/\AA$^2$) & $r_c$ (\AA) & $\epsilon$ \\
+\midrule
+ANM  & $D$   & 53.4 & 7.75 & --- \\
+ANM  & MSDs  & 0.4  & 15.4 & --- \\
+BENM & $D$   & 4.26 & 10.5 & 42 \\
+BENM & MSDs  & 1.2  & 10.5 & 42 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+BENM multiplies the spring constant of backbone neighbours by $\epsilon$.
+The reference is harmonic, so its fluctuations scale with $k_BT$ exactly as the network's
+do: these $\gamma$ are mechanical stiffnesses, independent of temperature (the MSDs are
+quoted at 300~K).
+The $D$-optimal ANM ``exhibits poor MSDs''; fitting the MSDs instead moves $\gamma$ by a
+factor of about 130 and the cutoff from 7.75 to 15.4~\AA.
+One protein.
+
+\subsection*{Orellana et al.\ 2010 \cite{orellana2010}}
+
+ED-ENM, fitted to essential dynamics of MD metatrajectories (AMBER, CHARMM, OPLS/AA;
+$\geq 10$~ns; six training proteins, 32+ test proteins).
+Sequence neighbours up to $i+3$ get $K_{ij} = C_{\mathrm{seq}}/S_{ij}^{2}$; other pairs within
+a size-dependent cutoff (about 8--16~\AA) get an inverse sixth power of distance.
+The constants are $C_{\mathrm{seq}} = 60$ and $C_{\mathrm{cart}} = 6$~kcal/(mol\,\AA$^2$),
+found by matching total variance, variance profile and reduced variance of the MD essential
+modes, and robust to $\pm 10$ and $\pm 1$ respectively.
+The long-range term is written $C_{\mathrm{cart}}/d_{ij}^{6}$ in eq.~6 and
+$(C_{\mathrm{cart}}/d_{ij})^{6}$ in eq.~8; only the first is consistent with the stated
+units.
+The energy is $E = \sum K_{ij}(R_{ij}-R^0_{ij})^2$, without the factor $\tfrac12$.
+The MD temperature is not stated in the main text.
+Calibrating against MD gives effective constants at the MD temperature, through
+$K^{\mathrm{app}}_{ij} = k_BT/\langle (R_{ij}-R^0_{ij})^2\rangle$ and $K_\nu = k_BT/\lambda$.
+
+\subsection*{Leioatts et al.\ 2012 \cite{leioatts2012}}
+
+Fits several spring functions (cutoff, exponential, HCA-like, bonded/nonbonded) to
+$>1~\mu$s MD of three GPCRs.
+The inverted ENM eigenvalues ``are normalized \ldots\ such that the total amplitude of
+predicted motion is identical'' to MD, so the fits determine the shape of $k(r)$, not its
+scale; the cutoff model uses $k = 1$.
+The potential is $U_{ij} = k(R^\circ_{ij})(R_{ij}-R^\circ_{ij})^2$, again without
+$\tfrac12$.
+Main result: after fitting, all spring functions perform alike, because all make the first
+shell of neighbours (about 3.8~\AA) much stiffer than more distant contacts, by about an
+order of magnitude or more.
+
+\subsection*{Fuglebakk et al.\ 2013 \cite{fuglebakk2013}}
+
+Benchmarks ANM (cutoffs 0.8 and 1.8~nm), GNM, HCA, pfANM, REACH and $\beta$GM against
+covariances from MD for seven proteins (five run at 300~K; two taken from earlier
+publications).
+Every covariance is normalised by its trace, which ``removes a global amplitude factor from
+the fluctuations and covariances, which none of the ENMs describes realistically anyway'';
+of $\gamma$: ``its value is not important''.
+No scale is determined.
+Results bearing on parameters:
+\begin{itemize}
+\item the ANM cutoff that best reproduces MD covariances lies in 0.8--1.0~nm; cutoffs that
+best reproduce B-factors are much longer and suppress collective motion;
+\item models with weak long-range interactions (HCA, REACH, ANM$_{0.8}$, $\beta$GM) beat
+those with strong ones (ANM$_{1.8}$, pfANM); the precise decay law matters little;
+\item B-factors are discouraged as a benchmark, and ``are not necessarily proportional to the
+temperature''.
+\end{itemize}
+REACH is used with parameters from MD of a myoglobin dimer.
+
+\subsection*{Dubanevics \& McLeish 2022 \cite{dubanevics2022}}
+
+ANM and BENM of three proteins (CAP, GST, Mpro) compared with 300~K MD (PCA of
+mass-weighted covariance).
+Potential $V_{ij} = \tfrac{k}{2}(r_{ij}-r^{(0)}_{ij})^2$ within $r_c$, starting from
+$k = 1$~kcal/(mol\,\AA$^2$), then rescaled so that the first ENM mode frequency matches
+the first MD mode (their eq.~3, as printed):
+\begin{equation*}
+k_{\mathrm{scaled}} = k\,\frac{\omega_{\mathrm{MD}}(1)}{\omega_{\mathrm{ENM}}(1)} .
+\end{equation*}
+The preceding sentence states $\omega^2 \propto k$, so matching the frequencies requires the
+square of this ratio; whether the tabulated values used the printed or the squared form
+cannot be told from the paper.
+Frequencies come from the mass-weighted Hessian and enter a quantum harmonic free energy,
+so the absolute scale matters there.
+MD: 300~K, 300~ns production, PCA on the last 50--150~ns (their Table~5).
+
+\begin{center}
+\small
+\begin{tabular}{llll}
+\toprule
+protein & $r_c$ (\AA) & ANM ($\epsilon=1$) & BENM ($\epsilon=100$) \\
+\midrule
+CAP  & 8.0 & 31.10 & 23.56 \\
+GST  & 8.5 & 25.71 & 20.55 \\
+Mpro & 8.5 & 12.28 & 9.01 \\
+\bottomrule
+\end{tabular}
+\end{center}
+($k_{\mathrm{scaled}}$ in kcal/mol/\AA$^2$, their Table~3.)
+The optimal $\epsilon$ is protein-dependent (100 for CAP and GST, 200 for Mpro), and the
+low:high frequency ratio across the BENM gap is 2:1, as in Ming \& Wall.
+
+\section{Observations}
+
+\begin{enumerate}
+\item \textbf{Most comparisons are scale-free by construction.}
+Leioatts and Fuglebakk normalise amplitudes before comparing; they constrain the shape of
+$k(r)$ and the cutoff, not $\gamma$.
+
+\item \textbf{Three papers give an absolute scale, by different routes.}
+Against an all-atom \emph{harmonic} model (Ming \& Wall): mechanical stiffness, independent
+of temperature.
+Against \emph{MD} variances or frequencies (Orellana; Dubanevics \& McLeish): effective
+constants at the MD temperature, absorbing anharmonicity and finite sampling.
+
+\item \textbf{For a uniform ANM, $\gamma$ is not a single number.}
+It depends on the target and is coupled to the cutoff: 53.4 at 7.75~\AA\ (distribution
+shape), 12--31 at 8--8.5~\AA\ (first MD mode), 0.4 at 15.4~\AA\ (MSDs), all in
+kcal/(mol\,\AA$^2$).
+Across proteins at fixed protocol it varies by a factor of about 2.5 (Dubanevics \&
+McLeish).
+The conventional $\gamma = 1$~kcal/(mol\,\AA$^2$) is none of these.
+
+\item \textbf{Conventions differ by factors of 2.}
+$\tfrac12 k\,\Delta d^2$ (Dubanevics \& McLeish; penm) versus $k\,\Delta d^2$ (Leioatts;
+Orellana).
+A constant taken from one paper into another code must be converted.
+
+\item \textbf{B-factors are a poor calibration target.}
+Ming \& Wall, Orellana and Fuglebakk all note that crystallographic B-factors include
+static disorder, lattice effects and crystal constraints; Fuglebakk finds that fitting to
+them selects networks with little collective motion.
+
+\item \textbf{Shape is better settled than scale.}
+Leioatts and Fuglebakk agree that what matters is a strong contrast between the first
+neighbour shell (or sequence neighbours) and weaker, fast-decaying long-range springs; the
+functional form matters little.
+\end{enumerate}
+
+\section{penm's models}
+
+As of penm 0.6.0, every model returns spring constants in kcal/(mol\,\AA$^2$), so all
+energies are in kcal/mol and \texttt{beta\_boltzmann()} (mol/kcal, CODATA gas constant)
+applies to every model. Models published in kJ keep their published numbers in the code and
+are converted on return.
+
+\begin{center}
+\small
+\begin{tabular}{llp{0.42\textwidth}}
+\toprule
+\texttt{model} & published units of $k$ & source; in penm \\
+\midrule
+\texttt{ming\_wall} & kcal/(mol\,\AA$^2$) & \cite{ming2005}; default $k = 4.26$ (was 4.5 before 0.6.0) \\
+\texttt{reach} & kJ/(mol\,\AA$^2$), MD at 300~K & Moritsugu et al.\ 2009, Table 1, solvated dimer; converted \\
+\texttt{hnm} & kJ/(mol\,\AA$^2$) & Hinsen et al.\ 2000, as in bio3d \texttt{ff.calpha}; converted; C$_\alpha$ nodes only \\
+\texttt{anm}, \texttt{gnm}, \texttt{pfanm}, \texttt{hnm0} & none & read as kcal/(mol\,\AA$^2$), arbitrary scale ($k = 1$, $d_{\max} = 10$~\AA\ for \texttt{anm}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+For the arbitrary-scale models, energies and anything that adds an energy to an entropic
+term carry that arbitrary scale; the calibrations of Section~2 are the alternatives.
+
+\begin{thebibliography}{9}
+\bibitem{ming2005} D.~Ming and M.~E.~Wall, Allostery in a coarse-grained model of protein
+dynamics, \emph{Phys.\ Rev.\ Lett.} \textbf{95}, 198103 (2005).
+\bibitem{orellana2010} L.~Orellana, M.~Rueda, C.~Ferrer-Costa, J.~R.~Lopez-Blanco,
+P.~Chac\'on and M.~Orozco, Approaching elastic network models to molecular dynamics
+flexibility, \emph{J.\ Chem.\ Theory Comput.} \textbf{6}, 2910 (2010).
+\bibitem{leioatts2012} N.~Leioatts, T.~D.~Romo and A.~Grossfield, Elastic network models
+are robust to variations in formalism, \emph{J.\ Chem.\ Theory Comput.} \textbf{8}, 2424
+(2012).
+\bibitem{fuglebakk2013} E.~Fuglebakk, N.~Reuter and K.~Hinsen, Evaluation of protein
+elastic network models based on an analysis of collective motions, \emph{J.\ Chem.\ Theory
+Comput.} \textbf{9}, 5618 (2013).
+\bibitem{dubanevics2022} I.~Dubanevics and T.~C.~B.~McLeish, Optimising elastic network
+models for protein dynamics and allostery: spatial and modal cut-offs and backbone
+stiffness, \emph{J.\ Mol.\ Biol.} \textbf{434}, 167696 (2022).
+\end{thebibliography}
+
+\end{document}

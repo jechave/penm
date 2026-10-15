@@ -380,6 +380,7 @@ Restricted to the complement of those directions, where the network deforms, $\K
 \label{eq:covariance}
 \end{equation}
 with $\KK^{+}$ the pseudo-inverse of $\KK$: the inverse on that complement, and zero on the rigid-body directions.
+$\bm{\Sigma}$ is therefore the covariance of the displacements from $\re$ with no component along the rigid-body directions of $\re$: the network's fluctuations in the frame in which it neither translates nor rotates relative to $\re$.
 Its $3\times3$ blocks give the fluctuation of one node and the correlation between two,
 \begin{equation}
 \big\langle \lVert \rr_i - \re_i \rVert^{2} \big\rangle
@@ -389,7 +390,7 @@ Its $3\times3$ blocks give the fluctuation of one node and the correlation betwe
 = \beta^{-1} \big(\KK^{+}\big)_{ij},
 \label{eq:node-fluctuation}
 \end{equation}
-the first being the quantity reported as a $B$-factor in a crystal structure.
+the first being, up to a factor $8\pi^{2}/3$, a crystallographic $B$-factor, except that it excludes the rigid-body motion a measured $B$-factor includes.
 In Cartesian coordinates $\bm{\Sigma}$ is not diagonal: the displacements of two nodes are correlated.
 
 In the normal-mode representation the same distribution is \eqref{eq:modal-distribution}, one independent Gaussian per mode, so the coordinates $u_n$ are uncorrelated and
