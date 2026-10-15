@@ -42,16 +42,16 @@
 \date{2026-08-26}
 
 \makeatletter
-\newcommand{\defref}[2]{\@namedef{r@#1}{{#2}{--}}}
+\newcommand{\defref}[2]{\@namedef{r@#1}{{#2}{--}{}{}{}}}   % five fields, as hyperref's \ref expects
 % labels below refer to the main report; numbers as in its current version
 \defref{sec:changes}{3.2}
 \defref{eq:potential}{6}
 \defref{eq:equilibrium-condition}{8}
 \defref{eq:potential-gradient}{14}
 \defref{eq:covariance}{29}
-\defref{eq:stress-energy}{48}
-\defref{eq:minimum-energy-change}{50}
-\defref{eq:entropy-change}{46}
+\defref{eq:stress-energy}{57}
+\defref{eq:minimum-energy-change}{59}
+\defref{eq:entropy-change}{55}
 \defref{sec:expansion}{2.2}
 \defref{eq:pseudo-inverse}{32}
 \makeatother

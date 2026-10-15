@@ -8,8 +8,8 @@ structure is obtained by minimization. In penm this is the `"genm"` mut_model of
 ## Contents
 
 - `genm_report.tex` / `.pdf` — the model: potential, quadratic expansion,
-  normal modes, thermal properties, conformational fluctuations, and the
-  mutational changes. Frustration is in an appendix.
+  normal modes, thermal properties, conformational fluctuations, activation
+  free energy, and the mutational changes. Frustration is in an appendix.
 
 - `genm_perturbation.tex` / `.pdf` — first-order perturbation theory, kept
   separate so the main derivation stays exact. Two results worth not

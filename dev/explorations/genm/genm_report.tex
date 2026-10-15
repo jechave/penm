@@ -69,6 +69,11 @@
 \newcommand{\lij}{l_{ij}}
 \newcommand{\kij}{k_{ij}}
 \newcommand{\dij}{d_{ij}}
+\newcommand{\xx}{\mathbf{x}}
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\nA}{n_{\cA}}
+\newcommand{\KA}{\KK_{\cA}}
+\newcommand{\xts}{\xx^{\ddagger}}
 
 \title{An elastic network model with $k_{ij}=k(l_{ij})$}
 \author{Julian Echave}
@@ -80,7 +85,7 @@
 
 \section{Introduction}
 
-In this document,  we pose a general elastic network model in which the parameters are the spring equilibrium lengths $\lij$, with force constants determined by them, $\kij = k(\lij)$. We derive its potential energy function, the potential's quadratic Taylor expansion around the minimum, its normal modes, the conformational distribution, the conformational fluctuations, and the thermodynamic properties. 
+In this document,  we pose a general elastic network model in which the parameters are the spring equilibrium lengths $\lij$, with force constants determined by them, $\kij = k(\lij)$. We derive its potential energy function, the potential's quadratic Taylor expansion around the minimum, its normal modes, the conformational distribution, the conformational fluctuations, the thermodynamic properties, and the activation free energy.
 
 Once the general model is derived, given an arbitrary reference ENM, we model a mutant, by introducing perturbations to the $\lij$ of the springs connected to the mutated site.
 
@@ -449,6 +454,78 @@ The argument of each logarithm is $2\pi/\beta\lambda_n$, which has units of leng
 The numerical values of $TS$ and $A$ therefore depend on the unit of length chosen, and $A$ may fall below $V(\re;\LL)$; the same applies to the momentum factor and the rigid-body directions left out of $Z$.
 Differences between two networks at the same temperature are free of all three, as are comparisons at a fixed choice of units.
 
+\subsection{Activation free energy}
+\label{sec:activation}
+
+\subsubsection{Active site and transition state}
+
+Let $\cA$ be a set of $\nA$ nodes, the active site, and
+\begin{equation}
+\xx = (\rr_i)_{i \in \cA} \in \mathbb{R}^{3\nA}
+\end{equation}
+their positions, with equilibrium value $\xx^{e}$.
+The transition state is the network with the active site held at a given conformation $\xts$, expressed in the frame of $\re$, and every other node free.
+Its partition function is
+\begin{equation}
+Z^{\ddagger} = \int e^{-\beta V(\rr;\LL)}\, \delta\big(\xx - \xts\big)\, d\rr ,
+\label{eq:ts-partition-function}
+\end{equation}
+over the same internal degrees of freedom as $Z$, and the activation free energy is
+\begin{equation}
+\Delta A^{\ddagger} \equiv A^{\ddagger} - A = -\beta^{-1} \ln \frac{Z^{\ddagger}}{Z} .
+\label{eq:activation-definition}
+\end{equation}
+
+\subsubsection{The marginal distribution of the active site}
+
+By \eqref{eq:boltzmann-distribution},
+\begin{equation}
+\frac{Z^{\ddagger}}{Z} = \int \rho(\rr)\, \delta\big(\xx - \xts\big)\, d\rr = \rho_{\cA}(\xts),
+\end{equation}
+with $\rho_{\cA}$ the marginal density of the active-site coordinates.
+In the quadratic approximation $\rho$ is the Gaussian \eqref{eq:gaussian-distribution}, with mean $\re$ and covariance \eqref{eq:covariance}, and its marginal is the Gaussian with mean $\xx^{e}$ and covariance the $\cA\cA$ block, $\bm{\Sigma}_{\cA\cA} = \beta^{-1}(\KK^{+})_{\cA\cA}$.
+Define the effective Hessian of the active site,
+\begin{equation}
+\boxed{
+\KA \equiv \Big[\big(\KK^{+}\big)_{\cA\cA}\Big]^{-1} ,
+}
+\label{eq:active-site-hessian}
+\end{equation}
+a $3\nA \times 3\nA$ matrix with eigenvalues $\kappa_a$, $a = 1, \ldots, 3\nA$.
+$\KK^{+}$ is positive semi-definite with null space the rigid-body directions, so $(\KK^{+})_{\cA\cA}$ is singular only if some rigid-body displacement vanishes on every node outside $\cA$, which requires those nodes to be collinear; otherwise the inverse exists and the $\kappa_a$ are positive.
+Then
+\begin{equation}
+\rho_{\cA}(\xx) = \prod_{a} \left(\frac{\beta\kappa_a}{2\pi}\right)^{1/2}
+\exp\Big(-\tfrac{\beta}{2}\big(\xx - \xx^{e}\big)^{\mathsf T}\KA\big(\xx - \xx^{e}\big)\Big).
+\label{eq:active-site-marginal}
+\end{equation}
+
+\subsubsection{The activation free energy}
+
+Substituting \eqref{eq:active-site-marginal} into \eqref{eq:activation-definition},
+\begin{equation}
+\boxed{
+\Delta A^{\ddagger} = \tfrac12 \big(\xts - \xx^{e}\big)^{\mathsf T}\KA\big(\xts - \xx^{e}\big)
++ \frac{1}{2\beta} \sum_{a} \ln \frac{2\pi}{\beta\kappa_a} .
+}
+\label{eq:activation-free-energy}
+\end{equation}
+The first term,
+\begin{equation}
+\Delta V^{\ddagger} \equiv \tfrac12 \big(\xts - \xx^{e}\big)^{\mathsf T}\KA\big(\xts - \xx^{e}\big),
+\label{eq:activation-energy}
+\end{equation}
+is the minimum of \eqref{eq:quadratic-approximation} over the conformations with $\xx = \xts$, less $V(\re;\LL)$.
+In the transition state the $3\nA$ coordinates of the active site are fixed and the remaining $3N-6-3\nA$ internal degrees of freedom fluctuate harmonically about that constrained minimum, so, as in \eqref{eq:internal-energy}, $U^{\ddagger} = V(\re;\LL) + \Delta V^{\ddagger} + (3N-6-3\nA)/2\beta$, and
+\begin{equation}
+\Delta U^{\ddagger} = \Delta V^{\ddagger} - \frac{3\nA}{2\beta},
+\qquad
+-T\Delta S^{\ddagger} = \frac{1}{2\beta} \sum_{a} \left[\ln\frac{2\pi}{\beta\kappa_a} + 1\right] ,
+\label{eq:activation-energy-entropy}
+\end{equation}
+the second being $T$ times the entropy of $\rho_{\cA}$, which the transition state loses.
+The transition state has $3\nA$ fewer degrees of freedom than the network, so, unlike the differences of Section~\ref{sec:changes}, $\Delta A^{\ddagger}$ and $T\Delta S^{\ddagger}$ depend on the unit of length; their differences between two networks do not.
+
 \section{Mutations}
 \label{sec:mutation}
 
@@ -580,6 +657,29 @@ Since $\rem$ minimises $V'$, we have $V'(\rem) \le V'(\rr)$ for every $\rr$, and
 \Delta V_{\text{relax}} \le 0 .
 \end{equation}
 
+\subsubsection{The change in the activation free energy}
+
+The mutant's activation free energy $\Delta A^{\ddagger\prime}$ is \eqref{eq:activation-free-energy} for the same active site and the same $\xts$, now in the frame of $\rem$, with the mutant's own $\xx^{e\prime}$ and $\KA' \equiv [(\KK'^{+})_{\cA\cA}]^{-1}$, of eigenvalues $\kappa'_a$.
+The terms $3\nA/2\beta$ of \eqref{eq:activation-energy-entropy} are the same for both networks, so $\Delta\Delta U^{\ddagger} = \Delta\Delta V^{\ddagger}$, with
+\begin{equation}
+\Delta\Delta V^{\ddagger} \equiv
+\tfrac12 \big(\xts - \xx^{e\prime}\big)^{\mathsf T}\KA'\big(\xts - \xx^{e\prime}\big)
+- \tfrac12 \big(\xts - \xx^{e}\big)^{\mathsf T}\KA\big(\xts - \xx^{e}\big) ,
+\label{eq:activation-energy-change}
+\end{equation}
+and
+\begin{equation}
+\boxed{
+T\Delta\Delta S^{\ddagger} = \frac{1}{2\beta} \ln
+\frac{\prod_{a} \kappa'_a}{\prod_{a} \kappa_a} ,
+\qquad
+\Delta\Delta A^{\ddagger} = \Delta\Delta V^{\ddagger} - \frac{1}{2\beta} \ln
+\frac{\prod_{a} \kappa'_a}{\prod_{a} \kappa_a} .
+}
+\label{eq:activation-free-energy-change}
+\end{equation}
+When the reference active site is at the transition-state conformation, $\xts = \xx^{e}$, the reference term of \eqref{eq:activation-energy-change} vanishes and $\Delta\Delta V^{\ddagger} = \tfrac12 (\xx^{e} - \xx^{e\prime})^{\mathsf T}\KA'(\xx^{e} - \xx^{e\prime}) \ge 0$.
+
 \clearpage
 \appendix
 \begin{center}
@@ -612,6 +712,11 @@ written.
 $\lij = \dij(\rr^{\ast})$ for a chosen structure $\rr^{\ast}$ yields an
 unfrustrated network, but nothing selects it, and whether a frustrated network is
 the better model of a native structure --- and if so, which one --- is open.
+\item How the transition state is placed. $\Delta A^{\ddagger}$ depends on the
+position of $\xts$ relative to $\re$, not only on its shape, because the distribution
+\eqref{eq:gaussian-distribution} has no rigid-body freedom. Whether $\xts$ should be
+superposed onto $\re$, and on which nodes, or integrated over its rigid-body
+placements, is not settled.
 \end{itemize}
 
 \section{Frustration}
