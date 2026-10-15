@@ -50,7 +50,7 @@ c(wt = get_nsites(wt),  mut = get_nsites(mut))
 #>  98  98
 c(wt = enm_v_min(wt),   mut = enm_v_min(mut))
 #>       wt      mut 
-#> 0.000000 2.068515
+#> 0.000000 1.958194
 ```
 
 The `delta_*` families compare them, by site or by normal mode:

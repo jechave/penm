@@ -20,15 +20,16 @@ delta_structure_df2n(wt, mut)
 }
 \value{
 A vector of size \code{nmodes} with the contribution of each normal mode
-to the given property.
+to the given property: in Å² for \code{dr2n}, kcal/mol for \code{de2n}, and
+(kcal/(mol Å))² for \code{df2n}.
 }
 \description{
 (This version works only for wt and mut with no indels)
 }
 \details{
-\code{delta_structure_dr2n} calculates the square of the mode-contributions to \eqn{\delta \mathbf{r} = \mathbf{C}\mathbf{f}}{delta r = C f}
+\code{delta_structure_dr2n} calculates the square of the mode-contributions to the displacement \eqn{\delta \mathbf{r}}{delta r} from \code{wt} to \code{mut}
 
-\code{delta_structure_de2n} calculates the square of the mode-contributions to \eqn{\delta \mathbf{e} = \mathbf{C}^{1/2}\mathbf{f}}{delta e = C^(1/2) f}
+\code{delta_structure_de2n} calculates the square of the mode-contributions to \eqn{\delta \mathbf{e} = \mathbf{K}^{1/2}\delta\mathbf{r}}{delta e = K^(1/2) delta r}
 
 \code{delta_structure_df2n} calculates the square of the mode-contributions to the force vector \eqn{\mathbf{f}}{f}
 }

@@ -4,17 +4,20 @@
 \alias{get_cmat_sqrt}
 \title{Calculate the matrix square root of the ENM covariance matrix}
 \usage{
-get_cmat_sqrt(prot)
+get_cmat_sqrt(prot, beta = beta_boltzmann())
 }
 \arguments{
 \item{prot}{is a protein object obtained using set_enm()}
+
+\item{beta}{inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see \code{\link[=beta_boltzmann]{beta_boltzmann()}})}
 }
 \value{
-a matrix of size 3 nsites x 3 nsites, the matrix square root of \code{cmat}
+a matrix of size 3 nsites x 3 nsites, the matrix square root of
+\code{get_cmat(prot, beta)}, in Å
 }
 \description{
 Calculates \eqn{\mathbf{C}^{1/2}}{C^(1/2)} from the eigendecomposition of the network,
-as \eqn{\mathbf{U} \sqrt{1/\lambda} \mathbf{U}^T}{U sqrt(1/lambda) U^T}. The dual of
+as \eqn{\mathbf{U} \sqrt{1/(\beta\lambda)} \mathbf{U}^T}{U sqrt(1/(beta lambda)) U^T}. The dual of
 \code{\link{get_kmat_sqrt}}, which uses \eqn{\sqrt{\lambda}}{sqrt(lambda)} instead.
 }
 \examples{
@@ -24,10 +27,10 @@ wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
 cs <- get_cmat_sqrt(wt)
 all.equal(cs \%*\% cs, as.matrix(get_cmat(wt)), check.attributes = FALSE)
 
-# cmat is the pseudo-inverse of kmat, taken over the non-rigid modes only, so
-# this product is not the identity but the projector onto that subspace: its
-# trace counts the 3 nsites - 6 modes that are kept.
-sum(diag(get_kmat_sqrt(wt) \%*\% cs))
+# with beta = 1, cmat is the pseudo-inverse of kmat, taken over the non-rigid
+# modes only, so this product is not the identity but the projector onto that
+# subspace: its trace counts the 3 nsites - 6 modes that are kept.
+sum(diag(get_kmat_sqrt(wt) \%*\% get_cmat_sqrt(wt, beta = 1)))
 
 }
 \seealso{

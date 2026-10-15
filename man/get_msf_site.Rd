@@ -4,13 +4,16 @@
 \alias{get_msf_site}
 \title{Calculate MSF site-dependent profile}
 \usage{
-get_msf_site(prot)
+get_msf_site(prot, beta = beta_boltzmann())
 }
 \arguments{
 \item{prot}{is a protein object obtained using set_enm()}
+
+\item{beta}{inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see \code{\link[=beta_boltzmann]{beta_boltzmann()}})}
 }
 \value{
-a vector of size nsites with msf values for each site
+a vector of size nsites with the mean-square fluctuation of each
+site at inverse temperature \code{beta}, in Å²
 }
 \description{
 Calculates the mean-square-fluctuation of each site

@@ -180,15 +180,16 @@ allele_delta_lij <- function(prot, site, allele) {
 
 #' Calculate structural response of network to applied force
 #'
-#' \eqn{\delta\mathbf{r} = \mathbf{C}\mathbf[f]}
+#' \eqn{\delta\mathbf{r} = \mathbf{K}^{+}\mathbf{f}}: a mechanical response, with
+#' no temperature in it, so it uses K+ and not the covariance.
 #'
 #' @noRd
 #'
 #' @family enm mutating functions
 calculate_dxyz <- function(wt, f) {
-  cmat <- get_cmat(wt)
+  kmat_pinv <- get_kmat_pinv(wt)
   nzf <- f != 0 # consider only non-zero forces, to make next step faster
-  dxyz <-  crossprod(cmat[nzf, ], f[nzf]) # calculate mutant equilibrium conformation (LRA)
+  dxyz <-  crossprod(kmat_pinv[nzf, ], f[nzf]) # calculate mutant equilibrium conformation (LRA)
   as.vector(dxyz) # crossprod gives a 3N x 1 matrix; xyz is a vector
 }
 

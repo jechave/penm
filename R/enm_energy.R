@@ -5,7 +5,12 @@
 #' The default inverse temperature used by the entropic energy functions
 #' ([ddg_tds()], [ddgact_tds()], [dgact_tds()]).
 #'
-#' @param R Boltzmann's constant per mole, in kcal/(mol K)
+#' penm works in kcal/mol: every model's spring constants are in
+#' kcal/(mol Å²) (see [set_enm()]), so its energies are in kcal/mol and the
+#' default `R`, in kcal/(mol K), matches them.
+#'
+#' @param R the gas constant, in kcal/(mol K); the default is the CODATA 2018
+#'   value, 8.314462618 J/(mol K), divided by 4184 J/kcal
 #' @param T absolute temperature, in Kelvin
 #'
 #' @returns a scalar, \eqn{1 / (RT)}{1 / (RT)}, in mol/kcal
@@ -17,7 +22,7 @@
 #' beta_boltzmann()              # 298 K
 #' beta_boltzmann(T = 310)       # body temperature
 #'
-beta_boltzmann <- function(R = 1.986e-3, T = 298) 1 / (R * T)
+beta_boltzmann <- function(R = 1.987204e-3, T = 298) 1 / (R * T)
 
 
 #' Calculate minimum energy of a given prot object
@@ -31,7 +36,7 @@ beta_boltzmann <- function(R = 1.986e-3, T = 298) 1 / (R * T)
 #'
 #' @param prot is a prot object, with a component graph tibble
 #' where v0ij, kij, lij and the dij for the minimum conformation are found.
-#' @return a scalar: the energy at the minimum-energy conformation
+#' @return a scalar: the energy at the minimum-energy conformation, in kcal/mol
 #'
 #' @export
 #' @family enm_energy
@@ -65,12 +70,15 @@ enm_v_min <- function(prot) {
 #' Calculate entropic total free energy of prot object
 #'
 #' Sums the entropic free-energy contribution of every normal mode, computed from
-#' the ENM eigenvalue spectrum.
+#' the ENM eigenvalue spectrum, \eqn{\frac{1}{2\beta} \sum_n \ln \frac{\beta\lambda_n}{2\pi}}{sum_n (1/(2 beta)) ln(beta lambda_n / (2 pi))}.
+#' Its value depends on the unit of length (Å); differences between two networks
+#' with the same number of modes ([ddg_tds()]) do not.
 #'
 #' @param prot is a prot object with known eigenvalues of enm model
-#' @param beta inverse temperature, \code{1 / kT}
+#' @param beta inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see [beta_boltzmann()])
 #'
-#' @return a scalar: the entropic free-energy contribution, summed over modes
+#' @return a scalar: the entropic free-energy contribution, summed over modes, in
+#'   kcal/mol
 #'
 #' @family enm_energy
 #' @export
@@ -79,8 +87,8 @@ enm_v_min <- function(prot) {
 #' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
 #'               d_max = 10.5)
 #'
-#' # beta has no default; beta_boltzmann() is the usual choice
-#' enm_g_entropy(wt, beta_boltzmann())
+#' enm_g_entropy(wt)                           # at 298 K
+#' enm_g_entropy(wt, beta_boltzmann(T = 310))  # at 310 K
 #'
 #' # the term depends on the whole eigenvalue spectrum, so it moves when the
 #' # network does: a shorter cutoff keeps fewer contacts
@@ -88,7 +96,7 @@ enm_v_min <- function(prot) {
 #'                d_max = 9)
 #' enm_g_entropy(wt2, beta_boltzmann())
 #'
-enm_g_entropy <- function(prot, beta) {
+enm_g_entropy <- function(prot, beta = beta_boltzmann()) {
   # Calculate T*S from the energy spectrum
   energy <- get_evalue(prot)
   sum(enm_g_entropy_mode(energy, beta))

@@ -8,6 +8,8 @@
 #' @param wt A protein, with normal modes: they are the basis of the profiles
 #' @param mut A second protein, with normal modes (a genm mutant gets them from
 #'   [set_enm_nma()])
+#' @param beta inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see
+#'   [beta_boltzmann()]); taken by `delta_motion_dmsfn` only, whose result is in Å²
 #'
 #' @return A vector \code{(x_n)} of size \code{nmodes}, where \code{x_n} is the property compared, for mode n.
 #'
@@ -46,10 +48,10 @@ NULL
 #'
 #' @export
 #'
-delta_motion_dmsfn <- function(wt, mut) {
+delta_motion_dmsfn <- function(wt, mut, beta = beta_boltzmann()) {
   stopifnot(wt$node$pdb_site == mut$node$pdb_site) # no indels
-  msf_wt <- get_msf_mode(wt)
-  msf_mut <- diag(t(get_umat(wt)) %*% (get_cmat(mut) %*% get_umat(wt)))
+  msf_wt <- get_msf_mode(wt, beta)
+  msf_mut <- diag(t(get_umat(wt)) %*% (get_cmat(mut, beta) %*% get_umat(wt)))
   dmsf = msf_mut - msf_wt
   dmsf
 }

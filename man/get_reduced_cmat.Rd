@@ -4,13 +4,16 @@
 \alias{get_reduced_cmat}
 \title{Calculate reduced covariance matrix}
 \usage{
-get_reduced_cmat(prot)
+get_reduced_cmat(prot, beta = beta_boltzmann())
 }
 \arguments{
 \item{prot}{is a protein object obtained using set_enm()}
+
+\item{beta}{inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see \code{\link[=beta_boltzmann]{beta_boltzmann()}})}
 }
 \value{
 a matrix of size nsites x nsites with \eqn{c_{ij} = < d\mathbf{r}_i . d\mathbf{r}_j >}{c_ij = < dr_i . dr_j >}
+at inverse temperature \code{beta}, in Å²
 }
 \description{
 Calculates the reduced covariance matrix (size nsites x nsites)

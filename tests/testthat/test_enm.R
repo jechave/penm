@@ -39,13 +39,45 @@ test_that("set_enm accepts both 'cb' and 'beta' for beta carbon nodes", {
   expect_equal(prot_cb1$nodes$bfactor, prot_cb2$nodes$bfactor)
 })
 
-test_that("set_enm stops on a network with negative springs", {
-  # kij_hnm is negative below 2390/860 = 2.78 A; with side-chain nodes 2acy has
-  # two pairs closer than that, which give the Hessian negative eigenvalues
+test_that("set_enm allows hnm only with alpha-carbon nodes", {
+  # kij_hnm is negative below 2390/860 = 2.78 A; with side-chain or beta-carbon
+  # nodes 2acy has pairs closer than that
   prot_ca <- set_enm(pdb_2acy_A, node = "ca", model = "hnm", d_max = 10.5)
   expect_equal(get_nmodes(prot_ca), 3 * get_nsites(prot_ca) - 6)
   expect_error(set_enm(pdb_2acy_A, node = "sc", model = "hnm", d_max = 10.5),
-               "negative eigenvalue")
+               "C-alpha nodes only")
+  expect_error(set_enm(pdb_2acy_A, node = "cb", model = "hnm", d_max = 10.5),
+               "C-alpha nodes only")
+})
+
+test_that("the normal modes stop on a network with negative springs", {
+  # built past set_enm's node check: hnm springs on side-chain nodes, two of
+  # them negative, give the Hessian negative eigenvalues
+  nodes <- penm:::calculate_enm_nodes(pdb_2acy_A, "sc")
+  graph <- penm:::calculate_enm_graph(nodes$xyz, nodes$pdb_site, "hnm", 10.5, list())
+  expect_equal(sum(graph$kij < 0), 2)
+  eij <- penm:::calculate_enm_eij(nodes$xyz, graph$i, graph$j)
+  kmat <- penm:::calculate_enm_kmat(graph, eij, nodes$nsites)
+  expect_error(penm:::calculate_enm_nma(kmat), "negative eigenvalue")
+})
+
+test_that("fluctuations are covariances at inverse temperature beta, in A^2", {
+  wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
+  # along each mode, kT / lambda_n, with kT in kcal/mol at the default 298 K
+  expect_equal(get_msf_mode(wt), 1.987204e-3 * 298 / get_evalue(wt))
+  # proportional to temperature
+  ratio <- get_msf_site(wt, beta_boltzmann(T = 310)) / get_msf_site(wt, beta_boltzmann(T = 298))
+  expect_equal(unname(ratio), rep(310 / 298, get_nsites(wt)))
+  # cmat is K+ / beta, with K+ the pseudo-inverse of kmat
+  k <- get_kmat(wt)
+  expect_equal(k %*% get_cmat(wt) %*% k, k / beta_boltzmann())
+})
+
+test_that("a prot from penm < 0.6.0, which stored nma$cmat, is rejected", {
+  wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
+  old <- wt
+  names(old$nma)[names(old$nma) == "kmat_pinv"] <- "cmat"
+  expect_error(get_cmat(old), "rebuild it with set_enm")
 })
 
 test_that("set_enm stores how the protein mutates, with defaults", {

@@ -8,7 +8,7 @@
 \alias{delta_motion_nhn}
 \title{Compare two protein ensembles mode by mode (mode-dependent profiles)}
 \usage{
-delta_motion_dmsfn(wt, mut)
+delta_motion_dmsfn(wt, mut, beta = beta_boltzmann())
 
 delta_motion_dhn(wt, mut)
 
@@ -21,6 +21,9 @@ delta_motion_nhn(wt, mut)
 
 \item{mut}{A second protein, with normal modes (a genm mutant gets them from
 \code{\link[=set_enm_nma]{set_enm_nma()}})}
+
+\item{beta}{inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see
+\code{\link[=beta_boltzmann]{beta_boltzmann()}}); taken by \code{delta_motion_dmsfn} only, whose result is in Å²}
 }
 \value{
 A vector \code{(x_n)} of size \code{nmodes}, where \code{x_n} is the property compared, for mode n.

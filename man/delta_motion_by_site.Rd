@@ -8,7 +8,7 @@
 \alias{delta_motion_dhi}
 \title{Compare the motions of two proteins site by site}
 \usage{
-delta_motion_dmsfi(wt, mut)
+delta_motion_dmsfi(wt, mut, beta = beta_boltzmann())
 
 delta_motion_dbhati(wt, mut)
 
@@ -21,6 +21,9 @@ delta_motion_dhi(wt, mut)
 
 \item{mut}{A second protein, with normal modes (a genm mutant gets them from
 \code{\link[=set_enm_nma]{set_enm_nma()}})}
+
+\item{beta}{inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see
+\code{\link[=beta_boltzmann]{beta_boltzmann()}}); taken by \code{delta_motion_dmsfi} only, whose result is in Å²}
 }
 \value{
 A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.

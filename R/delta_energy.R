@@ -6,9 +6,9 @@
 #' @param ideal A protein object whose conformation defines the reference (ideal) state.
 #'   Defaults to \code{wt}.
 #' @param pdb_site_active A vector of active-site residues, in pdb numbering (\code{resno})
-#' @param beta Inverse temperature, \code{1/kT}
+#' @param beta inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see [beta_boltzmann()])
 #'
-#' @return A (scalar) energy difference between mutant and wild type.
+#' @return A (scalar) energy difference between mutant and wild type, in kcal/mol.
 #'
 #' @seealso [delta_structure_by_site] and [delta_motion_by_site] for per-site
 #'   profiles rather than scalars. [get_mutant_site()] produces the `mut` argument;
@@ -66,7 +66,7 @@ delta_energy_dvs <- function(wt, mut, ideal = wt)
 
 #' @rdname delta_energy
 #'
-#' @details `ddgact_dv` calculates the energy contribution to the change in activation energy between \code{mut} and \code{wt}
+#' @details `ddgact_dv` calculates the change, from \code{wt} to \code{mut}, of the deformation term of the activation free energy ([dgact_dv()]): the change in its internal-energy part
 #'
 #' @export
 #'
@@ -78,12 +78,12 @@ ddgact_dv <- function(wt, mut, ideal = wt, pdb_site_active = NA) {
 
 #' @rdname delta_energy
 #'
-#' @details `ddgact_tds` calculates the entropy contribution to the change in activation energy between \code{mut} and \code{wt}
+#' @details `ddgact_tds` calculates the change, from \code{wt} to \code{mut}, of the fluctuation term of the activation free energy ([dgact_tds()]): the change in its entropic part, \eqn{-T\Delta\Delta S^\ddagger}{-T ddS}
 #'
 #' @export
 #'
 ddgact_tds <- function(wt, mut, ideal = wt, pdb_site_active = NA, beta = beta_boltzmann()) {
-  result <- dgact_tds(mut, ideal, pdb_site_active) - dgact_tds(wt, ideal, pdb_site_active)
+  result <- dgact_tds(mut, ideal, pdb_site_active, beta) - dgact_tds(wt, ideal, pdb_site_active, beta)
   result
 }
 

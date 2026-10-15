@@ -62,7 +62,7 @@ superpose_prot <- function(prot, fixed) {
   has_modes <- !identical(prot$nma, NA)
   if (has_modes) {
     prot$nma$umat <- canonical_sign(rotation_all %*% prot$nma$umat)
-    prot$nma$cmat <- rotation_all %*% prot$nma$cmat %*% t(rotation_all)
+    prot$nma$kmat_pinv <- rotation_all %*% prot$nma$kmat_pinv %*% t(rotation_all)
   }
   # one row per edge: a row vector e rotates to e t(rotation)
   has_eij <- !is.null(prot$internal$eij)

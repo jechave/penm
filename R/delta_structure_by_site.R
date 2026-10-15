@@ -10,7 +10,8 @@
 #' @param kmat_sqrt The matrix square root of the ENM K matrix, as returned by
 #'   \code{\link{get_kmat_sqrt}}
 #'
-#' @return A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.
+#' @return A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i:
+#'   in Å² for `dr2i`, kcal/mol for `de2i`, and (kcal/(mol Å))² for `df2i`.
 #'
 #' @seealso [delta_structure_by_mode] for the same differences resolved by normal
 #'   mode rather than by site — `dr2i` and `dr2n` are the same displacement in two
@@ -35,7 +36,7 @@ NULL
 
 #' @rdname delta_structure_by_site
 #'
-#' @details `delta_structure_dr2i` returns the square of structural difference vector \eqn{\mathbf{C}\mathbf{f}}{C f}
+#' @details `delta_structure_dr2i` returns the square of each site's displacement \eqn{\delta\mathbf{r}}{dr} from \code{wt} to \code{mut}
 #'
 #' @export
 #'
@@ -48,7 +49,7 @@ delta_structure_dr2i <- function(wt, mut) {
 }
 
 #' @rdname delta_structure_by_site
-#' @details `delta_structure_de2i` returns the square of deformation energy vector \eqn{\mathbf{C}^{1/2}\mathbf{f}}{C^(1/2) f}
+#' @details `delta_structure_de2i` returns the square of deformation energy vector \eqn{\mathbf{K}^{1/2}\delta\mathbf{r}}{K^(1/2) dr}
 #'
 #' @export
 #'

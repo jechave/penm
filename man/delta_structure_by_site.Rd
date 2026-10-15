@@ -22,15 +22,16 @@ delta_structure_df2i(wt, mut)
 \code{\link{get_kmat_sqrt}}}
 }
 \value{
-A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.
+A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i:
+in Å² for \code{dr2i}, kcal/mol for \code{de2i}, and (kcal/(mol Å))² for \code{df2i}.
 }
 \description{
 This version works only for wt and mut with no indels
 }
 \details{
-\code{delta_structure_dr2i} returns the square of structural difference vector \eqn{\mathbf{C}\mathbf{f}}{C f}
+\code{delta_structure_dr2i} returns the square of each site's displacement \eqn{\delta\mathbf{r}}{dr} from \code{wt} to \code{mut}
 
-\code{delta_structure_de2i} returns the square of deformation energy vector \eqn{\mathbf{C}^{1/2}\mathbf{f}}{C^(1/2) f}
+\code{delta_structure_de2i} returns the square of deformation energy vector \eqn{\mathbf{K}^{1/2}\delta\mathbf{r}}{K^(1/2) dr}
 
 \code{delta_structure_df2i} returns the square of force vector \eqn{\mathbf{f}}{f}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/enm_energy_activation.R
 \name{dgact_tds}
 \alias{dgact_tds}
-\title{Activation free energy, entropic contribution}
+\title{Activation free energy, fluctuation term}
 \usage{
 dgact_tds(prot, ideal, pdb_site_active = NA, beta = beta_boltzmann())
 }
@@ -14,16 +14,25 @@ dgact_tds(prot, ideal, pdb_site_active = NA, beta = beta_boltzmann())
 \item{pdb_site_active}{A vector of active-site residues, in pdb numbering (\code{resno}).
 If \code{NA} (the default), the function returns \code{NA}.}
 
-\item{beta}{Inverse temperature, \code{1/kT}}
+\item{beta}{inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see \code{\link[=beta_boltzmann]{beta_boltzmann()}})}
 }
 \value{
-A scalar, the entropic contribution to the activation free energy,
-or \code{NA} if \code{pdb_site_active} is \code{NA}.
+A scalar, the fluctuation term of the activation free energy, in
+kcal/mol, or \code{NA} if \code{pdb_site_active} is \code{NA}.
 }
 \description{
-Calculates the entropic contribution to the activation free energy, as the
-difference between the entropic free energy of the active site of \code{prot} and
-that of the transition state, which is assumed rigid (contributing zero).
+Calculates the free energy of freezing the fluctuations of the active site of
+\code{prot}, the transition state being assumed rigid:
+\eqn{\frac{1}{2\beta} \sum_a \ln \frac{2\pi}{\beta\kappa_a}}{sum_a (1/(2 beta)) ln(2 pi / (beta kappa_a))},
+with \eqn{\kappa_a}{kappa_a} the eigenvalues of the effective stiffness of the
+active site. The activation free energy is this term plus \code{\link[=dgact_dv]{dgact_dv()}}.
+}
+\details{
+It is not exactly the entropic part \eqn{-T\Delta S^\ddagger}{-T dS}: that is
+this term plus \eqn{3 n_A / (2\beta)}{3 n_A / (2 beta)}, with \eqn{n_A}{n_A} the
+number of active-site nodes. The value also depends on the unit of length (Å).
+Both cancel between two proteins, so \code{\link[=ddgact_tds]{ddgact_tds()}} is exactly the change in
+\eqn{-T\Delta S^\ddagger}{-T dS}.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",

@@ -65,10 +65,12 @@ test_that("an lfenm mutant is the wild type plus the response to lij - l0ij, wha
   expect_identical(path_1$graph$lij, path_2$graph$lij)
 
   # closed form, in one step from the wild type: kmat and the edge directions
-  # are the wild type's, so the response is linear in lij - l0ij
+  # are the wild type's, so the response is linear in lij - l0ij. It is K+ f,
+  # with K+ the pseudo-inverse of kmat: mechanical, with no temperature in it.
   delta_lij <- path_1$graph$lij - wt_alleles$graph$l0ij
   f <- penm:::calculate_force(wt_alleles, delta_lij)
-  xyz_direct <- get_xyz(wt_alleles) + as.vector(get_cmat(wt_alleles) %*% f)
+  kmat_pinv <- beta_boltzmann() * get_cmat(wt_alleles)
+  xyz_direct <- get_xyz(wt_alleles) + as.vector(kmat_pinv %*% f)
   expect_gt(max(abs(xyz_direct - get_xyz(wt_alleles))), 0.01)
   expect_equal(get_xyz(path_1), xyz_direct)
   expect_equal(get_xyz(path_2), xyz_direct)

@@ -20,6 +20,8 @@
 #' interface; the list structure is not.
 #'
 #' @param prot A protein with its associated ENM model, obtained using `set_enm`
+#' @param beta inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see
+#'   [beta_boltzmann()]); taken by `get_cmat` only
 #'
 #' @seealso [set_enm()], which builds the `prot` these read.
 #'
@@ -194,7 +196,8 @@ get_mode <- function(prot) get_nma(prot)$mode
 #' @rdname get_prot_property
 #'
 #'
-#' @return \code{get_evalue}: a vector of normal-mode eigenvalues
+#' @return \code{get_evalue}: a vector of normal-mode eigenvalues, the modes'
+#'   force constants, in kcal/(mol Å²)
 #'
 #' @export
 #'
@@ -212,11 +215,38 @@ get_umat <- function(prot) get_nma(prot)$umat
 #' @rdname get_prot_property
 #'
 #'
-#' @return \code{get_cmat}: the ENM covariance matrix, of size \code{3 nsites x 3 nsites}
+#' @return \code{get_cmat}: the covariance matrix of the node displacements at
+#'   inverse temperature `beta`, \eqn{\beta^{-1} \mathbf{K}^{+}}{K+ / beta}, in Å²,
+#'   of size \code{3 nsites x 3 nsites}; \eqn{\mathbf{K}^{+}}{K+} is the
+#'   pseudo-inverse of `kmat` over the non-rigid modes
 #'
 #' @export
 #'
-get_cmat <- function(prot) get_nma(prot)$cmat
+get_cmat <- function(prot, beta = beta_boltzmann()) {
+  get_kmat_pinv(prot) / beta
+}
+
+
+#' The pseudo-inverse of kmat
+#'
+#' \eqn{\mathbf{K}^{+}}{K+}, over the non-rigid modes: the covariance per unit
+#' \eqn{k_BT}{kT}, in Å²/(kcal/mol), stored as `nma$kmat_pinv`. Mechanical
+#' quantities need this rather than the covariance [get_cmat()] returns: the
+#' linear response to a force, and the stiffness of a subset of nodes.
+#'
+#' @param prot a prot with normal modes
+#'
+#' @returns a matrix of size 3 nsites x 3 nsites
+#'
+#' @noRd
+#'
+get_kmat_pinv <- function(prot) {
+  kmat_pinv <- get_nma(prot)$kmat_pinv
+  if (is.null(kmat_pinv)) {
+    stop("prot has no kmat_pinv: it was built by penm < 0.6.0; rebuild it with set_enm()")
+  }
+  kmat_pinv
+}
 
 
 #' @rdname get_prot_property

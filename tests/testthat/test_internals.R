@@ -40,9 +40,9 @@ test_that("kij_anm is a step function of distance, forcing i,i+1 contacts", {
 })
 
 test_that("kij_ming_wall gives k inside the cutoff and a*k for i,i+1", {
-  # defaults d_max = 10.5, k = 4.5, a = 42, so forced contacts are 42*4.5 = 189
-  expect_equal(penm:::kij_ming_wall(c(5, 12), c(4, 4)), c(4.5, 0))
-  expect_equal(penm:::kij_ming_wall(c(5, 12), c(1, -1)), c(189, 189))
+  # defaults d_max = 10.5, k = 4.26, a = 42, so forced contacts are 42*4.26 = 178.92
+  expect_equal(penm:::kij_ming_wall(c(5, 12), c(4, 4)), c(4.26, 0))
+  expect_equal(penm:::kij_ming_wall(c(5, 12), c(1, -1)), c(178.92, 178.92))
 })
 
 test_that("kij_pfanm is the inverse square of distance", {
@@ -64,9 +64,10 @@ test_that("kij_gnm and kij_pfgnm are aliases", {
 })
 
 test_that("kij_reach returns its fixed constants for the first three separations", {
-  expect_equal(penm:::kij_reach(5, sdij = 1), 712)
-  expect_equal(penm:::kij_reach(5, sdij = 2), 6.92)
-  expect_equal(penm:::kij_reach(5, sdij = 3), 32.0)
+  # published in kJ/(mol A^2), returned in kcal/(mol A^2): 1 kcal = 4.184 kJ
+  expect_equal(penm:::kij_reach(5, sdij = 1), 712 / 4.184)
+  expect_equal(penm:::kij_reach(5, sdij = 2), 6.92 / 4.184)
+  expect_equal(penm:::kij_reach(5, sdij = 3), 32.0 / 4.184)
 })
 
 test_that("kij_reach dispatches on each element of sdij", {
@@ -74,9 +75,15 @@ test_that("kij_reach dispatches on each element of sdij", {
   # `...` and every pair got the distance-dependent branch.
   d <- c(3.8, 3.8, 3.8, 3.8, 3.8)
   expect_equal(penm:::kij_reach(d, c(1, -1, 2, 3, 4)),
-               c(712, 712, 6.92, 32.0, 2560 * exp(-0.8 * 3.8)))
+               c(712, 712, 6.92, 32.0, 2560 * exp(-0.8 * 3.8)) / 4.184)
   expect_equal(penm:::kij_reach(d[1:2], c(4, 4), same_chain = FALSE),
-               rep(1630 * exp(-0.772 * 3.8), 2))
+               rep(1630 * exp(-0.772 * 3.8), 2) / 4.184)
+})
+
+test_that("kij_hnm is Hinsen's published function, converted from kJ to kcal", {
+  # 860 r - 2390 up to 4 A, 1.28e6 / r^6 beyond, in kJ/(mol A^2)
+  expect_equal(penm:::kij_hnm(c(3, 4, 5)),
+               c(860 * 3 - 2390, 860 * 4 - 2390, 1.28e6 / 5^6) / 4.184)
 })
 
 test_that("smoothed kij are half the contact value at the cutoff and force i,i+1", {
@@ -85,8 +92,8 @@ test_that("smoothed kij are half the contact value at the cutoff and force i,i+1
                c(1, 1 - tanh(2)))
   expect_equal(penm:::kij_anm_smooth(c(20, 20), c(1, -1), d_max = 10, d_max_width = 1, k = 2), c(2, 2))
   expect_equal(penm:::kij_ming_wall_smooth(c(10.5, 10.5 - 0.5), c(4, 4), d_max_width = 0.5),
-               4.5 * c(0.5, 0.5 * (1 + tanh(1))))
-  expect_equal(penm:::kij_ming_wall_smooth(20, 1, d_max_width = 1), 42 * 4.5)
+               4.26 * c(0.5, 0.5 * (1 + tanh(1))))
+  expect_equal(penm:::kij_ming_wall_smooth(20, 1, d_max_width = 1), 42 * 4.26)
   expect_error(penm:::kij_anm_smooth(5, 4), "\"d_max_width\" is missing")
 })
 

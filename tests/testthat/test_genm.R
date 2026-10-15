@@ -325,7 +325,7 @@ test_that("kij follows lij: a mutation that moves an edge across the cutoff chan
   m <- crossed$m
   r <- crossed$rows
   expect_true(all(m$graph$kij[r] != wt$graph$kij[r]))
-  expect_equal(m$graph$kij[r], ifelse(m$graph$lij[r] <= 10.5, 4.5, 0))
+  expect_equal(m$graph$kij[r], ifelse(m$graph$lij[r] <= 10.5, 4.26, 0))
   # and in general, kij is k(lij) everywhere
   expect_equal(m$graph$kij, penm:::kij_ming_wall(m$graph$lij, m$graph$sdij, d_max = 10.5))
 })
@@ -409,13 +409,25 @@ test_that("superposing a genm protein rotates its kmat into the kmat at the new 
 test_that("the existing analysis getters work on a genm prot", {
   expect_equal(length(get_msf_site(mut_a)), nsites)
   expect_true(all(is.finite(get_msf_site(mut_a)) & get_msf_site(mut_a) > 0))
-  # cmat is the pseudo-inverse of kmat
+  # cmat is the covariance, K+ / beta, with K+ the pseudo-inverse of kmat
   k <- get_kmat(mut_a)
-  expect_lt(max(abs(k %*% get_cmat(mut_a) %*% k - k)), 1e-8 * max(abs(k)))
+  kmat_pinv <- beta_boltzmann() * get_cmat(mut_a)
+  expect_lt(max(abs(k %*% kmat_pinv %*% k - k)), 1e-8 * max(abs(k)))
   # the mutation changes the spectrum, unlike lfenm
   expect_gt(abs(ddg_tds(wt, mut_a)), 0)
   # eij belongs to lfenm, and a genm prot has none
   expect_error(penm:::get_eij(wt), "no eij")
+})
+
+test_that("ddgact_tds passes its beta on", {
+  # under genm the mutation changes the active site's stiffness, so the
+  # fluctuation term depends on temperature
+  active <- get_pdb_site(wt)[c(10, 11, 12)]
+  beta_400 <- beta_boltzmann(T = 400)
+  by_hand <- dgact_tds(mut_a, wt, active, beta_400) - dgact_tds(wt, wt, active, beta_400)
+  expect_equal(ddgact_tds(wt, mut_a, pdb_site_active = active, beta = beta_400), by_hand)
+  at_298 <- ddgact_tds(wt, mut_a, pdb_site_active = active)
+  expect_gt(abs(by_hand - at_298), 1e-6 * abs(at_298))
 })
 
 test_that("a genm mutant has no modes; set_enm_nma adds them and changes nothing else", {

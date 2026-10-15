@@ -1,15 +1,24 @@
-#' Activation free energy, internal energy contribution
+#' Activation free energy, deformation term
 #'
 #' Calculates the energy cost of deforming the active site of \code{prot} into the
-#' conformation it has in \code{ideal}, treating the transition state as rigid.
+#' conformation it has in \code{ideal}, treating the transition state as rigid:
+#' \eqn{\frac12 \Delta\mathbf{x}^T \mathbf{K}_A \Delta\mathbf{x}}{(1/2) dx' K_A dx}, with
+#' \eqn{\mathbf{K}_A}{K_A} the effective stiffness of the active site. The
+#' activation free energy is this term plus [dgact_tds()].
+#'
+#' It is not exactly the internal-energy change on activation: that is this term
+#' less \eqn{3 n_A / (2\beta)}{3 n_A / (2 beta)}, with \eqn{n_A}{n_A} the number of
+#' active-site nodes, which the transition state cannot fluctuate. The difference
+#' cancels between two proteins, so [ddgact_dv()] is exactly the change in internal
+#' energy.
 #'
 #' @param prot A protein object obtained using \code{set_enm()}
 #' @param ideal A protein object whose conformation defines the ideal (transition) state
 #' @param pdb_site_active A vector of active-site residues, in pdb numbering (\code{resno}).
 #'   If \code{NA} (the default), the function returns \code{NA}.
 #'
-#' @return A scalar, the internal-energy contribution to the activation free energy,
-#'   or \code{NA} if \code{pdb_site_active} is \code{NA}.
+#' @return A scalar, the deformation term of the activation free energy, in
+#'   kcal/mol, or \code{NA} if \code{pdb_site_active} is \code{NA}.
 #'
 #' @export
 #' @family enm_energy
@@ -40,20 +49,28 @@ dgact_dv <- function(prot, ideal, pdb_site_active = NA) {
 }
 
 
-#' Activation free energy, entropic contribution
+#' Activation free energy, fluctuation term
 #'
-#' Calculates the entropic contribution to the activation free energy, as the
-#' difference between the entropic free energy of the active site of \code{prot} and
-#' that of the transition state, which is assumed rigid (contributing zero).
+#' Calculates the free energy of freezing the fluctuations of the active site of
+#' \code{prot}, the transition state being assumed rigid:
+#' \eqn{\frac{1}{2\beta} \sum_a \ln \frac{2\pi}{\beta\kappa_a}}{sum_a (1/(2 beta)) ln(2 pi / (beta kappa_a))},
+#' with \eqn{\kappa_a}{kappa_a} the eigenvalues of the effective stiffness of the
+#' active site. The activation free energy is this term plus [dgact_dv()].
+#'
+#' It is not exactly the entropic part \eqn{-T\Delta S^\ddagger}{-T dS}: that is
+#' this term plus \eqn{3 n_A / (2\beta)}{3 n_A / (2 beta)}, with \eqn{n_A}{n_A} the
+#' number of active-site nodes. The value also depends on the unit of length (Å).
+#' Both cancel between two proteins, so [ddgact_tds()] is exactly the change in
+#' \eqn{-T\Delta S^\ddagger}{-T dS}.
 #'
 #' @param prot A protein object obtained using \code{set_enm()}
 #' @param ideal A protein object whose conformation defines the ideal (transition) state
 #' @param pdb_site_active A vector of active-site residues, in pdb numbering (\code{resno}).
 #'   If \code{NA} (the default), the function returns \code{NA}.
-#' @param beta Inverse temperature, \code{1/kT}
+#' @param beta inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see [beta_boltzmann()])
 #'
-#' @return A scalar, the entropic contribution to the activation free energy,
-#'   or \code{NA} if \code{pdb_site_active} is \code{NA}.
+#' @return A scalar, the fluctuation term of the activation free energy, in
+#'   kcal/mol, or \code{NA} if \code{pdb_site_active} is \code{NA}.
 #'
 #' @export
 #' @family enm_energy
@@ -112,13 +129,16 @@ active_site_indexes <- function(prot, pdb_site_active) {
 
 #' Calculate effective K matrix of active site
 #'
+#' \eqn{[(\mathbf{K}^{+})_{AA}]^{-1}}{[(K+)_AA]^-1}, a stiffness in kcal/(mol A^2):
+#' built from K+, not from the covariance, which would multiply it by beta.
+#'
 #' @noRd
 #'
 kmat_asite <- function(prot, pdb_site_active) {
   asite <- active_site_indexes(prot, pdb_site_active)
-  cmat <- get_cmat(prot)
-  cmat_asite <- cmat[asite$ind_active, asite$ind_active]
-  kmat_asite <- solve(cmat_asite)
+  kmat_pinv <- get_kmat_pinv(prot)
+  kmat_pinv_asite <- kmat_pinv[asite$ind_active, asite$ind_active]
+  kmat_asite <- solve(kmat_pinv_asite)
   kmat_asite
 }
 

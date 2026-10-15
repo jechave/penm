@@ -49,7 +49,17 @@
 #'   and `"beta"` are accepted as synonyms.
 #' @param model ENM variant, one of `"anm"`, `"ming_wall"`, `"hnm"`, `"hnm0"`,
 #'   `"pfanm"`, `"reach"`, `"anm_smooth"`, `"ming_wall_smooth"`. These select the
-#'   spring-constant function applied to each contact.
+#'   spring-constant function applied to each contact. `"hnm"` requires
+#'   `node = "ca"`: its spring constant was fitted to alpha-carbon distances, and
+#'   is negative for the closer pairs that other node types produce.
+#'
+#'   Spring constants are in kcal/(mol Å²) for every model, so energies are in
+#'   kcal/mol. `"ming_wall"` uses the published values of Ming & Wall (2005),
+#'   in those units. `"hnm"` (Hinsen et al. 2000) and `"reach"` (Moritsugu et
+#'   al. 2009) were published in kJ/(mol Å²) and are converted. `"anm"`,
+#'   `"anm_smooth"`, `"pfanm"` and `"hnm0"` have no calibrated scale: their
+#'   default stiffness of 1 is a convention, so their energies, and anything
+#'   that adds an energy to an entropic term, carry an arbitrary scale.
 #' @param d_max distance cutoff (Å) used to define enm contacts
 #' @param ... further parameters of the spring-constant function, by name; for
 #'   example `d_max_width`, which `"anm_smooth"` and `"ming_wall_smooth"` require:
@@ -171,6 +181,10 @@ set_enm_param <- function(prot, node, model, d_max, kij_par, mut_model, d_max_gr
   }
   check_ensemble(ensemble)
   stopifnot(alphabet_size >= 2, mut_dl_sigma > 0, mut_sd_min >= 1)
+  if (model == "hnm" && !(node %in% c("ca", "calpha"))) {
+    stop("model \"hnm\" is defined for C-alpha nodes only ",
+         "(Hinsen's k(r) was fitted to C-alpha distances); use node = \"ca\"")
+  }
 
   # the spring-constant function, and the further parameters it is given
   kij_fun <- match.fun(paste0("kij_", model))
@@ -487,7 +501,8 @@ canonical_sign <- function(umat) {
 #' @param kmat The K matrix to diagonalize
 #' @param null_tol=1.e-8 Eigenvalues smaller in magnitude than `null_tol` times the largest are null, and are discarded
 #'
-#' @return A list with elements \code{lst(mode,evalue,cmat,umat)}
+#' @return A list with elements \code{lst(mode,evalue,kmat_pinv,umat)}, where
+#'   `kmat_pinv` is the pseudo-inverse of `kmat` over the non-rigid modes
 #'
 #' @examples
 #' \dontrun{
@@ -521,12 +536,14 @@ calculate_enm_nma <- function(kmat, null_tol = 1.e-8) {
 
   umat <- canonical_sign(umat)
 
-  cmat <-  umat %*% ((1 / evalue) * t(umat))
+  # K+, the pseudo-inverse of kmat over the non-rigid modes; get_cmat() turns
+  # it into the covariance, K+ / beta
+  kmat_pinv <- umat %*% ((1 / evalue) * t(umat))
 
   nma <- list(
     mode = mode,
     evalue = evalue,
-    cmat = cmat,
+    kmat_pinv = kmat_pinv,
     umat = umat
   )
   nma

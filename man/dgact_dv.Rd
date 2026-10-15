@@ -2,7 +2,7 @@
 % Please edit documentation in R/enm_energy_activation.R
 \name{dgact_dv}
 \alias{dgact_dv}
-\title{Activation free energy, internal energy contribution}
+\title{Activation free energy, deformation term}
 \usage{
 dgact_dv(prot, ideal, pdb_site_active = NA)
 }
@@ -15,12 +15,22 @@ dgact_dv(prot, ideal, pdb_site_active = NA)
 If \code{NA} (the default), the function returns \code{NA}.}
 }
 \value{
-A scalar, the internal-energy contribution to the activation free energy,
-or \code{NA} if \code{pdb_site_active} is \code{NA}.
+A scalar, the deformation term of the activation free energy, in
+kcal/mol, or \code{NA} if \code{pdb_site_active} is \code{NA}.
 }
 \description{
 Calculates the energy cost of deforming the active site of \code{prot} into the
-conformation it has in \code{ideal}, treating the transition state as rigid.
+conformation it has in \code{ideal}, treating the transition state as rigid:
+\eqn{\frac12 \Delta\mathbf{x}^T \mathbf{K}_A \Delta\mathbf{x}}{(1/2) dx' K_A dx}, with
+\eqn{\mathbf{K}_A}{K_A} the effective stiffness of the active site. The
+activation free energy is this term plus \code{\link[=dgact_tds]{dgact_tds()}}.
+}
+\details{
+It is not exactly the internal-energy change on activation: that is this term
+less \eqn{3 n_A / (2\beta)}{3 n_A / (2 beta)}, with \eqn{n_A}{n_A} the number of
+active-site nodes, which the transition state cannot fluctuate. The difference
+cancels between two proteins, so \code{\link[=ddgact_dv]{ddgact_dv()}} is exactly the change in internal
+energy.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",

@@ -89,7 +89,9 @@ get_dactive <- function(prot, pdb_site_active) {
 #' Calculates the mean-square-fluctuation of each site
 #'
 #' @param prot is a protein object obtained using set_enm()
-#' @returns a vector of size nsites with msf values for each site
+#' @param beta inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see [beta_boltzmann()])
+#' @returns a vector of size nsites with the mean-square fluctuation of each
+#'   site at inverse temperature `beta`, in Å²
 #'
 #' @export
 #'
@@ -107,8 +109,8 @@ get_dactive <- function(prot, pdb_site_active) {
 #' # the site profile is the diagonal of the reduced covariance matrix
 #' all.equal(msf, diag(get_reduced_cmat(wt)))
 #'
-get_msf_site <- function(prot) {
-  diag(get_reduced_cmat(prot))
+get_msf_site <- function(prot, beta = beta_boltzmann()) {
+  diag(get_reduced_cmat(prot, beta))
 }
 
 
@@ -119,7 +121,8 @@ get_msf_site <- function(prot) {
 #'
 #' @param prot is a protein object obtained using set_enm()
 #' @param sdij_cut An integer cutoff of sequence distance to include in calculation
-#' @returns the profile of mean-local-mutational-stress (mlms) values
+#' @returns the profile of mean-local-mutational-stress (mlms) values: the sum of
+#'   the spring constants of each site's springs, in kcal/(mol Å²)
 #'
 #' @export
 #'
@@ -162,7 +165,9 @@ get_mlms <- function(prot, sdij_cut = 2) {
 #' Calculates the mean-square-fluctuation in the direction of each normal mode
 #'
 #' @param prot is a protein object obtained using set_enm()
-#' @returns a vector of size nmodes with the msf contributed by each normal mode
+#' @param beta inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see [beta_boltzmann()])
+#' @returns a vector of size nmodes with the mean-square fluctuation along each
+#'   normal mode at inverse temperature `beta`, \eqn{1 / (\beta \lambda_n)}{1 / (beta lambda_n)}, in Å²
 #'
 #' @export
 #'
@@ -177,10 +182,12 @@ get_mlms <- function(prot, sdij_cut = 2) {
 #' msf_n <- get_msf_mode(wt)
 #' length(msf_n) == get_nmodes(wt)
 #'
-#' # softest modes fluctuate most: msf is 1 / eigenvalue
+#' # softest modes fluctuate most: msf is 1 / (beta * eigenvalue)
 #' head(sort(msf_n, decreasing = TRUE))
 #'
-get_msf_mode <-  function(prot) 1 / get_evalue(prot)
+get_msf_mode <- function(prot, beta = beta_boltzmann()) {
+  1 / (beta * get_evalue(prot))
+}
 
 
 
@@ -220,7 +227,9 @@ get_rho_matrix <- function(prot) {
 #' Calculates the reduced covariance matrix (size nsites x nsites)
 #'
 #' @param prot is a protein object obtained using set_enm()
+#' @param beta inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see [beta_boltzmann()])
 #' @returns a matrix of size nsites x nsites with \eqn{c_{ij} = < d\mathbf{r}_i . d\mathbf{r}_j >}{c_ij = < dr_i . dr_j >}
+#'   at inverse temperature `beta`, in Å²
 #'
 #' @export
 #'
@@ -236,8 +245,8 @@ get_rho_matrix <- function(prot) {
 #' # its diagonal is the site-by-site mean-square fluctuation profile
 #' all.equal(diag(cmat_r), get_msf_site(wt))
 #'
-get_reduced_cmat <- function(prot) {
-  get_cmat(prot) %>%
+get_reduced_cmat <- function(prot, beta = beta_boltzmann()) {
+  get_cmat(prot, beta) %>%
     reduce_matrix()
 }
 
@@ -281,7 +290,9 @@ get_reduced_kmat <- function(prot) {
 #' recovers [get_msf_mode()].
 #'
 #' @param prot is a protein object obtained using set_enm()
-#' @returns a matrix of size nsites x nmodes with the msf of each site contributed by each mode
+#' @param beta inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see [beta_boltzmann()])
+#' @returns a matrix of size nsites x nmodes with the msf of each site contributed
+#'   by each mode, at inverse temperature `beta`, in Å²
 #'
 #' @export
 #'
@@ -298,9 +309,9 @@ get_reduced_kmat <- function(prot) {
 #' all.equal(unname(rowSums(m)), unname(get_msf_site(wt)))
 #' all.equal(unname(colSums(m)), unname(get_msf_mode(wt)))
 #'
-get_msf_site_mode <- function(prot) {
+get_msf_site_mode <- function(prot, beta = beta_boltzmann()) {
   umat2 <- get_umat2(prot)
-  msf_site_mode <- t(t(umat2) / get_evalue(prot))
+  msf_site_mode <- t(t(umat2) / (beta * get_evalue(prot)))
   msf_site_mode
 }
 
@@ -380,11 +391,13 @@ get_kmat_sqrt <- function(prot) {
 #' Calculate the matrix square root of the ENM covariance matrix
 #'
 #' Calculates \eqn{\mathbf{C}^{1/2}}{C^(1/2)} from the eigendecomposition of the network,
-#' as \eqn{\mathbf{U} \sqrt{1/\lambda} \mathbf{U}^T}{U sqrt(1/lambda) U^T}. The dual of
+#' as \eqn{\mathbf{U} \sqrt{1/(\beta\lambda)} \mathbf{U}^T}{U sqrt(1/(beta lambda)) U^T}. The dual of
 #' \code{\link{get_kmat_sqrt}}, which uses \eqn{\sqrt{\lambda}}{sqrt(lambda)} instead.
 #'
 #' @param prot is a protein object obtained using set_enm()
-#' @returns a matrix of size 3 nsites x 3 nsites, the matrix square root of \code{cmat}
+#' @param beta inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see [beta_boltzmann()])
+#' @returns a matrix of size 3 nsites x 3 nsites, the matrix square root of
+#'   \code{get_cmat(prot, beta)}, in Å
 #'
 #' @export
 #'
@@ -397,14 +410,14 @@ get_kmat_sqrt <- function(prot) {
 #' cs <- get_cmat_sqrt(wt)
 #' all.equal(cs %*% cs, as.matrix(get_cmat(wt)), check.attributes = FALSE)
 #'
-#' # cmat is the pseudo-inverse of kmat, taken over the non-rigid modes only, so
-#' # this product is not the identity but the projector onto that subspace: its
-#' # trace counts the 3 nsites - 6 modes that are kept.
-#' sum(diag(get_kmat_sqrt(wt) %*% cs))
+#' # with beta = 1, cmat is the pseudo-inverse of kmat, taken over the non-rigid
+#' # modes only, so this product is not the identity but the projector onto that
+#' # subspace: its trace counts the 3 nsites - 6 modes that are kept.
+#' sum(diag(get_kmat_sqrt(wt) %*% get_cmat_sqrt(wt, beta = 1)))
 #'
-get_cmat_sqrt <- function(prot) {
+get_cmat_sqrt <- function(prot, beta = beta_boltzmann()) {
   evalue <- get_evalue(prot)
   umat <- get_umat(prot)
-  cmat_sqrt <- umat %*% (sqrt(1 / evalue) * t(umat))
+  cmat_sqrt <- umat %*% (sqrt(1 / (beta * evalue)) * t(umat))
   cmat_sqrt
 }

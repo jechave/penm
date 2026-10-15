@@ -4,10 +4,11 @@
 \alias{beta_boltzmann}
 \title{Boltzmann's beta, \eqn{1 / RT}{1 / RT}}
 \usage{
-beta_boltzmann(R = 0.001986, T = 298)
+beta_boltzmann(R = 0.001987204, T = 298)
 }
 \arguments{
-\item{R}{Boltzmann's constant per mole, in kcal/(mol K)}
+\item{R}{the gas constant, in kcal/(mol K); the default is the CODATA 2018
+value, 8.314462618 J/(mol K), divided by 4184 J/kcal}
 
 \item{T}{absolute temperature, in Kelvin}
 }
@@ -17,6 +18,11 @@ a scalar, \eqn{1 / (RT)}{1 / (RT)}, in mol/kcal
 \description{
 The default inverse temperature used by the entropic energy functions
 (\code{\link[=ddg_tds]{ddg_tds()}}, \code{\link[=ddgact_tds]{ddgact_tds()}}, \code{\link[=dgact_tds]{dgact_tds()}}).
+}
+\details{
+penm works in kcal/mol: every model's spring constants are in
+kcal/(mol Å²) (see \code{\link[=set_enm]{set_enm()}}), so its energies are in kcal/mol and the
+default \code{R}, in kcal/(mol K), matches them.
 }
 \examples{
 beta_boltzmann()              # 298 K

@@ -4,13 +4,16 @@
 \alias{get_msf_mode}
 \title{Calculate MSF mode-dependent profile}
 \usage{
-get_msf_mode(prot)
+get_msf_mode(prot, beta = beta_boltzmann())
 }
 \arguments{
 \item{prot}{is a protein object obtained using set_enm()}
+
+\item{beta}{inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see \code{\link[=beta_boltzmann]{beta_boltzmann()}})}
 }
 \value{
-a vector of size nmodes with the msf contributed by each normal mode
+a vector of size nmodes with the mean-square fluctuation along each
+normal mode at inverse temperature \code{beta}, \eqn{1 / (\beta \lambda_n)}{1 / (beta lambda_n)}, in Å²
 }
 \description{
 Calculates the mean-square-fluctuation in the direction of each normal mode
@@ -22,7 +25,7 @@ wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
 msf_n <- get_msf_mode(wt)
 length(msf_n) == get_nmodes(wt)
 
-# softest modes fluctuate most: msf is 1 / eigenvalue
+# softest modes fluctuate most: msf is 1 / (beta * eigenvalue)
 head(sort(msf_n, decreasing = TRUE))
 
 }

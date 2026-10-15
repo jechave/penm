@@ -1,3 +1,59 @@
+# penm 0.6.0
+
+## Breaking changes
+
+* Covariances and fluctuations are in Å², at an inverse temperature `beta`
+  that defaults to `beta_boltzmann()` (298 K). `get_cmat()`,
+  `get_reduced_cmat()`, `get_cmat_sqrt()` (in Å), `get_msf_site()`,
+  `get_msf_site_mode()`, `get_msf_mode()`, `delta_motion_dmsfi()` and
+  `delta_motion_dmsfn()` take a new `beta` argument. They used to return the
+  pseudo-inverse of `kmat`, which is the covariance per unit kT, although
+  documented as the covariance: old values times 1/β (0.592 kcal/mol at 298 K)
+  are the new ones. Measures that do not depend on the scale, such as
+  `get_rho_matrix()` and `delta_motion_dbhati()`, do not change.
+
+* Every model's spring constants are in kcal/(mol Å²), so all energies are in
+  kcal/mol. `"hnm"` and `"reach"`, published in kJ/(mol Å²), are converted:
+  their spring constants, eigenvalues and energies are 4.184 times smaller than
+  before. `"anm"`, `"anm_smooth"`, `"pfanm"` and `"hnm0"` have no calibrated
+  scale; their default stiffness of 1 is read as kcal/(mol Å²).
+
+* `model = "ming_wall"` uses k = 4.26 kcal/(mol Å²), the value Ming & Wall
+  (2005) published, instead of 4.5. Spring constants, eigenvalues and energies
+  are multiplied by 4.26/4.5, and fluctuations divided by it; structures, modes
+  and entropy differences do not change.
+
+* `model = "hnm"` requires `node = "ca"`. Its spring constant was fitted to
+  alpha-carbon distances and is negative for the closer pairs that side-chain
+  and beta-carbon nodes produce, where it used to stop with a "negative
+  eigenvalue" error.
+
+* `beta_boltzmann()` uses the CODATA value of the gas constant,
+  1.987204e-3 kcal/(mol K), instead of 1.986e-3, so values that depend on β
+  move by 0.06%.
+
+* A `prot` built by an earlier version is rejected by the functions that need
+  its covariance: rebuild it with `set_enm()`.
+
+## Bug fixes
+
+* `ddgact_tds()` ignored its `beta` argument and always used 298 K.
+
+## Documentation
+
+* Help pages state the units of energies (kcal/mol), fluctuations (Å²) and
+  spring constants (kcal/(mol Å²)), and `?set_enm` says where each model's
+  constants come from.
+* `?dgact_dv` and `?dgact_tds` call their quantities the deformation and
+  fluctuation terms of the activation free energy, and say how they differ from
+  its internal-energy and entropic parts; `ddgact_dv()` and `ddgact_tds()` are
+  exactly the changes in those parts.
+
+## Other changes
+
+* `enm_g_entropy()`'s `beta` defaults to `beta_boltzmann()`, as in the other
+  functions that take it.
+
 # penm 0.5.1
 
 ## Bug fixes

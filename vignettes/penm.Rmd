@@ -125,7 +125,7 @@ the buried core does not:
 ggplot(tibble::tibble(site = get_site(wt), msf = get_msf_site(wt)),
        aes(site, msf)) +
   geom_line() +
-  labs(x = "site", y = "mean-square fluctuation") +
+  labs(x = "site", y = "mean-square fluctuation (Å², 298 K)") +
   theme_minimal()
 ```
 

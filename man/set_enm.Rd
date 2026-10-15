@@ -27,7 +27,17 @@ and \code{"beta"} are accepted as synonyms.}
 
 \item{model}{ENM variant, one of \code{"anm"}, \code{"ming_wall"}, \code{"hnm"}, \code{"hnm0"},
 \code{"pfanm"}, \code{"reach"}, \code{"anm_smooth"}, \code{"ming_wall_smooth"}. These select the
-spring-constant function applied to each contact.}
+spring-constant function applied to each contact. \code{"hnm"} requires
+\code{node = "ca"}: its spring constant was fitted to alpha-carbon distances, and
+is negative for the closer pairs that other node types produce.
+
+Spring constants are in kcal/(mol Å²) for every model, so energies are in
+kcal/mol. \code{"ming_wall"} uses the published values of Ming & Wall (2005),
+in those units. \code{"hnm"} (Hinsen et al. 2000) and \code{"reach"} (Moritsugu et
+al. 2009) were published in kJ/(mol Å²) and are converted. \code{"anm"},
+\code{"anm_smooth"}, \code{"pfanm"} and \code{"hnm0"} have no calibrated scale: their
+default stiffness of 1 is a convention, so their energies, and anything
+that adds an energy to an entropic term, carry an arbitrary scale.}
 
 \item{d_max}{distance cutoff (Å) used to define enm contacts}
 

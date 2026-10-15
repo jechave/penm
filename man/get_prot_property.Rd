@@ -36,12 +36,15 @@ get_evalue(prot)
 
 get_umat(prot)
 
-get_cmat(prot)
+get_cmat(prot, beta = beta_boltzmann())
 
 get_nmodes(prot)
 }
 \arguments{
 \item{prot}{A protein with its associated ENM model, obtained using \code{set_enm}}
+
+\item{beta}{inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see
+\code{\link[=beta_boltzmann]{beta_boltzmann()}}); taken by \code{get_cmat} only}
 }
 \value{
 \code{get_enm_param}: the list of parameters \code{\link[=set_enm]{set_enm()}} was called
@@ -63,11 +66,15 @@ given in \code{...}, as \code{kij_par}) and the mutational model's (\code{mut_mo
 
 \code{get_mode}: a vector of normal-mode indexes
 
-\code{get_evalue}: a vector of normal-mode eigenvalues
+\code{get_evalue}: a vector of normal-mode eigenvalues, the modes'
+force constants, in kcal/(mol Å²)
 
 \code{get_umat}: the matrix of eigenvectors U, of size \code{3 nsites x nmodes}
 
-\code{get_cmat}: the ENM covariance matrix, of size \code{3 nsites x 3 nsites}
+\code{get_cmat}: the covariance matrix of the node displacements at
+inverse temperature \code{beta}, \eqn{\beta^{-1} \mathbf{K}^{+}}{K+ / beta}, in Å²,
+of size \code{3 nsites x 3 nsites}; \eqn{\mathbf{K}^{+}}{K+} is the
+pseudo-inverse of \code{kmat} over the non-rigid modes
 
 \code{get_nmodes}: the number of normal modes
 }

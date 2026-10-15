@@ -12,7 +12,8 @@ get_mlms(prot, sdij_cut = 2)
 \item{sdij_cut}{An integer cutoff of sequence distance to include in calculation}
 }
 \value{
-the profile of mean-local-mutational-stress (mlms) values
+the profile of mean-local-mutational-stress (mlms) values: the sum of
+the spring constants of each site's springs, in kcal/(mol Å²)
 }
 \description{
 Calculates the Mean Local Mutational Stress (MLMS) profile using graph of prot object

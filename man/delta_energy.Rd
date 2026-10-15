@@ -24,7 +24,7 @@ ddgact_tds(wt, mut, ideal = wt, pdb_site_active = NA, beta = beta_boltzmann())
 
 \item{mut}{A second protein}
 
-\item{beta}{Inverse temperature, \code{1/kT}}
+\item{beta}{inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see \code{\link[=beta_boltzmann]{beta_boltzmann()}})}
 
 \item{ideal}{A protein object whose conformation defines the reference (ideal) state.
 Defaults to \code{wt}.}
@@ -32,7 +32,7 @@ Defaults to \code{wt}.}
 \item{pdb_site_active}{A vector of active-site residues, in pdb numbering (\code{resno})}
 }
 \value{
-A (scalar) energy difference between mutant and wild type.
+A (scalar) energy difference between mutant and wild type, in kcal/mol.
 }
 \description{
 Calculate energy differences between a mutant and wild type
@@ -44,9 +44,9 @@ Calculate energy differences between a mutant and wild type
 
 \code{delta_energy_dvs} calculates the ideal-conformation stress-energy difference between \code{mut} and \code{wt}
 
-\code{ddgact_dv} calculates the energy contribution to the change in activation energy between \code{mut} and \code{wt}
+\code{ddgact_dv} calculates the change, from \code{wt} to \code{mut}, of the deformation term of the activation free energy (\code{\link[=dgact_dv]{dgact_dv()}}): the change in its internal-energy part
 
-\code{ddgact_tds} calculates the entropy contribution to the change in activation energy between \code{mut} and \code{wt}
+\code{ddgact_tds} calculates the change, from \code{wt} to \code{mut}, of the fluctuation term of the activation free energy (\code{\link[=dgact_tds]{dgact_tds()}}): the change in its entropic part, \eqn{-T\Delta\Delta S^\ddagger}{-T ddS}
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",

@@ -4,26 +4,29 @@
 \alias{enm_g_entropy}
 \title{Calculate entropic total free energy of prot object}
 \usage{
-enm_g_entropy(prot, beta)
+enm_g_entropy(prot, beta = beta_boltzmann())
 }
 \arguments{
 \item{prot}{is a prot object with known eigenvalues of enm model}
 
-\item{beta}{inverse temperature, \code{1 / kT}}
+\item{beta}{inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see \code{\link[=beta_boltzmann]{beta_boltzmann()}})}
 }
 \value{
-a scalar: the entropic free-energy contribution, summed over modes
+a scalar: the entropic free-energy contribution, summed over modes, in
+kcal/mol
 }
 \description{
 Sums the entropic free-energy contribution of every normal mode, computed from
-the ENM eigenvalue spectrum.
+the ENM eigenvalue spectrum, \eqn{\frac{1}{2\beta} \sum_n \ln \frac{\beta\lambda_n}{2\pi}}{sum_n (1/(2 beta)) ln(beta lambda_n / (2 pi))}.
+Its value depends on the unit of length (Å); differences between two networks
+with the same number of modes (\code{\link[=ddg_tds]{ddg_tds()}}) do not.
 }
 \examples{
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
               d_max = 10.5)
 
-# beta has no default; beta_boltzmann() is the usual choice
-enm_g_entropy(wt, beta_boltzmann())
+enm_g_entropy(wt)                           # at 298 K
+enm_g_entropy(wt, beta_boltzmann(T = 310))  # at 310 K
 
 # the term depends on the whole eigenvalue spectrum, so it moves when the
 # network does: a shorter cutoff keeps fewer contacts
