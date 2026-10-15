@@ -29,7 +29,7 @@ Three ways of building the mutant, which differ in what is recomputed:
   which is what makes mutational effects on dynamics accessible. "Self-consistent
   LFENM" is what the name means.
 
-- **the generalized model** (developed separately, in `../klfenm/`) — the `l_ij`
+- **the generalized model** (developed separately, in `../genm/`) — the `l_ij`
   are the primitive parameters, `k_ij = k(l_ij)` follows from them, and the
   mutant's structure is obtained by *minimizing* its own potential rather than by
   linear response. Numbers quoted below as measured "in the generalized model"

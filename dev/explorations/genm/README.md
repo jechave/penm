@@ -1,17 +1,17 @@
-# klfenm
+# genm
 
 Generalized elastic network model: the equilibrium lengths `l_ij` are the
 parameters, the force constants follow from them as `k_ij = k(l_ij)`, and the
-structure is obtained by minimization. Unlike LFENM, there is no linear response
-and no forcing — the name is a leftover and should be changed.
+structure is obtained by minimization. In penm this is the `"genm"` mut_model of
+`set_enm()`. Formerly called klfenm.
 
 ## Contents
 
-- `klfenm_report.tex` / `.pdf` — the model: potential, quadratic expansion,
+- `genm_report.tex` / `.pdf` — the model: potential, quadratic expansion,
   normal modes, thermal properties, conformational fluctuations, and the
   mutational changes. Frustration is in an appendix.
 
-- `klfenm_perturbation.tex` / `.pdf` — first-order perturbation theory, kept
+- `genm_perturbation.tex` / `.pdf` — first-order perturbation theory, kept
   separate so the main derivation stays exact. Two results worth not
   rediscovering: δK must be projected onto the internal subspace before any
   eigenvector or covariance formula is applied, or the error does not vanish as
