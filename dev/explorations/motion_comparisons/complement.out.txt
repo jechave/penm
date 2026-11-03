@@ -1,0 +1,6 @@
+GNM: L + L_bar == n I - J: TRUE 
+GNM: commutator norm ||L L_bar - L_bar L|| = 0 
+GNM: eigenvalues of L_bar == n - eigenvalues of L (non-zero modes, reversed): TRUE 
+ANM: check h equals penm kmat: TRUE 
+ANM: relative commutator ||H H_bar - H_bar H|| / (||H|| ||H_bar||) = 0.01721864 
+ANM: best |overlap| of H modes with H_bar modes, quantiles: 0.156 0.196 0.216 0.243 0.549 

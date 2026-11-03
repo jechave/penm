@@ -1,0 +1,3 @@
+KL mean part by site == beta/2 de2i: TRUE 
+mutants: 882  elapsed: 1.736913 mins 
+metrics: w2_mean, w2_cov, kl_cov, jeffreys_cov, bhattacharyya_cov, riemann_cov, kl_mean, frobenius_cov, marginal_kl, marginal_w2, dmsf2 

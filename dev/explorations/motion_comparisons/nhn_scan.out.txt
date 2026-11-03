@@ -1,0 +1,2 @@
+mutants: 882  elapsed: 23.30041 secs 
+any non-finite nhn: FALSE  nhn range: 1.000001 22.12541 

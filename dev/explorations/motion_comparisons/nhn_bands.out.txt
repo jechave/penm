@@ -1,0 +1,9 @@
+largest ratio lambda[n+1]/lambda[n] at n = 191 : 65.2 -> 147 
+modes below the jump: 191  above: 97  (nsites - 1 = 97 backbone bonds)
+band-constant couplings (3 params) s11, s12, s22 = 0.0383 1.02 0.197 
+  vs exact: pearson 0.867  spearman 0.866 
+  empirical rms coupling, bands 1 1 : 0.0382 
+  empirical rms coupling, bands 1 2 : 0.218 
+  empirical rms coupling, bands 2 2 : 0.19 
+null device 
+          1 

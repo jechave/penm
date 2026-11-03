@@ -1,0 +1,76 @@
+null device 
+          1 
+null device 
+          1 
+null device 
+          1 
+examples (row, site, letter, W2 total):
+  low    row 175  site 20  letter 4  W2 0.04326
+  median row 434  site 49  letter 2  W2 0.09345
+  high   row 396  site 44  letter 9  W2 0.5098
+
+global totals over mutants:
+                   median    mean      min   max
+w2_mean           0.09230 0.10700 9.92e-03 0.502
+w2_cov            0.00106 0.00181 3.42e-05 0.075
+kl_mean           1.17000 1.31000 1.02e-01 5.730
+kl_cov            0.09060 0.11900 7.32e-03 1.490
+kl_marginal_sites 1.65000 1.88000 1.49e-01 7.180
+
+fraction of the total in the covariance part, median over mutants: W2 0.0103  KL 0.0717 
+Spearman over mutants, W2 total vs KL total: 0.841 
+Spearman over mutants, KL mean part vs KL covariance part: 0.577 
+median ratio, KL sum of site marginals / KL joint: 1.27 
+generalised eigenvalues nu over all mutants: min 0.236  max 4.42 ; median per-mutant max |nu - 1| 0.321 
+
+Spearman between scan-mean profiles, by site:
+                  w2_mean w2_cov kl_mean kl_cov jeffreys_cov bhattacharyya_cov
+w2_mean              1.00   0.72    0.22   0.89         0.89              0.89
+w2_cov               0.72   1.00    0.02   0.86         0.87              0.87
+kl_mean              0.22   0.02    1.00   0.07         0.07              0.07
+kl_cov               0.89   0.86    0.07   1.00         1.00              1.00
+jeffreys_cov         0.89   0.87    0.07   1.00         1.00              1.00
+bhattacharyya_cov    0.89   0.87    0.07   1.00         1.00              1.00
+riemann_cov          0.89   0.87    0.06   1.00         1.00              1.00
+frobenius_cov        0.85   0.91   -0.03   0.90         0.90              0.90
+marginal_kl          0.32   0.08    0.87   0.13         0.14              0.14
+marginal_w2          1.00   0.72    0.22   0.89         0.89              0.89
+dmsf2                0.79   0.89    0.00   0.86         0.86              0.86
+                  riemann_cov frobenius_cov marginal_kl marginal_w2 dmsf2
+w2_mean                  0.89          0.85        0.32        1.00  0.79
+w2_cov                   0.87          0.91        0.08        0.72  0.89
+kl_mean                  0.06         -0.03        0.87        0.22  0.00
+kl_cov                   1.00          0.90        0.13        0.89  0.86
+jeffreys_cov             1.00          0.90        0.14        0.89  0.86
+bhattacharyya_cov        1.00          0.90        0.14        0.89  0.86
+riemann_cov              1.00          0.90        0.14        0.89  0.86
+frobenius_cov            0.90          1.00        0.05        0.85  0.87
+marginal_kl              0.14          0.05        1.00        0.32  0.06
+marginal_w2              0.89          0.85        0.32        1.00  0.79
+dmsf2                    0.86          0.87        0.06        0.79  1.00
+
+Spearman between scan-mean profiles, by mode:
+                  w2_mean w2_cov kl_mean kl_cov jeffreys_cov bhattacharyya_cov
+w2_mean              1.00   0.83    0.81   0.33         0.34              0.34
+w2_cov               0.83   1.00    0.57   0.71         0.72              0.71
+kl_mean              0.81   0.57    1.00   0.02         0.03              0.02
+kl_cov               0.33   0.71    0.02   1.00         1.00              1.00
+jeffreys_cov         0.34   0.72    0.03   1.00         1.00              1.00
+bhattacharyya_cov    0.34   0.71    0.02   1.00         1.00              1.00
+riemann_cov          0.34   0.71    0.03   1.00         1.00              1.00
+frobenius_cov        0.89   0.97    0.65   0.61         0.62              0.61
+marginal_kl          0.81   0.58    1.00   0.03         0.04              0.04
+marginal_w2          1.00   0.83    0.81   0.33         0.35              0.34
+dmsf2                0.96   0.89    0.74   0.42         0.44              0.44
+                  riemann_cov frobenius_cov marginal_kl marginal_w2 dmsf2
+w2_mean                  0.34          0.89        0.81        1.00  0.96
+w2_cov                   0.71          0.97        0.58        0.83  0.89
+kl_mean                  0.03          0.65        1.00        0.81  0.74
+kl_cov                   1.00          0.61        0.03        0.33  0.42
+jeffreys_cov             1.00          0.62        0.04        0.35  0.44
+bhattacharyya_cov        1.00          0.61        0.04        0.34  0.44
+riemann_cov              1.00          0.61        0.04        0.34  0.44
+frobenius_cov            0.61          1.00        0.66        0.89  0.93
+marginal_kl              0.04          0.66        1.00        0.81  0.75
+marginal_w2              0.34          0.89        0.81        1.00  0.96
+dmsf2                    0.44          0.93        0.75        0.96  1.00

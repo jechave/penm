@@ -1,0 +1,9 @@
+dhn == 1/2 log(1 + dmsfn/s2): TRUE 
+rwsipn == sqrt(s2 (s2 + dmsfn) / sum(s2 mu)): TRUE 
+sum(dhn) = -0.09875615  true dH = -0.1889295  -beta*ddg_tds = -0.1889295 
+KL cov == sum(diag terms) + mixing: TRUE 
+KL mean part == beta/2 sum(de2n): TRUE 
+KL mean = 0.6851726  KL cov diag = 0.001348109  mixing = 0.09018009 
+range nhn: 1.000218 13.11051 
+smallest eigenvalue gaps (relative): 0.0005772054 0.0006111199 0.0008469985 
+range rwsipi: 0.9995733 1 

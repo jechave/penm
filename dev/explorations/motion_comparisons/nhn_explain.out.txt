@@ -1,0 +1,13 @@
+mean nhn: min 1 at n = 285 ; max 2.68 at n = 89 
+mean nhn at n = 1..5: 1 1.01 1.02 1.04 1.05 ; last 5: 1.03 1 1.01 1.02 1.02 
+two-level PT with each mutant's own dK vs exact:    0.977 0.98 
+model S3, gaps + empirical mean dK^2 (no fit):      0.929 0.95 
+model S0, spectrum only, constant coupling, s = 0.039 : 0.803 0.822 
+model S2, spectrum only, s sqrt(l_n l_m), s = 0.000896 : 0.486 0.687 
+Spearman(mean nhn, -nearest gap):           0.776 
+Spearman(mean nhn, -nearest relative gap):  0.629 
+Spearman(mean nhn, rms coupling):           -0.331 
+Spearman(rms coupling, lambda):             0.488 
+lambda range: 1 636 
+null device 
+          1 
