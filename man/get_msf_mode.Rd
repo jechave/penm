@@ -31,5 +31,8 @@ head(sort(msf_n, decreasing = TRUE))
 }
 \seealso{
 \code{\link[=get_msf_site]{get_msf_site()}} for the same fluctuations resolved by site instead.
+
+Other mode profiles:
+\code{\link[=get_h_mode]{get_h_mode()}}
 }
 \concept{mode profiles}

@@ -15,12 +15,11 @@
 # were generated through these same functions.
 #
 # Feed every function the input shape the package actually calls it with. An
-# earlier version of this file passed the full reduced cmat to dbhat/rwsip/dh/
-# logdet, which no code path does: those take the 3x3 single-site block. The
-# full matrix is singular by construction (the six rigid-body modes are dropped
-# from the spectrum), so its determinant is zero, logdet has no value on it, and
-# the frozen numbers were floating-point residue -- they differed by BLAS and
-# broke on CI.
+# earlier version of this file passed the full reduced cmat to functions that
+# the package only ever called on a 3x3 single-site block. The full matrix is
+# singular by construction (the six rigid-body modes are dropped from the
+# spectrum), so its determinant is zero, and the frozen numbers were
+# floating-point residue -- they differed by BLAS and broke on CI.
 
 load(test_path("fixtures", "pdb_2acy_A.rda"))
 load(test_path("fixtures", "internals_expected.rda"))
@@ -97,20 +96,7 @@ test_that("smoothed kij are half the contact value at the cutoff and force i,i+1
   expect_error(penm:::kij_anm_smooth(5, 4), "\"d_max_width\" is missing")
 })
 
-test_that("distribution measures are degenerate on identical inputs", {
-  # 3x3 single-site block, the shape these are called with in the package.
-  # Not the full cmat: it is singular, so dbhat's logdet calls are undefined
-  # there and rwsip's eigendecomposition produces NaN.
-  b <- site_block(get_cmat(wt), 11L)
-  expect_equal(penm:::rwsip(b, b), 1)   # perfect similarity
-  expect_equal(penm:::dbhat(b, b), 0)   # zero distance
-  expect_equal(penm:::dh(b, b), 0)      # zero entropy difference
-})
-
 test_that("small utilities match their definitions", {
-  m <- matrix(c(1, 7, 7, 2), 2, 2)
-  expect_equal(penm:::tr(m), 3)
-  expect_equal(penm:::logdet(diag(c(2, 4))), log(8))
   expect_equal(penm:::xyz_indices_site(1), c(1, 2, 3))
   expect_equal(penm:::xyz_indices_site(3), c(7, 8, 9))
   expect_equal(penm:::xyz_indices_site(c(1, 2)), c(1, 2, 3, 4, 5, 6))
@@ -151,28 +137,7 @@ test_that("kij_reach matches frozen values on every branch", {
   expect_equal(penm:::kij_reach(dij, sdij), internals_expected$kij_reach)
 })
 
-test_that("distribution measures match frozen values", {
-  # Compared against a DIFFERENT ENM model, not against the lfenm mutant: lfenm
-  # leaves kmat and hence cmat unchanged, so that comparison would freeze the
-  # degenerate 0/1/0 answers and could not detect a broken function.
-  wt_anm <- set_enm(pdb_2acy_A, node = "ca", model = "anm", d_max = 10.5)
-  bwt  <- site_block(get_cmat(wt),     internals_expected$site_block)
-  bmut <- site_block(get_cmat(wt_anm), internals_expected$site_block)
-  expect_equal(penm:::dbhat(bwt, bmut), internals_expected$dbhat)
-  expect_equal(penm:::rwsip(bwt, bmut), internals_expected$rwsip)
-  expect_equal(penm:::dh(bwt, bmut), internals_expected$dh)
-  expect_equal(penm:::dbhat(bwt, bmut, normalize = TRUE), internals_expected$dbhat_norm)
-  expect_equal(penm:::rwsip(bwt, bmut, normalize = TRUE), internals_expected$rwsip_norm)
-  expect_equal(penm:::dh(bwt, bmut, normalize = TRUE), internals_expected$dh_norm)
-})
-
 test_that("utilities and energies match frozen values", {
-  cwt <- get_reduced_cmat(wt)
-  expect_equal(penm:::tr(cwt), internals_expected$tr)   # a plain diagonal sum, fine here
-  # logdet on the 3x3 block, not on cwt: cwt is singular (rigid-body modes
-  # dropped), so its determinant is zero and log(det) has no value.
-  expect_equal(penm:::logdet(site_block(get_cmat(wt), internals_expected$site_block)),
-               internals_expected$logdet)
   expect_equal(enm_g_entropy(wt, beta_boltzmann()), internals_expected$enm_g_entropy)
   expect_equal(penm:::v_dij(dij = c(3, 5, 7), v0ij = 0, kij = 2, lij = 4),
                internals_expected$v_dij)

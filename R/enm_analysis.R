@@ -191,6 +191,132 @@ get_msf_mode <- function(prot, beta = beta_boltzmann()) {
 
 
 
+#' Entropy of the fluctuations of each site
+#'
+#' The fluctuations of site i are a three-dimensional Gaussian, with covariance
+#' \eqn{\mathbf{C}_{ii}}{C_ii}, the site's 3 x 3 block of the covariance matrix.
+#' `get_h_site()` returns its differential entropy, in nats,
+#' \deqn{h_i = \frac{1}{2} \ln \det (2 \pi e \, \mathbf{C}_{ii})
+#'           = \frac{3}{2} \ln (2 \pi e) + \sum_{\alpha = 1}^{3} \ln \sigma_{i\alpha},}{
+#'       h_i = 1/2 ln det(2 pi e C_ii) = 3/2 ln(2 pi e) + sum_alpha ln sigma_i,alpha,}
+#' where the \eqn{\sigma_{i\alpha}}{sigma_i,alpha} are the standard deviations
+#' along the three principal axes of the site's fluctuations. It grows with the
+#' volume of the fluctuation ellipsoid, and does not depend on its orientation.
+#'
+#' This is the entropy of the positions of the site, not a sequence entropy.
+#' Its value depends on the unit of length (Å) and on the temperature; the
+#' difference between two proteins at the same temperature depends on neither
+#' (see [delta_motion_dh_site()]). The \eqn{h_i}{h_i} of all sites do not add up
+#' to the entropy of the protein, because they ignore the correlations between
+#' sites.
+#'
+#' @param prot a `prot`, with normal modes
+#' @param beta inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see [beta_boltzmann()])
+#' @returns a vector of size nsites, the entropy of each site's fluctuations, in nats
+#'
+#' @export
+#'
+#' @seealso [get_h_mode()] for the entropy along each normal mode;
+#'   [delta_motion_by_site] to compare two proteins.
+#'
+#' @family site profiles
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
+#'               d_max = 10.5)
+#'
+#' h <- get_h_site(wt)
+#' which.max(h)                    # the site with the largest fluctuation volume
+#'
+get_h_site <- function(prot, beta = beta_boltzmann()) {
+  nsites <- get_nsites(prot)
+  cmat <- get_cmat(prot, beta)
+  dim(cmat) <- c(3, nsites, 3, nsites)   # cmat[, i, , j] is the 3 x 3 block of sites i and j
+  h <- rep(NA_real_, nsites)
+  for (i in seq(nsites)) {
+    block <- cmat[, i, , i]
+    if (det(block) <= 0) stop("the covariance of site ", i, " is not positive definite")
+    # entropy of a three-dimensional Gaussian
+    h[i] <- 0.5 * log(det(2 * pi * exp(1) * block))
+  }
+  h
+}
+
+
+
+#' Entropy of the fluctuations along each normal mode
+#'
+#' The fluctuation of a protein along a direction \eqn{\mathbf{u}}{u} is a
+#' one-dimensional Gaussian, with variance
+#' \eqn{\sigma^2 = \mathbf{u}^T \mathbf{C} \mathbf{u}}{sigma^2 = u' C u}.
+#' `get_h_mode()` returns its differential entropy, in nats,
+#' \deqn{h_n = \frac{1}{2} \ln (2 \pi e \, \sigma_n^2),}{h_n = 1/2 ln(2 pi e sigma_n^2),}
+#' along each normal mode \eqn{\mathbf{u}_n}{u_n} of `reference`. By default
+#' the reference is the protein itself, and \eqn{\sigma_n^2}{sigma_n^2} is the
+#' variance of its own mode n, [get_msf_mode()].
+#'
+#' With another protein as reference, the directions are the reference's modes,
+#' so several proteins can be described along the same set of directions. The
+#' two must then be superposed ([superpose_prot()]): the function stops if they
+#' are not, and warns if they are only nearly so.
+#'
+#' If the two structures differ, a little of each reference mode lies along the
+#' rotations of `prot`'s structure, along which `prot`'s covariance is zero. The
+#' variance is taken along the part of the mode inside `prot`'s internal space:
+#' \eqn{\sigma_n^2 = \mathbf{u}_n^T \mathbf{C} \mathbf{u}_n / w_n}{sigma_n^2 = u_n' C u_n / w_n},
+#' where \eqn{w_n}{w_n} is the share of the mode inside that space. For
+#' mutants, \eqn{1 - w_n}{1 - w_n} is tiny; the function warns if some
+#' \eqn{w_n < 0.99}{w_n < 0.99} and stops if some \eqn{w_n < 0.9}{w_n < 0.9}.
+#'
+#' The value depends on the unit of length (Å) and on the temperature;
+#' differences between proteins at the same temperature depend on neither (see
+#' [delta_motion_dh_mode()]).
+#'
+#' @param prot a `prot`, with normal modes
+#' @param reference a `prot` with normal modes and the same sites as `prot`,
+#'   whose modes are the directions; by default `prot` itself
+#' @param beta inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see [beta_boltzmann()])
+#' @returns a vector of size nmodes, the entropy of the fluctuation of `prot`
+#'   along each mode of `reference`, in nats
+#'
+#' @export
+#'
+#' @seealso [get_h_site()] for the entropy of each site's fluctuations;
+#'   [delta_motion_by_mode] to compare two proteins.
+#'
+#' @family mode profiles
+#'
+#' @examples
+#' wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+#'               mut_model = "genm", d_max_graph = 14)
+#'
+#' # along its own modes, the entropy follows from the variances
+#' all.equal(get_h_mode(wt), 0.5 * log(2 * pi * exp(1) * get_msf_mode(wt)))
+#'
+#' # a mutant, along the wild type's modes
+#' mut <- set_enm_nma(get_mutant_site(wt, site_mut = 11, mutation = 1))
+#' h_mut <- get_h_mode(mut, reference = wt)
+#'
+get_h_mode <- function(prot, reference = prot, beta = beta_boltzmann()) {
+  stopifnot(get_pdb_site(reference) == get_pdb_site(prot)) # no indels
+  check_superposed(reference, prot)
+
+  directions <- get_umat(reference)
+  cmat <- get_cmat(prot, beta)
+  # variance of prot along each direction: the diagonal of t(U) C U
+  variance <- diag(t(directions) %*% cmat %*% directions)
+
+  # the part of a direction outside prot's internal space adds nothing to the
+  # variance; dividing by the share inside gives the variance along the part inside
+  share <- rowSums(squared_overlap(reference, prot))
+  variance_inside <- variance / share
+
+  # entropy of a one-dimensional Gaussian
+  0.5 * log(2 * pi * exp(1) * variance_inside)
+}
+
+
+
 
 # get site by site matrices -----------------------------------------------
 

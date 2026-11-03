@@ -16,6 +16,7 @@ This vignette is precomputed: it takes several minutes to run. Edit THIS file
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
+  error = FALSE,   # stop the precompute on an error, instead of writing it into the vignette
   collapse = TRUE,
   comment = "#>",
   fig.path = "genm-",
@@ -33,7 +34,7 @@ the potential $V = \frac12 \sum k_{ij} (d_{ij} - l_{ij})^2$, where $d_{ij}$ is
 the distance between the two residues, and its dynamics follow from the Hessian
 of $V$ at that minimum.
 
-The springs' parameters depend on the protein's sequence. Each site carries an
+The springs' parameters depend on the protein's sequence. Each site carries a
 letter, and a mutation changes the letter at one site, which changes the
 $l_{ij}$ of that site's springs.
 
@@ -44,8 +45,8 @@ normal modes.
 
 This vignette uses the model in two ways: a complete scan of single-point
 mutations, and a star tree of independent evolutionary trajectories. Both
-measure how far proteins diverge, in structure and in dynamics, site by site
-and mode by mode.
+measure how far proteins diverge, in structure and in fluctuations, site by
+site and mode by mode.
 
 ## Setup
 
@@ -124,32 +125,43 @@ modes: they are costly, and a long trajectory does not need them at every step.
 
 ## What is measured
 
-Each comparison is between two proteins, and gives four profiles:
+Each comparison is between two proteins, A and B. By site:
 
-- **structure, by site**: $|\delta \mathbf r_i|^2$, the squared displacement of
-  site $i$ between the two structures, in Å²
-  (`delta_structure_dr2i()`);
-- **structure, by mode**: the squared displacement along each normal mode
-  (`delta_structure_dr2n()`);
-- **dynamics, by site**: the change in the mean-square fluctuation of each site
-  (`delta_motion_dmsfi()`);
-- **dynamics, by mode**: the change in the mean-square fluctuation along each
-  normal mode (`delta_motion_dmsfn()`).
+- **`dr2i`**: $|\delta \mathbf r_i|^2$, the squared displacement of site $i$
+  between the two structures, in Å² (`delta_structure_dr2i()`).
+- **`dlcov`**, **`size`**, **`shape`**, **`orientation`**: how different
+  the fluctuations of site $i$ are, in nats (`delta_motion_dlcov_site()`).
+  Each site fluctuates within an ellipsoid; `size` compares the ellipsoids'
+  volumes, `shape` their proportions, `orientation` the directions of their
+  axes, and $\mathrm{dlcov}^2 = \mathrm{size}^2 + \mathrm{shape}^2 +
+  \mathrm{orientation}^2$.
 
-The structural measures are squares already. The dynamical ones are signed —
-a site can become more or less mobile — so averaged over many comparisons they
-would mostly cancel. They are squared first, so that all four profiles measure
-divergence.
+By mode, along the normal modes of A:
 
-Mode profiles are taken along the wild type's modes in every comparison, so
-that all of them share one basis.
+- **`dr2n`**: the squared displacement along each mode, in Å²
+  (`delta_structure_dr2n()`).
+- **`dh_mode`**: the change in the entropy of the fluctuation along each mode,
+  in nats: the log of the ratio of the standard deviations of B and A along it
+  (`delta_motion_dh_mode()`).
+- **`nmix_mode`**: the number of modes of B that each mode of A is spread over;
+  1 when B keeps the mode as it is (`delta_motion_nmix_mode()`).
+
+All of these are never negative, except `dh_mode`, which is positive where B
+fluctuates more and negative where it fluctuates less. Averaged over many
+comparisons its signs would mostly cancel, so its absolute value is averaged:
+$|\mathrm{dh\_mode}|$ is the size of the change on a log scale, whichever its
+direction.
+
+The same is true by site of `delta_motion_dh_site()`, the change in the
+entropy of each site's fluctuations. It is not shown separately: its absolute
+value is exactly $\sqrt 3 \times$ `size`.
 
 ## A complete single-point scan
 
 A complete scan makes every single-point mutant of the wild type: at each site,
 every letter other than the wild type's. Each mutant is minimised starting from
 the wild-type structure, gets its normal modes, and is compared with the wild
-type.
+type. The mode profiles are along the wild type's modes.
 
 ```{r scan}
 # every (site, letter) pair, except the wild type's own letter at each site
@@ -160,76 +172,124 @@ nrow(mutations)
 compare_mutant <- function(row) {
   mutant <- get_mutant_site(wt, mutations$site[row], mutations$letter[row])
   mutant <- set_enm_nma(mutant)
+  dlcov <- delta_motion_dlcov_site(wt, mutant)
   list(
-    dr2i  = delta_structure_dr2i(wt, mutant),
-    dr2n  = delta_structure_dr2n(wt, mutant),
-    dmsfi = delta_motion_dmsfi(wt, mutant),
-    dmsfn = delta_motion_dmsfn(wt, mutant)
+    dr2i        = delta_structure_dr2i(wt, mutant),
+    dlcov       = dlcov$dlcov,
+    size        = dlcov$size,
+    shape       = dlcov$shape,
+    orientation = dlcov$orientation,
+    dr2n        = delta_structure_dr2n(wt, mutant),
+    dh_mode     = delta_motion_dh_mode(wt, mutant),
+    nmix_mode   = delta_motion_nmix_mode(wt, mutant)
   )
 }
 scan <- run_in_parallel(seq_len(nrow(mutations)), compare_mutant)
 
-scan_dr2i  <- do.call(rbind, lapply(scan, function(mutant) mutant$dr2i))
-scan_dr2n  <- do.call(rbind, lapply(scan, function(mutant) mutant$dr2n))
-scan_dmsfi <- do.call(rbind, lapply(scan, function(mutant) mutant$dmsfi))
-scan_dmsfn <- do.call(rbind, lapply(scan, function(mutant) mutant$dmsfn))
+# one metric of every comparison, as a matrix: one row per comparison, one
+# column per site or mode
+stack_metric <- function(comparisons, metric) {
+  do.call(rbind, lapply(comparisons, function(comparison) comparison[[metric]]))
+}
 ```
 
-Each row of these matrices is one mutant, and each column a site or a mode. The
-profiles are the means over mutants:
+The profiles are the means over mutants:
 
 ```{r scan-profiles}
-scan_profile <- list(
-  structure_by_site = colMeans(scan_dr2i),
-  structure_by_mode = colMeans(scan_dr2n),
-  dynamics_by_site  = colMeans(scan_dmsfi^2),
-  dynamics_by_mode  = colMeans(scan_dmsfn^2)
+scan_by_site <- list(
+  "dr2i (Å²)"          = colMeans(stack_metric(scan, "dr2i")),
+  "dlcov (nats)"       = colMeans(stack_metric(scan, "dlcov")),
+  "size (nats)"        = colMeans(stack_metric(scan, "size")),
+  "shape (nats)"       = colMeans(stack_metric(scan, "shape")),
+  "orientation (nats)" = colMeans(stack_metric(scan, "orientation"))
+)
+scan_by_mode <- list(
+  "dr2n (Å²)"        = colMeans(stack_metric(scan, "dr2n")),
+  "|dh_mode| (nats)" = colMeans(abs(stack_metric(scan, "dh_mode"))),
+  "nmix_mode"        = colMeans(stack_metric(scan, "nmix_mode"))
 )
 ```
 
-To plot them, they go into one long table, one row per site or mode of each
-profile:
+To plot them, each list goes into one long table, one row per site or mode of
+each metric, and each metric gets its own panel:
 
-```{r profile-table}
-panels <- c("structure, by site", "structure, by mode",
-            "dynamics, by site", "dynamics, by mode")
-
-profile_table <- function(profile) {
-  table <- rbind(
-    tibble::tibble(panel = panels[1], index = sites, value = profile$structure_by_site),
-    tibble::tibble(panel = panels[2], index = modes, value = profile$structure_by_mode),
-    tibble::tibble(panel = panels[3], index = sites, value = profile$dynamics_by_site),
-    tibble::tibble(panel = panels[4], index = modes, value = profile$dynamics_by_mode)
-  )
-  table$panel <- factor(table$panel, levels = panels)  # keep this panel order
+```{r plot-functions}
+# a named list of profiles, all over the same index, as one long table
+profile_table <- function(profiles, index) {
+  tables <- lapply(names(profiles), function(metric_name) {
+    tibble::tibble(metric = metric_name, index = index, value = profiles[[metric_name]])
+  })
+  table <- do.call(rbind, tables)
+  table$metric <- factor(table$metric, levels = names(profiles))  # keep the list's order
   table
 }
 
-plot_profiles <- function(table, y_label, title) {
+# one panel per metric, stacked, with the metric as the y axis label
+plot_profiles <- function(table, x_label, title, subtitle) {
   ggplot(table, aes(index, value)) +
     geom_line() +
-    facet_wrap(~ panel, scales = "free") +
+    facet_wrap(~ metric, ncol = 1, scales = "free_y", strip.position = "left") +
     scale_y_log10() +
-    labs(x = "site (left) or mode (right)", y = y_label, title = title) +
-    theme_minimal()
+    labs(x = x_label, y = NULL, title = title, subtitle = subtitle) +
+    theme_minimal() +
+    theme(strip.placement = "outside")
 }
 ```
 
-```{r scan-plot, fig.height = 5}
-plot_profiles(profile_table(scan_profile),
-              y_label = "mean squared change",
-              title = "Single-point scan: divergence from the wild type")
+```{r scan-site-plot, fig.height = 8}
+plot_profiles(profile_table(scan_by_site, sites), x_label = "site",
+              title = "Single-point scan, by site",
+              subtitle = "mean over all single-point mutants")
 ```
 
-```{r bonds, include = FALSE}
-n_bonds <- sum(wt$graph$sdij == 1)
+```{r scan-mode-plot, fig.height = 5.5}
+plot_profiles(profile_table(scan_by_mode, modes), x_label = "mode, softest first",
+              title = "Single-point scan, by mode",
+              subtitle = "mean over all single-point mutants")
 ```
 
-Modes are numbered from the softest. The structural mode profile drops sharply
-after mode `r length(modes) - n_bonds`: the last `r n_bonds` modes are the
-stretching of the `r n_bonds` bonds between sequence neighbours. These are the
-stiffest springs in this model (`ming_wall` makes them 42 times stiffer than the
-rest), and the ones mutations leave alone (`mut_sd_min = 2`).
+Modes are numbered from the softest. `dr2n` and `|dh_mode|` change abruptly after mode
+`r length(modes) - sum(wt$graph$sdij == 1)`. The springs between sequence
+neighbours are the stiffest in this model (`ming_wall` makes them 42 times stiffer than the rest), and mutations
+leave them alone (`mut_sd_min = 2`). How much of each mode's elastic energy
+sits in those springs:
+
+```{r bonds}
+graph <- wt$graph
+bond <- graph$sdij == 1
+xyz <- matrix(get_xyz(wt), nrow = 3)                  # column k is site k
+spring_direction <- xyz[, graph$j] - xyz[, graph$i]
+spring_direction <- spring_direction / rep(sqrt(colSums(spring_direction^2)), each = 3)
+
+# for each mode, the share of its elastic energy, sum of k * stretch^2, in the bonds
+bond_share <- sapply(modes, function(n) {
+  mode_vector <- matrix(get_umat(wt)[, n], nrow = 3)
+  stretch <- colSums(spring_direction * (mode_vector[, graph$j] - mode_vector[, graph$i]))
+  energy <- graph$kij * stretch^2
+  sum(energy[bond]) / sum(energy)
+})
+
+n_bonds <- sum(bond)
+upper_band <- modes > length(modes) - n_bonds
+n_bonds
+round(median(bond_share[!upper_band]), 3)   # median share, modes below the last n_bonds
+round(min(bond_share[upper_band]), 3)       # lowest share, the last n_bonds modes
+```
+
+There are `r n_bonds` bonds, and the last `r n_bonds` modes are their
+stretching: in each of them, at least `r round(100 * min(bond_share[upper_band]))`%
+of the energy is in the bonds, against a median of
+`r round(100 * median(bond_share[!upper_band]), 1)`% in the modes below. The
+structure hardly moves along these stiff modes, and `dr2n` drops sharply there.
+
+`nmix_mode` is close to 1 for the softest modes, around the gap, and for the
+stiffest modes: a mutation leaves these as they are. In between, a mode of the
+wild type spreads, on average, over up to
+`r round(max(scan_by_mode[["nmix_mode"]]), 1)` modes of the mutant.
+`nmix_mode` and `|dh_mode|` are largest at different modes; across modes their
+logarithms correlate at `r round(cor(log(scan_by_mode[["nmix_mode"]]), log(scan_by_mode[["|dh_mode| (nats)"]])), 2)`.
+A mode can spread over several modes of the mutant while the fluctuation along
+it hardly changes.
 
 ## A star tree
 
@@ -271,10 +331,12 @@ sites_changed <- sapply(tips, function(tip) sum(tip$nodes$sequence != wt$nodes$s
 summary(sites_changed)
 ```
 
-To be compared site by site, the tips must all have the same orientation.
-`superpose_prot()` rotates each tip onto the wild type's structure, and its
-Hessian with it. Only the tips are compared, so only they need normal modes,
-added afterwards:
+Every comparison except `size` and `shape` depends on the frame: the
+displacements `dr2i` and `dr2n`, the `orientation` of the sites' fluctuations,
+and the fluctuations along modes. So the proteins must have the same
+orientation. `superpose_prot()` rotates each tip
+onto the wild type's structure, and its Hessian with it. Only the tips are
+compared, so only they need normal modes, added afterwards:
 
 ```{r tips-aligned}
 aligned_tips <- lapply(tips, superpose_prot, fixed = get_xyz(wt))
@@ -282,13 +344,14 @@ aligned_tips <- lapply(aligned_tips, set_enm_nma)
 ```
 
 The profiles compare **tips with each other**, not with the wild type: they
-average over all `r choose(n_trajectories, 2)` pairs of tips.
+average over all `r choose(n_trajectories, 2)` pairs of tips. The one
+exception, `nmix_mode`, is explained below.
 
-The site profiles use `delta_structure_dr2i()` and `delta_motion_dmsfi()`, as
-the scan does. The mode profiles cannot use `delta_structure_dr2n()` and
-`delta_motion_dmsfn()` directly: those take the modes of their first argument,
-which here would be a different tip, and so a different basis, for each pair.
-Instead, two small functions take the basis explicitly:
+The mode profiles must share one basis, the wild type's modes, as in the scan.
+`delta_motion_dh_mode()` takes it as its `reference` argument.
+`delta_structure_dr2n()` has no such argument: it takes the modes of its first
+argument, which here would be a different tip, and so a different basis, for
+each pair. Instead, a small function takes the basis explicitly:
 
 ```{r mode-basis-functions}
 # squared displacement from protein_1 to protein_2 along each column of basis
@@ -297,95 +360,172 @@ dr2_along <- function(protein_1, protein_2, basis) {
   as.vector(crossprod(basis, displacement))^2
 }
 
-# mean-square fluctuation of a protein along each column of basis, that is the
-# diagonal of t(basis) %*% cmat %*% basis, computed without forming the product
-msf_along <- function(protein, basis) {
-  colSums(basis * (get_cmat(protein) %*% basis))
-}
-
 wt_modes <- get_umat(wt)
 ```
 
-With the wild type as the first protein they give exactly what the `delta_*`
-functions give:
+With the wild type as the first protein it gives exactly what
+`delta_structure_dr2n()` gives:
 
 ```{r mode-basis-check}
 tip <- aligned_tips[[1]]
 all.equal(dr2_along(wt, tip, wt_modes), delta_structure_dr2n(wt, tip))
-all.equal(msf_along(tip, wt_modes) - msf_along(wt, wt_modes), delta_motion_dmsfn(wt, tip))
 ```
+
+`nmix_mode` is different. It counts how the modes of its first protein spread
+over those of the second, so between two tips its mode n would be a mode of the
+first tip, a different mode in each pair. To follow the wild type's modes, as
+in the scan, it compares each tip with the wild type instead: how well the wild
+type's modes are conserved after `r n_steps` mutations, against one in the
+scan.
 
 ```{r tree}
 pairs <- as.data.frame(t(combn(n_trajectories, 2)))
 names(pairs) <- c("first", "second")
-n_pairs <- nrow(pairs)
 
-tree_dr2i  <- matrix(NA_real_, nrow = n_pairs, ncol = length(sites))
-tree_dmsfi <- matrix(NA_real_, nrow = n_pairs, ncol = length(sites))
-tree_dr2n  <- matrix(NA_real_, nrow = n_pairs, ncol = length(modes))
-tree_dmsfn <- matrix(NA_real_, nrow = n_pairs, ncol = length(modes))
-
-for (row in seq_len(n_pairs)) {
+compare_tips <- function(row) {
   tip_1 <- aligned_tips[[pairs$first[row]]]
   tip_2 <- aligned_tips[[pairs$second[row]]]
-
-  tree_dr2i[row, ]  <- delta_structure_dr2i(tip_1, tip_2)
-  tree_dmsfi[row, ] <- delta_motion_dmsfi(tip_1, tip_2)
-  tree_dr2n[row, ]  <- dr2_along(tip_1, tip_2, wt_modes)
-  tree_dmsfn[row, ] <- msf_along(tip_2, wt_modes) - msf_along(tip_1, wt_modes)
+  dlcov <- delta_motion_dlcov_site(tip_1, tip_2)
+  list(
+    dr2i        = delta_structure_dr2i(tip_1, tip_2),
+    dlcov       = dlcov$dlcov,
+    size        = dlcov$size,
+    shape       = dlcov$shape,
+    orientation = dlcov$orientation,
+    dr2n        = dr2_along(tip_1, tip_2, wt_modes),
+    dh_mode     = delta_motion_dh_mode(tip_1, tip_2, reference = wt)
+  )
 }
+tree <- lapply(seq_len(nrow(pairs)), compare_tips)
 
-tree_profile <- list(
-  structure_by_site = colMeans(tree_dr2i),
-  structure_by_mode = colMeans(tree_dr2n),
-  dynamics_by_site  = colMeans(tree_dmsfi^2),
-  dynamics_by_mode  = colMeans(tree_dmsfn^2)
+# the conservation of the wild type's modes, tip by tip: one row per tip
+tree_nmix_mode <- do.call(rbind, lapply(aligned_tips, function(tip) delta_motion_nmix_mode(wt, tip)))
+
+tree_by_site <- list(
+  "dr2i (Å²)"          = colMeans(stack_metric(tree, "dr2i")),
+  "dlcov (nats)"       = colMeans(stack_metric(tree, "dlcov")),
+  "size (nats)"        = colMeans(stack_metric(tree, "size")),
+  "shape (nats)"       = colMeans(stack_metric(tree, "shape")),
+  "orientation (nats)" = colMeans(stack_metric(tree, "orientation"))
+)
+tree_by_mode <- list(
+  "dr2n (Å²)"        = colMeans(stack_metric(tree, "dr2n")),
+  "|dh_mode| (nats)" = colMeans(abs(stack_metric(tree, "dh_mode"))),
+  "nmix_mode"        = colMeans(tree_nmix_mode)
 )
 ```
 
-```{r tree-plot, fig.height = 5}
-plot_profiles(profile_table(tree_profile),
-              y_label = "mean squared difference",
-              title = "Star tree: divergence between tips")
+```{r tree-site-plot, fig.height = 8}
+plot_profiles(profile_table(tree_by_site, sites), x_label = "site",
+              title = "Star tree, by site",
+              subtitle = "mean over all pairs of tips")
+```
+
+```{r tree-mode-plot, fig.height = 5.5}
+plot_profiles(profile_table(tree_by_mode, modes), x_label = "mode, softest first",
+              title = "Star tree, by mode",
+              subtitle = "mean over all pairs of tips; nmix_mode: mean over tips, each against the wild type")
 ```
 
 ## Scan and tree compared
 
 The tips are separated by many mutations, so they differ far more than a
 single mutant differs from the wild type. To compare the *shapes* of the
-profiles, each is divided by its own mean:
+profiles, each is divided by its own mean, which also removes its unit:
 
-```{r compare-plot, fig.height = 5}
-relative <- function(profile) lapply(profile, function(values) values / mean(values))
+```{r compare-tables}
+relative <- function(profiles) lapply(profiles, function(values) values / mean(values))
 
-scan_table <- profile_table(relative(scan_profile))
-tree_table <- profile_table(relative(tree_profile))
-scan_table$source <- "single-point scan"
-tree_table$source <- "star tree (pairs of tips)"
+# the metric's name without its unit, which the division removed
+drop_unit <- function(profiles) {
+  names(profiles) <- sub(" \\(.*\\)$", "", names(profiles))
+  profiles
+}
 
-ggplot(rbind(scan_table, tree_table), aes(index, value, colour = source)) +
-  geom_line() +
-  facet_wrap(~ panel, scales = "free") +
-  scale_y_log10() +
-  labs(x = "site (left) or mode (right)", y = "relative to the profile's mean",
-       colour = NULL) +
-  theme_minimal() +
-  theme(legend.position = "bottom")
+compare_site <- rbind(
+  cbind(profile_table(drop_unit(relative(scan_by_site)), sites), source = "single-point scan"),
+  cbind(profile_table(drop_unit(relative(tree_by_site)), sites), source = "star tree (pairs of tips)")
+)
+compare_mode <- rbind(
+  cbind(profile_table(drop_unit(relative(scan_by_mode)), modes), source = "single-point scan"),
+  cbind(profile_table(drop_unit(relative(tree_by_mode)), modes), source = "star tree (pairs of tips)")
+)
+
+plot_compared <- function(table, x_label, title) {
+  plot_profiles(table, x_label, title, subtitle = "each profile divided by its mean") +
+    aes(colour = source) +
+    labs(colour = NULL) +
+    theme(legend.position = "bottom")
+}
+```
+
+```{r compare-site-plot, fig.height = 8.5}
+plot_compared(compare_site, x_label = "site", title = "Scan and tree, by site")
+```
+
+```{r compare-mode-plot, fig.height = 6}
+plot_compared(compare_mode, x_label = "mode, softest first", title = "Scan and tree, by mode")
 ```
 
 How closely the shapes agree, as the correlation between the logarithms of the
 scan profile and the tree profile:
 
 ```{r compare-cor}
-agreement <- c(
-  "structure, by site" = cor(log(scan_profile$structure_by_site), log(tree_profile$structure_by_site)),
-  "structure, by mode" = cor(log(scan_profile$structure_by_mode), log(tree_profile$structure_by_mode)),
-  "dynamics, by site"  = cor(log(scan_profile$dynamics_by_site),  log(tree_profile$dynamics_by_site)),
-  "dynamics, by mode"  = cor(log(scan_profile$dynamics_by_mode),  log(tree_profile$dynamics_by_mode))
-)
-round(agreement, 3)
+agreement <- function(scan_profiles, tree_profiles) {
+  metrics <- names(tree_profiles)
+  correlations <- sapply(metrics, function(metric) {
+    cor(log(scan_profiles[[metric]]), log(tree_profiles[[metric]]))
+  })
+  names(correlations) <- sub(" \\(.*\\)$", "", metrics)
+  round(correlations, 2)
+}
+
+agreement_site <- agreement(scan_by_site, tree_by_site)
+agreement_mode <- agreement(scan_by_mode, tree_by_mode)
+agreement_site
+agreement_mode
 ```
 
-The single-point scan predicts the pattern in which tips separated by many
-mutations differ from each other: the correlations range from
-`r round(min(agreement), 2)` to `r round(max(agreement), 2)`.
+The correlations measure the whole profile. The highest peaks are another
+matter: of the five sites (or modes) where each profile is largest, how many
+the scan and the tree share:
+
+```{r compare-peaks}
+shared_peaks <- function(scan_profiles, tree_profiles) {
+  metrics <- names(tree_profiles)
+  shared <- sapply(metrics, function(metric) {
+    top_scan <- order(scan_profiles[[metric]], decreasing = TRUE)[1:5]
+    top_tree <- order(tree_profiles[[metric]], decreasing = TRUE)[1:5]
+    length(intersect(top_scan, top_tree))
+  })
+  names(shared) <- sub(" \\(.*\\)$", "", metrics)
+  shared
+}
+
+peaks_site <- shared_peaks(scan_by_site, tree_by_site)
+peaks_mode <- shared_peaks(scan_by_mode, tree_by_mode)
+peaks_site
+peaks_mode
+```
+
+```{r agreement-text, include = FALSE}
+two_digits <- function(x) format(x, nsmall = 2)
+```
+
+The structure by mode agrees best
+(`r two_digits(agreement_mode[["dr2n"]])`). Next is the conservation of the
+wild type's modes, `nmix_mode`, after one mutation and after `r n_steps`
+(`r two_digits(agreement_mode[["nmix_mode"]])`): the same modes mix in both,
+each over many more modes after `r n_steps` mutations, up to
+`r round(max(tree_by_mode[["nmix_mode"]]), 1)` against
+`r round(max(scan_by_mode[["nmix_mode"]]), 1)`. The structure by site agrees
+at `r two_digits(agreement_site[["dr2i"]])`. The changes in the fluctuations
+of each site range from `r two_digits(agreement_site[["size"]])` for `size` to
+`r two_digits(agreement_site[["orientation"]])` for `orientation`, with
+`r two_digits(agreement_site[["dlcov"]])` for `dlcov` as a whole; by
+mode, `dh_mode` agrees at `r two_digits(agreement_mode[["|dh_mode|"]])`. Of
+their five highest sites, the scan and the tree share
+`r peaks_site[["dr2i"]]` in `dr2i`, `r peaks_site[["dlcov"]]` in `dlcov`,
+`r peaks_site[["orientation"]]` in `orientation`, and only
+`r peaks_site[["size"]]` in `size` and `r peaks_site[["shape"]]` in `shape`. This is one protein, one model and one
+ensemble of mutations.

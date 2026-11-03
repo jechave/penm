@@ -2,70 +2,84 @@
 % Please edit documentation in R/delta_motion_by_mode.R
 \name{delta_motion_by_mode}
 \alias{delta_motion_by_mode}
-\alias{delta_motion_dmsfn}
-\alias{delta_motion_dhn}
-\alias{delta_motion_rwsipn}
-\alias{delta_motion_nhn}
-\title{Compare two protein ensembles mode by mode (mode-dependent profiles)}
+\alias{delta_motion_dh_mode}
+\alias{delta_motion_nmix_mode}
+\title{Compare the fluctuations of two proteins mode by mode}
 \usage{
-delta_motion_dmsfn(wt, mut, beta = beta_boltzmann())
+delta_motion_dh_mode(wt, mut, reference = wt)
 
-delta_motion_dhn(wt, mut)
-
-delta_motion_rwsipn(wt, mut)
-
-delta_motion_nhn(wt, mut)
+delta_motion_nmix_mode(wt, mut)
 }
 \arguments{
-\item{wt}{A protein, with normal modes: they are the basis of the profiles}
+\item{wt}{A protein, with normal modes}
 
-\item{mut}{A second protein, with normal modes (a genm mutant gets them from
-\code{\link[=set_enm_nma]{set_enm_nma()}})}
+\item{mut}{A second protein with the same sites, with normal modes (a genm
+mutant gets them from \code{\link[=set_enm_nma]{set_enm_nma()}})}
 
-\item{beta}{inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see
-\code{\link[=beta_boltzmann]{beta_boltzmann()}}); taken by \code{delta_motion_dmsfn} only, whose result is in Å²}
+\item{reference}{a protein with normal modes and the same sites, whose modes
+are the directions along which \code{wt} and \code{mut} are compared; \code{wt} by
+default. Used by \code{delta_motion_dh_mode()} only.}
 }
 \value{
-A vector \code{(x_n)} of size \code{nmodes}, where \code{x_n} is the property compared, for mode n.
+A vector of size \code{nmodes}, one value per mode of \code{wt} (or of
+\code{reference}, for \code{delta_motion_dh_mode()}), softest first.
 }
 \description{
-Given two proteins, compare their conformational ensembles (fluctuation patterns),
-the proteins'  \code{cmat}, and normal modes (Principal components) are assumed known.
+Compares the fluctuations of \code{wt} and \code{mut} along normal modes: how much the
+fluctuation along each mode changed, and whether the mode's direction is
+kept. The two proteins must have the same sites and be superposed
+(\code{\link[=superpose_prot]{superpose_prot()}}): the functions stop if they are not, and warn if they
+are only nearly so.
 }
 \details{
-(This version works only for wt and mut with no indels)
+\code{delta_motion_dh_mode()} returns the change in the entropy of the
+fluctuation along each mode of \code{reference},
+\code{get_h_mode(mut, reference) - get_h_mode(wt, reference)}:
+\deqn{\Delta h_n = \frac{1}{2} \ln \frac{\mathbf{u}_n^T \mathbf{C}^{mut} \mathbf{u}_n}{\mathbf{u}_n^T \mathbf{C}^{wt} \mathbf{u}_n},}{
+      Delta h_n = 1/2 ln(u_n' C^mut u_n / u_n' C^wt u_n),}
+with \eqn{\mathbf{u}_n}{u_n} the reference's mode n, up to the small
+correction for structures that differ described in \code{\link[=get_h_mode]{get_h_mode()}}. It is the
+log of the ratio of the standard deviations along the mode, and positive
+where \code{mut} fluctuates more. It depends only on the fluctuation along the
+mode's direction, not on how \code{mut}'s own modes are arranged, so it needs no
+pairing of the modes of the two proteins.
 
-\code{delta_motion_dmsfn} returns mode-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_n^2}{delta sigma_n^2}.
-This version calculates fluctuations along normal modes of wt, it's independent of possible assignment issues.
+For a fixed reference, swapping \code{wt} and \code{mut} changes the sign. To compare
+many proteins along one set of directions, pass the same \code{reference} to every
+comparison. Summed over modes it is not the change in the protein's entropy:
+each mode's entropy ignores the correlations between modes.
 
-\code{delta_motion_dhn} returns mode-dependent profile of entropy differences \eqn{\delta H_n}{delta H_n}
-This version calculates fluctuations along normal modes of wt, it's independent of possible assignment issues.
-
-\code{delta_motion_rwsipn} returns mode-dependent profile of rwsip similarity
-
-\code{delta_motion_nhn} returns mode-dependent profile of mode conservation  measure \eqn{nH_n}{nH_n}
+\code{delta_motion_nmix_mode()} returns, for each mode n of \code{wt}, the
+effective number of modes of \code{mut} over which it is spread. With
+\eqn{O_{nm} = \mathbf{u}^{wt}_n \cdot \mathbf{u}^{mut}_m}{O_nm = u^wt_n . u^mut_m},
+the squared overlaps \eqn{O^2_{nm}}{O_nm^2} over m are the weights with which
+the direction of mode n is distributed over the modes of \code{mut}, and
+\deqn{\mathrm{nmix}_n = \exp\left(-\sum_m O^2_{nm} \ln O^2_{nm}\right).}{
+      nmix_n = exp(-sum_m O_nm^2 ln O_nm^2).}
+It is 1 when mode n is also a mode of \code{mut}, and k when it is spread equally
+over k of them. It depends only on the directions of the modes, not on their
+variances. Modes with close variances mix easily, so a large value with a
+\code{delta_motion_dh_mode()} near zero usually means a mode reshuffled among
+others of similar variance, with the fluctuation along it unchanged. If the
+two structures differ, the weights of each mode are rescaled to sum to one
+(see \code{\link[=get_h_mode]{get_h_mode()}} for why they fall slightly short).
 }
 \examples{
-wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, ensemble = 7)
-mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
-
-dmsfn <- delta_motion_dmsfn(wt, mut)
-length(dmsfn)                       # one value per mode
-
-# All zero here: "lfenm" leaves kmat, and so the normal modes, unchanged.
-range(dmsfn)
-
-# Under "genm" the mutation changes the network, and so the motion.
+# Under "genm" a mutation changes the network, and so the fluctuations.
 # A genm mutant needs its normal modes added first.
-wt_genm <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
-                   mut_model = "genm", d_max_graph = 14)
-mut_genm <- set_enm_nma(get_mutant_site(wt_genm, site_mut = 11, mutation = 1))
-range(delta_motion_dmsfn(wt_genm, mut_genm))
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+              mut_model = "genm", d_max_graph = 14)
+mut <- set_enm_nma(get_mutant_site(wt, site_mut = 11, mutation = 1))
+
+dh <- delta_motion_dh_mode(wt, mut)
+length(dh)                          # one value per mode
+
+nmix <- delta_motion_nmix_mode(wt, mut)
+range(nmix)                         # 1 for a mode kept as it is
 
 }
 \seealso{
-\link{delta_motion_by_site} for the same comparisons resolved by site rather
-than by mode. \link{delta_structure_by_mode} compares structure rather than motion.
+\link{delta_motion_by_site} for comparisons site by site; \code{\link[=get_h_mode]{get_h_mode()}};
+\link{delta_structure_by_mode} compares structure rather than fluctuations.
 \code{\link[=get_mutant_site]{get_mutant_site()}} produces the \code{mut} argument; \code{\link[=set_enm]{set_enm()}} the \code{wt}.
 }

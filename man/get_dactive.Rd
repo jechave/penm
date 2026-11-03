@@ -32,6 +32,7 @@ range(dact)                     # 0 at the active residues themselves
 \seealso{
 Other site profiles:
 \code{\link[=get_cn]{get_cn()}},
+\code{\link[=get_h_site]{get_h_site()}},
 \code{\link[=get_mlms]{get_mlms()}},
 \code{\link[=get_msf_site]{get_msf_site()}},
 \code{\link[=get_wcn]{get_wcn()}}

@@ -27,6 +27,7 @@ which.max(cn)                   # most buried site by contact number
 \seealso{
 Other site profiles:
 \code{\link[=get_dactive]{get_dactive()}},
+\code{\link[=get_h_site]{get_h_site()}},
 \code{\link[=get_mlms]{get_mlms()}},
 \code{\link[=get_msf_site]{get_msf_site()}},
 \code{\link[=get_wcn]{get_wcn()}}

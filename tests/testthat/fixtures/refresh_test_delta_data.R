@@ -44,16 +44,8 @@ delta_expected <- list(
   dr2n                 = delta_structure_dr2n(wt, mut),
   de2n                 = delta_structure_de2n(wt, mut),
   df2n                 = delta_structure_df2n(wt, mut),
-  # motion, by site
-  dmsfi                = delta_motion_dmsfi(wt, mut),
-  dbhati               = delta_motion_dbhati(wt, mut),
-  rwsipi               = delta_motion_rwsipi(wt, mut),
-  dhi                  = delta_motion_dhi(wt, mut),
-  # motion, by mode
-  dmsfn                = delta_motion_dmsfn(wt, mut),
-  dhn                  = delta_motion_dhn(wt, mut),
-  rwsipn               = delta_motion_rwsipn(wt, mut),
-  nhn                  = delta_motion_nhn(wt, mut),
+  # motion is not frozen here: under lfenm it is unchanged by construction, so
+  # its frozen values would hold however broken the code (see test_delta.R)
   # energy
   ddg_dv               = ddg_dv(wt, mut),
   ddg_tds              = ddg_tds(wt, mut),

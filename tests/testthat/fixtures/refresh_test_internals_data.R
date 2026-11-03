@@ -1,8 +1,7 @@
 # Refresh data to use in test_internals.R
 #
 # Frozen output of the internal helpers: the kij_* spring-constant functions
-# that define the ENM model variants, the distribution-comparison measures in
-# utils.R, and the small pure utilities.
+# that define the ENM model variants, and the small pure utilities.
 #
 # Same standing as the other fixtures: a REGRESSION anchor, not a correctness
 # claim. A mismatch means a number moved -- find out why before regenerating.
@@ -52,48 +51,12 @@ internals_expected <- list(
 )
 
 ## ----------------------------------------------------------------------------------------------------------------------
-# distribution-comparison measures, on two real covariance matrices
+# small pure utilities and energies, on a real protein
 
 load(test_path("fixtures", "pdb_2acy_A.rda"))
 
 wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5)
 
-# dbhat/rwsip/dh are only ever called on the 3x3 single-site block of cmat --
-# see delta_motion_dbhati/rwsipi/dhi in R/delta_motion_by_site.R. Feed them the
-# same thing here. The full reduced cmat must NOT be used: it is singular by
-# construction (the six rigid-body modes are dropped from the spectrum), so its
-# determinant is zero and logdet -- which dbhat calls three times -- has no value.
-site_block <- function(cmat, i) {
-  dim(cmat) <- c(3, nrow(cmat) / 3, 3, nrow(cmat) / 3)
-  cmat[, i, , i]
-}
-
-# The second matrix must actually DIFFER from the first. An lfenm mutant will
-# not do: it perturbs edge equilibrium lengths and leaves kmat untouched, so its
-# cmat is identical to wt's and dbhat/dh would freeze as 0 and rwsip as 1 --
-# values that hold even if the functions were broken. Use a different ENM model
-# instead, which changes kmat and so genuinely changes cmat.
-wt_anm <- set_enm(pdb_2acy_A, node = "ca", model = "anm", d_max = 10.5)
-
-site <- 11L
-bwt  <- site_block(get_cmat(wt),     site)
-bmut <- site_block(get_cmat(wt_anm), site)
-
-internals_expected$site_block   <- site
-internals_expected$dbhat        <- penm:::dbhat(bwt, bmut)
-internals_expected$rwsip        <- penm:::rwsip(bwt, bmut)
-internals_expected$dh           <- penm:::dh(bwt, bmut)
-internals_expected$dbhat_norm   <- penm:::dbhat(bwt, bmut, normalize = TRUE)
-internals_expected$rwsip_norm   <- penm:::rwsip(bwt, bmut, normalize = TRUE)
-internals_expected$dh_norm      <- penm:::dh(bwt, bmut, normalize = TRUE)
-
-# small pure utilities
-# tr is fine on the full reduced cmat -- it is a plain sum of the diagonal, with
-# no singularity concern. logdet is NOT: see above, so it is tested on the 3x3
-# block and, in the test file, against a closed-form diagonal matrix.
-cwt <- get_reduced_cmat(wt)
-internals_expected$tr           <- penm:::tr(cwt)
-internals_expected$logdet       <- penm:::logdet(bwt)
 internals_expected$enm_g_entropy <- enm_g_entropy(wt, beta_boltzmann())
 internals_expected$v_dij        <- penm:::v_dij(dij = c(3, 5, 7), v0ij = 0, kij = 2, lij = 4)
 internals_expected$cn_xyz       <- penm:::cn_xyz(get_xyz(wt), 10.5)

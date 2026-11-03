@@ -257,18 +257,25 @@ cor(log(dr2n), log(get_evalue(wt)))
 The two views answer different questions — where the protein moved, and which of
 its motions were excited.
 
-**Motion.** Changes in the fluctuations themselves — `delta_motion_dmsfi` over
-sites, `delta_motion_dmsfn` over modes:
+**Motion.** Changes in the fluctuations themselves — `delta_motion_dh_site`
+over sites, `delta_motion_dh_mode` over modes, the change in the entropy of the
+fluctuations, in nats:
 
 ```{r motion}
-sum(delta_motion_dmsfi(wt, mut))
+range(delta_motion_dh_site(wt, mut))
 ```
 
-The zero is a consequence of the perturbation model, explained next.
+Both ends of the range are zero: a consequence of the perturbation model,
+explained next.
 
-Each family has further members, weighting the same comparisons differently; see
-`?delta_structure_by_site`, `?delta_motion_by_site` and their by-mode
-counterparts.
+Each family has further members. The structural ones weight the same
+displacement differently (`?delta_structure_by_site`,
+`?delta_structure_by_mode`). For the fluctuations,
+`delta_motion_dlcov_site` measures how different each site's fluctuations
+are, as the difference of their log covariances, split into size, shape and
+orientation, and `delta_motion_nmix_mode`
+counts how many of the second protein's modes each mode of the first spreads
+over (`?delta_motion_by_site`, `?delta_motion_by_mode`).
 
 ## What the perturbation touches
 
@@ -289,7 +296,7 @@ two, and its difference vanishes:
 ddg_tds(wt, mut)
 ```
 
-This is why `delta_motion_dmsfi` returned zero above. Under this model the
+This is why `delta_motion_dh_site` returned zero above. Under this model the
 informative measures are those built on coordinates.
 
 The generalized model, `mut_model = "genm"`, is different. The force constants

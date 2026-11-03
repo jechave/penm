@@ -2,70 +2,113 @@
 % Please edit documentation in R/delta_motion_by_site.R
 \name{delta_motion_by_site}
 \alias{delta_motion_by_site}
-\alias{delta_motion_dmsfi}
-\alias{delta_motion_dbhati}
-\alias{delta_motion_rwsipi}
-\alias{delta_motion_dhi}
-\title{Compare the motions of two proteins site by site}
+\alias{delta_motion_dh_site}
+\alias{delta_motion_dlcov_site}
+\title{Compare the fluctuations of two proteins site by site}
 \usage{
-delta_motion_dmsfi(wt, mut, beta = beta_boltzmann())
+delta_motion_dh_site(wt, mut)
 
-delta_motion_dbhati(wt, mut)
-
-delta_motion_rwsipi(wt, mut)
-
-delta_motion_dhi(wt, mut)
+delta_motion_dlcov_site(wt, mut)
 }
 \arguments{
 \item{wt}{A protein, with normal modes}
 
-\item{mut}{A second protein, with normal modes (a genm mutant gets them from
-\code{\link[=set_enm_nma]{set_enm_nma()}})}
-
-\item{beta}{inverse temperature \eqn{1 / RT}{1 / RT}, in mol/kcal (see
-\code{\link[=beta_boltzmann]{beta_boltzmann()}}); taken by \code{delta_motion_dmsfi} only, whose result is in Å²}
+\item{mut}{A second protein with the same sites, with normal modes (a genm
+mutant gets them from \code{\link[=set_enm_nma]{set_enm_nma()}})}
 }
 \value{
-A vector \code{(x_i)} of size \code{nsites}, where \code{x_i} is the property compared, for site i.
+\itemize{
+\item \code{delta_motion_dh_site()}: a vector of size \code{nsites}.
+\item \code{delta_motion_dlcov_site()}: a tibble with one row per site and columns
+\code{pdb_site}, \code{dlcov}, \code{size}, \code{shape} and \code{orientation}.
+}
 }
 \description{
-Given two proteins, compare their conformational ensembles (fluctuation patterns),
-the proteins'  \code{cmat}, and normal modes (Principal components) are assumed known.
+The fluctuations of each site are a three-dimensional Gaussian, with
+covariance \eqn{\mathbf{C}_{ii}}{C_ii}, the site's 3 x 3 block of the
+covariance matrix. Its principal axes describe a fluctuation ellipsoid, with
+a size, a shape and an orientation. These functions compare the ellipsoids of
+\code{wt} and \code{mut}, site by site. All results are in nats, and none depends on
+the temperature or the unit of length.
 }
 \details{
-(This version works only for wt and mut with no indels)
+The two proteins must have the same sites.
 
-\code{delta_motion_dmsfi} returns site-dependent profile of changes of mean-square fluctuations \eqn{\delta \sigma_i^2}{delta sigma_i^2}
+\code{delta_motion_dh_site()} returns the change in the entropy of each
+site's fluctuations, \code{get_h_site(mut) - get_h_site(wt)}:
+\deqn{\Delta h_i = \sum_{\alpha = 1}^{3} \ln \frac{\sigma^{mut}_{i\alpha}}{\sigma^{wt}_{i\alpha}},}{
+      Delta h_i = sum_alpha ln(sigma^mut_i,alpha / sigma^wt_i,alpha),}
+where the \eqn{\sigma_{i\alpha}}{sigma_i,alpha} are the standard deviations
+along the principal axes. It is positive where \code{mut} fluctuates more. It
+measures the volume of the fluctuation ellipsoid only, not its shape or
+orientation, so the proteins need not be superposed. Summed over sites it is
+not the change in the protein's entropy: each site's entropy ignores the
+correlations with other sites.
 
-\code{delta_motion_dbhati} returns site-dependent profile of dbhat distances
+\code{delta_motion_dlcov_site()} returns, for each site, the difference
+between the log covariances of \code{wt} and \code{mut}, split into the parts due to
+size, shape and orientation. \code{dlcov} is the log-Euclidean distance (Arsigny
+et al. 2006) between the matrices
+\eqn{\frac{1}{2} \log \mathbf{C}_{ii}}{1/2 log C_ii}, whose eigenvalues are
+the \eqn{\ln \sigma_{i\alpha}}{ln sigma_i,alpha}, so that a factor of two in
+a standard deviation counts the same however large it is:
+\deqn{\mathrm{dlcov}_i = \left\| \tfrac{1}{2} \log \mathbf{C}^{mut}_{ii} - \tfrac{1}{2} \log \mathbf{C}^{wt}_{ii} \right\|_F.}{
+      dlcov_i = || 1/2 log C^mut_ii - 1/2 log C^wt_ii ||_F.}
+It splits exactly into three parts,
+\deqn{\mathrm{dlcov}^2 = \mathrm{size}^2 + \mathrm{shape}^2 + \mathrm{orientation}^2.}{
+      dlcov^2 = size^2 + shape^2 + orientation^2.}
+Write \eqn{\ell_\alpha = \ln \sigma_\alpha}{l_alpha = ln sigma_alpha} for each
+protein, with the axes ordered from the longest, \eqn{\mu}{mu} for their
+mean and \eqn{s_\alpha = \ell_\alpha - \mu}{s_alpha = l_alpha - mu} for what
+remains, which describes the shape alone. Then
+\itemize{
+\item \code{size} \eqn{= \sqrt{3} \, |\mu^{mut} - \mu^{wt}|}{= sqrt(3) |mu^mut - mu^wt|},
+which is \eqn{|\Delta h_i| / \sqrt{3}}{|Delta h_i| / sqrt(3)};
+\item \code{shape} \eqn{= \sqrt{\sum_\alpha (s^{mut}_\alpha - s^{wt}_\alpha)^2}}{= sqrt(sum_alpha (s^mut_alpha - s^wt_alpha)^2)},
+comparing the two ellipsoids at equal size, longest axis with longest axis;
+\item \code{orientation}
+\eqn{= \sqrt{2 \sum_{\alpha\beta} s^{wt}_\alpha s^{mut}_\beta (\delta_{\alpha\beta} - o^2_{\alpha\beta})}}{= sqrt(2 sum_alpha,beta s^wt_alpha s^mut_beta (delta_alpha,beta - o_alpha,beta^2))},
+where \eqn{o_{\alpha\beta}}{o_alpha,beta} is the overlap of axis
+\eqn{\alpha}{alpha} of \code{wt} with axis \eqn{\beta}{beta} of \code{mut}. It is
+zero when the axes coincide. A rotation costs in proportion to how
+different in length the rotated axes are: rotating two axes of nearly
+equal length costs little, since their directions are poorly defined, and
+a sphere has no orientation at all.
+}
 
-\code{delta_motion_rwsipi} returns site-dependent profile of rwsip similarity
-
-\code{delta_motion_dhi} returns site-dependent profile of dh similarity
+The orientation depends on the frame, so the two proteins must be superposed
+(\code{\link[=superpose_prot]{superpose_prot()}}): the function stops if they are not, and warns if they
+are only nearly so.
 }
 \examples{
-wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall",
-              d_max = 10.5, ensemble = 7)
-mut <- get_mutant_site(wt, site_mut = 11, mutation = 1)
-
-dmsfi <- delta_motion_dmsfi(wt, mut)
-length(dmsfi)                       # one value per site
-
-# Note these are all zero here: "lfenm" perturbs equilibrium edge lengths but
-# leaves kmat — and hence cmat and the normal modes — untouched, so the motion
-# is unchanged by construction.
-range(dmsfi)
-
-# Under "genm" the mutation changes the network, and so the motion.
+# Under "genm" a mutation changes the network, and so the fluctuations.
 # A genm mutant needs its normal modes added first.
-wt_genm <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
-                   mut_model = "genm", d_max_graph = 14)
-mut_genm <- set_enm_nma(get_mutant_site(wt_genm, site_mut = 11, mutation = 1))
-range(delta_motion_dmsfi(wt_genm, mut_genm))
+wt <- set_enm(pdb_2acy_A, node = "ca", model = "ming_wall", d_max = 10.5,
+              mut_model = "genm", d_max_graph = 14)
+mut <- set_enm_nma(get_mutant_site(wt, site_mut = 11, mutation = 1))
+
+dh <- delta_motion_dh_site(wt, mut)
+length(dh)                          # one value per site
+
+dlcov <- delta_motion_dlcov_site(wt, mut)
+dlcov[which.max(dlcov$dlcov), ]
+
+# the three parts add up, in squares, to the whole
+all.equal(dlcov$dlcov^2,
+          dlcov$size^2 + dlcov$shape^2 + dlcov$orientation^2)
+
+# the size part is the entropy change, unsigned and rescaled
+all.equal(dlcov$size, abs(dh) / sqrt(3))
 
 }
+\references{
+V. Arsigny, P. Fillard, X. Pennec and N. Ayache (2006).
+Log-Euclidean metrics for fast and simple calculus on diffusion tensors.
+Magnetic Resonance in Medicine 56, 411-421.
+}
 \seealso{
-\link{delta_motion_by_mode} for the same comparisons resolved by normal mode
-rather than by site. \link{delta_structure_by_site} compares structure rather than
-motion. \code{\link[=get_mutant_site]{get_mutant_site()}} produces the \code{mut} argument; \code{\link[=set_enm]{set_enm()}} the \code{wt}.
+\link{delta_motion_by_mode} for comparisons along normal modes;
+\code{\link[=get_h_site]{get_h_site()}}; \link{delta_structure_by_site} compares structure rather than
+fluctuations. \code{\link[=get_mutant_site]{get_mutant_site()}} produces the \code{mut} argument; \code{\link[=set_enm]{set_enm()}}
+the \code{wt}.
 }

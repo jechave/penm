@@ -11,8 +11,13 @@
 #' and spring constants, the eigenvalues and the energy, is unchanged.
 #'
 #' Comparing two proteins site by site, with `delta_structure_dr2i()` for
-#' example, needs them in the same orientation. An lfenm mutant is always in the
-#' orientation of the protein `set_enm()` built. A genm mutant is superposed
+#' example, needs them in the same orientation. The comparisons of
+#' fluctuations that use directions ([delta_motion_dlcov_site()],
+#' [delta_motion_dh_mode()], [delta_motion_nmix_mode()], [get_h_mode()] with a
+#' reference) check this, and stop if the proteins are not superposed.
+#'
+#' An lfenm mutant is always in the orientation of the protein `set_enm()`
+#' built. A genm mutant is superposed
 #' onto the protein it was made from, so along a trajectory its orientation can
 #' drift; superposing the tips of independent trajectories onto the wild type
 #' puts them back in one orientation.

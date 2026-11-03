@@ -435,7 +435,7 @@ test_that("a genm mutant has no modes; set_enm_nma adds them and changes nothing
   expect_identical(p$nma, NA)
   expect_error(get_evalue(p), "no normal modes")
   expect_error(get_cmat(p), "no normal modes")
-  expect_error(delta_motion_dmsfi(wt, p), "no normal modes")
+  expect_error(delta_motion_dh_site(wt, p), "no normal modes")
 
   q <- set_enm_nma(p)
   expect_equal(get_nmodes(q), 3 * nsites - 6)
